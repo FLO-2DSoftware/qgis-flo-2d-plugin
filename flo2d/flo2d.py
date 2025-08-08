@@ -3548,6 +3548,11 @@ class Flo2D(object):
         self.cur_info_table = None
 
     @connection_required
+    def show_raincell_data(self, fid=None):
+        self.f2d_widget.rain_editor.show_raincell(fid)
+        self.cur_info_table = None
+
+    @connection_required
     def show_profile(self, fid=None):
         self.f2d_widget.xs_editor.show_channel_peaks(self.cur_profile_table, fid)
         self.cur_profile_table = None
@@ -4508,6 +4513,7 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
+            "grid": self.show_raincell_data,
             "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,

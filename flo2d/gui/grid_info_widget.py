@@ -666,36 +666,6 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.lyrs.clear_rubber()
             self.render_tb.setText("")
 
-    def plot_grid_rainfall(self, feat):
-        si = "inches" if self.gutils.get_cont_par("METRIC") == "0" else "mm"
-        qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
-        fid = feat["fid"]
-        rainfall = self.gutils.execute(qry, (fid,))
-        self.create_plot()
-        self.tview.setModel(self.data_model)
-        self.data_model.clear()
-        self.data_model.setHorizontalHeaderLabels(["Time", "Cumulative rainfall"])
-        self.d1, self.d2 = [[], []]
-        for row in rainfall:
-            items = [QStandardItem("{:.4f}".format(x)) if x is not None else QStandardItem("") for x in row]
-            self.data_model.appendRow(items)
-            self.d1.append(row[0] if not row[0] is None else float("NaN"))
-            self.d2.append(row[1] if not row[1] is None else float("NaN"))
-        rc = self.data_model.rowCount()
-        if rc < 500:
-            for row in range(rc, 500 + 1):
-                items = [QStandardItem(x) for x in ("",) * 2]
-                self.data_model.appendRow(items)
-        self.tview.horizontalHeader().setStretchLastSection(True)
-        for col in range(2):
-            self.tview.setColumnWidth(col, 100)
-        for i in range(self.data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
-        self.plot.plot.setTitle("GRID FID: {}".format(fid))
-        self.plot.plot.setLabel("bottom", text="Time (minutes)")
-        self.plot.plot.setLabel("left", text="Rainfall ({})".format(si))
-        self.update_plot()
-
     def create_plot(self):
         self.plot.clear()
         if self.plot.plot.legend is not None:

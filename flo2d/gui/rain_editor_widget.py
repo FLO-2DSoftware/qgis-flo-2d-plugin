@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
 from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtGui import QDesktopServices, QStandardItem, QStandardItemModel
 
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor, NetCDFProcessor, TIFProcessor
@@ -736,3 +736,33 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.uc.bar_info("Realtime Rainfall data deleted successfully!")
         self.uc.log_info("Realtime Rainfall data deleted successfully!")
         QApplication.restoreOverrideCursor()
+
+    def show_raincell(self, fid):
+        si = "inches" if self.gutils.get_cont_par("METRIC") == "0" else "mm"
+        qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
+        rainfall = self.gutils.execute(qry, (fid,))
+        self.create_plot()
+        self.tview.setModel(self.rain_data_model)
+        self.rain_data_model.clear()
+        self.rain_data_model.setHorizontalHeaderLabels(["Time", "Cumulative rainfall"])
+        self.d1, self.d2 = [[], []]
+        for row in rainfall:
+            items = [QStandardItem("{:.4f}".format(x)) if x is not None else QStandardItem("") for x in row]
+            self.rain_data_model.appendRow(items)
+            self.d1.append(row[0] if not row[0] is None else float("NaN"))
+            self.d2.append(row[1] if not row[1] is None else float("NaN"))
+        rc = self.rain_data_model.rowCount()
+        if rc < 500:
+            for row in range(rc, 500 + 1):
+                items = [QStandardItem(x) for x in ("",) * 2]
+                self.rain_data_model.appendRow(items)
+        self.tview.horizontalHeader().setStretchLastSection(True)
+        for col in range(2):
+            self.tview.setColumnWidth(col, 100)
+        for i in range(self.rain_data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)
+        self.plot.plot.setTitle("Grid: {}".format(fid))
+        self.plot.plot.setLabel("bottom", text="Time (minutes)")
+        self.plot.plot.setLabel("left", text="Rainfall ({})".format(si))
+        self.update_plot()
+        self.plot.auto_range()

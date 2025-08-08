@@ -62,7 +62,8 @@ class InfoTool(QgsMapToolIdentify):
             "user_swmm_pumps",
             "user_swmm_orifices",
             "user_swmm_weirs",
-            "user_swmm_storage_units"
+            "user_swmm_storage_units",
+            "grid"
         ]
         # try:
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
@@ -100,7 +101,8 @@ class InfoTool(QgsMapToolIdentify):
         for i, ln in enumerate(lyrs_found.keys()):
             lid = lyrs_found[ln]["lid"]
             tab = lyrs_found[ln]["table"]
-            sm[i] = QMenu(ln)
+            display_name = "Realtime Rainfall" if tab == "grid" else ln
+            sm[i] = QMenu(display_name)
             actions[i] = {}
 
             for j, fid in enumerate(lyrs_found[ln]["fids"]):
