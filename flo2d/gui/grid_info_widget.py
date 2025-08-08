@@ -105,7 +105,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         group_areas_menu.addAction("LID Volume", lambda: self.render_areas("lid_volume_cells", "volume"))
         menu.addMenu(group_areas_menu)
 
-        # menu.addAction("Rain", self.r)
+        menu.addAction("Rain ARF", self.render_rainfall)
+
         menu.addAction("Subdomains", self.render_subdomains)
 
         self.render_tb.setMenu(menu)
@@ -600,6 +601,68 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.show_error("Render of infiltration failed!\n", e)
             self.uc.log_info("Render of infiltration failed!")
+            self.lyrs.clear_rubber()
+            self.render_tb.setText("")
+
+    def render_rainfall(self):
+        try:
+            if self.gutils.is_table_empty("user_model_boundary"):
+                self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+                self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
+                self.render_tb.setText("")
+                return
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
+                self.render_tb.setText("")
+                return
+            if self.gutils.is_table_empty("rain_arf_cells"):
+                self.uc.bar_warn("Rain ARF data is missing. Please schematize it before rendering.")
+                self.uc.log_info("Rain ARF data is missing. Please schematize it before rendering.")
+                self.render_tb.setText("")
+                return
+
+            rain_arf = self.lyrs.data["rain_arf_cells"]["qlyr"]
+
+            join_info = QgsVectorLayerJoinInfo()
+            join_info.setJoinFieldName("grid_fid")
+            join_info.setTargetFieldName("fid")
+            join_info.setJoinLayerId(rain_arf.id())
+            join_info.setUsingMemoryCache(True)
+            join_info.setPrefix("rain_")
+            join_info.setJoinLayer(rain_arf)
+
+            # Apply the join to the grid layer
+            self.grid.addJoin(join_info)
+
+            rains = [x[0] for x in self.gutils.execute(f"""
+            SELECT 
+                arf
+            FROM 
+                rain_arf_cells AS rac
+            JOIN
+                grid G ON rac.grid_fid = G.fid
+            """).fetchall()]
+            rains = [x if x is not None else -9999 for x in rains]
+            if rains:
+                mini = min(rains)
+                mini2 = second_smallest(rains)
+                maxi = max(rains)
+                render_grid(
+                    self.grid,
+                    True,
+                    mini,
+                    mini2,
+                    maxi,
+                    f"rain_arf"
+                )
+                set_min_max_elevs(mini, maxi)
+                self.lyrs.lyrs_to_repaint = [self.grid]
+                self.lyrs.repaint_layers()
+                self.render_tb.setText(f"Rain ARF")
+        except Exception as e:
+            self.uc.show_error("Render of Rain ARF failed!\n", e)
+            self.uc.log_info("Render of Rain ARF failed!")
             self.lyrs.clear_rubber()
             self.render_tb.setText("")
 
