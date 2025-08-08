@@ -2941,6 +2941,19 @@ class Flo2D(object):
                     dlg_components.hdf5_rb.setChecked(True)
                     dlg_components.data_rb.setChecked(False)
 
+            # Check the presence of fplain cadpts neighbors dat files
+            files = [
+                "FPLAIN.DAT",
+                "CADPTS.DAT",
+                "NEIGHBORS.DAT"
+            ]
+            for file in files:
+                file_path = os.path.join(outdir, file)
+                self.uc.log_info(str(file_path))
+                if os.path.exists(file_path):
+                    dlg_components.remove_files_chbox.setEnabled(True)
+                    break
+
             QApplication.restoreOverrideCursor()
             ok = dlg_components.exec_()
             if ok:
@@ -2955,23 +2968,15 @@ class Flo2D(object):
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 if export_type == "data":
+
+                    if dlg_components.remove_files_chbox.isChecked():
+                        for file in files:
+                            file_path = os.path.join(outdir, file)
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+
                     export_message = "Files exported to\n" + outdir + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface)
-                    # remove = "export_swmminp"
-                    # export_calls_filtered = [item for item in export_calls if item not in remove]
-
-                    # Check the presence of fplain cadpts neighbors dat files
-                    files = [
-                        "FPLAIN.DAT",
-                        "CADPTS.DAT",
-                        "NEIGHBORS.DAT"
-                    ]
-                    for file in files:
-                        file_path = os.path.join(outdir, file)
-                        if os.path.exists(file_path):
-                            dlg_components.remove_files_chbox.setEnabled(True)
-                            break
-
                     self.export_flo2d_files(outdir, export_calls, dlg_components)
 
                     if "export_tailings" in export_calls:
