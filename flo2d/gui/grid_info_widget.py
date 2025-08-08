@@ -15,7 +15,7 @@ from qgis.PyQt.QtGui import QColor, QIntValidator, QStandardItem, QStandardItemM
 from qgis.PyQt.QtWidgets import QApplication
 
 from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2, render_grid_subdomains, \
-    clear_grid_render, render_grid_mannings, render_grid_infiltration
+    clear_grid_render, render_grid_mannings, render_grid
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import (
@@ -101,7 +101,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         group_areas_menu.addAction("Tolerance", lambda: self.render_areas("tolspatial_cells", "tol"))
         group_areas_menu.addAction("Froude", lambda: self.render_areas("fpfroude_cells", "froudefp"))
         group_areas_menu.addAction("Shallow-n", lambda: self.render_areas("spatialshallow_cells", "shallow_n"))
-        # group_areas_menu.addAction("Steep Slope-n", lambda: self.render_areas("steep_slope_n_cells", None))
+        group_areas_menu.addAction("Steep Slope-n", lambda: self.render_areas("steep_slope_n_cells", None))
         group_areas_menu.addAction("LID Volume", lambda: self.render_areas("lid_volume_cells", "volume"))
         menu.addMenu(group_areas_menu)
 
@@ -379,21 +379,24 @@ class GridInfoWidget(qtBaseClass, uiDialog):
 
             # Apply the join to the grid layer
             self.grid.addJoin(join_info)
-
-            areas = [x[0] for x in self.gutils.execute(f"""
-            SELECT 
-                {field_name} 
-            FROM 
-                {layer_name} AS area
-            JOIN
-                grid G ON area.grid_fid = G.fid
-            """).fetchall()]
+            if not field_name:
+                areas = [0, 1]
+                field_name = "global"
+            else:
+                areas = [x[0] for x in self.gutils.execute(f"""
+                SELECT 
+                    {field_name} 
+                FROM 
+                    {layer_name} AS area
+                JOIN
+                    grid G ON area.grid_fid = G.fid
+                """).fetchall()]
             areas = [x if x is not None else -9999 for x in areas]
             if areas:
                 mini = min(areas)
                 mini2 = second_smallest(areas)
                 maxi = max(areas)
-                render_grid_infiltration(
+                render_grid(
                     self.grid,
                     True,
                     mini,
@@ -458,7 +461,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 mini = min(infils)
                 mini2 = second_smallest(infils)
                 maxi = max(infils)
-                render_grid_infiltration(
+                render_grid(
                     self.grid,
                     True,
                     mini,
@@ -520,7 +523,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 mini = min(infils)
                 mini2 = second_smallest(infils)
                 maxi = max(infils)
-                render_grid_infiltration(
+                render_grid(
                     self.grid,
                     True,
                     mini,
@@ -582,7 +585,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 mini = min(infils)
                 mini2 = second_smallest(infils)
                 maxi = max(infils)
-                render_grid_infiltration(
+                render_grid(
                     self.grid,
                     True,
                     mini,

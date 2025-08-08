@@ -3172,7 +3172,7 @@ def render_grid_mannings(grid_lyr, show_nodata, mini, mini2, maxi):
     prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
 
 
-def render_grid_infiltration(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
+def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
     if show_nodata:
         colors = [
             "#0011FF",
