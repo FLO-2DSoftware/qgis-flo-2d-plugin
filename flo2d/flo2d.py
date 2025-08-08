@@ -2957,8 +2957,8 @@ class Flo2D(object):
                 if export_type == "data":
                     export_message = "Files exported to\n" + outdir + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface)
-                    remove = "export_swmminp"
-                    export_calls_filtered = [item for item in export_calls if item not in remove]
+                    # remove = "export_swmminp"
+                    # export_calls_filtered = [item for item in export_calls if item not in remove]
 
                     # Check the presence of fplain cadpts neighbors dat files
                     files = [
@@ -2972,7 +2972,7 @@ class Flo2D(object):
                             dlg_components.remove_files_chbox.setEnabled(True)
                             break
 
-                    self.export_flo2d_files(outdir, export_calls_filtered, dlg_components)
+                    self.export_flo2d_files(outdir, export_calls, dlg_components)
 
                     if "export_tailings" in export_calls:
                         MUD = self.gutils.get_cont_par("MUD")
@@ -3205,9 +3205,6 @@ class Flo2D(object):
             export_calls.remove("export_lid_volume")
 
         self.call_IO_methods(export_calls, True, outdir)
-
-        if "export_swmmflo" in export_calls:
-            self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
 
     @connection_required
     def import_from_gpkg(self):

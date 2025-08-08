@@ -12020,7 +12020,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_swmminp(self, outdir=None, subdomain=None):
 
         # If outdir is None, it means we are exporting to HDF5 format.
-        if not outdir:
+        if outdir is None or not os.path.isdir(outdir):
             outdir = os.path.dirname(self.parser.hdf5_filepath)
 
         try:
