@@ -721,6 +721,12 @@ class GeoPackageUtils(object):
 
         self.execute("DETACH other;")
 
+        try:
+            other_gpkg_conn.close()
+        except Exception as e:
+            pass
+
+
         # Make sure that the CELLSIZE on the cont table is an integer
         cell_size = self.grid_cell_size()
         self.execute(f"""UPDATE cont SET value = '{cell_size}' WHERE name = 'CELLSIZE';""")
