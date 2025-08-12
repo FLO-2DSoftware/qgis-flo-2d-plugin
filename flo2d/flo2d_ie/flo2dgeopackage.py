@@ -1368,12 +1368,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 """INSERT INTO raincell (rainintime, irinters) VALUES""",
                 2,
             ]
-            data_sql = [
+            raincellraw_data_sql = [
                 """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES""",
                 3,
             ]
 
-            self.clear_tables("raincell", "raincellraw")
+            flo2draincell_data_sql = [
+                """INSERT INTO flo2d_raincell (iraindum, nxrdgd) VALUES""",
+                2,
+            ]
+
+            self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
 
             rainintime, irinters, data = self.parser.parse_raincellraw()
             head_sql += [(rainintime, irinters)]
@@ -1385,44 +1390,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if row[0] == 'R':
                     r_time = row[1]
                     rrgrid = row[2]
-                    data_sql += [(nxrdgd, r_time, rrgrid)]
-
-            self.batch_execute(head_sql, data_sql)
-
-        except Exception as e:
-            self.uc.show_error("Error while importing RAINCELLRAW.DAT!", e)
-            self.uc.log_info("Error while importing RAINCELLRAW.DAT!")
-
-    def import_raincellraw_hdf5(self):
-        pass
-
-    def import_flo2draincell(self):
-        if self.parsed_format == self.FORMAT_DAT:
-            return self.import_flo2draincell_dat()
-        elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_flo2draincell_hdf5()
-
-    def import_flo2draincell_dat(self):
-        try:
-            data_sql = [
-                """INSERT INTO flo2d_raincell (iraindum, nxrdgd) VALUES""",
-                2,
-            ]
-
-            self.clear_tables("flo2d_raincell")
+                    raincellraw_data_sql += [(nxrdgd, r_time, rrgrid)]
 
             data = self.parser.parse_flo2draincell()
             for row in data:
                 iraindum, nxrdgd = row
-                data_sql += [(iraindum, nxrdgd)]
+                flo2draincell_data_sql += [(iraindum, nxrdgd)]
 
-            self.batch_execute(data_sql)
+            self.batch_execute(head_sql, raincellraw_data_sql, flo2draincell_data_sql)
 
         except Exception as e:
-            self.uc.show_error("Error while importing FLO2DRAINCELL.DAT!", e)
-            self.uc.log_info("Error while importing FLO2DRAINCELL.DAT!")
+            self.uc.show_error("Error while importing RAINCELLRAW.DAT and FLO2DRAINCELL.DAT!", e)
+            self.uc.log_info("Error while importing RAINCELLRAW.DAT and FLO2DRAINCELL.DAT!")
 
-    def import_flo2draincell_hdf5(self):
+    def import_raincellraw_hdf5(self):
         pass
 
     def import_infil(self):
@@ -8564,21 +8545,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_raincellraw_dat(self, outdir):
         try:
-            if self.is_table_empty("raincellraw") or self.is_table_empty("raincell"):
+            if self.is_table_empty("raincellraw") or self.is_table_empty("raincell") or self.is_table_empty("flo2d_raincell"):
                 return False
 
             raincellraw = os.path.join(outdir, "RAINCELLRAW.DAT")
-
-            # if os.path.exists(raincellraw):
-            #     msg = f"There is an existing RAINCELLRAW.DAT file at: \n\n{outdir}\n\n"
-            #     msg += "Would you like to overwrite it?"
-            #     QApplication.setOverrideCursor(Qt.ArrowCursor)
-            #     answer = self.uc.customized_question("FLO-2D", msg)
-            #     if answer == QMessageBox.No:
-            #         QApplication.restoreOverrideCursor()
-            #         return
-            #     else:
-            #         QApplication.restoreOverrideCursor()
 
             head_sql = """SELECT rainintime, irinters FROM raincell LIMIT 1;"""
             data_sql = """SELECT nxrdgd, r_time, rrgrid FROM raincellraw ORDER BY nxrdgd, r_time;"""
@@ -8586,9 +8556,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line1 = "{0}\t{1}\n"
             line2 = "N\t{0}\n"
             line3 = "R\t{0}\t{1}\n"
-
-            # grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            # n_cells = number_of_elements(self.gutils, grid_lyr)
 
             raincellraw_head = self.execute(head_sql).fetchone()
             raincellraw_rows = self.execute(data_sql)
@@ -8612,26 +8579,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     r.write(line3.format(r_time, rrgrid))
                     progDialog.setValue(i)
                     i += 1
-            return True
-
-        except Exception as e:
-            self.uc.show_error("Exporting RAINCELLRAW.DAT failed!.\n", e)
-            self.uc.log_info("Exporting RAINCELLRAW.DAT failed!")
-            return False
-
-    def export_raincellraw_hdf5(self):
-        pass
-
-    def export_flo2draincell(self, output=None):
-        if self.parsed_format == self.FORMAT_DAT:
-            return self.export_flo2draincell_dat(output)
-        elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_flo2draincell_hdf5()
-
-    def export_flo2draincell_dat(self, outdir):
-        try:
-            if self.is_table_empty("flo2d_raincell"):
-                return False
 
             data_sql = """SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd;"""
             size_sql = """SELECT COUNT(fid) FROM flo2d_raincell"""
@@ -8656,14 +8603,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     r.write(line.format(iraindum, nxrdgd))
                     progDialog.setValue(i)
                     i += 1
+
             return True
 
         except Exception as e:
-            self.uc.show_error("Exporting FLO2DRAINCELL.DAT failed!.\n", e)
-            self.uc.log_info("Exporting FLO2DRAINCELL.DAT failed!")
+            self.uc.show_error("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT failed!.\n", e)
+            self.uc.log_info("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT failed!")
             return False
 
-    def export_flo2draincell_hdf5(self):
+    def export_raincellraw_hdf5(self):
         pass
 
     def export_infil(self, output=None, subdomain=None):

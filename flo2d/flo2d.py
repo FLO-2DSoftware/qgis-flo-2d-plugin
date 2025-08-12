@@ -2485,7 +2485,6 @@ class Flo2D(object):
             "import_rain",
             "import_raincell",
             "import_raincellraw",
-            "import_flo2draincell",
             "import_evapor",
             "import_infil",
             "import_chan",
@@ -2599,7 +2598,6 @@ class Flo2D(object):
                         import_calls.remove("import_rain")
                         import_calls.remove("import_raincell")
                         import_calls.remove("import_raincellraw")
-                        import_calls.remove("import_flo2draincell")
 
                     if "Storm Drain" not in dlg_components.components:
                         import_calls.remove("import_swmminp")
@@ -2911,7 +2909,6 @@ class Flo2D(object):
                             "export_rain",
                             "export_raincell",
                             "export_raincellraw",
-                            "export_flo2draincell",
                             "export_sdclogging",
                             "export_sed",
                             "export_shallowNSpatial",
@@ -2986,9 +2983,6 @@ class Flo2D(object):
 
                     if self.gutils.is_table_empty("raincell_data"):
                         export_calls.remove("export_raincell")
-
-                    if self.gutils.is_table_empty("flo2d_raincell"):
-                        export_calls.remove("export_flo2draincell")
 
                     if self.gutils.is_table_empty("raincellraw"):
                         export_calls.remove("export_raincellraw")
