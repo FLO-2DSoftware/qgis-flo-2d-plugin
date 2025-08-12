@@ -2485,6 +2485,7 @@ class Flo2D(object):
             "import_rain",
             "import_raincell",
             "import_raincellraw",
+            "import_flo2draincell",
             "import_evapor",
             "import_infil",
             "import_chan",
@@ -2598,6 +2599,7 @@ class Flo2D(object):
                         import_calls.remove("import_rain")
                         import_calls.remove("import_raincell")
                         import_calls.remove("import_raincellraw")
+                        import_calls.remove("import_flo2draincell")
 
                     if "Storm Drain" not in dlg_components.components:
                         import_calls.remove("import_swmminp")

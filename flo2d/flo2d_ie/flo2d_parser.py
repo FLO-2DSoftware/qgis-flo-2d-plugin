@@ -339,6 +339,7 @@ class ParseDAT(object):
             "RAIN.DAT": None,
             "RAINCELL.DAT": None,
             "RAINCELLRAW.DAT": None,
+            "FLO2DRAINCELL.DAT": None,
             "INFIL.DAT": None,
             "EVAPOR.DAT": None,
             "CHAN.DAT": None,
@@ -731,6 +732,12 @@ class ParseDAT(object):
         irinters = line1[1]
         data = [row for row in par]
         return rainintime, irinters, data
+
+    def parse_flo2draincell(self):
+        rain = self.dat_files["FLO2DRAINCELL.DAT"]
+        par = self.single_parser(rain)
+        data = [row for row in par]
+        return data
 
     def parse_infil(self):
         infil = self.dat_files["INFIL.DAT"]

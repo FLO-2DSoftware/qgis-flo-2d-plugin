@@ -1396,6 +1396,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_raincellraw_hdf5(self):
         pass
 
+    def import_flo2draincell(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_flo2draincell_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_flo2draincell_hdf5()
+
+    def import_flo2draincell_dat(self):
+        try:
+            data_sql = [
+                """INSERT INTO flo2d_raincell (iraindum, nxrdgd) VALUES""",
+                2,
+            ]
+
+            self.clear_tables("flo2d_raincell")
+
+            data = self.parser.parse_flo2draincell()
+            for row in data:
+                iraindum, nxrdgd = row
+                data_sql += [(iraindum, nxrdgd)]
+
+            self.batch_execute(data_sql)
+
+        except Exception as e:
+            self.uc.show_error("Error while importing FLO2DRAINCELL.DAT!", e)
+            self.uc.log_info("Error while importing FLO2DRAINCELL.DAT!")
+
+    def import_flo2draincell_hdf5(self):
+        pass
+
     def import_infil(self):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_infil_dat()
