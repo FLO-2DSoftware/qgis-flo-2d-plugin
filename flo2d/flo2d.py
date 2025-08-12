@@ -2911,6 +2911,7 @@ class Flo2D(object):
                             "export_rain",
                             "export_raincell",
                             "export_raincellraw",
+                            "export_flo2draincell",
                             "export_sdclogging",
                             "export_sed",
                             "export_shallowNSpatial",
@@ -2986,7 +2987,8 @@ class Flo2D(object):
                     if self.gutils.is_table_empty("raincell_data"):
                         export_calls.remove("export_raincell")
 
-                    # if self.gutils.is_table_empty("flo2d_raincell"):
+                    if self.gutils.is_table_empty("flo2d_raincell"):
+                        export_calls.remove("export_flo2draincell")
 
                     if self.gutils.is_table_empty("raincellraw"):
                         export_calls.remove("export_raincellraw")

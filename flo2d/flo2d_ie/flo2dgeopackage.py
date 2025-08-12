@@ -8567,18 +8567,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("raincellraw") or self.is_table_empty("raincell"):
                 return False
 
-            # Check for existing RAINCELLRAW.DAT file
             raincellraw = os.path.join(outdir, "RAINCELLRAW.DAT")
-            if os.path.exists(raincellraw):
-                msg = f"There is an existing RAINCELLRAW.DAT file at: \n\n{outdir}\n\n"
-                msg += "Would you like to overwrite it?"
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.No:
-                    QApplication.restoreOverrideCursor()
-                    return
-                else:
-                    QApplication.restoreOverrideCursor()
+
+            # if os.path.exists(raincellraw):
+            #     msg = f"There is an existing RAINCELLRAW.DAT file at: \n\n{outdir}\n\n"
+            #     msg += "Would you like to overwrite it?"
+            #     QApplication.setOverrideCursor(Qt.ArrowCursor)
+            #     answer = self.uc.customized_question("FLO-2D", msg)
+            #     if answer == QMessageBox.No:
+            #         QApplication.restoreOverrideCursor()
+            #         return
+            #     else:
+            #         QApplication.restoreOverrideCursor()
 
             head_sql = """SELECT rainintime, irinters FROM raincell LIMIT 1;"""
             data_sql = """SELECT nxrdgd, r_time, rrgrid FROM raincellraw ORDER BY nxrdgd, r_time;"""
@@ -8620,6 +8620,50 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_raincellraw_hdf5(self):
+        pass
+
+    def export_flo2draincell(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_flo2draincell_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_flo2draincell_hdf5()
+
+    def export_flo2draincell_dat(self, outdir):
+        try:
+            if self.is_table_empty("flo2d_raincell"):
+                return False
+
+            data_sql = """SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd;"""
+            size_sql = """SELECT COUNT(fid) FROM flo2d_raincell"""
+            line = "{0}\t{1}\n"
+
+            flo2draincell_rows = self.execute(data_sql)
+            flo2draincell_size = self.execute(size_sql).fetchone()[0]
+
+            flo2draincell = os.path.join(outdir, "FLO2DRAINCELL.DAT")
+
+            with open(flo2draincell, "w") as r:
+
+                progDialog = QProgressDialog("Exporting Intersected Realtime Rainfall (.DAT)...", None, 0,
+                                             int(flo2draincell_size))
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                i = 0
+
+                for row in flo2draincell_rows:
+                    iraindum, nxrdgd = row
+                    r.write(line.format(iraindum, nxrdgd))
+                    progDialog.setValue(i)
+                    i += 1
+            return True
+
+        except Exception as e:
+            self.uc.show_error("Exporting FLO2DRAINCELL.DAT failed!.\n", e)
+            self.uc.log_info("Exporting FLO2DRAINCELL.DAT failed!")
+            return False
+
+    def export_flo2draincell_hdf5(self):
         pass
 
     def export_infil(self, output=None, subdomain=None):
