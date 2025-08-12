@@ -1351,6 +1351,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.log_info("Error while importing RAINCELL data from HDF5!")
         #     return False
 
+    def import_raincellraw(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_raincellraw_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_raincellraw_hdf5()
+
+    def import_raincellraw_dat(self):
+        try:
+            head_sql = [
+                """INSERT INTO raincell (rainintime, irinters) VALUES""",
+                2,
+            ]
+            data_sql = [
+                """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES""",
+                3,
+            ]
+
+            self.clear_tables("raincell", "raincellraw")
+
+            rainintime, irinters, data = self.parser.parse_raincellraw()
+            head_sql += [(rainintime, irinters)]
+
+            nxrdgd = None
+            for row in data:
+                if row[0] == 'N':
+                    nxrdgd = row[1]
+                if row[0] == 'R':
+                    r_time = row[1]
+                    rrgrid = row[2]
+                    data_sql += [(nxrdgd, r_time, rrgrid)]
+
+            self.batch_execute(head_sql, data_sql)
+
+        except Exception as e:
+            self.uc.show_error("Error while importing RAINCELLRAW.DAT!", e)
+            self.uc.log_info("Error while importing RAINCELLRAW.DAT!")
+
+    def import_raincellraw_hdf5(self):
+        pass
+
     def import_infil(self):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_infil_dat()
