@@ -1345,6 +1345,28 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                (
+                    "flo2d_raincell",
+                    {
+                        "name": "Intersected Realtime Rainfall Data",
+                        "sgroup": "Rain Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "raincellraw",
+                    {
+                        "name": "Cumulative Realtime Rainfall Data",
+                        "sgroup": "Rain Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": True
+                    },
+                ),
                 # Calibration Data:
                 (
                     "wstime",

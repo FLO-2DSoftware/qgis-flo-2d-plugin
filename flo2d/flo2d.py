@@ -2908,6 +2908,7 @@ class Flo2D(object):
                             "export_outrc",
                             "export_rain",
                             "export_raincell",
+                            "export_raincellraw",
                             "export_sdclogging",
                             "export_sed",
                             "export_shallowNSpatial",
@@ -2979,6 +2980,15 @@ class Flo2D(object):
 
                     export_message = "Files exported to\n" + outdir + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface)
+
+                    if self.gutils.is_table_empty("raincell_data"):
+                        export_calls.remove("export_raincell")
+
+                    # if self.gutils.is_table_empty("flo2d_raincell"):
+
+                    if self.gutils.is_table_empty("raincellraw"):
+                        export_calls.remove("export_raincellraw")
+
                     self.export_flo2d_files(outdir, export_calls, dlg_components)
 
                     if "export_tailings" in export_calls:
@@ -3173,12 +3183,12 @@ class Flo2D(object):
         if "Rain" not in dlg_components.components:
             self.gutils.set_cont_par("IRAIN", 0)
             export_calls.remove("export_rain")
-            if "export_raincell" in export_calls:
-                export_calls.remove("export_raincell")
+            export_calls.remove("export_raincell")
+            export_calls.remove("export_raincellraw")
         else:
             if not self.f2d_widget.rain_editor.realtime_rainfall_grp.isChecked():
-                if "export_raincell" in export_calls:
-                    export_calls.remove("export_raincell")
+                export_calls.remove("export_raincell")
+                export_calls.remove("export_raincellraw")
             self.gutils.set_cont_par("IRAIN", 1)
 
         if "Storm Drain" not in dlg_components.components:

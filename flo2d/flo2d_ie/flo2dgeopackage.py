@@ -1177,6 +1177,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         fid = 1
         fid_ts = 1
 
+        # If the RAIN.DAT does not contain IRAINDIR and RAINSPEED, add it as a default of 0
+        if len(options.values()) == 6:
+            options["RAINSPEED"] = 0
+            options["IRAINDIR"] = 0
+
         rain_sql += [(fid_ts,) + tuple(options.values())]
         ts_sql += [(fid_ts,)]
 
@@ -8521,6 +8526,72 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("Error while exporting RAINCELL data to hdf5 file!\n", e)
             self.uc.log_info("Error while exporting RAINCELL data to hdf5 file!")
             return False
+
+    def export_raincellraw(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_raincellraw_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_raincellraw_hdf5()
+
+    def export_raincellraw_dat(self, outdir):
+        try:
+            if self.is_table_empty("raincellraw") or self.is_table_empty("raincell"):
+                return False
+
+            # Check for existing RAINCELLRAW.DAT file
+            raincellraw = os.path.join(outdir, "RAINCELLRAW.DAT")
+            if os.path.exists(raincellraw):
+                msg = f"There is an existing RAINCELLRAW.DAT file at: \n\n{outdir}\n\n"
+                msg += "Would you like to overwrite it?"
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.No:
+                    QApplication.restoreOverrideCursor()
+                    return
+                else:
+                    QApplication.restoreOverrideCursor()
+
+            head_sql = """SELECT rainintime, irinters FROM raincell LIMIT 1;"""
+            data_sql = """SELECT nxrdgd, r_time, rrgrid FROM raincellraw ORDER BY nxrdgd, r_time;"""
+            size_sql = """SELECT COUNT(fid) FROM raincellraw"""
+            line1 = "{0}\t{1}\n"
+            line2 = "N\t{0}\n"
+            line3 = "R\t{0}\t{1}\n"
+
+            # grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            # n_cells = number_of_elements(self.gutils, grid_lyr)
+
+            raincellraw_head = self.execute(head_sql).fetchone()
+            raincellraw_rows = self.execute(data_sql)
+            raincellraw_size = self.execute(size_sql).fetchone()[0]
+
+            with open(raincellraw, "w") as r:
+                r.write(line1.format(int(raincellraw_head[0]), int(raincellraw_head[1])))
+
+                progDialog = QProgressDialog("Exporting Cumulative Realtime Rainfall (.DAT)...", None, 0, int(raincellraw_size))
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                i = 0
+
+                previous_nxrdgd = None
+                for row in raincellraw_rows:
+                    nxrdgd, r_time, rrgrid = row
+                    if nxrdgd != previous_nxrdgd:
+                        r.write(line2.format(nxrdgd))
+                        previous_nxrdgd = nxrdgd
+                    r.write(line3.format(r_time, rrgrid))
+                    progDialog.setValue(i)
+                    i += 1
+            return True
+
+        except Exception as e:
+            self.uc.show_error("Exporting RAINCELLRAW.DAT failed!.\n", e)
+            self.uc.log_info("Exporting RAINCELLRAW.DAT failed!")
+            return False
+
+    def export_raincellraw_hdf5(self):
+        pass
 
     def export_infil(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
