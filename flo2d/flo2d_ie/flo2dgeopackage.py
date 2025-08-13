@@ -1294,67 +1294,70 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(head_sql, data_sql)
 
     def import_raincell_hdf5(self):
-        # try:
-        # Access the tailings group
-        rain_group = self.parser.read_groups("Input/Rainfall")
-        if rain_group:
-            rain_group = rain_group[0]
+        try:
 
-            head_sql = [
-                """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
-                3,
-            ]
-            data_sql = [
-                """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
-                3,
-            ]
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
 
-            self.clear_tables("raincell", "raincell_data")
+            raincell = os.path.join(project_dir, "RAINCELL.HDF5")
+            if os.path.exists(raincell):
 
-            rainintime, irinters, timestamp = None, None, None
+                head_sql = [
+                    """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
+                    3,
+                ]
 
-            # Read IRINTERS dataset
-            if "IRINTERS" in rain_group.datasets:
-                irinters = rain_group.datasets["IRINTERS"].data[0]
+                data_sql = [
+                    """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+                    3,
+                ]
 
-            # Read RAININTIME dataset
-            if "RAININTIME" in rain_group.datasets:
-                rainintime = rain_group.datasets["RAININTIME"].data[0]
+                self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
 
-            # Read TIMESTAMP dataset
-            if "TIMESTAMP" in rain_group.datasets:
-                timestamp = rain_group.datasets["TIMESTAMP"].data[0]
+                with h5py.File(raincell, "r") as f:
+                    grp  = f["raincell"]
 
-            if irinters and rainintime and timestamp:
-                head_sql += [(rainintime, int(irinters), timestamp)]
+                    # Read header scalars
+                    rainintime = int(grp["RAININTIME"][()])  # scalar int
+                    irinters = int(grp["IRINTERS"][()])  # scalar int
 
-            # Read IRAINDUM dataset
-            if "IRAINDUM" in rain_group.datasets:
-                data = rain_group.datasets["IRAINDUM"].data
-                n_grids, n_intervals = data.shape
-                result = []
-                for i in range(n_intervals):
-                    for rrgrid in range(n_grids):
-                        result.append((i, rrgrid + 1, data[rrgrid, i]))
-                result_array = np.array(result)
-                for row in result_array:
-                    data_sql += [(row[0], int(row[1]), row[2])]
+                    # TIMESTAMP is a 1-element array of bytes
+                    ts0 = grp["TIMESTAMP"][0]
+                    if isinstance(ts0, (bytes, bytearray)):
+                        timestamp = ts0.decode("utf-8", errors="ignore")
+                    else:
+                        timestamp = str(ts0)
 
-            if head_sql:
-                self.batch_execute(head_sql)
+                    head_sql += [(rainintime, int(irinters), timestamp)]
 
-            if data_sql:
-                self.batch_execute(data_sql)
+                    # Bulk insert raincell_data in chunks
+                    dts = grp["IRAINDUM"]  # shape (n_cells, irinters)
+                    n_cells, n_intervals = dts.shape
 
-            pass
+                    # Iterate column-wise to keep locality by time_interval
+                    for i in range(n_intervals):
+                        col = dts[:, i]  # length n_cells
+                        # Append rows to chunk
+                        # rrgrid is 1..n_cells to match your exported order
+                        for rrgrid in range(1, n_cells + 1):
+                            # Ensure native Python float for DB drivers
+                            val = float(col[rrgrid - 1])
+                            data_sql += [(int(i), int(rrgrid), val)]
 
-        return True
+                    if head_sql:
+                        self.batch_execute(head_sql)
 
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
-        #     self.uc.log_info("Error while importing RAINCELL data from HDF5!")
-        #     return False
+                    if data_sql:
+                        self.batch_execute(data_sql)
+
+                return True
+            else:
+                return False
+
+        except Exception as e:
+            self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
+            self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+            return False
 
     def import_raincellraw(self):
         if self.parsed_format == self.FORMAT_DAT:
