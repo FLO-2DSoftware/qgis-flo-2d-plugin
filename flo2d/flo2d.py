@@ -2952,7 +2952,6 @@ class Flo2D(object):
             ]
             for file in files:
                 file_path = os.path.join(outdir, file)
-                self.uc.log_info(str(file_path))
                 if os.path.exists(file_path):
                     dlg_components.remove_files_chbox.setEnabled(True)
                     break

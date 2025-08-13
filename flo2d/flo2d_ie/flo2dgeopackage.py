@@ -8500,7 +8500,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_raincell_hdf5(self):
         try:
-            if self.is_table_empty("raincell"):
+            if self.is_table_empty("raincell") or self.is_table_empty("raincell_data"):
                 return False
 
             s = QSettings()
@@ -8612,7 +8612,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_raincellraw_hdf5(self):
-        pass
+
+        try:
+            if self.is_table_empty("raincellraw") or self.is_table_empty("raincell") or self.is_table_empty("flo2d_raincell"):
+                return False
+
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
+
+            raincellraw = os.path.join(project_dir, "RAINCELLRAW.HDF5")
+            if os.path.exists(raincellraw):
+                msg = f"There is an existing RAINCELLRAW.HDF5 file at: \n\n{project_dir}\n\n"
+                msg += "Would you like to overwrite it?"
+                QApplication.restoreOverrideCursor()
+                answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.No:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    return
+                else:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            qry_header = "SELECT rainintime, irinters FROM raincell LIMIT 1;"
+            header = self.gutils.execute(qry_header).fetchone()
+            if header:
+                rainintime, irinters = header
+                header_data = [rainintime, irinters]
+                raincellraw_qry_data = "SELECT nxrdgd, r_time, rrgrid FROM raincellraw ORDER BY nxrdgd, r_time"
+                raincellraw_size = "SELECT COUNT(fid) FROM raincellraw"
+                flo2draincell_qry_data = "SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd"
+                flo2draincell_size = "SELECT COUNT(fid) FROM flo2d_raincell"
+                hdf_processor = HDFProcessor(raincellraw, self.iface)
+                hdf_processor.export_rainfallraw_to_binary_hdf5(header_data, raincellraw_qry_data, raincellraw_size, flo2draincell_qry_data, flo2draincell_size)
+
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error while exporting RAINCELL data to hdf5 file!\n", e)
+            self.uc.log_info("Error while exporting RAINCELL data to hdf5 file!")
+            return False
 
     def export_infil(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
