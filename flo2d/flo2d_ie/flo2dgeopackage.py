@@ -1407,7 +1407,65 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("Error while importing RAINCELLRAW.DAT and FLO2DRAINCELL.DAT!")
 
     def import_raincellraw_hdf5(self):
-        pass
+        try:
+
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
+
+            raincellraw = os.path.join(project_dir, "RAINCELLRAW.HDF5")
+            if os.path.exists(raincellraw):
+
+                head_sql = [
+                    """INSERT INTO raincell (rainintime, irinters) VALUES""",
+                    2,
+                ]
+
+                raincellraw_sql = [
+                    """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES""",
+                    3,
+                ]
+
+                flo2draincell_sql = [
+                    """INSERT INTO flo2d_raincell (iraindum, nxrdgd) VALUES""",
+                    2,
+                ]
+
+                self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
+
+                with h5py.File(raincellraw, "r") as f:
+                    grp = f["raincellraw"]
+
+                    # Read header scalars
+                    rainintime = int(grp["RAININTIME"][()])  # scalar int
+                    irinters = int(grp["IRINTERS"][()])  # scalar int
+
+                    head_sql += [(rainintime, int(irinters))]
+
+                    flo2draincell_dts = grp["FLO2DRAINCELL"]
+                    for row in flo2draincell_dts:
+                        flo2draincell_sql += [(int(row[0]), int(row[1]))]
+
+                    raincellraw_dts = grp["RAINCELLRAW"]
+                    for row in raincellraw_dts:
+                        raincellraw_sql += [(int(row[0]), float(row[1]), float(row[2]))]
+
+                    if head_sql:
+                        self.batch_execute(head_sql)
+
+                    if flo2draincell_sql:
+                        self.batch_execute(flo2draincell_sql)
+
+                    if raincellraw_sql:
+                        self.batch_execute(raincellraw_sql)
+
+                return True
+            else:
+                return False
+
+        except Exception as e:
+            self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
+            self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+            return False
 
     def import_infil(self):
         if self.parsed_format == self.FORMAT_DAT:

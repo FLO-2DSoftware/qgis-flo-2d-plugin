@@ -2174,6 +2174,7 @@ class Flo2D(object):
             "import_outflow",
             "import_rain",
             "import_raincell",
+            "import_raincellraw",
             # "import_evapor",
             "import_infil",
             "import_chan",
@@ -2377,8 +2378,6 @@ class Flo2D(object):
             self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
         self.setup_dock_widgets()
-        self.lyrs.refresh_layers()
-        self.lyrs.zoom_to_all()
 
         # See if geopackage has grid with 'col' and 'row' fields:
         grid_lyr = self.lyrs.data["grid"]["qlyr"]
@@ -2452,6 +2451,9 @@ class Flo2D(object):
                   "Layers to User Layers</FONT> tool in the FLO-2D panel."
             self.uc.show_info(msg)
             self.schematic2user(True)
+
+        self.lyrs.refresh_layers()
+        self.lyrs.zoom_to_all()
 
     @connection_required
     def import_components(self):
