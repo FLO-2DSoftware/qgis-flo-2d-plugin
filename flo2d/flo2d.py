@@ -1747,6 +1747,7 @@ class Flo2D(object):
             "import_outflow",
             "import_rain",
             "import_raincell",
+            "import_raincellraw",
             "import_evapor",
             "import_infil",
             "import_chan",
@@ -1885,6 +1886,7 @@ class Flo2D(object):
                     if "Rain" not in dlg_components.components:
                         import_calls.remove("import_rain")
                         import_calls.remove("import_raincell")
+                        import_calls.remove("import_raincellraw")
 
                     if "Storm Drain" not in dlg_components.components:
                         import_calls.remove("import_swmminp")
@@ -1976,6 +1978,8 @@ class Flo2D(object):
                         "rain_time_series_data",
                         "raincell",
                         "raincell_data",
+                        "raincellraw",
+                        "flo2d_raincell",
                         "rat_curves",
                         "rat_table",
                         "rbank",
@@ -2738,6 +2742,8 @@ class Flo2D(object):
             "OUTFLOW.DAT": "import_outflow",
             "RAIN.DAT": "import_rain",
             "RAINCELL.DAT": "import_raincell",
+            "RAINCELLRAW.DAT": "import_raincellraw",
+            "FLO2DRAINCELL.DAT": "import_raincellraw",
             "EVAPOR.DAT": "import_evapor",
             "INFIL.DAT": "import_infil",
             "CHAN.DAT": "import_chan",
