@@ -737,14 +737,32 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.uc.log_info("Realtime Rainfall data deleted successfully!")
         QApplication.restoreOverrideCursor()
 
-    def show_raincell(self, fid):
-        si = "inches" if self.gutils.get_cont_par("METRIC") == "0" else "mm"
-        qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
+    def realtime_rainfall(self, fid):
+        si = "inches" if self.gutils.get_cont_par("METRIC") in ["0", "0.0"] else "mm"
+
+        # If not raincell_data table or empty, use raincellraw and flo2d_raincell
+        if self.gutils.is_table_empty("raincell_data"):
+            qry = f"""
+            SELECT rr.r_time,
+                   rr.rrgrid
+            FROM 
+                raincellraw AS rr
+            JOIN 
+                flo2d_raincell fr ON fr.nxrdgd = rr.nxrdgd
+            WHERE 
+                fr.iraindum=?
+            ORDER 
+                BY rr.r_time
+            """
+            header = ["Time", "Cumulative Realtime Rainfall"]
+        else:
+            qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
+            header = ["Time", "Realtime Rainfall"]
         rainfall = self.gutils.execute(qry, (fid,))
         self.create_plot()
         self.tview.setModel(self.rain_data_model)
         self.rain_data_model.clear()
-        self.rain_data_model.setHorizontalHeaderLabels(["Time", "Cumulative rainfall"])
+        self.rain_data_model.setHorizontalHeaderLabels(header)
         self.d1, self.d2 = [[], []]
         for row in rainfall:
             items = [QStandardItem("{:.4f}".format(x)) if x is not None else QStandardItem("") for x in row]

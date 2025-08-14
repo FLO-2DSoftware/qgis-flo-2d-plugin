@@ -3559,8 +3559,8 @@ class Flo2D(object):
         self.cur_info_table = None
 
     @connection_required
-    def show_raincell_data(self, fid=None):
-        self.f2d_widget.rain_editor.show_raincell(fid)
+    def show_realtime_rainfall_data(self, fid=None):
+        self.f2d_widget.rain_editor.realtime_rainfall(fid)
         self.cur_info_table = None
 
     @connection_required
@@ -4524,7 +4524,7 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
-            "grid": self.show_raincell_data,
+            "grid": self.show_realtime_rainfall_data,
             "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,
