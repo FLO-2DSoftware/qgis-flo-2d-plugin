@@ -646,163 +646,175 @@
                <property name="text">
                 <string>Time vs % of Total Storm Series</string>
                </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_2">
-               <item>
-                <widget class="QToolButton" name="add_tseries_btn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>Add rain time series</string>
-                 </property>
-                 <property name="text">
-                  <string>Add</string>
-                 </property>
-                 <property name="icon">
-                  <iconset>
-                   <normaloff>../../../../.designer/img/mActionAddRainTimeSeries.svg</normaloff>../../../../.designer/img/mActionAddRainTimeSeries.svg</iconset>
-                 </property>
-                 <property name="iconSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QToolButton" name="add_predefined_tseries_btn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add predefined rain time series.&lt;/p&gt;&lt;p&gt;Select one or more files. Each file must be a list of pairs (time, distribution).&lt;/p&gt;&lt;p&gt;The distribution is a % of the total storm.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>Add</string>
-                 </property>
-                 <property name="icon">
-                  <iconset>
-                   <normaloff>../../../../.designer/img/mActionOpenFile.svg</normaloff>../../../../.designer/img/mActionOpenFile.svg</iconset>
-                 </property>
-                 <property name="iconSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QToolButton" name="remove_tseries_btn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>Remove rain time series</string>
-                 </property>
-                 <property name="text">
-                  <string>Remove</string>
-                 </property>
-                 <property name="icon">
-                  <iconset>
-                   <normaloff>../../../../.designer/img/mActionDeleteSelected.svg</normaloff>../../../../.designer/img/mActionDeleteSelected.svg</iconset>
-                 </property>
-                 <property name="iconSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QToolButton" name="rename_tseries_btn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>31</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>Rename rain time series</string>
-                 </property>
-                 <property name="text">
-                  <string>Change name</string>
-                 </property>
-                 <property name="icon">
-                  <iconset>
-                   <normaloff>../../../../.designer/img/change_name.svg</normaloff>../../../../.designer/img/change_name.svg</iconset>
-                 </property>
-                 <property name="iconSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <spacer name="horizontalSpacer_10">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QToolButton" name="add_tseries_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Add rain time series</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../../../../.designer/img/mActionAddRainTimeSeries.svg</normaloff>../../../../.designer/img/mActionAddRainTimeSeries.svg</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>25</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="add_predefined_tseries_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add predefined rain time series.&lt;/p&gt;&lt;p&gt;Select one or more files. Each file must be a list of pairs (time, distribution).&lt;/p&gt;&lt;p&gt;The distribution is a % of the total storm.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../../../../.designer/img/mActionOpenFile.svg</normaloff>../../../../.designer/img/mActionOpenFile.svg</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>25</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="remove_tseries_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Remove rain time series</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../../../../.designer/img/mActionDeleteSelected.svg</normaloff>../../../../.designer/img/mActionDeleteSelected.svg</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>25</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="rename_tseries_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Rename rain time series</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../../../../.designer/img/change_name.svg</normaloff>../../../../.designer/img/change_name.svg</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>25</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>

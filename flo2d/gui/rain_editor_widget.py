@@ -808,6 +808,11 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         si = "inches" if self.gutils.get_cont_par("METRIC") in ["0", "0.0"] else "mm"
 
         # If not raincell_data table or empty, use raincellraw and flo2d_raincell
+        if self.gutils.is_table_empty("raincell_data") and self.gutils.is_table_empty("raincellraw"):
+            self.uc.bar_warn("Realtime Rainfall data does not exist in this project! Please, import it first.")
+            self.uc.log_info("Realtime Rainfall data does not exist in this project! Please, import it first.")
+            return
+
         if self.gutils.is_table_empty("raincell_data"):
             qry = f"""
             SELECT rr.r_time,

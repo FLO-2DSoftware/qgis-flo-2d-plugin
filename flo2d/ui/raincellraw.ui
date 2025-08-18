@@ -214,6 +214,15 @@
    <header>qgsfieldcombobox.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>srcLayerCbo</tabstop>
+  <tabstop>srcFieldCbo</tabstop>
+  <tabstop>srcDataLe</tabstop>
+  <tabstop>browseSrcBtn</tabstop>
+  <tabstop>fill_zeros_chbox</tabstop>
+  <tabstop>start_date_dte</tabstop>
+  <tabstop>end_date_dte</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

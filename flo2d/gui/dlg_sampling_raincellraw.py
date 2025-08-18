@@ -164,6 +164,7 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
             iriters = ceil(duration_minutes / rainintime) + 1
             insert_qry = """INSERT INTO raincell (rainintime, irinters) VALUES (?, ?);"""
             self.gutils.con.execute(insert_qry, (rainintime, iriters))
+            self.gutils.con.commit()
 
             self.uc.bar_info("Realtime Rainfall (RAINCELLRAW) data processed successfully!")
             self.uc.log_info("Realtime Rainfall (RAINCELLRAW) data processed successfully!")
