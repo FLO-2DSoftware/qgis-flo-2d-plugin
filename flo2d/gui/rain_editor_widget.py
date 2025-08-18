@@ -21,6 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessag
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QStandardItem, QStandardItemModel
 
+from .dlg_sampling_raincellraw import SamplingRaincellRawDialog
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor, NetCDFProcessor, TIFProcessor
 from ..flo2dobjects import Rain
@@ -103,6 +104,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.moving_storm_grp.toggled.connect(self.set_moving_storm)
         self.moving_storm_speed_dbox.editingFinished.connect(self.set_moving_storm_speed)
         self.rainfall_time_distribution_grp.toggled.connect(self.set_time_series_fid)
+        self.realtime_raw_btn.clicked.connect(self.import_raincellraw)
+        self.realtime_rainfall_raw_grp.toggled.connect(self.set_realtime)
+        self.delete_realtime_rainfall_raw_btn.clicked.connect(self.delete_realtime_raw_rainfall)
 
         self.n_radio.clicked.connect(self.set_n_radio)
         self.e_radio.clicked.connect(self.set_e_radio)
@@ -290,6 +294,37 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     "Importing Rainfall Data failed! Please check your input data.\nIs the .RFC file "
                     "missing?"
                 )
+
+    def import_raincellraw(self):
+        """
+        Function to load the dialog that processes the NEXRAD data into the raincellraw & flo2d_raincell tables.
+        """
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
+            return
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
+            return
+
+        dlg = SamplingRaincellRawDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if ok:
+            dlg.process_raincellraw()
+        else:
+            return
+        # try:
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        #     res = dlg.probe_roughness()
+        #     QApplication.restoreOverrideCursor()
+        #     if res:
+        #         dlg.show_probing_result_info()
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn("WARNING 060319.1710: Probing grid roughness failed! Please check your raster layer.")
+
 
     def create_plot(self):
         """
@@ -626,7 +661,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def set_realtime(self):
         if not self.rain:
             return
-        self.rain.irainreal = self.realtime_rainfall_grp.isChecked()
+        if self.realtime_rainfall_grp.isChecked() or self.realtime_rainfall_raw_grp.isChecked():
+            self.rain.irainreal = True
+        else:
+            self.rain.irainreal = False
         self.rain.set_row()
 
     def set_building(self):
@@ -733,8 +771,18 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.gutils.clear_tables("raincell", "raincell_data")
-        self.uc.bar_info("Realtime Rainfall data deleted successfully!")
-        self.uc.log_info("Realtime Rainfall data deleted successfully!")
+        self.uc.bar_info("Realtime Rainfall (RAINCELL.DAT) deleted successfully!")
+        self.uc.log_info("Realtime Rainfall (RAINCELL.DAT) deleted successfully!")
+        QApplication.restoreOverrideCursor()
+
+    def delete_realtime_raw_rainfall(self):
+        """
+        Delete all realtime rainfall data from the database.
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.gutils.clear_tables("raincell", "raincellraw", "flo2d_raincell")
+        self.uc.bar_info("Realtime Rainfall (RAINCELLRAW.DAT) deleted successfully!")
+        self.uc.log_info("Realtime Rainfall (RAINCELLRAW.DAT) deleted successfully!")
         QApplication.restoreOverrideCursor()
 
     def realtime_rainfall(self, fid):

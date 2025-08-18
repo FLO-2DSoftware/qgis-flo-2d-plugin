@@ -12,6 +12,7 @@ import time
 from collections import OrderedDict
 from os.path import normpath
 
+import processing
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.core import (
@@ -2704,3 +2705,12 @@ class Layers(object):
                 return True
         except TypeError:
             self.uc.bar_warn("ERROR 121117.0544")
+
+    def reproject_simple(self, vlayer, target_crs, sink="memory:"):
+        if vlayer.crs().authid() == target_crs.authid():
+            return vlayer
+        out = processing.run(
+            "native:reprojectlayer",
+            {"INPUT": vlayer, "TARGET_CRS": target_crs, "OPERATION": "", "OUTPUT": sink},
+        )["OUTPUT"]
+        return out if out and out.isValid() else None
