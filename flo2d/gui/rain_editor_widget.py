@@ -94,7 +94,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def connect_signals(self):
         self.realtime_btn.clicked.connect(self.import_rainfall)
         self.delete_realtime_rainfall_btn.clicked.connect(self.delete_realtime_rainfall)
-        # self.hdf_btn.clicked.connect(self.export_rainfall_to_binary_hdf5)
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.simulate_rain_grp.toggled.connect(self.set_rain)
         self.realtime_rainfall_grp.toggled.connect(self.set_realtime)
@@ -105,7 +104,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.moving_storm_speed_dbox.editingFinished.connect(self.set_moving_storm_speed)
         self.rainfall_time_distribution_grp.toggled.connect(self.set_time_series_fid)
         self.realtime_raw_btn.clicked.connect(self.import_raincellraw)
-        self.realtime_rainfall_raw_grp.toggled.connect(self.set_realtime)
+        self.realtime_rainfall_raw_grp.toggled.connect(self.set_realtime_raw)
         self.delete_realtime_rainfall_raw_btn.clicked.connect(self.delete_realtime_raw_rainfall)
 
         self.n_radio.clicked.connect(self.set_n_radio)
@@ -659,13 +658,26 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.gutils.set_cont_par("IRAIN", 0)
 
     def set_realtime(self):
-        if not self.rain:
-            return
-        if self.realtime_rainfall_grp.isChecked() or self.realtime_rainfall_raw_grp.isChecked():
-            self.rain.irainreal = True
+        if self.realtime_rainfall_grp.isChecked():
+            self.realtime_rainfall_raw_grp.setChecked(False)
+            if self.rain:
+                self.rain.irainreal = True
+                self.rain.set_row()
         else:
-            self.rain.irainreal = False
-        self.rain.set_row()
+            if self.rain:
+                self.rain.irainreal = False
+                self.rain.set_row()
+
+    def set_realtime_raw(self):
+        if self.realtime_rainfall_raw_grp.isChecked():
+            self.realtime_rainfall_grp.setChecked(False)
+            if self.rain:
+                self.rain.irainreal = True
+                self.rain.set_row()
+        else:
+            if self.rain:
+                self.rain.irainreal = False
+                self.rain.set_row()
 
     def set_building(self):
         if not self.rain:

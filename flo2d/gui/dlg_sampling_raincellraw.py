@@ -5,9 +5,9 @@ import os
 from math import ceil
 from pathlib import Path
 
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog
-from qgis._core import QgsWkbTypes
+from qgis._core import QgsWkbTypes, QgsApplication
 
 from ..flo2d_tools.grid_tools import poly2grid
 # FLO-2D Preprocessor tools for QGIS
@@ -108,64 +108,71 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
             self.uc.log_info("Please select a valid source layer.")
             return False
 
-        self.gutils.clear_tables("raincell", "raincellraw", "flo2d_raincell")
+        try:
+            QgsApplication.setOverrideCursor(Qt.WaitCursor)
+            self.gutils.clear_tables("raincell", "raincellraw", "flo2d_raincell")
 
-        # Convert grid layer to correct CRS
-        current_lyr_crs = self.current_lyr.crs()
-        grid_lyr_crs = self.grid_lyr.crs()
-        if current_lyr_crs.authid() != grid_lyr_crs.authid():
-            reprojected = self.lyrs.reproject_simple(self.current_lyr, grid_lyr_crs, sink="memory:")
-            if not reprojected:
-                self.uc.bar_error("Error reprojecting source layer.")
-                self.uc.log_info("Error reprojecting source layer.")
-                return False
-            self.current_lyr = reprojected
+            # Convert grid layer to correct CRS
+            current_lyr_crs = self.current_lyr.crs()
+            grid_lyr_crs = self.grid_lyr.crs()
+            if current_lyr_crs.authid() != grid_lyr_crs.authid():
+                reprojected = self.lyrs.reproject_simple(self.current_lyr, grid_lyr_crs, sink="memory:")
+                if not reprojected:
+                    self.uc.bar_error("Error reprojecting source layer.")
+                    self.uc.log_info("Error reprojecting source layer.")
+                    return False
+                self.current_lyr = reprojected
 
-        # Intersect the grid and save to flo2d_raincell table
-        qry = """INSERT INTO flo2d_raincell (nxrdgd, iraindum) VALUES (?, ?);"""
+            # Intersect the grid and save to flo2d_raincell table
+            qry = """INSERT INTO flo2d_raincell (nxrdgd, iraindum) VALUES (?, ?);"""
 
-        # Centroids
-        cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
+            # Centroids
+            cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
 
-        self.gutils.con.executemany(
-            qry,
-            poly2grid(cellSize, self.grid_lyr, self.current_lyr, None, True, False, False, 1, src_field),
-        )
-        self.gutils.con.commit()
-
-        # Parse the nexrad data and insert into raincellraw table - Check for the zeros
-        # format_string = "%Y-%m-%d %H:%M:%S"
-        data_min = self.start_date_dte.dateTime().toPyDateTime()
-        data_max = self.end_date_dte.dateTime().toPyDateTime()
-
-
-        fill_zeros = self.fill_zeros_chbox.isChecked()
-
-        # Fill the raincellraw table
-        raincellraw_data, rainintime = self.process_nexrad_data(
-            self.srcData,
-            fill_zeros=fill_zeros,
-            agg="sum",
-            data_min=data_min,
-            data_max=data_max)
-
-        intersected_nexrad_grids = self.gutils.execute("""SELECT DISTINCT nxrdgd FROM flo2d_raincell;""").fetchall()
-        for row in intersected_nexrad_grids:
-            nxrdgd = row[0]
-            self.uc.log_info(f"Processing NEXRAD grid {nxrdgd}...")
-            filtered_data = [r for r in raincellraw_data if r["POLYGON"] == nxrdgd]
-            insert_qry = """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES (?, ?, ?);"""
-            to_insert = [(r["POLYGON"], r["TIME_HOURS"], r["VALUE"]) for r in filtered_data]
-            self.gutils.con.executemany(insert_qry, to_insert)
+            self.gutils.con.executemany(
+                qry,
+                poly2grid(cellSize, self.grid_lyr, self.current_lyr, None, True, False, False, 1, src_field),
+            )
             self.gutils.con.commit()
 
-        self.uc.show_warn("Complete.")
+            # Parse the nexrad data and insert into raincellraw table - Check for the zeros
+            # format_string = "%Y-%m-%d %H:%M:%S"
+            data_min = self.start_date_dte.dateTime().toPyDateTime()
+            data_max = self.end_date_dte.dateTime().toPyDateTime()
 
-        # Fill the raincell table
-        duration_minutes = (data_max - data_min).total_seconds() / 60
-        iriters = ceil(duration_minutes / rainintime) + 1
-        insert_qry = """INSERT INTO raincell (rainintime, irinters) VALUES (?, ?);"""
-        self.gutils.con.execute(insert_qry, (rainintime, iriters))
+            fill_zeros = self.fill_zeros_chbox.isChecked()
+
+            # Fill the raincellraw table
+            raincellraw_data, rainintime = self.process_nexrad_data(
+                self.srcData,
+                fill_zeros=fill_zeros,
+                agg="sum",
+                data_min=data_min,
+                data_max=data_max)
+
+            intersected_nexrad_grids = self.gutils.execute("""SELECT DISTINCT nxrdgd FROM flo2d_raincell;""").fetchall()
+            for row in intersected_nexrad_grids:
+                nxrdgd = row[0]
+                filtered_data = [r for r in raincellraw_data if r["POLYGON"] == nxrdgd]
+                insert_qry = """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES (?, ?, ?);"""
+                to_insert = [(r["POLYGON"], r["TIME_HOURS"], r["VALUE"]) for r in filtered_data]
+                self.gutils.con.executemany(insert_qry, to_insert)
+                self.gutils.con.commit()
+
+            # Fill the raincell table
+            duration_minutes = (data_max - data_min).total_seconds() / 60
+            iriters = ceil(duration_minutes / rainintime) + 1
+            insert_qry = """INSERT INTO raincell (rainintime, irinters) VALUES (?, ?);"""
+            self.gutils.con.execute(insert_qry, (rainintime, iriters))
+
+            self.uc.bar_info("Realtime Rainfall (RAINCELLRAW) data processed successfully!")
+            self.uc.log_info("Realtime Rainfall (RAINCELLRAW) data processed successfully!")
+
+        except Exception as e:
+            self.uc.bar_error(f"Error processing raincellraw data!")
+            self.uc.log_info(f"Error processing raincellraw data:\n\n{e}")
+        finally:
+            QgsApplication.restoreOverrideCursor()
 
     def process_nexrad_data(self, file_path, data_min=None, data_max=None,
                             fill_zeros=False, agg="sum"):
