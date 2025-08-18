@@ -369,9 +369,16 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.simulate_rain_grp.setChecked(False)
 
         if row["irainreal"] == 1:
-            self.realtime_rainfall_grp.setChecked(True)
+            if not self.gutils.is_table_empty("raincell_data"):
+                self.realtime_rainfall_grp.setChecked(True)
+            elif not self.gutils.is_table_empty("raincellraw"):
+                self.realtime_rainfall_raw_grp.setChecked(True)
+            else:
+                self.realtime_rainfall_grp.setChecked(True)
+                self.realtime_rainfall_raw_grp.setChecked(False)
         else:
             self.realtime_rainfall_grp.setChecked(False)
+            self.realtime_rainfall_raw_grp.setChecked(False)
 
         if row["irainbuilding"] == 1:
             self.building_chbox.setChecked(True)
