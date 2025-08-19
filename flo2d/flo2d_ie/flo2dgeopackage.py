@@ -8731,11 +8731,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_raincellraw_hdf5(self, subdomain):
 
         try:
-            if self.is_table_empty("raincellraw") or self.is_table_empty("raincell") or self.is_table_empty("flo2d_raincell"):
+            if self.is_table_empty("raincellraw") or self.is_table_empty("flo2d_raincell"):
                 return False
 
-            s = QSettings()
-            project_dir = s.value("FLO-2D/lastGdsDir")
+            project_dir = os.path.dirname(self.parser.hdf5_filepath)
+            self.uc.log_info(str(project_dir))
 
             raincellraw = os.path.join(project_dir, "RAINCELLRAW.HDF5")
             if os.path.exists(raincellraw):
@@ -8756,8 +8756,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 header_data = [rainintime, irinters]
                 raincellraw_qry_data = "SELECT nxrdgd, r_time, rrgrid FROM raincellraw ORDER BY nxrdgd, r_time"
                 raincellraw_size = "SELECT COUNT(fid) FROM raincellraw"
-                flo2draincell_qry_data = "SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd"
-                flo2draincell_size = "SELECT COUNT(fid) FROM flo2d_raincell"
+                if not subdomain:
+                    flo2draincell_qry_data = "SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd"
+                    flo2draincell_size = "SELECT COUNT(fid) FROM flo2d_raincell"
+                else:
+                    flo2draincell_qry_data = f"""
+                    SELECT 
+                        md.domain_cell, 
+                        fr.nxrdgd 
+                    FROM 
+                        flo2d_raincell AS fr
+                    JOIN 
+                        schema_md_cells md ON fr.iraindum = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY 
+                        md.domain_cell, fr.nxrdgd;"""
+                    flo2draincell_size = f"""
+                    SELECT 
+                        COUNT(fr.fid) 
+                    FROM 
+                        flo2d_raincell AS fr
+                    JOIN 
+                        schema_md_cells md ON fr.iraindum = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain};
+                        """
                 hdf_processor = HDFProcessor(raincellraw, self.iface)
                 hdf_processor.export_rainfallraw_to_binary_hdf5(header_data, raincellraw_qry_data, raincellraw_size, flo2draincell_qry_data, flo2draincell_size)
 
