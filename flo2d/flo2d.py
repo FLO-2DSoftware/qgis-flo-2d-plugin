@@ -3196,6 +3196,7 @@ class Flo2D(object):
             if not self.f2d_widget.rain_editor.realtime_rainfall_grp.isChecked():
                 if "export_raincell" in export_calls:
                     export_calls.remove("export_raincell")
+            if not self.f2d_widget.rain_editor.realtime_rainfall_raw_grp.isChecked():
                 if "export_raincellraw" in export_calls:
                     export_calls.remove("export_raincellraw")
             self.gutils.set_cont_par("IRAIN", 1)

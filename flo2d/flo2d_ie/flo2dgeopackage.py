@@ -8638,7 +8638,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_raincellraw_dat(self, outdir, subdomain):
         try:
-            if self.is_table_empty("raincellraw") or self.is_table_empty("raincell") or self.is_table_empty("flo2d_raincell"):
+            if self.is_table_empty("raincellraw") or self.is_table_empty("flo2d_raincell"):
                 return False
 
             raincellraw = os.path.join(outdir, "RAINCELLRAW.DAT")
@@ -8673,8 +8673,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     progDialog.setValue(i)
                     i += 1
 
-            data_sql = """SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd;"""
-            size_sql = """SELECT COUNT(fid) FROM flo2d_raincell"""
+            if not subdomain:
+                data_sql = """SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd;"""
+                size_sql = """SELECT COUNT(fid) FROM flo2d_raincell"""
+            else:
+                data_sql = f"""
+                            SELECT 
+                                md.domain_cell, 
+                                fr.nxrdgd 
+                            FROM 
+                                flo2d_raincell AS fr
+                            JOIN 
+                                schema_md_cells md ON fr.iraindum = md.grid_fid
+                            WHERE
+                                md.domain_fid = {subdomain}
+                            ORDER BY 
+                                md.domain_cell, fr.nxrdgd;
+                            """
+                size_sql = f"""
+                            SELECT 
+                                COUNT(fr.fid) 
+                            FROM 
+                                flo2d_raincell AS fr
+                            JOIN 
+                                schema_md_cells md ON fr.iraindum = md.grid_fid
+                            WHERE
+                                md.domain_fid = {subdomain};"""
             line = "{0}\t{1}\n"
 
             flo2draincell_rows = self.execute(data_sql)
