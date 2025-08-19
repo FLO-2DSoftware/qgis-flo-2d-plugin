@@ -1747,6 +1747,7 @@ class Flo2D(object):
             "import_outflow",
             "import_rain",
             "import_raincell",
+            "import_raincellraw",
             "import_evapor",
             "import_infil",
             "import_chan",
@@ -1885,6 +1886,7 @@ class Flo2D(object):
                     if "Rain" not in dlg_components.components:
                         import_calls.remove("import_rain")
                         import_calls.remove("import_raincell")
+                        import_calls.remove("import_raincellraw")
 
                     if "Storm Drain" not in dlg_components.components:
                         import_calls.remove("import_swmminp")
@@ -1976,6 +1978,8 @@ class Flo2D(object):
                         "rain_time_series_data",
                         "raincell",
                         "raincell_data",
+                        "raincellraw",
+                        "flo2d_raincell",
                         "rat_curves",
                         "rat_table",
                         "rbank",
@@ -2174,6 +2178,7 @@ class Flo2D(object):
             "import_outflow",
             "import_rain",
             "import_raincell",
+            "import_raincellraw",
             # "import_evapor",
             "import_infil",
             "import_chan",
@@ -2377,8 +2382,6 @@ class Flo2D(object):
             self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
         self.setup_dock_widgets()
-        self.lyrs.refresh_layers()
-        self.lyrs.zoom_to_all()
 
         # See if geopackage has grid with 'col' and 'row' fields:
         grid_lyr = self.lyrs.data["grid"]["qlyr"]
@@ -2453,6 +2456,9 @@ class Flo2D(object):
             self.uc.show_info(msg)
             self.schematic2user(True)
 
+        self.lyrs.refresh_layers()
+        self.lyrs.zoom_to_all()
+
     @connection_required
     def import_components(self):
         """
@@ -2484,6 +2490,7 @@ class Flo2D(object):
             "import_outflow",
             "import_rain",
             "import_raincell",
+            "import_raincellraw",
             "import_evapor",
             "import_infil",
             "import_chan",
@@ -2596,6 +2603,7 @@ class Flo2D(object):
                     if "Rain" not in dlg_components.components:
                         import_calls.remove("import_rain")
                         import_calls.remove("import_raincell")
+                        import_calls.remove("import_raincellraw")
 
                     if "Storm Drain" not in dlg_components.components:
                         import_calls.remove("import_swmminp")
@@ -2734,6 +2742,8 @@ class Flo2D(object):
             "OUTFLOW.DAT": "import_outflow",
             "RAIN.DAT": "import_rain",
             "RAINCELL.DAT": "import_raincell",
+            "RAINCELLRAW.DAT": "import_raincellraw",
+            "FLO2DRAINCELL.DAT": "import_raincellraw",
             "EVAPOR.DAT": "import_evapor",
             "INFIL.DAT": "import_infil",
             "CHAN.DAT": "import_chan",
@@ -2906,6 +2916,7 @@ class Flo2D(object):
                             "export_outrc",
                             "export_rain",
                             "export_raincell",
+                            "export_raincellraw",
                             "export_sdclogging",
                             "export_sed",
                             "export_shallowNSpatial",
@@ -2949,7 +2960,6 @@ class Flo2D(object):
             ]
             for file in files:
                 file_path = os.path.join(outdir, file)
-                self.uc.log_info(str(file_path))
                 if os.path.exists(file_path):
                     dlg_components.remove_files_chbox.setEnabled(True)
                     break
@@ -2977,6 +2987,13 @@ class Flo2D(object):
 
                     export_message = "Files exported to\n" + outdir + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface)
+
+                    if self.gutils.is_table_empty("raincell_data"):
+                        export_calls.remove("export_raincell")
+
+                    if self.gutils.is_table_empty("raincellraw"):
+                        export_calls.remove("export_raincellraw")
+
                     self.export_flo2d_files(outdir, export_calls, dlg_components)
 
                     if "export_tailings" in export_calls:
@@ -3173,10 +3190,15 @@ class Flo2D(object):
             export_calls.remove("export_rain")
             if "export_raincell" in export_calls:
                 export_calls.remove("export_raincell")
+            if "export_raincellraw" in export_calls:
+                export_calls.remove("export_raincellraw")
         else:
             if not self.f2d_widget.rain_editor.realtime_rainfall_grp.isChecked():
                 if "export_raincell" in export_calls:
                     export_calls.remove("export_raincell")
+            if not self.f2d_widget.rain_editor.realtime_rainfall_raw_grp.isChecked():
+                if "export_raincellraw" in export_calls:
+                    export_calls.remove("export_raincellraw")
             self.gutils.set_cont_par("IRAIN", 1)
 
         if "Storm Drain" not in dlg_components.components:
@@ -3548,8 +3570,8 @@ class Flo2D(object):
         self.cur_info_table = None
 
     @connection_required
-    def show_raincell_data(self, fid=None):
-        self.f2d_widget.rain_editor.show_raincell(fid)
+    def show_realtime_rainfall_data(self, fid=None):
+        self.f2d_widget.rain_editor.realtime_rainfall(fid)
         self.cur_info_table = None
 
     @connection_required
@@ -4513,7 +4535,7 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
-            "grid": self.show_raincell_data,
+            "grid": self.show_realtime_rainfall_data,
             "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,

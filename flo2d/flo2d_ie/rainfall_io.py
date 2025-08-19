@@ -232,7 +232,7 @@ class HDFProcessor(object):
         self.hdf_path = hdf_path
         self.uc = UserCommunication(iface, "FLO-2D")
 
-    def export_rainfall_to_binary_hdf5(self, header, qry_data, qry_size, qry_timeinterval):
+    def export_rainfall_to_binary_hdf5(self, header, qry_data, qry_size, qry_timeinterval, subdomain):
 
         con = self.iface.f2d["con"]
         if con is None:
@@ -286,9 +286,66 @@ class HDFProcessor(object):
             i = 0
             for interval in timeinterval:
                 progDialog.setValue(i)
-                batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
+                if not subdomain:
+                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
+                else:
+                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} AND md.domain_fid = '{subdomain}' ORDER BY md.domain_cell, rd.time_interval"
                 data = self.gutils.execute(batch_query).fetchall()
                 data = np.array(data)
                 dts[:, i] = data.flatten()
                 i += 1
+
+    def export_rainfallraw_to_binary_hdf5(self, header, raincellraw_qry_data, raincellraw_size, flo2draincell_qry_data, flo2draincell_size):
+
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        self.con = con
+        self.gutils = GeoPackageUtils(self.con, self.iface)
+
+        with h5py.File(self.hdf_path, "w") as hdf_file:
+
+            rainintime, irinters = header
+            hdf_file.attrs["hdf5_version"] = np.array([h5py.version.hdf5_version], dtype=np.bytes_)
+            hdf_file.attrs["plugin"] = np.array(["FLO-2D"], dtype=np.bytes_)
+            grp = hdf_file.create_group("raincellraw")
+
+            # Not scalar datasets
+            datasets = [
+                (
+                    "RAININTIME",
+                    int(rainintime),
+                    "Time interval in minutes of the realtime rainfall data.",
+                ),
+
+                (
+                    "IRINTERS",
+                    int(irinters),
+                    "Number of intervals in the dataset."),
+            ]
+            for name, value, description in datasets:
+                dts = grp.create_dataset(name, data=value)
+                dts.attrs["description"] = np.array([description], dtype=np.bytes_)
+
+            # Scalar dataset
+            n_lines = self.gutils.execute(raincellraw_size).fetchone()[0]
+            dts = grp.create_dataset("RAINCELLRAW", (n_lines, 3), compression="gzip")
+            dts.attrs["description"] = np.array(["Cumulative realtime rainfall data"], dtype=np.bytes_)
+
+            # Export the RAINCELLRAW data
+            for i, row in enumerate(self.gutils.execute(raincellraw_qry_data).fetchall()):
+                dts[i, :] = np.array([row[0], row[1], row[2]])
+
+            # Export the FLO2DRAINCELL data
+            n_lines2 = self.gutils.execute(flo2draincell_size).fetchone()[0]
+            dts = grp.create_dataset("FLO2DRAINCELL", (n_lines2, 2), compression="gzip")
+            dts.attrs["description"] = np.array(["Intersected realtime rainfall data"], dtype=np.bytes_)
+            progDialog = QProgressDialog("Exporting FLO2DRAINCELL (.HDF5)...", None, 0, int(n_lines2))
+            progDialog.setModal(True)
+            progDialog.setValue(0)
+            progDialog.show()
+
+            for i, row in enumerate(self.gutils.execute(flo2draincell_qry_data).fetchall()):
+                progDialog.setValue(i)
+                dts[i, :] = np.array([row[0], row[1]])
 

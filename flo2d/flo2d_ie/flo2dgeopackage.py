@@ -1177,6 +1177,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         fid = 1
         fid_ts = 1
 
+        # If the RAIN.DAT does not contain IRAINDIR and RAINSPEED, add it as a default of 0
+        if len(options.values()) == 6:
+            options["RAINSPEED"] = 0
+            options["IRAINDIR"] = 0
+
         rain_sql += [(fid_ts,) + tuple(options.values())]
         ts_sql += [(fid_ts,)]
 
@@ -1289,67 +1294,178 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(head_sql, data_sql)
 
     def import_raincell_hdf5(self):
-        # try:
-        # Access the tailings group
-        rain_group = self.parser.read_groups("Input/Rainfall")
-        if rain_group:
-            rain_group = rain_group[0]
+        try:
 
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
+
+            raincell = os.path.join(project_dir, "RAINCELL.HDF5")
+            if os.path.exists(raincell):
+
+                head_sql = [
+                    """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
+                    3,
+                ]
+
+                data_sql = [
+                    """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+                    3,
+                ]
+
+                self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
+
+                with h5py.File(raincell, "r") as f:
+                    grp  = f["raincell"]
+
+                    # Read header scalars
+                    rainintime = int(grp["RAININTIME"][()])  # scalar int
+                    irinters = int(grp["IRINTERS"][()])  # scalar int
+
+                    # TIMESTAMP is a 1-element array of bytes
+                    ts0 = grp["TIMESTAMP"][0]
+                    if isinstance(ts0, (bytes, bytearray)):
+                        timestamp = ts0.decode("utf-8", errors="ignore")
+                    else:
+                        timestamp = str(ts0)
+
+                    head_sql += [(rainintime, int(irinters), timestamp)]
+
+                    # Bulk insert raincell_data in chunks
+                    dts = grp["IRAINDUM"]  # shape (n_cells, irinters)
+                    n_cells, n_intervals = dts.shape
+
+                    # Iterate column-wise to keep locality by time_interval
+                    for i in range(n_intervals):
+                        col = dts[:, i]  # length n_cells
+                        # Append rows to chunk
+                        # rrgrid is 1..n_cells to match your exported order
+                        for rrgrid in range(1, n_cells + 1):
+                            # Ensure native Python float for DB drivers
+                            val = float(col[rrgrid - 1])
+                            data_sql += [(int(i), int(rrgrid), val)]
+
+                    if head_sql:
+                        self.batch_execute(head_sql)
+
+                    if data_sql:
+                        self.batch_execute(data_sql)
+
+                return True
+            else:
+                return False
+
+        except Exception as e:
+            self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
+            self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+            return False
+
+    def import_raincellraw(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_raincellraw_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_raincellraw_hdf5()
+
+    def import_raincellraw_dat(self):
+        try:
             head_sql = [
-                """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
+                """INSERT INTO raincell (rainintime, irinters) VALUES""",
+                2,
+            ]
+            raincellraw_data_sql = [
+                """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES""",
                 3,
             ]
-            data_sql = [
-                """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
-                3,
+
+            flo2draincell_data_sql = [
+                """INSERT INTO flo2d_raincell (iraindum, nxrdgd) VALUES""",
+                2,
             ]
 
-            self.clear_tables("raincell", "raincell_data")
+            self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
 
-            rainintime, irinters, timestamp = None, None, None
+            rainintime, irinters, data = self.parser.parse_raincellraw()
+            head_sql += [(rainintime, irinters)]
 
-            # Read IRINTERS dataset
-            if "IRINTERS" in rain_group.datasets:
-                irinters = rain_group.datasets["IRINTERS"].data[0]
+            nxrdgd = None
+            for row in data:
+                if row[0] == 'N':
+                    nxrdgd = row[1]
+                if row[0] == 'R':
+                    r_time = row[1]
+                    rrgrid = row[2]
+                    raincellraw_data_sql += [(nxrdgd, r_time, rrgrid)]
 
-            # Read RAININTIME dataset
-            if "RAININTIME" in rain_group.datasets:
-                rainintime = rain_group.datasets["RAININTIME"].data[0]
+            data = self.parser.parse_flo2draincell()
+            for row in data:
+                iraindum, nxrdgd = row
+                flo2draincell_data_sql += [(iraindum, nxrdgd)]
 
-            # Read TIMESTAMP dataset
-            if "TIMESTAMP" in rain_group.datasets:
-                timestamp = rain_group.datasets["TIMESTAMP"].data[0]
+            self.batch_execute(head_sql, raincellraw_data_sql, flo2draincell_data_sql)
 
-            if irinters and rainintime and timestamp:
-                head_sql += [(rainintime, int(irinters), timestamp)]
+        except Exception as e:
+            self.uc.show_error("Error while importing RAINCELLRAW.DAT and FLO2DRAINCELL.DAT!", e)
+            self.uc.log_info("Error while importing RAINCELLRAW.DAT and FLO2DRAINCELL.DAT!")
 
-            # Read IRAINDUM dataset
-            if "IRAINDUM" in rain_group.datasets:
-                data = rain_group.datasets["IRAINDUM"].data
-                n_grids, n_intervals = data.shape
-                result = []
-                for i in range(n_intervals):
-                    for rrgrid in range(n_grids):
-                        result.append((i, rrgrid + 1, data[rrgrid, i]))
-                result_array = np.array(result)
-                for row in result_array:
-                    data_sql += [(row[0], int(row[1]), row[2])]
+    def import_raincellraw_hdf5(self):
+        try:
 
-            if head_sql:
-                self.batch_execute(head_sql)
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
 
-            if data_sql:
-                self.batch_execute(data_sql)
+            raincellraw = os.path.join(project_dir, "RAINCELLRAW.HDF5")
+            if os.path.exists(raincellraw):
 
-            pass
+                head_sql = [
+                    """INSERT INTO raincell (rainintime, irinters) VALUES""",
+                    2,
+                ]
 
-        return True
+                raincellraw_sql = [
+                    """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES""",
+                    3,
+                ]
 
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
-        #     self.uc.log_info("Error while importing RAINCELL data from HDF5!")
-        #     return False
+                flo2draincell_sql = [
+                    """INSERT INTO flo2d_raincell (iraindum, nxrdgd) VALUES""",
+                    2,
+                ]
+
+                self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
+
+                with h5py.File(raincellraw, "r") as f:
+                    grp = f["raincellraw"]
+
+                    # Read header scalars
+                    rainintime = int(grp["RAININTIME"][()])  # scalar int
+                    irinters = int(grp["IRINTERS"][()])  # scalar int
+
+                    head_sql += [(rainintime, int(irinters))]
+
+                    flo2draincell_dts = grp["FLO2DRAINCELL"]
+                    for row in flo2draincell_dts:
+                        flo2draincell_sql += [(int(row[0]), int(row[1]))]
+
+                    raincellraw_dts = grp["RAINCELLRAW"]
+                    for row in raincellraw_dts:
+                        raincellraw_sql += [(int(row[0]), float(row[1]), float(row[2]))]
+
+                    if head_sql:
+                        self.batch_execute(head_sql)
+
+                    if flo2draincell_sql:
+                        self.batch_execute(flo2draincell_sql)
+
+                    if raincellraw_sql:
+                        self.batch_execute(raincellraw_sql)
+
+                return True
+            else:
+                return False
+
+        except Exception as e:
+            self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
+            self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+            return False
 
     def import_infil(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -8282,15 +8398,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR 101218.1543: exporting RAIN.DAT failed!.\n")
             return False
 
-    def export_raincell(self, output=None):
+    def export_raincell(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_raincell_dat(output)
+            return self.export_raincell_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_raincell_hdf5()
+            return self.export_raincell_hdf5(subdomain)
 
-    def export_raincell_dat(self, outdir):
+    def export_raincell_dat(self, outdir, subdomain):
         try:
-            if self.is_table_empty("raincell"):
+            if self.is_table_empty("raincell_data"):
                 return False
 
             s = QSettings()
@@ -8362,7 +8478,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if msg_box.clickedButton() == button2:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
-                data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                if not subdomain:
+                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                else:
+                    data_sql = f"""
+                    SELECT
+                        md.domain_cell, 
+                        rd.iraindum 
+                    FROM 
+                        raincell_data AS rd
+                    JOIN
+                        schema_md_cells md ON rd.rrgrid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY rd.time_interval, md.domain_cell;
+                    """
                 size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
                 line1 = "{0} {1} {2}\n"
                 line2 = "{0} {1}\n"
@@ -8401,7 +8531,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             elif msg_box.clickedButton() == button3:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
-                data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                if not subdomain:
+                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                else:
+                    data_sql = f"""
+                    SELECT
+                        md.domain_cell, 
+                        rd.iraindum 
+                    FROM 
+                        raincell_data AS rd
+                    JOIN
+                        schema_md_cells md ON rd.rrgrid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY rd.time_interval, md.domain_cell;
+                    """
                 size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
                 line1 = "{0} {1} {2}\n"
                 line2 = "{0} {1}\n"
@@ -8443,13 +8587,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def export_raincell_hdf5(self):
+    def export_raincell_hdf5(self, subdomain):
         try:
-            if self.is_table_empty("raincell"):
+            if self.is_table_empty("raincell_data"):
                 return False
 
-            s = QSettings()
-            project_dir = s.value("FLO-2D/lastGdsDir")
+            project_dir = os.path.dirname(self.parser.hdf5_filepath)
+            self.uc.log_info(str(project_dir))
 
             raincell = os.path.join(project_dir, "RAINCELL.HDF5")
             if os.path.exists(raincell):
@@ -8468,11 +8612,178 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if header:
                 rainintime, irinters, timestamp = header
                 header_data = [rainintime, irinters, timestamp]
-                qry_data = "SELECT iraindum FROM raincell_data"
-                qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                if not subdomain:
+                    qry_data = "SELECT iraindum FROM raincell_data"
+                    qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                else:
+                    qry_data = "SELECT iraindum FROM raincell_data AS rd JOIN schema_md_cells md ON rd.rrgrid = md.grid_fid"
+                    qry_size = f"SELECT COUNT(iraindum) FROM raincell_data AS rd JOIN schema_md_cells md ON rd.rrgrid = md.grid_fid WHERE md.domain_fid = {subdomain}"
                 qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
                 hdf_processor = HDFProcessor(raincell, self.iface)
-                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
+                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval, subdomain)
+
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error while exporting RAINCELL data to hdf5 file!\n", e)
+            self.uc.log_info("Error while exporting RAINCELL data to hdf5 file!")
+            return False
+
+    def export_raincellraw(self, output=None, subdomain=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_raincellraw_dat(output, subdomain)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_raincellraw_hdf5(subdomain)
+
+    def export_raincellraw_dat(self, outdir, subdomain):
+        try:
+            if self.is_table_empty("raincellraw") or self.is_table_empty("flo2d_raincell"):
+                return False
+
+            raincellraw = os.path.join(outdir, "RAINCELLRAW.DAT")
+
+            head_sql = """SELECT rainintime, irinters FROM raincell LIMIT 1;"""
+            data_sql = """SELECT nxrdgd, r_time, rrgrid FROM raincellraw ORDER BY nxrdgd, r_time;"""
+            size_sql = """SELECT COUNT(fid) FROM raincellraw"""
+            line1 = "{0}\t{1}\n"
+            line2 = "N\t{0}\n"
+            line3 = "R\t{0}\t{1}\n"
+
+            raincellraw_head = self.execute(head_sql).fetchone()
+            raincellraw_rows = self.execute(data_sql)
+            raincellraw_size = self.execute(size_sql).fetchone()[0]
+
+            with open(raincellraw, "w") as r:
+                r.write(line1.format(int(raincellraw_head[0]), int(raincellraw_head[1])))
+
+                progDialog = QProgressDialog("Exporting Cumulative Realtime Rainfall (.DAT)...", None, 0, int(raincellraw_size))
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                i = 0
+
+                previous_nxrdgd = None
+                for row in raincellraw_rows:
+                    nxrdgd, r_time, rrgrid = row
+                    if nxrdgd != previous_nxrdgd:
+                        r.write(line2.format(nxrdgd))
+                        previous_nxrdgd = nxrdgd
+                    r.write(line3.format(r_time, rrgrid))
+                    progDialog.setValue(i)
+                    i += 1
+
+            if not subdomain:
+                data_sql = """SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd;"""
+                size_sql = """SELECT COUNT(fid) FROM flo2d_raincell"""
+            else:
+                data_sql = f"""
+                            SELECT 
+                                md.domain_cell, 
+                                fr.nxrdgd 
+                            FROM 
+                                flo2d_raincell AS fr
+                            JOIN 
+                                schema_md_cells md ON fr.iraindum = md.grid_fid
+                            WHERE
+                                md.domain_fid = {subdomain}
+                            ORDER BY 
+                                md.domain_cell, fr.nxrdgd;
+                            """
+                size_sql = f"""
+                            SELECT 
+                                COUNT(fr.fid) 
+                            FROM 
+                                flo2d_raincell AS fr
+                            JOIN 
+                                schema_md_cells md ON fr.iraindum = md.grid_fid
+                            WHERE
+                                md.domain_fid = {subdomain};"""
+            line = "{0}\t{1}\n"
+
+            flo2draincell_rows = self.execute(data_sql)
+            flo2draincell_size = self.execute(size_sql).fetchone()[0]
+
+            flo2draincell = os.path.join(outdir, "FLO2DRAINCELL.DAT")
+
+            with open(flo2draincell, "w") as r:
+
+                progDialog = QProgressDialog("Exporting Intersected Realtime Rainfall (.DAT)...", None, 0,
+                                             int(flo2draincell_size))
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                i = 0
+
+                for row in flo2draincell_rows:
+                    iraindum, nxrdgd = row
+                    r.write(line.format(iraindum, nxrdgd))
+                    progDialog.setValue(i)
+                    i += 1
+
+            return True
+
+        except Exception as e:
+            self.uc.show_error("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT failed!.\n", e)
+            self.uc.log_info("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT failed!")
+            return False
+
+    def export_raincellraw_hdf5(self, subdomain):
+
+        try:
+            if self.is_table_empty("raincellraw") or self.is_table_empty("flo2d_raincell"):
+                return False
+
+            project_dir = os.path.dirname(self.parser.hdf5_filepath)
+            self.uc.log_info(str(project_dir))
+
+            raincellraw = os.path.join(project_dir, "RAINCELLRAW.HDF5")
+            if os.path.exists(raincellraw):
+                msg = f"There is an existing RAINCELLRAW.HDF5 file at: \n\n{project_dir}\n\n"
+                msg += "Would you like to overwrite it?"
+                QApplication.restoreOverrideCursor()
+                answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.No:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    return
+                else:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            qry_header = "SELECT rainintime, irinters FROM raincell LIMIT 1;"
+            header = self.gutils.execute(qry_header).fetchone()
+            if header:
+                rainintime, irinters = header
+                header_data = [rainintime, irinters]
+                raincellraw_qry_data = "SELECT nxrdgd, r_time, rrgrid FROM raincellraw ORDER BY nxrdgd, r_time"
+                raincellraw_size = "SELECT COUNT(fid) FROM raincellraw"
+                if not subdomain:
+                    flo2draincell_qry_data = "SELECT iraindum, nxrdgd FROM flo2d_raincell ORDER BY iraindum, nxrdgd"
+                    flo2draincell_size = "SELECT COUNT(fid) FROM flo2d_raincell"
+                else:
+                    flo2draincell_qry_data = f"""
+                    SELECT 
+                        md.domain_cell, 
+                        fr.nxrdgd 
+                    FROM 
+                        flo2d_raincell AS fr
+                    JOIN 
+                        schema_md_cells md ON fr.iraindum = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY 
+                        md.domain_cell, fr.nxrdgd;"""
+                    flo2draincell_size = f"""
+                    SELECT 
+                        COUNT(fr.fid) 
+                    FROM 
+                        flo2d_raincell AS fr
+                    JOIN 
+                        schema_md_cells md ON fr.iraindum = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain};
+                        """
+                hdf_processor = HDFProcessor(raincellraw, self.iface)
+                hdf_processor.export_rainfallraw_to_binary_hdf5(header_data, raincellraw_qry_data, raincellraw_size, flo2draincell_qry_data, flo2draincell_size)
 
                 return True
 

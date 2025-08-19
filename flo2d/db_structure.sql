@@ -3113,7 +3113,7 @@ CREATE TABLE "raincellraw" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "nxrdgd" INTEGER,
     "r_time" REAL,
-    "rrgrid" INTEGER
+    "rrgrid" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincellraw', 'aspatial');
 
