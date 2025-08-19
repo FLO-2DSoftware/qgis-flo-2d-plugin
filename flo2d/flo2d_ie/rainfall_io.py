@@ -232,7 +232,7 @@ class HDFProcessor(object):
         self.hdf_path = hdf_path
         self.uc = UserCommunication(iface, "FLO-2D")
 
-    def export_rainfall_to_binary_hdf5(self, header, qry_data, qry_size, qry_timeinterval):
+    def export_rainfall_to_binary_hdf5(self, header, qry_data, qry_size, qry_timeinterval, subdomain):
 
         con = self.iface.f2d["con"]
         if con is None:
@@ -286,7 +286,10 @@ class HDFProcessor(object):
             i = 0
             for interval in timeinterval:
                 progDialog.setValue(i)
-                batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
+                if not subdomain:
+                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
+                else:
+                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} AND md.domain_fid = '{subdomain}' ORDER BY md.domain_cell, rd.time_interval"
                 data = self.gutils.execute(batch_query).fetchall()
                 data = np.array(data)
                 dts[:, i] = data.flatten()

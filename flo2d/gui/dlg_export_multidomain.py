@@ -182,6 +182,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # 'export_outrc',
                 "export_outflow",
                 "export_rain",
+                "export_raincell",
+                "export_raincellraw",
                 # "export_evapor",
                 "export_infil",
                 "export_chan",
@@ -311,6 +313,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
+                    if "export_raincell" in export_calls:
+                        export_calls.remove("export_raincell")
+                    if "export_raincellraw" in export_calls:
+                        export_calls.remove("export_raincellraw")
 
                 if "Storm Drain" not in dlg_components.components:
                     export_calls.remove("export_swmminp")

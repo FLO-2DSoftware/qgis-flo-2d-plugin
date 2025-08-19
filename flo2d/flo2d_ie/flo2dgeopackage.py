@@ -8398,15 +8398,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR 101218.1543: exporting RAIN.DAT failed!.\n")
             return False
 
-    def export_raincell(self, output=None):
+    def export_raincell(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_raincell_dat(output)
+            return self.export_raincell_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_raincell_hdf5()
+            return self.export_raincell_hdf5(subdomain)
 
-    def export_raincell_dat(self, outdir):
+    def export_raincell_dat(self, outdir, subdomain):
         try:
-            if self.is_table_empty("raincell"):
+            if self.is_table_empty("raincell_data"):
                 return False
 
             s = QSettings()
@@ -8478,7 +8478,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if msg_box.clickedButton() == button2:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
-                data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                if not subdomain:
+                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                else:
+                    data_sql = f"""
+                    SELECT
+                        md.domain_cell, 
+                        rd.iraindum 
+                    FROM 
+                        raincell_data AS rd
+                    JOIN
+                        schema_md_cells md ON rd.rrgrid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY rd.time_interval, md.domain_cell;
+                    """
                 size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
                 line1 = "{0} {1} {2}\n"
                 line2 = "{0} {1}\n"
@@ -8517,7 +8531,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             elif msg_box.clickedButton() == button3:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
-                data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                if not subdomain:
+                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                else:
+                    data_sql = f"""
+                    SELECT
+                        md.domain_cell, 
+                        rd.iraindum 
+                    FROM 
+                        raincell_data AS rd
+                    JOIN
+                        schema_md_cells md ON rd.rrgrid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY rd.time_interval, md.domain_cell;
+                    """
                 size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
                 line1 = "{0} {1} {2}\n"
                 line2 = "{0} {1}\n"
@@ -8559,13 +8587,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def export_raincell_hdf5(self):
+    def export_raincell_hdf5(self, subdomain):
         try:
-            if self.is_table_empty("raincell") or self.is_table_empty("raincell_data"):
+            if self.is_table_empty("raincell_data"):
                 return False
 
-            s = QSettings()
-            project_dir = s.value("FLO-2D/lastGdsDir")
+            project_dir = os.path.dirname(self.parser.hdf5_filepath)
+            self.uc.log_info(str(project_dir))
 
             raincell = os.path.join(project_dir, "RAINCELL.HDF5")
             if os.path.exists(raincell):
@@ -8584,11 +8612,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if header:
                 rainintime, irinters, timestamp = header
                 header_data = [rainintime, irinters, timestamp]
-                qry_data = "SELECT iraindum FROM raincell_data"
-                qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                if not subdomain:
+                    qry_data = "SELECT iraindum FROM raincell_data"
+                    qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                else:
+                    qry_data = "SELECT iraindum FROM raincell_data AS rd JOIN schema_md_cells md ON rd.rrgrid = md.grid_fid"
+                    qry_size = f"SELECT COUNT(iraindum) FROM raincell_data AS rd JOIN schema_md_cells md ON rd.rrgrid = md.grid_fid WHERE md.domain_fid = {subdomain}"
                 qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
                 hdf_processor = HDFProcessor(raincell, self.iface)
-                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
+                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval, subdomain)
 
                 return True
 
@@ -8598,13 +8630,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("Error while exporting RAINCELL data to hdf5 file!")
             return False
 
-    def export_raincellraw(self, output=None):
+    def export_raincellraw(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_raincellraw_dat(output)
+            return self.export_raincellraw_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_raincellraw_hdf5()
+            return self.export_raincellraw_hdf5(subdomain)
 
-    def export_raincellraw_dat(self, outdir):
+    def export_raincellraw_dat(self, outdir, subdomain):
         try:
             if self.is_table_empty("raincellraw") or self.is_table_empty("raincell") or self.is_table_empty("flo2d_raincell"):
                 return False
@@ -8672,7 +8704,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT failed!")
             return False
 
-    def export_raincellraw_hdf5(self):
+    def export_raincellraw_hdf5(self, subdomain):
 
         try:
             if self.is_table_empty("raincellraw") or self.is_table_empty("raincell") or self.is_table_empty("flo2d_raincell"):
