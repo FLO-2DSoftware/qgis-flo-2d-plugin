@@ -2973,7 +2973,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
         inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
         if inflow:
-            baseline = inflow[1]
+            baseline = inflow[1] if inflow[1] != 0 else ""
             pattern_name = inflow[2]
             time_series_name = inflow[3]
             scale_factor = inflow[4]
