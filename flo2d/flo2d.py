@@ -3678,6 +3678,11 @@ class Flo2D(object):
 
             self.f2d_inlets_junctions_dock = dlg.dock_widget
 
+        # Populate any external inflows
+        self.f2d_plot.clear()
+        self.f2d_table.clear()
+        self.f2d_widget.storm_drain_editor.show_external_inflow(fid, "ij")
+
     @connection_required
     def show_sd_outlets_attributes(self, fid=None, extra=""):
         """
@@ -3703,6 +3708,9 @@ class Flo2D(object):
             dlg.dock_widget.raise_()
 
             self.f2d_outlets_dock = dlg.dock_widget
+
+        self.f2d_plot.clear()
+        self.f2d_table.clear()
 
     @connection_required
     def show_sd_storage_unit_attributes(self, fid=None, extra=""):
@@ -3731,6 +3739,11 @@ class Flo2D(object):
 
             self.f2d_storage_units_dock = dlg.dock_widget
 
+        # Populate any external inflows
+        self.f2d_plot.clear()
+        self.f2d_table.clear()
+        self.f2d_widget.storm_drain_editor.show_external_inflow(fid, "su")
+
     @connection_required
     def show_sd_weir_attributes(self, fid=None):
         """
@@ -3755,6 +3768,9 @@ class Flo2D(object):
         dlg.dock_widget.raise_()
 
         self.f2d_weirs_dock = dlg.dock_widget
+
+        self.f2d_plot.clear()
+        self.f2d_table.clear()
 
     @connection_required
     def show_sd_orifice_attributes(self, fid=None):
@@ -3781,6 +3797,9 @@ class Flo2D(object):
 
         self.f2d_orifices_dock = dlg.dock_widget
 
+        self.f2d_plot.clear()
+        self.f2d_table.clear()
+
     @connection_required
     def show_sd_pump_attributes(self, fid=None):
         """
@@ -3806,6 +3825,9 @@ class Flo2D(object):
 
         self.f2d_pumps_dock = dlg.dock_widget
 
+        self.f2d_plot.clear()
+        self.f2d_table.clear()
+
     @connection_required
     def show_sd_conduit_attributes(self, fid=None):
         """
@@ -3830,6 +3852,9 @@ class Flo2D(object):
         dlg.dock_widget.raise_()
 
         self.f2d_conduits_dock = dlg.dock_widget
+
+        self.f2d_plot.clear()
+        self.f2d_table.clear()
 
     @connection_required
     def show_struct_hydrograph(self, fid=None):

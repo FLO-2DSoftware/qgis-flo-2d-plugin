@@ -7170,6 +7170,94 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         return None, None
 
+    def show_external_inflow(self, fid, node):
+        """
+        Function to show the external inflow table and plot
+        ij: inlet junctions
+        su: storage units
+        """
+
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
+            return False
+
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
+        # Get node name
+        if node == "ij":
+            node_name = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
+        else:
+            node_name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?", (fid,)).fetchone()
+
+        if not node_name:
+            return False
+        else:
+            node_name = node_name[0]
+
+        # Get storm drain external inflow ts name
+        time_series_name = self.gutils.execute(f"""SELECT time_series_name FROM swmm_inflows WHERE node_name = '{node_name}'""").fetchone()
+        if not time_series_name:
+            return False
+        else:
+            time_series_name = time_series_name[0]
+
+        # Get the time series data
+        time_series = self.gutils.execute(f"""SELECT date, time, value FROM swmm_time_series_data WHERE time_series_name = '{time_series_name}'""").fetchall()
+        time_list = []
+        discharge_list = []
+
+        for row in time_series:
+            date_str, time_str, value = row
+            # Combine date and time
+            dt = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M")
+
+            # Convert to hours relative to the first timestamp
+            hours = (dt - datetime.strptime(f"{time_series[0][0]} {time_series[0][1]}",
+                                            "%d/%m/%Y %H:%M")).total_seconds() / 3600.0
+
+            time_list.append(hours)
+            discharge_list.append(value)
+
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"External Inflow - {time_series_name}")
+        self.plot.plot.setLabel("bottom", text="Time (hrs)")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+
+        try:  # Build table.
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                            f"Discharge ({self.system_units[units][2]})"])
+
+            data = zip(time_list, discharge_list)
+            for time, discharge in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                discharge_data_model.appendRow([time_item, discharge_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(discharge_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("Error while building table for floodplain cross section!")
+            self.uc.log_info("Error while building table for floodplain cross section!")
+            return
+
 
 class SDTablesDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
