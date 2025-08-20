@@ -145,6 +145,10 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         if indices:
             self.after_delete.emit()
 
+    def clear(self):
+        empty_model = StandardItemModel()
+        self.tview.setModel(empty_model)
+
 class CommandItemEdit(QUndoCommand):
     """
     Command for undoing/redoing text edit changes, to be placed in undostack.
