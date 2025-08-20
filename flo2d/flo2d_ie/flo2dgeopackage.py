@@ -13278,7 +13278,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 row[1],
                                 "1.0",
                                 row[5],
-                                row[2] if row[2] != "?" else "",
+                                row[2] if row[2] != 0 else "",
                                 row[3] if row[3] != "?" else "",
                             ]
                             swmm_inp_file.write(line.format(*lrow))
