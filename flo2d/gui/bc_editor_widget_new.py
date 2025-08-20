@@ -420,9 +420,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         for i, row in enumerate(all_inflows):
             row = [x if x is not None else "" for x in row]
             fid, name, geom_type, ts_fid = row
-            if not geom_type:
-                inflows_skipped += 1
-                continue
             if not name:
                 name = "Inflow {}".format(fid)
             self.inflow_bc_name_cbo.addItem(name, [fid, ts_fid])
@@ -474,7 +471,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.ts_fid = 0
         else:
             self.ts_fid = int(self.ts_fid)
-        self.inflow_tseries_cbo.setCurrentIndex(self.ts_fid)
+        self.populate_inflow_data_cbo()
 
         if self.inflow.ident == "F":
             self.ifc_fplain_radio.setChecked(1)
@@ -497,7 +494,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             feat = next(self.bc_lyr.getFeatures(QgsFeatureRequest(self.inflow.bc_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-        self.populate_inflow_data_cbo()
 
     def populate_inflow_data_cbo(self):
         """
@@ -515,17 +511,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if not ts_name:
                 ts_name = "Time Series {}".format(ts_fid)
             self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
-            # if ts_fid == self.inflow.time_series_fid:
-            #     cur_idx = i
-            #     self.uc.log_info(str(cur_idx))
-        # self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
-        if isinstance(self.inflow.time_series_fid, int):
-            index = self.inflow.time_series_fid - 1
-            self.inflow_tseries_cbo.setCurrentIndex(index)
-        # Sometimes it is an empty string, then set it to the first time series
-        else:
-            self.inflow_tseries_cbo.setCurrentIndex(0)
-        # self.inflow_data_changed() this was removed because it was not populating correclty when importing data
+        self.uc.log_info(str(self.inflow.time_series_fid))
+        self.inflow_tseries_cbo.setCurrentIndex(int(float(self.inflow.time_series_fid)) - 1)
+        self.inflow_data_changed()
 
     def inflow_data_changed(self):
         """
