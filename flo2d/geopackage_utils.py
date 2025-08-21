@@ -16,6 +16,7 @@ from functools import wraps
 
 from PyQt5.QtWidgets import QProgressDialog, QApplication
 from osgeo import ogr, gdal
+from qgis.PyQt.QtCore import NULL
 from qgis._core import QgsVectorLayer, QgsProject, QgsRasterLayer
 from qgis.core import QgsGeometry, QgsVectorFileWriter
 from .user_communication import UserCommunication
@@ -271,7 +272,11 @@ class GeoPackageUtils(object):
         'user_infiltration', 'user_effective_impervious_area', 'raincell',
         'raincell_data', 'buildings_areas', 'buildings_stats', 'sd_fields', 'outrc', 'swmm_control',
         'user_tailings', 'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells', 'external_layers',
-        'user_swmm_inlets_junctions', 'user_swmm_outlets'
+        'user_swmm_inlets_junctions', 'user_swmm_outlets',
+        'mult_domains', 'user_md_connect_lines', 'schema_md_cells', 'mult_domains_methods',
+        'mult_domains_con', 'user_steep_slope_n_areas', 'steep_slope_n_cells',
+        'user_lid_volume_areas', 'lid_volume_cells', 'user_timdep', 'timdep_cells', 'chan_interior_nodes',
+        'user_building_collapse', 'building_collapse_cells', 'flo2d_raincell', 'raincellraw'
     ]
 
     def __init__(self, con, iface):
@@ -716,8 +721,14 @@ class GeoPackageUtils(object):
 
         self.execute("DETACH other;")
 
+        try:
+            other_gpkg_conn.close()
+        except Exception as e:
+            pass
+
+
         # Make sure that the CELLSIZE on the cont table is an integer
-        cell_size = int(float(self.get_cont_par("CELLSIZE")))
+        cell_size = self.grid_cell_size()
         self.execute(f"""UPDATE cont SET value = '{cell_size}' WHERE name = 'CELLSIZE';""")
 
     def execute(self, statement, inputs=None, get_rowid=False):
@@ -904,6 +915,24 @@ class GeoPackageUtils(object):
         geom = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
         return geom
 
+    def grid_cell_size(self):
+        sql = """
+        SELECT 
+            ST_MinX(geom) as min_x, 
+            ST_MaxX(geom) as max_x 
+        FROM "grid" 
+        WHERE "fid" = 1;
+        """
+        # Execute the SQL query
+        result = self.execute(sql).fetchone()
+        if result:
+            min_x, max_x = result
+            # Calculate cell width and height
+            cell_size = int(abs(round(max_x - min_x, 0)))
+            return cell_size
+        else:
+            return None
+
     def grid_centroids(self, gids, table="grid", field="fid", buffers=False):
         cells = {}
         if buffers is False:
@@ -1029,6 +1058,14 @@ class GeoPackageUtils(object):
             y + half_size,
             x - half_size,
             y - half_size,
+        )
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return gpb_buff
+
+    def build_point_xy(self, x, y):
+        gpb = """SELECT AsGPB(ST_GeomFromText('POINT({} {})'))""".format(
+            x,
+            y
         )
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff

@@ -12,7 +12,9 @@ from PyQt5.QtWidgets import QApplication, QFileDialog
 from qgis.PyQt.QtCore import QSize
 from qgis._gui import QgsDockWidget
 
+from .areas_editor_widget import AreasEditorWidget
 from .bc_editor_widget_new import BCEditorWidgetNew
+from .multiple_domains_editor_widget import MultipleDomainsEditorWidget
 from ..user_communication import UserCommunication
 # from .bc_editor_widget import BCEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget
@@ -52,6 +54,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_street_editor()
         self.setup_struct_editor()
         self.setup_rain_editor()
+        self.setup_areas_editor()
         self.setup_channels_editor()
         self.setup_xsec_editor()
         self.setup_storm_drain_editor()
@@ -60,6 +63,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_infil_editor()
         self.setup_levee_and_breach_editor()
         self.setup_multiple_channels_editor()
+        self.setup_multiple_domains_editor()
         self.setup_pre_processing_tools()
 
         # Setup the project folder
@@ -74,12 +78,14 @@ class FLO2DWidget(qtBaseClass, uiDialog):
             self.ic_editor_grp,
             self.street_editor_grp,
             self.rain_editor_grp,
+            self.areas_editor_grp,
             self.channels_editor_grp,
             self.struct_editor_grp,
             self.xs_editor_grp,
             self.profile_tool_grp,
             self.levee_and_breach_editor_grp,
             self.multiple_channels_editor_grp,
+            self.multiple_domains_editor_grp,
             self.pre_processing_grp
         ]
         self.set_collapsible_groups()
@@ -163,6 +169,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.rain_editor = RainEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.rain_editor_lout.addWidget(self.rain_editor)
 
+    def setup_areas_editor(self):
+        self.areas_editor = AreasEditorWidget(self.iface, self.lyrs)
+        self.areas_editor_lout.addWidget(self.areas_editor)
+
     def setup_channels_editor(self):
         self.channels_editor = ChannelsEditorWidget(self.iface, self.lyrs)
         self.channels_editor_lout.addWidget(self.channels_editor)
@@ -194,6 +204,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_multiple_channels_editor(self):
         self.multiple_channels_editor = MultipleChannelsEditorWidget(self.iface, self.lyrs)
         self.multiple_channels_lout.addWidget(self.multiple_channels_editor)
+
+    def setup_multiple_domains_editor(self):
+        self.multiple_domains_editor = MultipleDomainsEditorWidget(self.iface, self.lyrs)
+        self.multiple_domains_lout.addWidget(self.multiple_domains_editor)
 
     def setup_pre_processing_tools(self):
         self.pre_processing_tools = PreProcessingWidget(self.iface, self.lyrs)

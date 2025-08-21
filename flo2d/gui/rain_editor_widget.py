@@ -19,14 +19,16 @@ from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
 from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtGui import QDesktopServices, QStandardItem, QStandardItemModel
+
+from .dlg_sampling_raincellraw import SamplingRaincellRawDialog
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
+from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor, NetCDFProcessor, TIFProcessor
 from ..flo2dobjects import Rain
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, get_flo2dpro_release_date
+from ..utils import is_number, m_fdata, get_flo2dpro_release_date, second_smallest, set_min_max_elevs
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect
 
@@ -61,6 +63,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.rename_tseries_btn, "change_name.svg")
 
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
+        # self.grid = self.lyrs.data["grid"]["qlyr"]
+        # self.raincell_data = self.lyrs.data["raincell_data"]["qlyr"]
 
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
@@ -88,8 +92,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return True
 
     def connect_signals(self):
-        self.asc_btn.clicked.connect(self.import_rainfall)
-        self.hdf_btn.clicked.connect(self.export_rainfall_to_binary_hdf5)
+        self.realtime_btn.clicked.connect(self.import_rainfall)
+        self.delete_realtime_rainfall_btn.clicked.connect(self.delete_realtime_rainfall)
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.simulate_rain_grp.toggled.connect(self.set_rain)
         self.realtime_rainfall_grp.toggled.connect(self.set_realtime)
@@ -99,6 +103,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.moving_storm_grp.toggled.connect(self.set_moving_storm)
         self.moving_storm_speed_dbox.editingFinished.connect(self.set_moving_storm_speed)
         self.rainfall_time_distribution_grp.toggled.connect(self.set_time_series_fid)
+        self.realtime_raw_btn.clicked.connect(self.import_raincellraw)
+        self.realtime_rainfall_raw_grp.toggled.connect(self.set_realtime_raw)
+        self.delete_realtime_rainfall_raw_btn.clicked.connect(self.delete_realtime_raw_rainfall)
 
         self.n_radio.clicked.connect(self.set_n_radio)
         self.e_radio.clicked.connect(self.set_e_radio)
@@ -149,24 +156,33 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.control_lyr.editingStopped.connect(self.check_simulate_rainfall)
 
     def import_rainfall(self):
-        try:
-            s = QSettings()
-            last_dir = s.value("FLO-2D/lastASC", "")
-            asc_dir = QFileDialog.getExistingDirectory(
-                None,
-                "Select directory with Rainfall ASCII grid files",
-                directory=last_dir,
-            )
-            if not asc_dir:
-                return
-            s.setValue("FLO-2D/lastASC", asc_dir)
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastASC", "")
 
-            try:
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        head_qry = "INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);"
+        data_qry = ["""INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""", 3]
+
+        try:
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+
+            realtime_file = QFileDialog.getOpenFileName(
+                None,
+                "Select Realtime Rainfall File",
+                directory=last_dir,
+                filter="Realtime Rainfall Files (*.asc *.tif *.tiff *.geotiff *.nc)")[0]
+            if not realtime_file:
+                return
+            s.setValue("FLO-2D/lastASC", os.path.dirname(realtime_file))
+
+            extension = os.path.splitext(realtime_file)[1]
+
+            if extension == ".asc":
+
+                asc_dir = os.path.dirname(realtime_file)
+
                 QApplication.setOverrideCursor(Qt.WaitCursor)
+
                 asc_processor = ASCProcessor(grid_lyr, asc_dir, self.iface)  # as_processor, an instance of the ASCProcessor class,
-                head_qry = "INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);"
-                data_qry = "INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);"
                 self.gutils.clear_tables("raincell", "raincell_data")
                 header = asc_processor.parse_rfc()
                 time_step = float(header[0])
@@ -182,196 +198,132 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
                 for rain_series in asc_processor.rainfall_sampling():
                     pd.setValue(i)
-                    cur = self.gutils.con.cursor()
                     for val, gid in rain_series:
-                        cur.execute(data_qry, (time_interval, gid, val))
-                    self.gutils.con.commit()
+                        data_qry += [(time_interval, gid, val)]
                     time_interval += time_step
                     i += 1
 
+                self.gutils.batch_execute(data_qry)
+
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_info("Importing Rainfall Data finished!")
-                self.uc.log_info("Importing Rainfall Data finished!")
-            except Exception as e:
+                self.uc.bar_info("ASCII Realtime Rainfall imported successfully!")
+                self.uc.log_info("ASCII Realtime Rainfall imported successfully!")
+
+            if extension == ".nc":
+
+                era_file = realtime_file
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                # 1. Create processor
+                netcdf_proc = NetCDFProcessor(grid_lyr, era_file, self.iface, self.gutils)
+
+                # 2. Read header for raincell table
+                header = netcdf_proc.parse_header()  # [interval_time, num_intervals, start_timestamp]
+                time_step = float(header[0])
+                irinters = int(header[1]) - 1
+
+                # 3. Clear previous data
+                self.gutils.clear_tables("raincell", "raincell_data")
+
+                # 4. Insert raincell header
+                self.gutils.execute(head_qry, header)
+
+                # 5. Insert data
+                time_interval = 0
+                pd = QProgressDialog("Importing ERA5 Rainfall...", None, 0, irinters)
+                pd.setModal(True)
+                pd.setValue(0)
+                pd.show()
+
+                for timestep_data in netcdf_proc.sample_all():
+                    pd.setValue(int(time_interval))
+                    QApplication.processEvents()
+
+                    for rainfall, fid in timestep_data:
+                        data_qry += [(time_interval, fid, round(rainfall,4))]
+
+                    time_interval += 1
+
+                self.gutils.batch_execute(data_qry)
+
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_info("ERA5 Realtime Rainfall imported successfully!")
+                self.uc.log_info("ERA5 Realtime Rainfall imported successfully!")
+
+            if extension in [".tif", ".tiff", ".geotiff"]:
+
+                tif_dir = os.path.dirname(realtime_file)
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                tif_processor = TIFProcessor(grid_lyr, tif_dir,
+                                             self.iface)  # as_processor, an instance of the ASCProcessor class,
+                self.gutils.clear_tables("raincell", "raincell_data")
+                header = tif_processor.parse_rfc()
+                time_step = float(header[0])
+                irinters = int(header[1]) - 1
+                self.gutils.execute(head_qry, header)
+                time_interval = 0
+
+                pd = QProgressDialog("Importing RealTime Rainfall...", None, 0, irinters)
+                pd.setModal(True)
+                pd.setValue(0)
+                pd.show()
+                i = 0
+
+                for rain_series in tif_processor.rainfall_sampling():
+                    pd.setValue(i)
+                    for val, gid in rain_series:
+                        data_qry += [(time_interval, gid, val)]
+                    time_interval += time_step
+                    i += 1
+
+                self.gutils.batch_execute(data_qry)
+
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_info("Raster Realtime Rainfall imported successfully!")
+                self.uc.log_info("Raster Realtime Rainfall imported successfully!")
+
+        except Exception as e:
                 self.uc.log_info(traceback.format_exc())
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_error("Importing Rainfall Data from ASCII files failed!")
+                self.uc.bar_error("Importing Realtime Rainfall Data failed!")
                 self.uc.log_info(
-                    "Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file "
+                    "Importing Rainfall Data failed! Please check your input data.\nIs the .RFC file "
                     "missing?"
                 )
 
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                f"WARNING 060319.1835: Importing Rainfall Data failed! : {e}"
-            )
-
-    def export_rainfall_to_binary_hdf5(self):
+    def import_raincellraw(self):
         """
-        Function to export RAINCELL.DAT
+        Function to load the dialog that processes the NEXRAD data into the raincellraw & flo2d_raincell tables.
         """
-        s = QSettings()
-        flopro_dir = s.value("FLO-2D/last_flopro")
-        flo2d_release_date = False
-        if flopro_dir is not None:
-            if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
-                flo2d_release_date = get_flo2dpro_release_date(flopro_dir + "/FLOPRO.exe")
-            elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
-                flo2d_release_date = get_flo2dpro_release_date(flopro_dir + "/FLOPRO_Demo.exe")
-        else:
-            return False
-
-        new_raincell_format = False
-        new_raincell_format_release_date = "2024-08-01"
-        target_date = datetime.strptime(new_raincell_format_release_date, "%Y-%m-%d")
-        flo2d_release_date = datetime.strptime(flo2d_release_date, "%Y-%m-%d")
-        if flo2d_release_date >= target_date:
-            new_raincell_format = True
-
-        title = "Select RAINCELL format to export"
-
-        msg = "Select the desired RAINCELL.DAT format. \n\n" \
-              "RAINCELL.HDF5: Recommended for reduced file size and faster read/write speeds. \n" \
-              "New RAINCELL.DAT: Suggested for a smaller file size. \n" \
-              "Old RAINCELL.DAT: Use this format if your FLOPRO.exe build is earlier than 23.10.25.\n"
-
-        if not new_raincell_format:
-            msg += "\nYour current version of FLOPRO.exe does not support the new RAINCELL.DAT format. Please " \
-                           "contact the FLO-2D team to update your FLOPRO.exe build."
-
-        msg_box = QMessageBox()
-
-        # Set the title for the message box
-        msg_box.setWindowTitle(title)
-
-        # Set the text for the message box
-        msg_box.setText(msg)
-
-        # Add buttons to the message box
-        button1 = msg_box.addButton("RAINCELL.HDF5", QMessageBox.ActionRole)
-        button2 = msg_box.addButton("New RAINCELL.DAT", QMessageBox.ActionRole)
-        button3 = msg_box.addButton("Old RAINCELL.DAT", QMessageBox.ActionRole)
-        if not new_raincell_format:
-            button2.setEnabled(False)
-        button4 = msg_box.addButton("Cancel", QMessageBox.ActionRole)
-
-        # Set the icon for the message box
-        msg_box.setIcon(QMessageBox.Information)
-
-        # Display the message box and wait for the user to click a button
-        msg_box.exec_()
-
-        # RAINCELL.HDF5
-        if msg_box.clickedButton() == button1:
-
-            try:
-                import h5py
-            except ImportError:
-                self.uc.bar_warn("There is no h5py module installed! Please install it to run export tool.")
-                self.uc.log_info("There is no h5py module installed! Please install it to run export tool.")
-                return
-
-            s = QSettings()
-            last_dir = s.value("FLO-2D/lastHDF", "")
-            hdf_dir = QFileDialog.getExistingDirectory(
-                None, "Select directory to export RAINCELL.HDF5 binary file", last_dir
-            )
-            if not hdf_dir:
-                return
-
-            hdf_file = hdf_dir + "/RAINCELL.HDF5"
-            s.setValue("FLO-2D/lastHDF", os.path.dirname(hdf_file))
-            s.setValue("FLO-2D/lastHDF", hdf_file)
-            try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
-                header = self.gutils.execute(qry_header).fetchone()
-                if header:
-                    rainintime, irinters, timestamp = header
-                    header_data = [rainintime, irinters, timestamp]
-                    qry_data = "SELECT iraindum FROM raincell_data"
-                    qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
-                    qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
-                    hdf_processor = HDFProcessor(hdf_file, self.iface)
-                    hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
-                    self.uc.bar_info("RAINCELL.HDF5 was exported!")
-                    self.uc.log_info(f"RAINCELL.HDF5 was exported to {hdf_dir}")
-                else:
-                    self.uc.bar_warn(
-                        "There is no data in layer 'Realtime Rainfall'"
-                    )
-                    self.uc.log_info(
-                        "There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files."
-                    )
-
-            except Exception as e:
-                self.uc.log_info(f"Exporting Rainfall Data failed! Please check your input data.\n\n{traceback.format_exc()}")
-                self.uc.bar_error("Exporting Rainfall Data failed! Please check your input data.")
-
-            finally:
-                QApplication.restoreOverrideCursor()
-
-        # New RAINCELL.DAT
-        elif msg_box.clickedButton() == button2:
-
-            if self.gutils.is_table_empty("grid"):
-                self.uc.bar_warn("There is no grid! Please create it before running tool.")
-                self.uc.log_info("There is no grid! Please create it before running tool.")
-                return
-
-            project_dir = QgsProject.instance().absolutePath()
-            outdir = QFileDialog.getExistingDirectory(
-                None,
-                "Select directory where RAINCELL.DAT will be exported",
-                directory=project_dir,
-            )
-
-            if outdir:
-                flo2dgeo = Flo2dGeoPackage(self.con, self.iface)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                out = flo2dgeo.export_raincell_new(outdir)
-                QApplication.restoreOverrideCursor()
-                if out:
-                    self.uc.bar_info("RAINCELL.DAT was exported!")
-                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}")
-                else:
-                    self.uc.bar_error("RAINCELL.DAT could not be exported!")
-                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}")
-
-        # Old RAINCELL.DAT
-        elif msg_box.clickedButton() == button3:
-
-            if self.gutils.is_table_empty("grid"):
-                self.uc.bar_warn("There is no grid! Please create it before running tool.")
-                self.uc.log_info("There is no grid! Please create it before running tool.")
-                return
-
-            project_dir = QgsProject.instance().absolutePath()
-            outdir = QFileDialog.getExistingDirectory(
-                None,
-                "Select directory where RAINCELL.DAT will be exported",
-                directory=project_dir,
-            )
-
-            if outdir:
-                flo2dgeo = Flo2dGeoPackage(self.con, self.iface)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                out = flo2dgeo.export_raincell(outdir)
-                QApplication.restoreOverrideCursor()
-                if out:
-                    self.uc.bar_info("RAINCELL.DAT was exported!")
-                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}")
-                else:
-                    self.uc.bar_error("RAINCELL.DAT could not be exported!")
-                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}")
-
-        # Close button
-        elif msg_box.clickedButton() == button4:
-            self.uc.bar_info("Export RealTime Rainfall canceled!")
-            self.uc.log_info("Export RealTime Rainfall canceled!")
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
             return
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
+            return
+
+        dlg = SamplingRaincellRawDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if ok:
+            dlg.process_raincellraw()
+        else:
+            return
+        # try:
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        #     res = dlg.probe_roughness()
+        #     QApplication.restoreOverrideCursor()
+        #     if res:
+        #         dlg.show_probing_result_info()
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn("WARNING 060319.1710: Probing grid roughness failed! Please check your raster layer.")
+
 
     def create_plot(self):
         """
@@ -409,13 +361,24 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
         if self.gutils.get_cont_par("IRAIN") == "1":
             self.simulate_rain_grp.setChecked(True)
+            self.populate_tseries()
+            idx = self.tseries_cbo.findData(self.rain.series_fid)
+            self.tseries_cbo.setCurrentIndex(idx)
+            self.populate_tseries_data()
         else:
             self.simulate_rain_grp.setChecked(False)
 
         if row["irainreal"] == 1:
-            self.realtime_rainfall_grp.setChecked(True)
+            if not self.gutils.is_table_empty("raincell_data"):
+                self.realtime_rainfall_grp.setChecked(True)
+            elif not self.gutils.is_table_empty("raincellraw"):
+                self.realtime_rainfall_raw_grp.setChecked(True)
+            else:
+                self.realtime_rainfall_grp.setChecked(True)
+                self.realtime_rainfall_raw_grp.setChecked(False)
         else:
             self.realtime_rainfall_grp.setChecked(False)
+            self.realtime_rainfall_raw_grp.setChecked(False)
 
         if row["irainbuilding"] == 1:
             self.building_chbox.setChecked(True)
@@ -442,10 +405,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         else:
             self.moving_storm_speed_dbox.setValue(0)
 
-        self.populate_tseries()
-        idx = self.tseries_cbo.findData(self.rain.series_fid)
-        self.tseries_cbo.setCurrentIndex(idx)
-        self.populate_tseries_data()
         self.connect_signals()
 
     def populate_tseries(self):
@@ -698,14 +657,34 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         if self.simulate_rain_grp.isChecked():
             self.gutils.set_cont_par("IRAIN", 1)
+            self.populate_tseries()
+            idx = self.tseries_cbo.findData(self.rain.series_fid)
+            self.tseries_cbo.setCurrentIndex(idx)
+            self.populate_tseries_data()
         else:
             self.gutils.set_cont_par("IRAIN", 0)
 
     def set_realtime(self):
-        if not self.rain:
-            return
-        self.rain.irainreal = self.realtime_rainfall_grp.isChecked()
-        self.rain.set_row()
+        if self.realtime_rainfall_grp.isChecked():
+            self.realtime_rainfall_raw_grp.setChecked(False)
+            if self.rain:
+                self.rain.irainreal = True
+                self.rain.set_row()
+        else:
+            if self.rain:
+                self.rain.irainreal = False
+                self.rain.set_row()
+
+    def set_realtime_raw(self):
+        if self.realtime_rainfall_raw_grp.isChecked():
+            self.realtime_rainfall_grp.setChecked(False)
+            if self.rain:
+                self.rain.irainreal = True
+                self.rain.set_row()
+        else:
+            if self.rain:
+                self.rain.irainreal = False
+                self.rain.set_row()
 
     def set_building(self):
         if not self.rain:
@@ -804,3 +783,76 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         self.rain.rainabs = self.rainfall_abst_sbox.value()
         self.rain.set_row()
+
+    def delete_realtime_rainfall(self):
+        """
+        Delete all realtime rainfall data from the database.
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.gutils.clear_tables("raincell", "raincell_data")
+        self.uc.bar_info("Realtime Rainfall (RAINCELL.DAT) deleted successfully!")
+        self.uc.log_info("Realtime Rainfall (RAINCELL.DAT) deleted successfully!")
+        QApplication.restoreOverrideCursor()
+
+    def delete_realtime_raw_rainfall(self):
+        """
+        Delete all realtime rainfall data from the database.
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.gutils.clear_tables("raincell", "raincellraw", "flo2d_raincell")
+        self.uc.bar_info("Realtime Rainfall (RAINCELLRAW.DAT) deleted successfully!")
+        self.uc.log_info("Realtime Rainfall (RAINCELLRAW.DAT) deleted successfully!")
+        QApplication.restoreOverrideCursor()
+
+    def realtime_rainfall(self, fid):
+        si = "inches" if self.gutils.get_cont_par("METRIC") in ["0", "0.0"] else "mm"
+
+        # If not raincell_data table or empty, use raincellraw and flo2d_raincell
+        if self.gutils.is_table_empty("raincell_data") and self.gutils.is_table_empty("raincellraw"):
+            self.uc.bar_warn("Realtime Rainfall data does not exist in this project! Please, import it first.")
+            self.uc.log_info("Realtime Rainfall data does not exist in this project! Please, import it first.")
+            return
+
+        if self.gutils.is_table_empty("raincell_data"):
+            qry = f"""
+            SELECT rr.r_time,
+                   rr.rrgrid
+            FROM 
+                raincellraw AS rr
+            JOIN 
+                flo2d_raincell fr ON fr.nxrdgd = rr.nxrdgd
+            WHERE 
+                fr.iraindum=?
+            ORDER 
+                BY rr.r_time
+            """
+            header = ["Time", "Cumulative Realtime Rainfall"]
+        else:
+            qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
+            header = ["Time", "Realtime Rainfall"]
+        rainfall = self.gutils.execute(qry, (fid,))
+        self.create_plot()
+        self.tview.setModel(self.rain_data_model)
+        self.rain_data_model.clear()
+        self.rain_data_model.setHorizontalHeaderLabels(header)
+        self.d1, self.d2 = [[], []]
+        for row in rainfall:
+            items = [QStandardItem("{:.4f}".format(x)) if x is not None else QStandardItem("") for x in row]
+            self.rain_data_model.appendRow(items)
+            self.d1.append(row[0] if not row[0] is None else float("NaN"))
+            self.d2.append(row[1] if not row[1] is None else float("NaN"))
+        rc = self.rain_data_model.rowCount()
+        if rc < 500:
+            for row in range(rc, 500 + 1):
+                items = [QStandardItem(x) for x in ("",) * 2]
+                self.rain_data_model.appendRow(items)
+        self.tview.horizontalHeader().setStretchLastSection(True)
+        for col in range(2):
+            self.tview.setColumnWidth(col, 100)
+        for i in range(self.rain_data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)
+        self.plot.plot.setTitle("Grid: {}".format(fid))
+        self.plot.plot.setLabel("bottom", text="Time (minutes)")
+        self.plot.plot.setLabel("left", text="Rainfall ({})".format(si))
+        self.update_plot()
+        self.plot.auto_range()

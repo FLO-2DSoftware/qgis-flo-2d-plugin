@@ -37,6 +37,9 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HYDCHN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -51,9 +54,7 @@
          <bool>false</bool>
         </property>
         <property name="toolTip">
-         <string>HYDCHN
-Average global hydraulic conductivity for the entire channel.
-(in/hr or mm/hr)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HYDCHN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr or mm/hr) &lt;/p&gt;&lt;p&gt;Average global hydraulic conductivity for the entire channel.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 10 inches/hr&lt;/p&gt;&lt;p&gt;0.25 - 250 mm/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Global Hydraulic Conductivity</string>
@@ -67,6 +68,9 @@ Average global hydraulic conductivity for the entire channel.
        <widget class="QCheckBox" name="cb_infchan">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check to enable channel infiltration.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Channel Infiltration</string>
@@ -86,12 +90,7 @@ Average global hydraulic conductivity for the entire channel.
       <item row="3" column="0">
        <widget class="QLabel" name="label_4">
         <property name="toolTip">
-         <string>HYDADJ
-Hydraulic conductivity adjustment variable for spatially variable hydraulic conductivity.
-
-0.01 to 1; HYDCON = HYDCON + HYDCADJ
-1 to 100; HYDCON = HYDCON * HYDCADJ
--2 to -1; HYDCON = HYDCON * 2.HYDCADJ</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HYDADJ&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Hydraulic conductivity adjustment variable for spatially variable hydraulic conductivity.&lt;/p&gt;&lt;p&gt;0.01 to 1; HYDCON = HYDCON + HYDCADJ&lt;/p&gt;&lt;p&gt;1 to 100; HYDCON = HYDCON * HYDCADJ&lt;/p&gt;&lt;p&gt;-2 to -1; HYDCON = HYDCON * 2.HYDCADJ&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1&lt;/p&gt;&lt;p&gt;1 - 100&lt;/p&gt;&lt;p&gt;-2.0 - (-1.0)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="lineWidth">
          <number>1</number>
@@ -112,6 +111,9 @@ Hydraulic conductivity adjustment variable for spatially variable hydraulic cond
       </item>
       <item row="3" column="1">
        <widget class="QDoubleSpinBox" name="spin_hydcadj">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HYDADJ&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -123,11 +125,7 @@ Hydraulic conductivity adjustment variable for spatially variable hydraulic cond
       <item row="3" column="2">
        <widget class="QLabel" name="label_8">
         <property name="toolTip">
-         <string>SOILD
-Global infiltration limiting depth storage.
-Set SOILD = 0 to have unlimited infiltration.
-If SOILD = 0, spatially variable soil depth will not be used.
-(ft or m)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOILD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global Green-Ampt infiltration soil limiting depth storage.&lt;/p&gt;&lt;p&gt;Maximum soil depth for infiltration.&lt;/p&gt;&lt;p&gt;Set SOILD = 0 to have unlimited infiltration and do not assign spatially variable SOIL_DEPTH(N).&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 100. ft&lt;/p&gt;&lt;p&gt;0.0 - 30. m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Soil Depth</string>
@@ -142,6 +140,9 @@ If SOILD = 0, spatially variable soil depth will not be used.
       </item>
       <item row="3" column="3">
        <widget class="QDoubleSpinBox" name="spin_soild">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SOILD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -153,9 +154,7 @@ If SOILD = 0, spatially variable soil depth will not be used.
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="toolTip">
-         <string>HYDCALL
-Average global floodplain hydraulic conductivity.
-(in/hr or mm/hr)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HYDCALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr or mm/hr)&lt;/p&gt;&lt;p&gt;Average global floodplain hydraulic conductivity.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 10 inches/hr&lt;/p&gt;&lt;p&gt;0.25 - 250 mm/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Average global floodplain hydraulic conductivity</string>
@@ -170,6 +169,9 @@ Average global floodplain hydraulic conductivity.
       </item>
       <item row="2" column="1">
        <widget class="QDoubleSpinBox" name="spin_hydcall">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HYDCALL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -181,9 +183,7 @@ Average global floodplain hydraulic conductivity.
       <item row="2" column="2">
        <widget class="QLabel" name="label_7">
         <property name="toolTip">
-         <string>SOILALL
-Average global floodplain capillary suction head.
-(in or mm)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOILALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Average global floodplain capillary suction head.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;1 - 20 inches&lt;/p&gt;&lt;p&gt;25 - 500 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Soil Suction</string>
@@ -198,6 +198,9 @@ Average global floodplain capillary suction head.
       </item>
       <item row="2" column="3">
        <widget class="QDoubleSpinBox" name="spin_soilall">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SOILALL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -209,10 +212,7 @@ Average global floodplain capillary suction head.
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="toolTip">
-         <string>POROS
-Global floodplain soil porosity.
-If using the volumetric soil moisture deficiency for DTHETA, set POROS = 0.
-(Volume pore space  Volume soil sample)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;POROS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global floodplain soil porosity.&lt;/p&gt;&lt;p&gt;If using the volumetric soil moisture deficiency for DTHETA, set POROS = 0.&lt;/p&gt;&lt;p&gt;Range: 0.3 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Soil Porosity</string>
@@ -228,9 +228,7 @@ If using the volumetric soil moisture deficiency for DTHETA, set POROS = 0.
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="toolTip">
-         <string>ABSTR
-Green Ampt global floodplain rainfall abstraction or interception.
-(in or mm)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ABSTR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Green Ampt global floodplain rainfall abstraction or interception.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1 inches&lt;/p&gt;&lt;p&gt;0 - 25 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Initial Abstraction</string>
@@ -245,6 +243,9 @@ Green Ampt global floodplain rainfall abstraction or interception.
       </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="spin_poros">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;POROS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -256,7 +257,7 @@ Green Ampt global floodplain rainfall abstraction or interception.
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_abstr">
         <property name="toolTip">
-         <string/>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTR&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="decimals">
          <number>4</number>
@@ -269,9 +270,7 @@ Green Ampt global floodplain rainfall abstraction or interception.
       <item row="0" column="2">
        <widget class="QLabel" name="label_5">
         <property name="toolTip">
-         <string>SATI
-Global initial saturation of the soil.
-(Volume Water / Volume Void)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SATI&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global initial saturation of the soil (decimal percentage). &lt;/p&gt;&lt;p&gt;Range: 0.0 - 0.95&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Initial Saturation</string>
@@ -287,9 +286,7 @@ Global initial saturation of the soil.
       <item row="1" column="2">
        <widget class="QLabel" name="label_6">
         <property name="toolTip">
-         <string>SATF
-Global final saturation of the soil.
-(Volume Water / Volume Void)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SATF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global final saturation of the soil (decimal percentage) for computing infiltration. &lt;/p&gt;&lt;p&gt;Range: 0.5 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Final Saturation</string>
@@ -304,6 +301,9 @@ Global final saturation of the soil.
       </item>
       <item row="0" column="3">
        <widget class="QDoubleSpinBox" name="spin_sati">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SATI&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -314,6 +314,9 @@ Global final saturation of the soil.
       </item>
       <item row="1" column="3">
        <widget class="QDoubleSpinBox" name="spin_satf">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SATF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -348,6 +351,9 @@ Global final saturation of the soil.
       </property>
       <item row="0" column="4">
        <widget class="QDoubleSpinBox" name="spin_abstr1">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTR1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -359,10 +365,7 @@ Global final saturation of the soil.
       <item row="0" column="3">
        <widget class="QLabel" name="label_11">
         <property name="toolTip">
-         <string>ABSTRSCS
-SCS global floodplain rainfall abstraction or interception.
-Assign ABSTRSCS = 0 for automatic computation of the initial abstraction.
-(in or mm)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ABSTR1&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;SCS global floodplain rainfall abstraction or interception. &lt;/p&gt;&lt;p&gt;Assign ABSTRSCS = 0 for automatic com putation of the initial abstraction.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1 inches&lt;/p&gt;&lt;p&gt;0 - 25 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Abstraction</string>
@@ -378,11 +381,7 @@ Assign ABSTRSCS = 0 for automatic computation of the initial abstraction.
       <item row="0" column="0">
        <widget class="QLabel" name="label_10">
         <property name="toolTip">
-         <string>SCSCNALL
-Global floodplain SCS curve number for infiltration.
-The variable can range from 1 to 99 but use engineering judgment.
-Values lower than 67 will result in an excessive loss.
-Variables higher than 99 will be reset to 99.</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SCSCNALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global floodplain SCS curve number for infiltration.&lt;/p&gt;&lt;p&gt;The variable can range from 1 to 99 but use engineering judgment.&lt;/p&gt;&lt;p&gt;Values lower than 67 will result in an excessive loss and variables higher than 99 will be reset to 99.&lt;/p&gt;&lt;p&gt;Range: 1 - 99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Curve Number</string>
@@ -409,7 +408,11 @@ Variables higher than 99 will be reset to 99.</string>
        </spacer>
       </item>
       <item row="0" column="1">
-       <widget class="QSpinBox" name="spin_scsnall"/>
+       <widget class="QSpinBox" name="spin_scsnall">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SCSCNALL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -447,6 +450,9 @@ Variables higher than 99 will be reset to 99.</string>
       </item>
       <item row="0" column="4">
        <widget class="QDoubleSpinBox" name="spin_fhortonf">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FHORTONF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -458,9 +464,7 @@ Variables higher than 99 will be reset to 99.</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_13">
         <property name="toolTip">
-         <string>FHORTONI
-Global Horton initial infiltration rate.
-(in/hr both unit systems)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FHORTONI&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr)&lt;/p&gt;&lt;p&gt;Global Horton’s equation initial infiltration rate.&lt;/p&gt;&lt;p&gt;No metric.&lt;/p&gt;&lt;p&gt;Range: 3.0 - 5.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Initial Rate</string>
@@ -475,6 +479,9 @@ Global Horton initial infiltration rate.
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_fhortoni">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FHORTONI&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -499,9 +506,7 @@ Global Horton initial infiltration rate.
       <item row="0" column="3">
        <widget class="QLabel" name="label_12">
         <property name="toolTip">
-         <string>FHORTONF
-Global Horton final infiltration rate.
-(in/hr both unit systems)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FHORTONF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr)&lt;/p&gt;&lt;p&gt;Global Horton’s equation final infiltration rate.&lt;/p&gt;&lt;p&gt;No metric.&lt;/p&gt;&lt;p&gt;Range: 0.5 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Final Rate</string>
@@ -516,6 +521,9 @@ Global Horton final infiltration rate.
       </item>
       <item row="0" column="7">
        <widget class="QDoubleSpinBox" name="spin_decaya">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECAYA&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -527,9 +535,7 @@ Global Horton final infiltration rate.
       <item row="0" column="6">
        <widget class="QLabel" name="label_14">
         <property name="toolTip">
-         <string>DECAYA
-Horton global decay coefficient.
-(1/second)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DECAYA&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(1/second)&lt;/p&gt;&lt;p&gt;Horton global decay coefficient.&lt;/p&gt;&lt;p&gt;Range: 0.0007 - 0.0018&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Decay Coeff.</string>
@@ -557,6 +563,9 @@ Horton global decay coefficient.
       </item>
       <item row="1" column="4">
        <widget class="QDoubleSpinBox" name="spin_fhortonia">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTR&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -568,7 +577,7 @@ Horton global decay coefficient.
       <item row="1" column="3">
        <widget class="QLabel" name="label_9">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FHORTONIA\nHorton global floodplain rainfall abstraction or interception.\n(in or mm)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTR&lt;/p&gt;&lt;p&gt;(inches)&lt;/p&gt;&lt;p&gt;Horton global floodplain rainfall abstraction or interception.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Horton does not have a metric equivalent for FLO-2D. It uses English units for all flow calculations. It is OK to use Horton on a metric project. The output will still be converted to metric but the input data must be English.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1&lt;/p&gt;&lt;p&gt;0 - 25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial Abst.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

@@ -253,6 +253,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="center_fpxs_chbox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected floodplain xs.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -307,6 +310,9 @@
         </property>
         <item>
          <widget class="QLabel" name="label">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Floodplain cross section name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Floodplain XS name</string>
           </property>
@@ -325,6 +331,9 @@
             <width>0</width>
             <height>0</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a floodplain cross section.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="sizeAdjustPolicy">
            <enum>QComboBox::AdjustToMinimumContentsLength</enum>
@@ -352,7 +361,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Change floodplain XS name</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected floodplain xs.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -378,7 +387,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Defines the general direction expected to cross the line. &lt;/p&gt;&lt;p&gt;IFLO is set to one of the following:&lt;/p&gt;&lt;p&gt;1 flow to the north&lt;/p&gt;&lt;p&gt;2 flow to the east&lt;/p&gt;&lt;p&gt;3 flow to the south&lt;/p&gt;&lt;p&gt;4 flow to the west&lt;/p&gt;&lt;p&gt;5 flow to the northeast&lt;/p&gt;&lt;p&gt;6 flow to the southeast&lt;/p&gt;&lt;p&gt;7 flow to the southwest&lt;/p&gt;&lt;p&gt;8 flow to the northwest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IFLO(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Defines the general direction that the flow is expected to cross the floodplain cross section. &lt;/p&gt;&lt;p&gt;IFLO is set to one of the following:&lt;/p&gt;&lt;p&gt;1 flow to the north.&lt;/p&gt;&lt;p&gt;5 flow to the northeast.&lt;/p&gt;&lt;p&gt;2 flow to the east. &lt;/p&gt;&lt;p&gt;6 flow to the southeast.&lt;/p&gt;&lt;p&gt;3 flow to the south.&lt;/p&gt;&lt;p&gt;7 flow to the southwest.&lt;/p&gt;&lt;p&gt;4 flow to the west.&lt;/p&gt;&lt;p&gt;8 flow to the northwest. &lt;/p&gt;&lt;p&gt;If the output is desired from only one direction (i.e. without the discharge components from the other component flow directions), set IFLO as nega tive. &lt;/p&gt;&lt;p&gt;IFLO is set to the following:&lt;/p&gt;&lt;p&gt;-1 flow from south only. &lt;/p&gt;&lt;p&gt;-5 flow from southwest only&lt;/p&gt;&lt;p&gt;-2 flow from west only. &lt;/p&gt;&lt;p&gt;-6 flow from northwest only.&lt;/p&gt;&lt;p&gt;-3 flow from north only. &lt;/p&gt;&lt;p&gt;-7 flow from northeast only.&lt;/p&gt;&lt;p&gt;-4 flow from east only.&lt;/p&gt;&lt;p&gt;-8 flow from southeast only.&lt;/p&gt;&lt;p&gt;Range: 1 - 8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -393,6 +402,9 @@
       <widget class="QCheckBox" name="report_chbox">
        <property name="enabled">
         <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NXPRT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;If NXPRT = 0, the cross section summary information including cross sec tion discharge, average cross section velocity, width and depth will not be reported in the BASE.OUT file.&lt;/p&gt;&lt;p&gt;If NXPRT = 1, the cross section summary information including cross sec tion discharge, average cross section velocity, width and depth will be reported in the BASE.OUT file.&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Reported in BASE.OUT</string>

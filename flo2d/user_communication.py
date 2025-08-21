@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -31,6 +31,17 @@ from qgis.PyQt.QtWidgets import (
     QHBoxLayout,    
 )
 from PyQt5.QtGui import QFont
+
+
+def is_file_locked(filepath):
+    if not os.path.exists(filepath):
+        return False
+    try:
+        os.rename(filepath, filepath)
+        return False
+    except OSError:
+        return True
+
 
 class UserCommunication(object):
     """

@@ -206,14 +206,12 @@ class SchemaBCConverter(SchemaConverter):
         for table, fid, tab_bc_fid in bc_updates:
             qry = """UPDATE {0} SET bc_fid = ?, geom_type = ? WHERE fid = ?;""".format(table)
             cur.execute(qry, (fid, "point", tab_bc_fid))
-        #             cur.execute(qry, (tab_bc_fid, "point", tab_bc_fid))
         self.con.commit()
 
     def create_user_bc(self):
         try:
             self.disable_geom_triggers()
             remove_features(self.user_bc_lyr)
-
             remove_features(self.user_bc_lines_lyr)
             remove_features(self.user_bc_polygons_lyr)
 
@@ -230,14 +228,13 @@ class SchemaBCConverter(SchemaConverter):
                 new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
                 new_features.append(new_feat)
                 bc_updates.append((feat["type"], feat["fid"], feat["tab_bc_fid"]))
-            #             bc_updates.append((new_feat['type'], new_feat['fid'], new_feat['tab_bc_fid']))
             self.user_bc_lyr.startEditing()
             self.user_bc_lyr.addFeatures(new_features)
             self.user_bc_lyr.commitChanges()
             self.user_bc_lyr.updateExtents()
             self.user_bc_lyr.triggerRepaint()
             self.user_bc_lyr.removeSelection()
-            self.update_bc_fids(bc_updates)
+            # self.update_bc_fids(bc_updates)
             self.enable_geom_triggers()
         except Exception as e:
             QApplication.restoreOverrideCursor()

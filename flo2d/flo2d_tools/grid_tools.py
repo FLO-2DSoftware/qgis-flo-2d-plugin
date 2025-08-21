@@ -18,7 +18,7 @@ from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
 from PyQt5.QtCore import QVariant
-from qgis._core import QgsField, QgsVectorDataProvider
+from qgis._core import QgsField, QgsVectorDataProvider, QgsMessageLog
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from qgis.core import (
     NULL,
@@ -1748,14 +1748,24 @@ def calculate_arfwrf(grid, areas):
                     was_null = True
                 farf = int(round(1 if f["calc_arf"] == NULL else f["calc_arf"]))
                 fwrf = int(round(1 if f["calc_wrf"] == NULL else f["calc_wrf"]))
+                fcol = int(round(0 if f["collapse"] == NULL else f["collapse"]))
                 inter = fgeom.intersects(geom)
                 if inter is True:
                     areas_intersection = fgeom.intersection(geom)
                     arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
                     centroid = geom.centroid()
                     centroid_wkt = centroid.asWkt()
+                    # Totally Blocked
                     if arf >= 0.9:
-                        yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        if fcol == 1:
+                            yield (centroid_wkt, -feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        else:
+                            yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        continue
+                    # elif arf < 0.1:
+                    #     yield (centroid_wkt, feat.id(), f.id(), 0) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                    #     continue
+                    elif arf == 0:
                         continue
                     else:
                         pass
@@ -1768,7 +1778,11 @@ def calculate_arfwrf(grid, areas):
                         wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
                     else:
                         wrf = empty_wrf
-                    yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
+                    # Partially Blocked
+                    if fcol == 1:
+                        yield (centroid_wkt, feat.id(), f.id(), -arf) + tuple(wrf), was_null
+                    else:
+                        yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
                 else:
                     pass
             i += 1
@@ -2720,6 +2734,40 @@ def adjacent_grids(gutils, currentCell, cell_size):
 
     return n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
 
+def domain_tendency(gutils, grid_lyr, cell, cell_size):
+    cell = int(cell)
+    currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+    xx, yy = currentCell.geometry().centroid().asPoint()
+
+    # North cell:
+    y = yy + cell_size
+    x = xx
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [4, 5, 6]
+
+    # East cell:
+    y = yy
+    x = xx + cell_size
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [6, 7, 8]
+
+    # South cell:
+    y = yy - cell_size
+    x = xx
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [1, 2, 8]
+
+    # West cell:
+    y = yy
+    x = xx - cell_size
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [2, 3, 4]
+
+    return False
 
 def dirID(dir):
     if dir == 1:  # "N"
@@ -2870,6 +2918,96 @@ def cell_elevation(self, x, y):
     return elev
 
 
+def clear_grid_render(grid_layer):
+    """
+    Function to clear the renders
+    """
+    style_path2 = get_file_path("styles", "grid.qml")
+    if os.path.isfile(style_path2):
+        err_msg, res = grid_layer.loadNamedStyle(style_path2)
+        if not res:
+            QApplication.restoreOverrideCursor()
+            msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+            raise Flo2dError(msg)
+    else:
+        QApplication.restoreOverrideCursor()
+        raise Flo2dError("Unable to load style {}".format(style_path2))
+    prj = QgsProject.instance()
+    prj.layerTreeRoot().findLayer(grid_layer.id()).setItemVisibilityCheckedParentRecursive(True)
+
+
+def render_grid_subdomains(grid_layer, render, unique_subdomains):
+    if render:
+        try:
+            # Generate distinct random colors for each subdomain
+            colors = _generate_colors(len(unique_subdomains))
+            subdomain_colors = dict(zip(unique_subdomains, colors))
+
+            # Create a list of QGIS ranges for the renderer
+            myRangeList = []
+            for subdomain_id, color in subdomain_colors.items():
+                symbol = QgsSymbol.defaultSymbol(grid_layer.geometryType())
+                symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+                symbol.setColor(QColor(color))
+                try:
+                    symbol.setSize(1)  # Symbol size here
+                except:
+                    pass
+
+                # Define range specific to this subdomain
+                myRange = QgsRendererRange(
+                    float(subdomain_id),
+                    float(subdomain_id),
+                    symbol,
+                    f"{subdomain_id}"
+                )
+                myRangeList.append(myRange)
+
+            # Apply graduated symbol renderer with field "subdomain"
+            myRenderer = QgsGraduatedSymbolRenderer("domain_fid", myRangeList)
+            grid_layer.setRenderer(myRenderer)
+            grid_layer.triggerRepaint()
+
+            # Ensure layer visibility in the QGIS TOC
+            prj = QgsProject.instance()
+            prj.layerTreeRoot().findLayer(grid_layer.id()).setItemVisibilityCheckedParentRecursive(True)
+        except Exception as e:
+            raise Flo2dError("Error while rendering subdomains: {}".format(e))
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_layer.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))
+        prj = QgsProject.instance()
+        prj.layerTreeRoot().findLayer(grid_layer.id()).setItemVisibilityCheckedParentRecursive(True)
+
+
+def _generate_colors(n):
+    """
+    Generate `n` distinct random colors for subdomains.
+
+    Args:
+        n (int): Number of colors to generate.
+    Returns:
+        list: List of hex color strings.
+    """
+    import random
+    return [
+        "#{:02X}{:02X}{:02X}".format(
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255)
+        )
+        for _ in range(n)
+    ]
+
+
 def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
     if show_nodata:
         colors = [
@@ -2951,6 +3089,169 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
     prj = QgsProject.instance()
     prj.layerTreeRoot().findLayer(elevs_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
 
+
+def render_grid_mannings(grid_lyr, show_nodata, mini, mini2, maxi):
+    if show_nodata:
+        colors = [
+            "#0011FF",
+            "#0061FF",
+            "#00D4FF",
+            "#00FF66",
+            "#00FF00",
+            "#E5FF32",
+            "#FCFC0C",
+            "#FF9F00",
+            "#FF3F00",
+            "#FF0000",
+        ]
+        myRangeList = []
+        if mini == -9999:
+            symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.setColor(QColor(Qt.lightGray))
+            try:
+                symbol.setSize(1)
+            except:
+                pass
+            myRange = QgsRendererRange(-9999, -9999, symbol, "-9999")
+            myRangeList.append(myRange)
+            step = (maxi - mini2) / (len(colors) - 1)
+            low = mini2
+            high = mini2 + step
+        else:
+            step = (maxi - mini) / (len(colors) - 1)
+            low = mini
+            high = mini + step
+
+        for i in range(0, len(colors) - 2):
+            symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.setColor(QColor(colors[i]))
+            try:
+                symbol.setSize(1)
+            except:
+                pass
+            myRange = QgsRendererRange(
+                low,
+                high,
+                symbol,
+                "{0:.2f}".format(low) + " - " + "{0:.2f}".format(high),
+            )
+            myRangeList.append(myRange)
+            low = high
+            high = high + step
+
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+        symbol.setColor(QColor(colors[len(colors) - 1]))
+        try:
+            symbol.setSize(1)
+        except:
+            pass
+
+        myRange = QgsRendererRange(low, maxi, symbol, "{0:.2f}".format(low) + " - " + "{0:.2f}".format(maxi))
+        myRangeList.append(myRange)
+
+        myRenderer = QgsGraduatedSymbolRenderer("n_value", myRangeList)
+
+        grid_lyr.setRenderer(myRenderer)
+        grid_lyr.triggerRepaint()
+
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))
+    prj = QgsProject.instance()
+    prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
+
+
+def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
+    if show_nodata:
+        colors = [
+            "#0011FF",
+            "#0061FF",
+            "#00D4FF",
+            "#00FF66",
+            "#00FF00",
+            "#E5FF32",
+            "#FCFC0C",
+            "#FF9F00",
+            "#FF3F00",
+            "#FF0000",
+        ]
+        myRangeList = []
+        if mini == -9999:
+            symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.setColor(QColor(Qt.lightGray))
+            try:
+                symbol.setSize(1)
+            except:
+                pass
+            myRange = QgsRendererRange(-9999, -9999, symbol, "-9999")
+            myRangeList.append(myRange)
+            step = (maxi - mini2) / (len(colors) - 1)
+            low = mini2
+            high = mini2 + step
+        else:
+            step = (maxi - mini) / (len(colors) - 1)
+            low = mini
+            high = mini + step
+
+        for i in range(0, len(colors) - 2):
+            symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.setColor(QColor(colors[i]))
+            try:
+                symbol.setSize(1)
+            except:
+                pass
+            myRange = QgsRendererRange(
+                low,
+                high,
+                symbol,
+                "{0:.2f}".format(low) + " - " + "{0:.2f}".format(high),
+            )
+            myRangeList.append(myRange)
+            low = high
+            high = high + step
+
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+        symbol.setColor(QColor(colors[len(colors) - 1]))
+        try:
+            symbol.setSize(1)
+        except:
+            pass
+
+        myRange = QgsRendererRange(low, maxi, symbol, "{0:.2f}".format(low) + " - " + "{0:.2f}".format(maxi))
+        myRangeList.append(myRange)
+
+        myRenderer = QgsGraduatedSymbolRenderer(infil_type, myRangeList)
+
+        grid_lyr.setRenderer(myRenderer)
+        grid_lyr.triggerRepaint()
+
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))
+    prj = QgsProject.instance()
+    prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
 
 def find_this_cell(iface, lyrs, uc, gutils, cell, color=Qt.yellow, zoom_in=False, clear_previous=True):
     try:

@@ -460,6 +460,19 @@ CREATE TABLE "out_hydrographs_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('out_hydrographs_cells', 'aspatial');
 
+CREATE TABLE "user_timdep" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_timdep', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_timdep', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_timdep', 'geom');
+
+CREATE TABLE "timdep_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('timdep_cells', 'aspatial');
 
 -- RAIN.DAT
 
@@ -684,6 +697,46 @@ CREATE TABLE "noexchange_chan_cells" (
     "grid_fid" INTEGER -- NOEXCHANGE, channel element number not exchanging flow. Filled in by a geoprocessing trigger
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_cells', 'aspatial');
+
+CREATE TABLE "chan_interior_nodes" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_interior_nodes', 'aspatial');
+
+CREATE TABLE "user_steep_slope_n_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "global" INTEGER DEFAULT 0,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_steep_slope_n_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_steep_slope_n_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_steep_slope_n_areas', 'geom');
+
+CREATE TABLE "steep_slope_n_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "global" INTEGER,
+    "area_fid" INTEGER, -- fid of steep_slope_n_area polygon
+    "grid_fid" INTEGER -- STEEP SLOPE N
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('steep_slope_n_cells', 'aspatial');
+
+CREATE TABLE "user_lid_volume_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "volume" REAL,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_lid_volume_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_lid_volume_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_lid_volume_areas', 'geom');
+
+CREATE TABLE "lid_volume_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "volume" REAL,
+    "area_fid" INTEGER,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('lid_volume_cells', 'aspatial');
 
 --CREATE TRIGGER "find_noexchange_cells_insert"
 --    AFTER INSERT ON "user_noexchange_chan_areas"
@@ -1326,6 +1379,91 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpxsec_cells'
 SELECT gpkgAddGeometryColumn('fpxsec_cells', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('fpxsec_cells', 'geom');
 
+-- MULTIDOMAIN.DAT
+
+CREATE TABLE "mult_domains" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT,
+    "domain_cellsize" INTEGER,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_domains', 'features', 4326);
+SELECT gpkgAddGeometryColumn('mult_domains', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('mult_domains', 'geom');
+SELECT gpkgAddSpatialIndex('mult_domains', 'geom');
+
+CREATE TABLE "user_md_connect_lines" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "up_domain_fid" INTEGER,
+    "down_domain_fid" INTEGER,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_md_connect_lines', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_md_connect_lines', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_md_connect_lines', 'geom');
+SELECT gpkgAddSpatialIndex('user_md_connect_lines', 'geom');
+
+CREATE TABLE "schema_md_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER,
+    "domain_fid" INTEGER,
+    "domain_cell" INTEGER,
+    "down_domain_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('schema_md_cells', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('schema_md_cells', 'geom');
+SELECT gpkgAddSpatialIndex('schema_md_cells', 'geom');
+
+CREATE TABLE "mult_domains_methods" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "subdomain_name" TEXT, -- name of the subdomain
+    "subdomain_path" TEXT, -- name of the subdomain
+    "fid_method" INTEGER -- NULL = was not imported, 1 CADPTS and Ups-Downs
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_domains_methods', 'aspatial');
+
+CREATE TABLE "mult_domains_con" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "subdomain_name" TEXT DEFAULT '', -- name of the subdomain
+    "fid_subdomain_1" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_1" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_1" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_1" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_2" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_2" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_2" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_2" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_3" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_3" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_3" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_3" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_4" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_4" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_4" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_4" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_5" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_5" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_5" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_5" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_6" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_6" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_6" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_6" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_7" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_7" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_7" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_7" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_8" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_8" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_8" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_8" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_9" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_9" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_9" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_9" INTEGER DEFAULT 0 -- ds file of the subdomain connected
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_domains_con', 'aspatial');
 
 -- FPFROUDE.DAT
 
@@ -1341,7 +1479,8 @@ SELECT gpkgAddGeometryTriggers('fpfroude', 'geom');
 CREATE TABLE "fpfroude_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "area_fid" INTEGER, -- fid of area from frfroude table
-    "grid_fid" INTEGER -- grid element fid that has an individual Froude number
+    "grid_fid" INTEGER, -- grid element fid that has an individual Froude number
+    "froudefp" REAL DEFAULT 0.9 -- FROUDEFP, Froude number for grid elements
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'aspatial');
 
@@ -1752,7 +1891,8 @@ SELECT gpkgAddGeometryTriggers('spatialshallow', 'geom');
 CREATE TABLE "spatialshallow_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "area_fid" INTEGER, -- fid of area from spatialshallow table
-    "grid_fid" INTEGER -- grid element fid that has an individual shallow number
+    "grid_fid" INTEGER, -- grid element fid that has an individual shallow number
+    "shallow_n" REAL DEFAULT 0.04 -- shallow_n
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('spatialshallow_cells', 'aspatial');
 
@@ -1837,7 +1977,8 @@ SELECT gpkgAddGeometryTriggers('tolspatial', 'geom');
 CREATE TABLE "tolspatial_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "area_fid" INTEGER, -- fid of a polygon from tolspatial table
-    "grid_fid" INTEGER -- IDUM, fid of grid cell contained in a fpxsection 
+    "grid_fid" INTEGER, -- IDUM, fid of grid cell contained in a fpxsection
+    "tol" REAL DEFAULT 0.01 -- TOL, tolerance for grid cells
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tolspatial_cells', 'aspatial');
 
@@ -2961,6 +3102,21 @@ CREATE TABLE "raincell_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincell_data', 'aspatial');
 
+CREATE TABLE "flo2d_raincell" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "iraindum" INTEGER, -- GRID fid
+    "nxrdgd" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('flo2d_raincell', 'aspatial');
+
+CREATE TABLE "raincellraw" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "nxrdgd" INTEGER,
+    "r_time" REAL,
+    "rrgrid" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincellraw', 'aspatial');
+
 CREATE TABLE "buildings_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "adjustment_factor" REAL
@@ -2993,7 +3149,19 @@ SELECT gpkgAddGeometryColumn('buildings_stats', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('buildings_stats', 'geom');
 SELECT gpkgAddSpatialIndex('buildings_stats', 'geom');
 
+CREATE TABLE "user_building_collapse" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "iarfsmash" INTEGER DEFAULT 2
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_building_collapse', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_building_collapse', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_building_collapse', 'geom');
 
-
-
+CREATE TABLE "building_collapse_cells" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "iarfsmashglobal" INTEGER,
+    "iarfsmash" INTEGER,
+    "ig" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('building_collapse_cells', 'aspatial');
 

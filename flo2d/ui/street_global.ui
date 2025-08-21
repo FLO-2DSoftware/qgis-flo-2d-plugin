@@ -63,6 +63,9 @@
     </item>
     <item row="1" column="0">
      <widget class="QLabel" name="froude_label">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STRFNO&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Maximum street Froude number.&lt;/p&gt;&lt;p&gt;When the computed Froude number for the street flow exceeds STRFNO, the n-value is increased by 0.001 for that grid node.&lt;/p&gt;&lt;p&gt;The increased n-values are reported in the ROUGH.OUT and STREET.RGH files&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>Froude number</string>
       </property>
@@ -70,6 +73,9 @@
     </item>
     <item row="1" column="1">
      <widget class="QDoubleSpinBox" name="global_froude">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STRFNO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="decimals">
        <number>3</number>
       </property>
@@ -83,6 +89,9 @@
     </item>
     <item row="2" column="0">
      <widget class="QLabel" name="n_label">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STRMAN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global n-value for street flow which that is assigned to all the grid element street segments.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 0.25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>N value</string>
       </property>
@@ -90,6 +99,9 @@
     </item>
     <item row="2" column="1">
      <widget class="QDoubleSpinBox" name="global_n">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STRMAN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="decimals">
        <number>3</number>
       </property>
@@ -106,6 +118,9 @@
     </item>
     <item row="3" column="0">
      <widget class="QLabel" name="curb_label">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global street curb height.&lt;/p&gt;&lt;p&gt;If the street curb height is exceeded by the flow it will result in overland flow depth in the grid element containing the street.&lt;/p&gt;&lt;p&gt;DEPX is used to assign a street curb height to all grid elements.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 2.0 ft&lt;/p&gt;&lt;p&gt;0.0 - 0.6 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>Curb height</string>
       </property>
@@ -113,6 +128,9 @@
     </item>
     <item row="3" column="1">
      <widget class="QDoubleSpinBox" name="global_curb">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="decimals">
        <number>2</number>
       </property>
@@ -129,6 +147,9 @@
     </item>
     <item row="4" column="0">
      <widget class="QLabel" name="width_label">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WIDST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global assignment of street width to all streets.&lt;/p&gt;&lt;p&gt;This value is superseded by WIDR(K) when WIDR(K) is greater than zero.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>Street width</string>
       </property>
@@ -136,6 +157,9 @@
     </item>
     <item row="4" column="1">
      <widget class="QDoubleSpinBox" name="global_width">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WIDST&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="decimals">
        <number>2</number>
       </property>
@@ -149,6 +173,9 @@
     </item>
     <item row="5" column="1">
      <widget class="QCheckBox" name="inflow_to_street">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISTRFLO&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISTRFLO = 1 specifies that the floodplain inflow hydrograph will enter the streets rather than entering the overland portion of the grid element.&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>Inflow to street</string>
       </property>

@@ -14,8 +14,12 @@ from itertools import chain, repeat, zip_longest
 from operator import attrgetter
 from typing import Any
 
+import numpy as np
+import pandas as pd
+
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD
+    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD, SEDIMENT, STREET, \
+    MULTIDOMAIN, QGIS
 from ..utils import Msge
 
 try:
@@ -64,6 +68,12 @@ class ParseHDF5:
         return group
 
     @property
+    def qgis_group(self):
+        group_name = "Input/QGIS"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def tol_group(self):
         group_name = "Input/Tolerance"
         group = HDF5Group(group_name)
@@ -72,7 +82,7 @@ class ParseHDF5:
     @property
     def grid_group(self):
         group_name = "Input/Grid"
-        group_datasets = ["GRIDCODE", "MANNING", "COORDINATES", "ELEVATION", "NEIGHBOURS"]
+        group_datasets = ["GRIDCODE", "MANNING", "COORDINATES", "ELEVATION", "NEIGHBORS"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
             group.create_dataset(dataset_name, [])
@@ -143,9 +153,10 @@ class ParseHDF5:
         group_name = "Input/Floodplain"
         group = HDF5Group(group_name)
         return group
+
     @property
     def sed_group(self):
-        group_name = "Input/Sediment"
+        group_name = "Input/Mudflow and Sediment Transport"
         group = HDF5Group(group_name)
         return group
 
@@ -174,6 +185,18 @@ class ParseHDF5:
         return group
 
     @property
+    def street_group(self):
+        group_name = "Input/Street"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
+    def multipledomain_group(self):
+        group_name = "Input/Multiple Domains"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,
@@ -196,7 +219,7 @@ class ParseHDF5:
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
                                 REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE,
-                                MULT, SD]
+                                MULT, SD, SEDIMENT, STREET, MULTIDOMAIN, QGIS]
 
             for attributes_dict in attributes_dicts:
                 if dataset.name in attributes_dict:
@@ -255,20 +278,43 @@ class ParseHDF5:
             return 0
         if not os.path.getsize(self.hdf5_filepath) > 0:
             return 0
-        x_dataset = self.read("X", "Grid")
-        x_data = x_dataset.data
-        first_x = x_data[0]
-        dx_coords = (abs(first_x - x) for x in x_data)
-        try:
-            size = min(dx for dx in dx_coords if dx > 0)
-        except ValueError:
-            y_dataset = self.read("Y", "Grid")
-            y_data = y_dataset.data
-            first_y = y_data[0]
-            dy_coords = (abs(first_y - y) for y in y_data)
-            size = min(dy for dy in dy_coords if dy > 0)
+
+        # Read COORDINATES dataset
+        coordinates_dataset = self.read("COORDINATES", "Input/Grid")
+        coordinates = coordinates_dataset.data
+
+        # Extract x and y coordinates
+        x_coords = coordinates[:, 0]
+        y_coords = coordinates[:, 1]
+
+        # Calculate differences in x-coordinates
+        dx = np.diff(np.sort(np.unique(x_coords)))
+        dx = dx[dx > 0]  # Filter out non-positive differences
+
+        if dx.size > 0:
+            size = np.min(dx)
+        else:
+            # Calculate differences in y-coordinates if no valid dx
+            dy = np.diff(np.sort(np.unique(y_coords)))
+            dy = dy[dy > 0]  # Filter out non-positive differences
+            if dy.size > 0:
+                size = np.min(dy)
+            else:
+                return 0
+
         cell_size += size
         return cell_size
+
+    def list_input_subfolders(self):
+        files_used = ""
+        with h5py.File(self.hdf5_filepath, self.read_mode) as f:
+            input_group = f.get("Input")
+            if input_group is None:
+                return files_used
+            for name in input_group:
+                if isinstance(input_group[name], h5py.Group):
+                    files_used += name + "\n"
+        return files_used
 
 
 class ParseDAT(object):
@@ -292,6 +338,8 @@ class ParseDAT(object):
             "OUTFLOW.DAT": None,
             "RAIN.DAT": None,
             "RAINCELL.DAT": None,
+            "RAINCELLRAW.DAT": None,
+            "FLO2DRAINCELL.DAT": None,
             "INFIL.DAT": None,
             "EVAPOR.DAT": None,
             "CHAN.DAT": None,
@@ -308,6 +356,8 @@ class ParseDAT(object):
             "FPXSEC.DAT": None,
             "BREACH.DAT": None,
             "FPFROUDE.DAT": None,
+            "STEEP_SLOPEN.DAT": None,
+            "LID_VOLUME.DAT": None,
             "SWMM.INP": None,
             "SWMMFLO.DAT": None,
             "SWMMFLORT.DAT": None,
@@ -406,12 +456,36 @@ class ParseDAT(object):
                     yield row
 
     @staticmethod
+    def pandas_single_parser(file1, chunksize=10000):
+        """Parse one large text file line-by-line using pandas in chunks."""
+        f_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
+
+        for chunk in f_iter:
+            for row in chunk.itertuples(index=False, name=None):
+                yield list(row)
+
+    @staticmethod
     def double_parser(file1, file2):
         with open(file1, "r") as f1, open(file2, "r") as f2:
             for line1, line2 in zip(f1, f2):
                 row = line1.split() + line2.split()
                 if row:
                     yield row
+
+    @staticmethod
+    def pandas_double_parser(file1, file2, chunksize=10000):
+        """Parse two large text files line-by-line using pandas in chunks."""
+        # Open both files in chunks
+        f1_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
+        f2_iter = pd.read_csv(file2, sep=r'\s+', header=None, chunksize=chunksize)
+
+        # Iterate over chunks simultaneously
+        for chunk1, chunk2 in zip(f1_iter, f2_iter):
+            # Concatenate the dataframes horizontally
+            combined = pd.concat([chunk1, chunk2], axis=1)
+            # Convert each row to a list and yield
+            for row in combined.itertuples(index=False, name=None):
+                yield list(row)
 
     @staticmethod
     def swmminp_parser(swmminp_file):
@@ -430,6 +504,9 @@ class ParseDAT(object):
         """
         sections = defaultdict(list)
         current_section = None
+
+        if not swmminp_file:
+            return {}
 
         with open(swmminp_file, 'r') as inp_file:
             for line in inp_file:
@@ -459,6 +536,7 @@ class ParseDAT(object):
                 row.insert(index, default)
 
     def parse_cont(self):
+
         results = {}
         cont = self.dat_files["CONT.DAT"]
         with open(cont, "r") as f:
@@ -645,6 +723,21 @@ class ParseDAT(object):
         head.append(" ".join(line1[2:]))
         data = [row for row in par]
         return head, data
+
+    def parse_raincellraw(self):
+        rain = self.dat_files["RAINCELLRAW.DAT"]
+        par = self.single_parser(rain)
+        line1 = next(par)
+        rainintime = line1[0]
+        irinters = line1[1]
+        data = [row for row in par]
+        return rainintime, irinters, data
+
+    def parse_flo2draincell(self):
+        rain = self.dat_files["FLO2DRAINCELL.DAT"]
+        par = self.single_parser(rain)
+        data = [row for row in par]
+        return data
 
     def parse_infil(self):
         infil = self.dat_files["INFIL.DAT"]
@@ -984,6 +1077,18 @@ class ParseDAT(object):
         data = [row[1:] for row in par]
         return data
 
+    def parse_steep_slopen(self):
+        steep_slopen = self.dat_files["STEEP_SLOPEN.DAT"]
+        par = self.single_parser(steep_slopen)
+        data = [row for row in par]
+        return data
+
+    def parse_lid_volume(self):
+        lid_volume = self.dat_files["LID_VOLUME.DAT"]
+        par = self.single_parser(lid_volume)
+        data = [row for row in par]
+        return data
+
     def parse_gutter(self):
         gutter = self.dat_files["GUTTER.DAT"]
         par = self.single_parser(gutter)
@@ -1056,6 +1161,12 @@ class ParseDAT(object):
     def parse_tolspatial(self):
         tolspatial = self.dat_files["TOLSPATIAL.DAT"]
         par = self.single_parser(tolspatial)
+        data = [row for row in par]
+        return data
+
+    def parse_shallowNSpatial(self):
+        shallowNSpatial = self.dat_files["SHALLOWN_SPATIAL.DAT"]
+        par = self.single_parser(shallowNSpatial)
         data = [row for row in par]
         return data
 

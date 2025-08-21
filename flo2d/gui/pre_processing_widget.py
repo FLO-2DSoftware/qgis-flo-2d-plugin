@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import QFileDialog, QApplication
 from PyQt5.QtGui import QDesktopServices
 from qgis._analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 
+from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsRasterLayer, QgsUnitTypes
@@ -27,7 +28,11 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
 
         self.iface = iface
+        self.con = None
+        self.gutils = None
         self.canvas = iface.mapCanvas()
+
+        self.setup_connection()
 
         self.lyrs = lyrs
         self.setupUi(self)
@@ -56,8 +61,10 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         self.remove_dam_btn.clicked.connect(self.remove_dam)
 
+        QgsProject.instance().layersAdded.connect(self.populate_raster_cbo)
+        QgsProject.instance().layerRemoved.connect(self.populate_raster_cbo)
+
         # connections raster converter
-        self.populate_raster_converter_cbo()
         self.populate_units()
         self.raster_converter_cbo.activated.connect(self.populate_units)
         self.convert_raster_btn.clicked.connect(self.convert_raster)
@@ -67,11 +74,13 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         """
         Initial settings after connection to GeoPackage.
         """
-        self.populate_raster_cbo()
-        QgsProject.instance().legendLayersAdded.connect(self.populate_raster_cbo)
-        QgsProject.instance().layersRemoved.connect(self.populate_raster_cbo)
-        QgsProject.instance().legendLayersAdded.connect(self.populate_raster_converter_cbo)
-        QgsProject.instance().layersRemoved.connect(self.populate_raster_converter_cbo)
+
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def select_output_raster(self):
         """
@@ -170,21 +179,19 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         Get loaded rasters into combobox dam removal.
         """
         self.srcRasterCbo.clear()
-        rasters = self.lyrs.list_group_rlayers()
-        for r in rasters:
-            self.srcRasterCbo.addItem(r.name(), r.dataProvider().dataSourceUri())
-
-    def populate_raster_converter_cbo(self):
-        """
-        Get loaded rasters into combobox raster converted.
-        """
         self.raster_converter_cbo.clear()
-        rasters = self.lyrs.list_group_rlayers()
-        for r in rasters:
-            crs = r.crs()
-            unit = QgsUnitTypes.toString(crs.mapUnits())
-            if unit in ['feet', 'meters']:
-                self.raster_converter_cbo.addItem(r.name(), r.dataProvider().dataSourceUri())
+
+        # Retrieve all raster layers in the project
+        rasters = [layer for layer in QgsProject.instance().mapLayers().values() if isinstance(layer, QgsRasterLayer)]
+        if not rasters:
+            return
+        else:
+            for r in rasters:
+                self.srcRasterCbo.addItem(r.name(), r.dataProvider().dataSourceUri())
+                crs = r.crs()
+                unit = QgsUnitTypes.toString(crs.mapUnits())
+                if unit in ['feet', 'meters']:
+                    self.raster_converter_cbo.addItem(r.name(), r.dataProvider().dataSourceUri())
 
         self.populate_units()
 
@@ -476,11 +483,13 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
                                                               'METHOD': 1,
                                                               'OUTPUT_TABLE': 'TEMPORARY_OUTPUT'})
 
-        if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+        # Meters
+        if self.gutils.get_cont_par("METRIC") == "1":
             area_unit = "km²"
             volume_unit = "M m³"
             area_conversion = 1000000
             volume_conversion = 1000000
+        # Feet
         else:
             area_unit = "acres"
             volume_unit = "acre-foot"

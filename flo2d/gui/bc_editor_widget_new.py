@@ -420,9 +420,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         for i, row in enumerate(all_inflows):
             row = [x if x is not None else "" for x in row]
             fid, name, geom_type, ts_fid = row
-            if not geom_type:
-                inflows_skipped += 1
-                continue
             if not name:
                 name = "Inflow {}".format(fid)
             self.inflow_bc_name_cbo.addItem(name, [fid, ts_fid])
@@ -474,7 +471,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.ts_fid = 0
         else:
             self.ts_fid = int(self.ts_fid)
-        self.inflow_tseries_cbo.setCurrentIndex(self.ts_fid)
+        self.populate_inflow_data_cbo()
 
         if self.inflow.ident == "F":
             self.ifc_fplain_radio.setChecked(1)
@@ -497,7 +494,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             feat = next(self.bc_lyr.getFeatures(QgsFeatureRequest(self.inflow.bc_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-        self.populate_inflow_data_cbo()
 
     def populate_inflow_data_cbo(self):
         """
@@ -515,16 +511,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if not ts_name:
                 ts_name = "Time Series {}".format(ts_fid)
             self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
-            # if ts_fid == self.inflow.time_series_fid:
-            #     cur_idx = i
-            #     self.uc.log_info(str(cur_idx))
-        # self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
-        if isinstance(self.inflow.time_series_fid, int):
-            index = self.inflow.time_series_fid - 1
-            self.inflow_tseries_cbo.setCurrentIndex(index)
-        # Sometimes it is an empty string, then set it to the first time series
-        else:
-            self.inflow_tseries_cbo.setCurrentIndex(0)
+        self.uc.log_info(str(self.inflow.time_series_fid))
+        self.inflow_tseries_cbo.setCurrentIndex(int(float(self.inflow.time_series_fid)) - 1)
         self.inflow_data_changed()
 
     def inflow_data_changed(self):
@@ -918,19 +906,22 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 else:
                                     batch_updates.append((time_series_fid, n[1][1], n[1][2], n[0][0]))
 
-                if len(batch_updates[0]) == 4:
-                    self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
-                                         series_fid = ?,
-                                         time = ?,
-                                         value = ?
-                                         WHERE fid = ?""", batch_updates)
-                else:
-                    self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
-                                         series_fid = ?,
-                                         time = ?,
-                                         value = ?,
-                                         value2 = ?,
-                                         WHERE fid = ?""", batch_updates)
+                self.uc.log_info(str(batch_updates))
+
+                if batch_updates:
+                    if len(batch_updates[0]) == 4:
+                        self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
+                                             series_fid = ?,
+                                             time = ?,
+                                             value = ?
+                                             WHERE fid = ?""", batch_updates)
+                    else:
+                        self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
+                                             series_fid = ?,
+                                             time = ?,
+                                             value = ?,
+                                             value2 = ?,
+                                             WHERE fid = ?""", batch_updates)
                 self.gutils.batch_execute(insert_ts_sql, insert_inflow_sql, insert_cells_sql, insert_tsd_sql)
 
                 if len(update_all_schem_sql) > 0:
@@ -1824,11 +1815,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             row = [x if x is not None else "" for x in row]
             fid, name, typ, geom_type = row
             if not geom_type:
-                outflows_skipped += 1
-                continue
+                geom_type = 'point'
             if not name:
                 name = "Outflow {}".format(fid)
-            self.outflow_bc_name_cbo.addItem(name, [fid, typ, geom_type])
+            self.outflow_bc_name_cbo.addItem(name, [fid, int(typ), geom_type])
             if fid == outflow_fid:
                 cur_out_idx = i - outflows_skipped
 
@@ -1844,7 +1834,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow.get_row()
 
         if not self.outflow.geom_type:
-            return
+            self.outflow.geom_type = "point"
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.outflow.hydro_out:
@@ -1929,7 +1919,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         else:
             self.type_fid = int(self.outflow.typ)
         if not self.outflow.geom_type:
-            return
+            self.outflow.geom_type = "point"
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.outflow_bc_center_btn.isChecked():

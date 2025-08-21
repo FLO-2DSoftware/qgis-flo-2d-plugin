@@ -303,6 +303,26 @@
       </widget>
      </item>
      <item row="2" column="2">
+      <widget class="QToolButton" name="steep_slopen_btn">
+       <property name="toolTip">
+        <string>Sampling spatial steep slope-n values</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_steep_slopen.svg</normaloff>../img/sample_steep_slopen.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="4">
       <widget class="QToolButton" name="help_btn">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -322,6 +342,26 @@
        <property name="icon">
         <iconset>
          <normaloff>../img/help.svg</normaloff>../img/help.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QToolButton" name="lid_volume_btn">
+       <property name="toolTip">
+        <string>Sampling LID volume values</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_lid_volume.svg</normaloff>../img/sample_lid_volume.svg</iconset>
        </property>
        <property name="iconSize">
         <size>

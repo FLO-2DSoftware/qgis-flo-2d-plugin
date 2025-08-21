@@ -96,7 +96,7 @@
         <x>0</x>
         <y>0</y>
         <width>952</width>
-        <height>528</height>
+        <height>527</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -200,7 +200,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;INFIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up the infiltration data before turning this switch on.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;INFIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;INFIL = 1 initiates an infiltration subroutine using the Green-Ampt infiltration model for either channel or over land infiltration.&lt;/p&gt;&lt;p&gt;The INFIL.DAT file must be created.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Infiltration</string>
@@ -216,7 +216,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAIN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This switch is default ON. But it won't produce any rainfall data in RAIN.DAT unless the rainfall is created in the project.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAIN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IRAIN = 1 to simulate rain on the grid system.&lt;/p&gt;&lt;p&gt;The RAIN.DAT file must be created.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="layoutDirection">
                           <enum>Qt::LeftToRight</enum>
@@ -238,7 +238,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IMODFLOW&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up the modflow data before using this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IMODFLOW&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IMODFLOW = 1 to simulate surface-groundwater exchange.&lt;/p&gt;&lt;p&gt;This switch initiated the linked MODFLOW groundwater model a during the FLO-2D simulation.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>MODFLO-2D Modelling</string>
@@ -254,7 +254,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IEVAP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up evaporation data before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IEVAP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IEVAP = 1 if simulating free water surface evaporation from overland or channel flow.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Evaporation</string>
@@ -270,7 +270,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SWMM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up the storm drain model before turning this switch on.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SWMM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SWMM = 1 initiates the FLO-2D storm drain model.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Storm Drain</string>
@@ -289,7 +289,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Volume Rating Table&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This checkbox is not an on off switch.  It is simply a switch so that QGIS knows to export the OUTRC.DAT file.  &lt;/p&gt;&lt;p&gt;This tool is disabled until the final revision and testing for that processor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Volume Rating Table&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This checkbox is not an on off switch.&lt;/p&gt;&lt;p&gt;It is simply a switch so that QGIS knows to export the OUTRC.DAT file. &lt;/p&gt;&lt;p&gt;This tool is disabled until the final revision and testing for that processor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Volume Rating Tables</string>
@@ -305,7 +305,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MUD and ISED&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This menu interacts with two switches in cont.dat.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 clear water.&lt;/p&gt;&lt;p&gt;MUD = 1 and ISED = 0 for Hyperconcentrated flow routine.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 for Sediment transport flow routine.&lt;/p&gt;&lt;p&gt;MUD = 2 and ISED = 0 for Two phase flow routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MUD and ISED&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This menu interacts with two switches in cont.dat.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 clear water.&lt;/p&gt;&lt;p&gt;MUD = 1 and ISED = 0 for Hyperconcentrated flow routine.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 for Sediment transport flow routine.&lt;/p&gt;&lt;p&gt;MUD = 2 and ISED = 0 for Two phase flow routine.&lt;/p&gt;&lt;p&gt;MUD&lt;/p&gt;&lt;p&gt;Set MUD = 0 for clear water and MUD = 1 for hyper concentrated sediment flow. If MUD = 1 the sediment load (volume or concentration by volume) for either the floodplain hydrograph HP(I,J,3) or the channel hydrograph H(I,J,3) must be assigned to each inflow hydrograph pair (comments 1 and 3). The SED.DAT file must be created.&lt;/p&gt;&lt;p&gt;ISED&lt;/p&gt;&lt;p&gt;If ISED = 1, the sediment transport routine will be used. The SED.DAT file must be created.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mud/Debris/Sediment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -404,7 +404,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICHANNEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Build 1D channel data before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICHANNEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;If ICHANNEL = 1, the channel component will be used and the CHAN.DAT must be created.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Main Channel</string>
@@ -420,7 +420,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MSTREET&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up streets using the 1D street tool before turning on this switch.&lt;/p&gt;&lt;p&gt;Note: 1D streets are not as commonly modeled now that urban models use grid element sizes around 20 ft wide.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MSTREET&lt;/span&gt;&lt;/p&gt;&lt;p&gt;MSTREET = 1 to initiate the street flow component.&lt;/p&gt;&lt;p&gt;The STREET.DAT file must be created.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Streets</string>
@@ -436,7 +436,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IWRFS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up Blocked areas and calculate ARFs and WRFs before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IWRFS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IWRFS = 1 specifies that area and width reduction factors (ARFs and WRFs) will be assigned in the ARF.DAT file.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Area Reduction Factors (ARF)</string>
@@ -452,7 +452,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IMULTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up multiple channel rill and gulley data before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IMULTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IMULTC = 1 to simulate multiple channel (rill and gully flow) rather than overland sheet flow between multiple chan nel elements.&lt;/p&gt;&lt;p&gt;The MULT.DAT file must be created.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Multiple Channels (Rills and Guillies)</string>
@@ -468,7 +468,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVEE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up levees, dams, walls or berms using the Levee Tool before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVEE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set LEVEE = 1 to simulate levees.&lt;/p&gt;&lt;p&gt;The LEVEE.DAT file must be created.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Levees</string>
@@ -519,7 +519,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IHYDRSTRUCT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set this switch after creating hydraulic structure data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IHYDRSTRUCT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IHYDRSTRUCT = 1 to simulate hydraulic structures either on the floodplain or in the channel.&lt;/p&gt;&lt;p&gt;The HYSTRUC. DAT file must be created.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Hydraulic Structures</string>
@@ -535,7 +535,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IDEBRV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IDEBRV = 1 if a debris basin volume should be filled before routing the flow hydrograph.&lt;/p&gt;&lt;p&gt;Debris basin volume is set in SED.DAT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IDEBRV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IDEBRV = 1 if a debris basin volume should be filled before routing the flow hydrograph.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Debris Basin</string>
@@ -551,7 +551,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IFLOODWAY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IFLOODWAY = 1, a floodway analysis will be performed in the subsequent FLO-2D simulation. An initial FLO-2D flood simulation must be completed prior to a floodway simulation.  Set this switch along with ENCROACH in cont.dat.  &lt;/p&gt;&lt;p&gt;IFLOODWAY = 2, a base flow analysis where DEPFP.OUT from a previous simulation is used to set a base flow limit.  Run again to see a time to value greater than the depth in DEPFP.OUT.  Results reported in BASE_FLOW_TIME.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IFLOODWAY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;If FLOODWAY =1, a floodway analysis will be performed in the subsequent FLO-2D simulation.&lt;/p&gt;&lt;p&gt;An initial FLO-2D flood simulation must be completed prior to a floodway simulation.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Floodway Analysis</string>
@@ -681,7 +681,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STARTIMTEP&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;Start time for the time series output data (hours). Set this value to any time 0 to ENDTIMTEP. It should represent the delayed start of time dependant data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STARTIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Start time for the time series output data.&lt;/p&gt;&lt;p&gt;Set this value to any time 0 to ENDTIMTEP. &lt;/p&gt;&lt;p&gt;It should represent the delayed start of time dependant data.&lt;/p&gt;&lt;p&gt;Range: 0 -  ENDTIM TEP &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Start Time</string>
@@ -712,7 +712,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ENDTIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;The end time for the delayed time series output data (hours). Should be greater than STARTTIMTEP and up to SIMUL.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ENDTIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The end time for the delayed time series output data.&lt;/p&gt;&lt;p&gt;Should be greater than STARTTIMTEP and up to SIMUL. &lt;/p&gt;&lt;p&gt;To shorten the timeseries output, set the value to a lower time limit than SIMUL.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>End Time</string>
@@ -775,7 +775,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;Output interval (hrs) that the flow depth, resolved velocity, x-velocity, y-velocity and water surface elevation datasets are reported to the TIMDEP output files for a post-simulation flood animation. TIMTEP should be a multiple of TOUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TIMTEP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.000000000000000</double>
@@ -807,6 +807,9 @@
                         <width>16777215</width>
                         <height>16777215</height>
                        </size>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Output interval (hrs) that the flow depth, resolved velocity, x-velocity, y-velocity and water surface elevation datasets are reported to the TIMDEP.OUT file for a post-simulation flood animation.&lt;/p&gt;&lt;p&gt;TIMTEP should be a multiple of TOUT.&lt;/p&gt;&lt;p&gt;The switch ITIMTEP is required.&lt;/p&gt;&lt;p&gt;Range: 0 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Output Interval (hrs)</string>
@@ -842,6 +845,9 @@
                         <height>0</height>
                        </size>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No time series output is written.&lt;/p&gt;&lt;p&gt;1 = TIMDEP.OUT and TIMDEP_NC4.out are written.&lt;/p&gt;&lt;p&gt;2 = TIMDEP.HDF5 files is written.&lt;/p&gt;&lt;p&gt;3 = TIMDEPNC.HDF5 file is written.&lt;/p&gt;&lt;p&gt;4 = All time series output is written.&lt;/p&gt;&lt;p&gt;5 = Extract a time series for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;p&gt;11 = TIMDEP.OUT and TIMDEP_NC4.OUT are written for the time interval.&lt;/p&gt;&lt;p&gt;21 = TIMDEP.HDF5 files is written for the time interval.&lt;/p&gt;&lt;p&gt;31 = TIMDEPNC.HDF5 file is written for the time interval.&lt;/p&gt;&lt;p&gt;41 = All time series output is written for the time interval.&lt;/p&gt;&lt;p&gt;51 = Extract a time series during the time interval for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1, 2, 3, 4, 5, and 6 = on&lt;/p&gt;&lt;p&gt;11, 21, 31, 41, 51 = on for an interval&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Time Series Output</string>
                       </property>
@@ -871,7 +877,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No time series output is written.&lt;/p&gt;&lt;p&gt;1 = TIMDEP.OUT and TIMDEP_NC4.out are written.&lt;/p&gt;&lt;p&gt;2 = TIMDEP.HDF5 files is written.&lt;/p&gt;&lt;p&gt;3 = TIMDEPNC.HDF5 file is written.&lt;/p&gt;&lt;p&gt;4 = All time series output is written.&lt;/p&gt;&lt;p&gt;5 = Extract a time series for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ITIMTEP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <item>
                        <property name="text">
@@ -952,7 +958,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FROUDL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 to 5&lt;/p&gt;&lt;p&gt;Limiting Froude number for overland flow. When FROUDL is exceeded, the floodplain n-value is increased by 0.001 for that grid element for the next timestep.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FROUDL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Limiting Froude number for overland flow.&lt;/p&gt;&lt;p&gt;When FROUDL is exceeded, the floodplain n-value is increased by 0.001 for that grid element for the next timestep. &lt;/p&gt;&lt;p&gt;The increased n-values are reported in the ROUGH.OUT and FPLAIN.RGH files.&lt;/p&gt;&lt;p&gt;Range: 0 - 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Floodplain Limiting Froude No.</string>
@@ -980,7 +986,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>FROUDL</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="maximum">
                        <double>5.000000000000000</double>
@@ -996,7 +1002,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SHALLOWN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;&amp;gt; 0 = n value replacemnt for shallow depth.&lt;/p&gt;&lt;p&gt;Flow roughness n-value for shallow overland flow (flow depth &amp;lt; 0.2 ft or 0.06 m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SHALLOWN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Flow roughness n-value for shallow overland flow (flow depth &amp;lt; 0.2 ft or 0.06m). &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;0.1 - 0.99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Shallow Flow n-value</string>
@@ -1018,7 +1024,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>DEPTHDUR</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPTHDUR&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.010000000000000</double>
@@ -1040,7 +1046,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AMANN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Increments the floodplain Manning’s n roughness coefficient at runtime.&lt;/p&gt;&lt;p&gt;AMANN = 0, n = n&lt;/p&gt;&lt;p&gt;ABS(AMANN) &amp;lt; 1, n = n + AMANN (positive or negative)&lt;/p&gt;&lt;p&gt;AMANN &amp;gt; 1, n = n * AMANN (positive)&lt;/p&gt;&lt;p&gt;AMANN &amp;lt; -1, n = n * (1 + AMANN) where AMANN is negative&lt;/p&gt;&lt;p&gt;After AMANN is applied, the shallow n is applied.&lt;/p&gt;&lt;p&gt;AMANN = -99 no depth integrate n-value adjustment and no adjustment for exceeding Courant number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AMANN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Increments the floodplain Manning’s n roughness coefficient at runtime.&lt;/p&gt;&lt;p&gt;AMANN = 0, n = n.&lt;/p&gt;&lt;p&gt;ABS(AMANN) &amp;lt; 1, n = n + AMANN (positive or negative).&lt;/p&gt;&lt;p&gt;AMANN &amp;gt; 1, n = n * AMANN (positive).&lt;/p&gt;&lt;p&gt;AMANN &amp;lt; -1, n = n * (1 + AMANN) where AMANN is negative.&lt;/p&gt;&lt;p&gt;After AMANN is applied, the shallow n is applied..&lt;/p&gt;&lt;p&gt;AMANN = -99 no depth integrated n-value adjustment and no adjustment for exceeding Courant number.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0&lt;/p&gt;&lt;p&gt;-1 - 1&lt;/p&gt;&lt;p&gt;-99 &amp;gt; 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>n-value Adjustment</string>
@@ -1062,7 +1068,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>AMANN</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;AMANN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>-99.000000000000000</double>
@@ -1087,7 +1093,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XCONC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Volumetric concentration to bulk the inflow discharge hydrograph (channel or floodplain). &lt;/p&gt;&lt;p&gt;XCONC = 0 for clear water.&lt;/p&gt;&lt;p&gt;XCONC = 0.20 for a concentration of 20% by volume. &lt;/p&gt;&lt;p&gt;XCONC = 0.5 and MUD = 2 for Global Mudflow Tailings Concentration for Tailings Dam failure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XCONC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Volumetric concentration to bulk the inflow discharge hydrograph (channel or floodplain).&lt;/p&gt;&lt;p&gt;For example, set XCONC = 0.20 for a concentration of 20% by volume.&lt;/p&gt;&lt;p&gt;This will account for sediment bulking without initiating the hyper concentrated sediment transport routine.&lt;/p&gt;&lt;p&gt;If simulating clear water flooding, set XCONC = 0. If MUD = 2, XCONC is the global mudflow or tailings sediment concentration by volume. &lt;/p&gt;&lt;p&gt;Range: 0 - 0.60&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Bulking Concentration</string>
@@ -1112,7 +1118,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>SHALLOWN</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SHALLOWN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="maximum">
                        <double>0.400000000000000</double>
@@ -1134,7 +1140,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTHDUR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m) &lt;/p&gt;&lt;p&gt;Depth duration analysis. When a flow depth greater than DEPTHDUR is computed, the time duration of inundation for that grid element is tracked and reported in the DEPTHDUR.OUT file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTHDUR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m) &lt;/p&gt;&lt;p&gt;Flow depth for a depth-duration analysis.&lt;/p&gt;&lt;p&gt;When a f low depth greater than DEPTHDUR is computed, the time duration of inundation for that grid element is tracked and reported in the DEPTHDUR.OUT file &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 100 ft&lt;/p&gt;&lt;p&gt;0.003 - 30 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Flow Depth for Depth Duration Analysis</string>
@@ -1156,7 +1162,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>XCONC</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XCONC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="maximum">
                        <double>0.500000000000000</double>
@@ -1172,7 +1178,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ENCROACH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The floodway encroachment increase in flow depth (ft or m).&lt;/p&gt;&lt;p&gt;The IFLOODWAY switch must be set to 1 and a previous FLO-2D simulation must be completed for the project to generate the maximum water surface elevations.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ENCROACH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The floodway encroachment increase in flow depth.&lt;/p&gt;&lt;p&gt;The IFLOODWAY switch must be set to 1 and a previous FLO-2D simulation must be completed for the project to generate the maximum water surface elevations.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 10 ft&lt;/p&gt;&lt;p&gt;0 - 3 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Encroachment Depth</string>
@@ -1200,7 +1206,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>ENCROACH</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ENCROACH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="maximum">
                        <double>10.000000000000000</double>
@@ -1216,7 +1222,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XARF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global area reduction factor applied to all grid elements. &lt;/p&gt;&lt;p&gt;A typical value for XARF of 0.10 indicates that 10% of each grid element surface is not available.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XARF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global area reduction factor applied to all grid elements.&lt;/p&gt;&lt;p&gt;This factor reduces the grid element surface area available for flood volume storage.&lt;/p&gt;&lt;p&gt;XARF can be used to account irregu lar surface topography, dense vegetation or other features.&lt;/p&gt;&lt;p&gt;A typical value for XARF of 0.10 indicates that 10% of each grid element surface is not avail able for flood storage.&lt;/p&gt;&lt;p&gt;The XARF value is overridden by the ARF variable specified for the individual grid elements in the ARF.DAT file.&lt;/p&gt;&lt;p&gt;Assign XARF = 0. to flood the entire surface area of the grid elements&lt;/p&gt;&lt;p&gt;Range: 0. - 1.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Area Reduction Factor</string>
@@ -1235,7 +1241,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>XARF</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XARF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="decimals">
                        <number>2</number>
@@ -1257,7 +1263,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFBLOCKMOD&lt;/span&gt; (ARF.DAT)&lt;/p&gt;&lt;p&gt;Setting IARFBLOCKMOD = 0.9 will change the ARF = 1. to ARF = 0.9 for all the totally blocked elements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFBLOCKMOD&lt;/span&gt; (ARF.DAT)&lt;/p&gt;&lt;p&gt;Global revision to the ARF = 1 value to the grid elements that are total blocked from receiving any flow (ITTAWF elements).&lt;/p&gt;&lt;p&gt;Setting IARFBLOCKMOD = 0.9 will change the ARF = 1. to ARF = 0.9 for all the ITTAWF elements &lt;/p&gt;&lt;p&gt;Range: 0. - 1.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Global ARF = 1 Revision</string>
@@ -1282,7 +1288,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>IARFBLOCKMOD</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ARFBLOCKMOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="decimals">
                        <number>2</number>
@@ -1348,7 +1354,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGPLOT&lt;/span&gt; = 0, TEXT Mode will display screen scrolling text during the run that includes the simulation time, minimum timestep and volume conservation.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGPLOT&lt;/span&gt; = 1, BATCH Mode will display nothing. Use this switch position with BATCH runs or to run silently.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGPLOT&lt;/span&gt; = 2, GRAPHIC Mode displays the floodwave progression over the grid system (flow depth) and inflow hydrograph.&lt;/p&gt;&lt;p&gt;If there are more than 200k elments, Graphic mode is disabled.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGPLOT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;LGPLOT = 0, TEXT Mode will display screen scrolling text during the run that includes the simulation time, minimum timestep and volume conservation.&lt;/p&gt;&lt;p&gt;LGPLOT = 1, BATCH Mode will display nothing. Use this switch position with BATCH runs or to run silently.&lt;/p&gt;&lt;p&gt;LGPLOT = 2, GRAPHIC Mode displays the floodwave progression over the grid system (flow depth) and inflow hydrograph.&lt;/p&gt;&lt;p&gt;If there are more than 200k elments, Graphic mode is disabled.&lt;/p&gt;&lt;p&gt;Range: 0 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Graphics Display</string>
@@ -1382,7 +1388,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>METRIC</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;METRIC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <item>
                        <property name="text">
@@ -1417,7 +1423,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOUT &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Output interval (hrs) that hydraulic data is reported to the various output files *.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOUT &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Output interval that hydraulic data is reported to the various output files *.OUT.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 24.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Output Interval (hrs)</string>
@@ -1451,7 +1457,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SIMUL &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Total simulation time (hrs).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SIMUL &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Total simulation time.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Simulation Time (hrs)</string>
@@ -1485,7 +1491,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>SIMUL</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SIMUL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="whatsThis">
                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Simulation Time in hours&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1516,7 +1522,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRAPTIM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;If Display Mode is TEXT or BATCH, this variable is not needed.&lt;/p&gt;&lt;p&gt;If Display Mode is GRAPHIC, this is the update interval of the display.&lt;/p&gt;&lt;p&gt;If project grid count exceeds 200k, GRAPTIM will not be used.&lt;/p&gt;&lt;p&gt;Note: Regardless of the project size, this display method will slow simulation time significantly. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRAPTIM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Time interval that the graphics display is updated (e.g. set GRAPTIM = 0.02 for a frequent update).&lt;/p&gt;&lt;p&gt;GRAPHTIM is required when LGPLOT = 2.&lt;/p&gt;&lt;p&gt;This variable will not affect the file output data time interval (TOUT).&lt;/p&gt;&lt;p&gt;The graphics mode is limited to a 48-day inflow hydrograph.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 10.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Update Time Interval (hrs)</string>
@@ -1550,7 +1556,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;METRIC&lt;/span&gt; = 0 for english units.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;METRIC&lt;/span&gt; = 1 for metric units.&lt;/p&gt;&lt;p&gt;See Table 2.1 in the Data Input Manual to review the units used by FLO-2D.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;METRIC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;METRIC = 0 for english units.&lt;/p&gt;&lt;p&gt;METRIC = 1 for metric units.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Units</string>
@@ -1584,7 +1590,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>LGPLOT</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LGPLOT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <item>
                        <property name="text">
@@ -1624,7 +1630,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>GRAPTIM</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRAPTIM&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.010000000000000</double>
@@ -1658,7 +1664,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>TOUT</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TOUT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="whatsThis">
                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Output interval (hrs) that hydraulic data is reported to the various output files *.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1690,7 +1696,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBACKUP = 0 Off.&lt;/p&gt;&lt;p&gt;IBACKUP = 1 creates a backup file of all the data files with a *.BAC extension for data error troubleshooting. It also enables the model to be resumed following termination from the last output interval. &lt;/p&gt;&lt;p&gt;IBACKUP = 2 enables elevation changes for outflow nodes made at runtime to be permanently written to the FPLAIN.RGH file. &lt;/p&gt;&lt;p&gt;(see comment 10 Data Input Manual).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBACKUP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IBACKUP = 1 creates a backup file of all the data files with a *.BAC extension for data error troubleshooting.&lt;/p&gt;&lt;p&gt;It also enables the model to be resumed following termination from the last output interval.&lt;/p&gt;&lt;p&gt;IBACKUP = 2 enables elevation changes for outflow nodes made at runtime to be permanently written to the FPLAIN.RGH file.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on 2&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="layoutDirection">
                        <enum>Qt::LeftToRight</enum>
@@ -1746,7 +1752,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPRESSDEPTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.000000000000000</double>
@@ -1768,7 +1774,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTC&lt;/span&gt; = 0, the BASE.OUT channel data is reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTC&lt;/span&gt; = 1, the BASE.OUT channel outflow data is not reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTC&lt;/span&gt; = 2, the BASE.OUT file is not reported.&lt;/p&gt;&lt;p&gt;Default = 2 because the BASE.OUT file slows the computation time significantly.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;NOPRTC = 0, the BASE.OUT channel data is reported.&lt;/p&gt;&lt;p&gt;NOPRTC = 1, the BASE.OUT channel outflow data is not reported.&lt;/p&gt;&lt;p&gt;NOPRTC = 2, the BASE.OUT file is not reported.&lt;/p&gt;&lt;p&gt;Range: 0 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Channel Display</string>
@@ -1787,7 +1793,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPRESSDEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;This variable has two purposes.&lt;/p&gt;&lt;p&gt;1. Identifies depressed grid elements that are lower than all contiguous nodes. Depressed elements may be real, but in most cases isolated depressed elements are a result of poor topographic data. They can cause instability or artificially high velocities.&lt;/p&gt;&lt;p&gt;2. Identifies low levee crest elevations. A typical value of 1 to 3 ft.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPRESSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft)&lt;/p&gt;&lt;p&gt;The DEPRESSDEPTH variable has two functions:&lt;/p&gt;&lt;p&gt;1. DEPRESSDEPTH identifies depressed grid elements that are lower than all contiguous nodes. A value of DEPRESSDEPTH = 3.0 ft is suggested. Depressed elements may be real, but in most cases isolated depressed elements are a result of poor topographic data.&lt;/p&gt;&lt;p&gt;2. Identifies low levee crst elevations. A typical value of DEPRESSDEPTH 3.0 (default value if zero).&lt;/p&gt;&lt;p&gt;DEPRESSDEPTH = 0.0 to 10.0 ft; Identifies the wall with a crest elevation lower than DEPRESSDEPTH in LOW_LEVEE_CREST_ELEVATIONS.OUT file.&lt;/p&gt;&lt;p&gt;DEPRESSDEPTH = -1.0 to - 10.0 ft; Assesses the side of the wall where the crest elevation is assigned to determine if the levee height is lower than the DEPRESSDEPTH value.&lt;/p&gt;&lt;p&gt;DEPRESSDEPTH = -101.0 to -110.0 ft; Assesses both sides of the wall to determine if the height is lower than DEPRESSDEPTH (1 ft to 10 ft).&lt;/p&gt;&lt;p&gt;If DEPRESSDEPTH is negative, LEVEE.BAC file is written as a backup file omitting the low levees that can be renamed as LEVEE.DAT.&lt;/p&gt;&lt;p&gt;Range: -110.0 to 10.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Depress Depth</string>
@@ -1818,7 +1824,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOPRTFP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="currentIndex">
                        <number>2</number>
@@ -1854,7 +1860,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 0, the BASE.OUT floodplain flow data is reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 1, the BASE.OUT floodplain outflow data is not reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 2, BASE.OUT is not written. This reduces the time for writing model output.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 3, only floodplain outflow data is reported to the BASE.OUT file.&lt;/p&gt;&lt;p&gt;Default = 2.&lt;/p&gt;&lt;p&gt;BASE.OUT output data can increase the total runtime because it can report data on the timestep interval rather than the output interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;If NOPRTFP = 0, the BASE.OUT floodplain flow data is reported.&lt;/p&gt;&lt;p&gt;If NOPRTFP = 1, the BASE.OUT floodplain outflow data is not reported.&lt;/p&gt;&lt;p&gt;If NOPRTFP = 2, BASE.OUT is not written. This reduces the time for writing model output.&lt;/p&gt;&lt;p&gt;If NOPRTFP = 3, only floodplain outflow data is reported to the BASE.OUT file.&lt;/p&gt;&lt;p&gt;Range: 0 - 3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Floodplain Display</string>
@@ -1885,7 +1891,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOPRTC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="currentIndex">
                        <number>2</number>
@@ -1966,7 +1972,7 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>COURANTST</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COURANTST&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="maximum">
                      <double>1.000000000000000</double>
@@ -1986,6 +1992,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for streets.&lt;/p&gt;&lt;p&gt;Numerical stability parameter that relates the floodwave movement in streets to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Street Courant</string>
@@ -2010,7 +2019,7 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>COURANTC</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COURANTC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="maximum">
                      <double>1.000000000000000</double>
@@ -2030,6 +2039,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for channels.&lt;/p&gt;&lt;p&gt;Courant-Friedrich-Lewy numerical stability parameter that relates the floodwave movement in channels to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Channel Courant</string>
@@ -2054,7 +2066,7 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>COURANTFP</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COURANTFP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="maximum">
                      <double>1.000000000000000</double>
@@ -2075,6 +2087,9 @@
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for floodplain.&lt;/p&gt;&lt;p&gt;Numerical stability parameter that relates the floodwave movement for overland flow to the discretized model in space and time. &lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
                     </property>
@@ -2093,6 +2108,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TIME_ACCEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient to increase the rate of incremental timestep change.&lt;/p&gt;&lt;p&gt;Default value = 0.1.&lt;/p&gt;&lt;p&gt;A value of 0.1 may result in a a more stable simulation time.&lt;/p&gt;&lt;p&gt;A value of 0.2 or higher may result in a faster simulation.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Change Acelerator Rate</string>
@@ -2115,6 +2133,9 @@
                       <width>0</width>
                       <height>0</height>
                      </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TIME_ACCEL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="maximum">
                      <double>1.000000000000000</double>
@@ -2174,7 +2195,7 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>DEPTOL</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPTOL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                    </widget>
                   </item>
@@ -2185,6 +2206,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOLGLOBAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Surface detention.&lt;/p&gt;&lt;p&gt;TOLGLOBAL is a minimum value of the flow depth for flood routing.&lt;/p&gt;&lt;p&gt;A typical value river flooding is 0.10 ft. &lt;/p&gt;&lt;p&gt;Use a small value for rainfall runoff.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.004 - 0.5 ft&lt;/p&gt;&lt;p&gt;0.0012 - 0.03 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
@@ -2212,7 +2236,7 @@
                      </size>
                     </property>
                     <property name="toolTip">
-                     <string>TOLGLOBAL</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TOLGLOBAL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="decimals">
                      <number>4</number>
@@ -2235,6 +2259,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTOL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tolerance value for the percent change in the flow depth for a given timestep.&lt;/p&gt;&lt;p&gt;When a given element DEPTOL is exceeded, the timestep will be reduced.&lt;/p&gt;&lt;p&gt;If DEPTOL = 0, then the timestep is governed by the Courant numerical stability criteria.&lt;/p&gt;&lt;p&gt;It is recommended that DEPTOL only be used for specific ponded flow conditions where the Courant number is ineffective.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.1 - 0.5 ft&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Google Sans'; font-size:13px; color:#1f1f1f; background-color:#ffffff;&quot;&gt;0.03048 - 0.1524 m&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>

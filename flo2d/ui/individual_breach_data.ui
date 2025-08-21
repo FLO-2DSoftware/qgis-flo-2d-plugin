@@ -45,6 +45,9 @@
            <layout class="QGridLayout" name="gridLayout_4">
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="uws_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UWS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -58,6 +61,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="pors_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PORS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -71,6 +77,9 @@
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="d50s_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -85,8 +94,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="label_22">
               <property name="toolTip">
-               <string>Porosity of the levee or dam shell material for an prescribed grid element
-failure location.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PORS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Porosity of the levee or dam shell material for an prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range: 0.35 - 0.45&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Porosity</string>
@@ -98,6 +106,9 @@ failure location.</string>
             </item>
             <item row="0" column="3">
              <widget class="QDoubleSpinBox" name="afrs_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UWS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -112,8 +123,7 @@ failure location.</string>
             <item row="2" column="0">
              <widget class="QLabel" name="label_23">
               <property name="toolTip">
-               <string>Unit weight (lb/ft3 or N/m3) of the levee or dam shell material for a prescribed
-grid element failure location.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam shell material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -126,7 +136,7 @@ grid element failure location.</string>
             <item row="0" column="0">
              <widget class="QLabel" name="label_21">
               <property name="toolTip">
-               <string>Mean sediment size (D50 in mm) of the levee or dam shell material.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50S&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50 in mm) of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;Range: 0.25 - 10 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment size</string>
@@ -139,8 +149,7 @@ grid element failure location.</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_25">
               <property name="toolTip">
-               <string>Angle (degrees) of internal friction of the shell material for failure of a specific
-grid element flow direction.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle of internal friction of the shell material for failure of a specific grid element flow direction.&lt;/p&gt;&lt;p&gt;Range: 0 - 50 degrees&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle of internal friction</string>
@@ -152,6 +161,9 @@ grid element flow direction.</string>
             </item>
             <item row="3" column="0">
              <widget class="QLabel" name="label_24">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CNS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Manning’s n-value of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;If CNS = 0., Manning’s n-value for the shell material will computed from Strickler’s equation.&lt;/p&gt;&lt;p&gt;If CNS &amp;gt; 1., the n-value will be computed from a Moody diagram (Darcy f vs. D50).&lt;/p&gt;&lt;p&gt;Range: 0.02 - 0.25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Manning's n-value</string>
               </property>
@@ -163,10 +175,7 @@ grid element flow direction.</string>
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="cns_dbox">
               <property name="toolTip">
-               <string>Manning’s n-value of the levee or dam shell material. If
-CNS = 0., Manning’s n-value for the shell material will computed from
-Strickler’s equation. If CNS &gt; 1., the n-value will be computed from a
-Moody diagram (Darcy f vs. D50).</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CNS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="decimals">
                <number>3</number>
@@ -182,8 +191,7 @@ Moody diagram (Darcy f vs. D50).</string>
             <item row="1" column="2">
              <widget class="QLabel" name="label_26">
               <property name="toolTip">
-               <string>Cohesive strength (lb/ft2 or N/m2) of the levee or dam shell material. If there
-is no core, COHS = 0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Cohesive strength of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;If there is no core, COHS = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000  N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
@@ -195,6 +203,9 @@ is no core, COHS = 0.</string>
             </item>
             <item row="1" column="3">
              <widget class="QDoubleSpinBox" name="cohs_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COHS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -209,9 +220,7 @@ is no core, COHS = 0.</string>
             <item row="2" column="2">
              <widget class="QLabel" name="label_27">
               <property name="toolTip">
-               <string>Sediment gradient, ratio of D90 to D30 of the levee or dam shell material
-for a prescribed grid element failure location. If UNFCS = 0.0, the default
-value is 10.0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNFCS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the levee or dam shell material for a prescribed grid element failure location. &lt;/p&gt;&lt;p&gt;If UNFCS = 0.0, the default value is 10.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Shell sediment gradient</string>
@@ -223,6 +232,9 @@ value is 10.0.</string>
             </item>
             <item row="2" column="3">
              <widget class="QDoubleSpinBox" name="unfcs_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UNFCS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -268,6 +280,9 @@ value is 10.0.</string>
            <layout class="QGridLayout" name="gridLayout_29">
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="crestwidth_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CRESTWIDTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -279,9 +294,7 @@ value is 10.0.</string>
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
               <property name="toolTip">
-               <string>Slope of the downstream face of the levee or dam for a prescribed grid element
-failure location. ZD is expressed as a ratio of the ZD (horizontal : vertical).
-For example: ZD = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Slope of the downstream face of the levee or dam for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;ZD is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZD = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Down stream face slope</string>
@@ -294,9 +307,7 @@ For example: ZD = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
             <item row="0" column="0">
              <widget class="QLabel" name="label">
               <property name="toolTip">
-               <string>Slope of the upstream face of the levee or dam for a prescribed grid element
-failure location. ZU is expressed as a ratio of the ZU (horizontal : vertical).
-For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZU&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Slope of the upstream face of the levee or dam for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;ZU is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Upstream face slope</string>
@@ -308,6 +319,9 @@ For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="zu_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZU&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -318,6 +332,9 @@ For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="zc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -328,6 +345,9 @@ For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
             </item>
             <item row="4" column="1">
              <widget class="QDoubleSpinBox" name="crestlength_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CRESTLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -338,6 +358,9 @@ For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="zd_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -349,9 +372,7 @@ For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_4">
               <property name="toolTip">
-               <string>Maximum allowable breach bottom width (ft or m) as constrained by the
-valley cross section. Set BRBOTWIDWAX = 0.0 if the dam levee is continuous
-through adjoining grid elements (default = grid element octagon side).</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BRBOTWIDMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum allowable breach bottom width as constrained by the valley cross section.&lt;/p&gt;&lt;p&gt;Set BRBOTWIDMAX = 0.0 if the dam levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum bottom width</string>
@@ -364,10 +385,7 @@ through adjoining grid elements (default = grid element octagon side).</string>
             <item row="2" column="0">
              <widget class="QLabel" name="label_3">
               <property name="toolTip">
-               <string>Average slope of the upstream and downstream face of the levee or dam core
-material for a prescribed failure location. ZC is expressed as a ratio of the ZC
-(horizontal : vertical). For example: ZC = 2.0 represents 2.0 horizontal to
-1.0 vertical. If there is no core set ZC = 0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Average slope of the upstream and downstream face of the levee or dam core material for a prescribed failure location. &lt;/p&gt;&lt;p&gt;ZC is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZC = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;If there is no core set ZC = 0.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Core average face slope</string>
@@ -380,7 +398,7 @@ material for a prescribed failure location. ZC is expressed as a ratio of the ZC
             <item row="3" column="0">
              <widget class="QLabel" name="label_7">
               <property name="toolTip">
-               <string>Crest width of the levee or dam (ft or m). The crest width can be zero.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CRESTWIDTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Crest width of the levee or dam.&lt;/p&gt;&lt;p&gt;The crest width can be zero.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Crest width</string>
@@ -393,10 +411,7 @@ material for a prescribed failure location. ZC is expressed as a ratio of the ZC
             <item row="4" column="0">
              <widget class="QLabel" name="label_8">
               <property name="toolTip">
-               <string>Length of the crest of the levee or dam (ft or m). If CRESTLENGTH = 0.,
-the crest length will default to the grid element octagon side. If crest length
-is greater than the grid element octagon side, it will be reset to the octagon
-side length.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CRESTLENGTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Length of the crest of the levee or dam.&lt;/p&gt;&lt;p&gt;If CRESTLENGTH = 0.,the crest length will default to the grid element octagon side.&lt;/p&gt;&lt;p&gt;If crest length is greater than the grid element octagon side, it will be reset to the octagon side length.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Crest length</string>
@@ -408,6 +423,9 @@ side length.</string>
             </item>
             <item row="0" column="3">
              <widget class="QDoubleSpinBox" name="brbotwidmax_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BRBOTWIDWAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -422,9 +440,7 @@ side length.</string>
                <bool>true</bool>
               </property>
               <property name="toolTip">
-               <string>Maximum allowable breach top width (ft or m) as constrained by the valley
-cross section. Set BRTOPWIDMAX = 0.0 if the levee is continuous
-through adjoining grid elements (default = grid element octagon side).</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BRTOPWIDMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum allowable breach top width as constrained by the valley cross section.&lt;/p&gt;&lt;p&gt;Set BRTOPWIDMAX = 0.0 if the levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum top width</string>
@@ -436,6 +452,9 @@ through adjoining grid elements (default = grid element octagon side).</string>
             </item>
             <item row="1" column="3">
              <widget class="QDoubleSpinBox" name="brtopwidmax_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BRTOPWIDMAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -447,7 +466,7 @@ through adjoining grid elements (default = grid element octagon side).</string>
             <item row="2" column="2">
              <widget class="QLabel" name="label_6">
               <property name="toolTip">
-               <string>Initial breach or pipe bottom elevation (ft or m).</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BRBOTTOMEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Initial breach or pipe bottom elevation.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Pipe bottom elevation</string>
@@ -459,6 +478,9 @@ through adjoining grid elements (default = grid element octagon side).</string>
             </item>
             <item row="2" column="3">
              <widget class="QDoubleSpinBox" name="brbottomel_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BRBOTTOMEL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -470,8 +492,7 @@ through adjoining grid elements (default = grid element octagon side).</string>
             <item row="3" column="2">
              <widget class="QLabel" name="label_18">
               <property name="toolTip">
-               <string>Weir coefficient for piping or breach channel weir for a prescribed grid element
-failure location. Typical range: 2.85 – 3.05.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WEIRCOEF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Weir coefficient for piping or breach channel weir for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range: 2.85 – 3.05.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Weir Coeficient</string>
@@ -483,6 +504,9 @@ failure location. Typical range: 2.85 – 3.05.</string>
             </item>
             <item row="3" column="3">
              <widget class="QDoubleSpinBox" name="weircoef_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WEIRCOEF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -529,8 +553,7 @@ failure location. Typical range: 2.85 – 3.05.</string>
             <item row="2" column="0">
              <widget class="QLabel" name="label_15">
               <property name="toolTip">
-               <string>Unit weight (lb/ft3 or N/m3) of the levee or dam core material for a prescribed
-grid element failure location. Set UWC = 0.0 if there no core.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Set UWC = 0.0 if there no core. &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 -120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -542,6 +565,9 @@ grid element failure location. Set UWC = 0.0 if there no core.</string>
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="porc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PORC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -555,6 +581,9 @@ grid element failure location. Set UWC = 0.0 if there no core.</string>
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="d50c_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50C&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -569,8 +598,7 @@ grid element failure location. Set UWC = 0.0 if there no core.</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_9">
               <property name="toolTip">
-               <string>Angle (degrees) of internal friction of the core material for failure of a specific
-grid element flow direction. Set AFRC = 0.0 for no core.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle of internal friction of the core material for failure of a specific grid element flow direction.&lt;/p&gt;&lt;p&gt;Set AFRC = 0.0 for no core.&lt;/p&gt;&lt;p&gt;Range: 0 - 50 degrees&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle of internal friction</string>
@@ -582,6 +610,9 @@ grid element flow direction. Set AFRC = 0.0 for no core.</string>
             </item>
             <item row="0" column="3">
              <widget class="QDoubleSpinBox" name="afrc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ARFC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -595,6 +626,9 @@ grid element flow direction. Set AFRC = 0.0 for no core.</string>
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="uwc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UWC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -609,7 +643,7 @@ grid element flow direction. Set AFRC = 0.0 for no core.</string>
             <item row="0" column="0">
              <widget class="QLabel" name="label_13">
               <property name="toolTip">
-               <string>Mean sediment size (D50 in mm) of the levee or dam core material.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50C&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the levee or dam core material.&lt;/p&gt;&lt;p&gt;Range: 0.0625 - 2 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment size</string>
@@ -622,8 +656,7 @@ grid element flow direction. Set AFRC = 0.0 for no core.</string>
             <item row="1" column="0">
              <widget class="QLabel" name="label_14">
               <property name="toolTip">
-               <string>Porosity of the levee or dam core material for a prescribed grid element failure
-location. Set GPORC = 0.0 for no core material.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PORC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Porosity of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Set GPORC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.35 - 0.45&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Porosity</string>
@@ -636,10 +669,7 @@ location. Set GPORC = 0.0 for no core material.</string>
             <item row="3" column="0">
              <widget class="QLabel" name="label_16">
               <property name="toolTip">
-               <string>Manning’s n-value of the levee or dam core material. If CNC = 0., Manning’s
-n-value for the core material will computed from Strickler’s equation.
-If CNC &gt; 1., the n-value will be computed from a Moody diagram (Darcy f
-vs. D50). Set CNC = 0.0 for no core material.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CNC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Manning’s n-value of the levee or dam core material.&lt;/p&gt;&lt;p&gt;If CNC = 0., Manning’s n-value for the core material will computed from Strickler’s equation.&lt;/p&gt;&lt;p&gt;If CNC &amp;gt; 1., the n-value will be computed from a Moody diagram (Darcy fvs. D50). &lt;/p&gt;&lt;p&gt;Set CNC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.02 - 0.25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Manning's n-value</string>
@@ -651,6 +681,9 @@ vs. D50). Set CNC = 0.0 for no core material.</string>
             </item>
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="cnc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CNC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -665,8 +698,7 @@ vs. D50). Set CNC = 0.0 for no core material.</string>
             <item row="1" column="2">
              <widget class="QLabel" name="label_10">
               <property name="toolTip">
-               <string>Cohesive strength (lb/ft2 or N/m2) of the levee or dam core material. If there
-is no core, COHC = 0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Cohesive strength (lb/ft2 or N/m2) of the levee or dam core material.&lt;/p&gt;&lt;p&gt;If there is no core, COHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000 N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
@@ -678,6 +710,9 @@ is no core, COHC = 0.</string>
             </item>
             <item row="1" column="3">
              <widget class="QDoubleSpinBox" name="cohc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COHC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -692,10 +727,7 @@ is no core, COHC = 0.</string>
             <item row="2" column="2">
              <widget class="QLabel" name="label_11">
               <property name="toolTip">
-               <string>Sediment gradient, ratio of D90 to D30 of the levee or dam core material for
-a prescribed grid element failure location. If there is no core material, set
-UNFCC = 0.0. If the there is core material and UNFCC = 0.0, it is reset
-to 10.0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNFCC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If there is no core material, set UNFCC = 0.0.&lt;/p&gt;&lt;p&gt;If the there is core material and UNFCC = 0.0, it is reset to 10.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Core sediment gradient</string>
@@ -707,6 +739,9 @@ to 10.0.</string>
             </item>
             <item row="2" column="3">
              <widget class="QDoubleSpinBox" name="unfcc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UNFCC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -753,9 +788,7 @@ to 10.0.</string>
             <item row="1" column="0">
              <widget class="QLabel" name="label_29">
               <property name="toolTip">
-               <string>Average length of grass (inches or mm) on downstream face for a prescribed
-failure location. Set GRASSLENGTH = 0.0 for no grass on downstream
-face.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRASSLENGTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Average length of grass on downstream face for a prescribed failure location.&lt;/p&gt;&lt;p&gt;Set GRASSLENGTH = 0.0 for no grass on downstream face.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1 inches&lt;/p&gt;&lt;p&gt;0 - 25 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Average grass length</string>
@@ -768,9 +801,7 @@ face.</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_33">
               <property name="toolTip">
-               <string>Maximum sediment concentration by volume in the breach discharge for
-a prescribed grid element failure location. Typical range = 0.2 to 0.55. If
-SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SEDCONMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Maximum sediment concentration by volume in the breach discharge fora prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If SEDCONMAX = 0.0, a default value of 0.5 is used.&lt;/p&gt;&lt;p&gt;Range: 0.2 to 0.55. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Max. sediment conc.</string>
@@ -782,6 +813,9 @@ SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="grasscond_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRASSCOND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -792,6 +826,9 @@ SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
             </item>
             <item row="0" column="3">
              <widget class="QDoubleSpinBox" name="sedconmax_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SEDCONMAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -803,7 +840,7 @@ SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
             <item row="0" column="0">
              <widget class="QLabel" name="label_36">
               <property name="toolTip">
-               <string>Ratio of the initial breach width to breach depth.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BRATIO&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Ratio of the initial breach width to breach depth.&lt;/p&gt;&lt;p&gt;Range: 1 - 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Ratio of init. width to length</string>
@@ -815,6 +852,9 @@ SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="grasslength_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRASSLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -826,9 +866,7 @@ SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
             <item row="2" column="0">
              <widget class="QLabel" name="label_30">
               <property name="toolTip">
-               <string>Condition of the grass on the downstream face of the levee or dam for a
-prescribed failure location. 0.0 for a poor stand or no grass; 1.0 for a good
-stand of grass.</string>
+               <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRASSCOND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Condition of the grass on the downstream face of the levee or dam for a prescribed failure location.&lt;/p&gt;&lt;p&gt;0.0 for a poor stand or no grass; 1.0 for a good stand of grass.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Downstream grass condition</string>
@@ -840,6 +878,9 @@ stand of grass.</string>
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="bratio_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BRATIO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -854,9 +895,7 @@ stand of grass.</string>
             <item row="3" column="0">
              <widget class="QLabel" name="label_31">
               <property name="toolTip">
-               <string>Maximum permissible velocity (fps or mps) for a grass-lined downstream
-face before the grass is eroded for a prescribed failure location. Range: 3 to 6
-fps (1 to 2 mps). If no grass, set GRASSVMAXP = 0.0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRASSVMAXP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(fps or mps)&lt;/p&gt;&lt;p&gt;Maximum permissible velocity for a grass-lined downstream face before the grass is eroded for a prescribed failure location.&lt;/p&gt;&lt;p&gt;If no grass, set GRASSVMAXP = 0.0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;3 - 6 fps&lt;/p&gt;&lt;p&gt;1 - 2 mps&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum grass velocity</string>
@@ -868,6 +907,9 @@ fps (1 to 2 mps). If no grass, set GRASSVMAXP = 0.0.</string>
             </item>
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="grassvmaxp_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRASSVMAXP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -879,8 +921,7 @@ fps (1 to 2 mps). If no grass, set GRASSVMAXP = 0.0.</string>
             <item row="1" column="2">
              <widget class="QLabel" name="label_34">
               <property name="toolTip">
-               <string>Mean sediment size (D50 in mm) of the top one foot (0.3 m) of the downstream
-face (riprap material). If D50DF = 0.0, then D50DF = D50S.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream face (riprap material).&lt;/p&gt;&lt;p&gt;If D50DF = 0.0, then D50DF = D50S.&lt;/p&gt;&lt;p&gt;Range: 1.0 - 100 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment (riprap) size</string>
@@ -892,6 +933,9 @@ face (riprap material). If D50DF = 0.0, then D50DF = D50S.</string>
             </item>
             <item row="1" column="3">
              <widget class="QDoubleSpinBox" name="d50df_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50DF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -903,10 +947,7 @@ face (riprap material). If D50DF = 0.0, then D50DF = D50S.</string>
             <item row="2" column="2">
              <widget class="QLabel" name="label_35">
               <property name="toolTip">
-               <string>Sediment gradient, ratio of D90 to D30 of the downstream face upper one
-foot of material (riprap) for a prescribed grid element failure location. If
-UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF
-= 3.0 when D50DF &gt; 0.0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNDFCDF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the downstream face upper one foot of material (riprap) for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF = 3.0 when D50DF &amp;gt; 0.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Sediment (riprap) gradient</string>
@@ -918,6 +959,9 @@ UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF
             </item>
             <item row="2" column="3">
              <widget class="QDoubleSpinBox" name="unfcdf_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UNDFCDF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -929,19 +973,7 @@ UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF
             <item row="3" column="2">
              <widget class="QLabel" name="label_37">
               <property name="toolTip">
-               <string>The cumulative duration (hrs) that the levee erosion will initiate
-after the water surface exceeds the specified pipe elevation
-BRBOTTOMEL.
-If BREACHTIME = 0 if the level erosion begins immediately
-when pipe elevation is exceeded.
-If BREACHTIME &gt; or = 0.0, the start time for time to 1 ft
-and time to 2 ft is based on the model start time 0.0 hr.
-If BREACHTIME &lt; 0.0, the start time for time to 1 ft and
-time to 2 ft is the first dam or levee breach time for multiple
-breaches.
-If BREACHTIME = -99.0, the start time for time to 1 ft and
-time to 2 is the first dam or levee breach time for multiple
-breaches and BEACHTIME is reset to 0.0 hr.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BEACHTIME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The cumulative duration that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL.&lt;/p&gt;&lt;p&gt;If BREACHTIME = 0 if the level erosion begins immediately when pipe elevation is exceeded.&lt;/p&gt;&lt;p&gt;If BREACHTIME &amp;gt; or = 0.0, the start time for time to 1 ft and time to 2 ft is based on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If BREACHTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If BREACHTIME = -99.0, the start time for time to 1 ft and time to 2 is the first dam or levee breach time for multiple breaches and BEACHTIME is reset to 0.0 hr.&lt;/p&gt;&lt;p&gt;Range: - SIMULT to SIMULT-99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Breach time</string>
@@ -953,6 +985,9 @@ breaches and BEACHTIME is reset to 0.0 hr.</string>
             </item>
             <item row="3" column="3">
              <widget class="QDoubleSpinBox" name="breachtime_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BEACHTIME&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -987,6 +1022,9 @@ breaches and BEACHTIME is reset to 0.0 hr.</string>
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="1">
       <widget class="QLabel" name="label_12">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBREACHGRID&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Grid element of the specified breach failure location. &lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Breach failure grid element</string>
        </property>
@@ -996,10 +1034,17 @@ breaches and BEACHTIME is reset to 0.0 hr.</string>
       </widget>
      </item>
      <item row="0" column="2">
-      <widget class="QComboBox" name="individual_breach_element_cbo"/>
+      <widget class="QComboBox" name="individual_breach_element_cbo">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBREACHGRID&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
      </item>
      <item row="1" column="1">
       <widget class="QLabel" name="label_17">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBREACHDIR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Direction of the specified breach failure in a given grid element.&lt;/p&gt;&lt;p&gt;The possible flow directions are:&lt;/p&gt;&lt;p&gt;1 = north&lt;/p&gt;&lt;p&gt;5 = northeast&lt;/p&gt;&lt;p&gt;2 = east&lt;/p&gt;&lt;p&gt;6 = southeast&lt;/p&gt;&lt;p&gt;3 = south&lt;/p&gt;&lt;p&gt;7 = southwest&lt;/p&gt;&lt;p&gt;4 = west&lt;/p&gt;&lt;p&gt;8 = northwest&lt;/p&gt;&lt;p&gt;Range: 1 - 8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Direction of breach failure</string>
        </property>
@@ -1023,6 +1068,9 @@ breaches and BEACHTIME is reset to 0.0 hr.</string>
      </item>
      <item row="1" column="2">
       <widget class="QComboBox" name="breach_failure_direction_cbo">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBREACHDIR&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <item>
         <property name="text">
          <string>1 = North</string>

@@ -11,7 +11,7 @@ GRID = {
     "MANNING": "Global n Value Adjustment",
     "COORDINATES": "Longitude - Latitude",
     "ELEVATION": "Elevation",
-    "NEIGHBOURS": "Neighbours"
+    "NEIGHBORS": "Neighbors"
 }
 
 NEIGHBORS = {
@@ -57,6 +57,7 @@ CHANNEL = {
     "XSEC_DATA": "Cross Section Data",
     "XSEC_NAME": "Cross Section Name",
     "NOEXCHANGE": "No Exchange Grids",
+    "CHAN_WSE": "Channel Water Surface Elevation",
 }
 
 HYSTRUCT = {
@@ -86,27 +87,38 @@ INFIL = {
 RAIN = {
     "RAIN_GLOBAL": "Global Rainfall Data",
     "RAIN_DATA": "Rainfall Data",
-    "RAIN_ARF": "Rainfall ARF"
+    "RAIN_ARF": "Rainfall ARF",
+    "RAININTIME": "Time interval in minutes of the realtime rainfall data",
+    "IRINTERS": "Number of intervals in the dataset",
+    "TIMESTAMP": "Timestamp indicates the start and end time of the storm",
+    "IRAINDUM": "Rainfall data in the grid cells",
 }
 
 REDUCTION_FACTORS = {
     "ARF_GLOBAL": "Global revision to the ARF",
     "ARF_TOTALLY_BLOCKED": "Totally blocked grid elements",
-    "ARF_PARTIALLY_BLOCKED": "Partially blocked gridd elements",
-    "WRF": "Floodplain Width Reduction",
+    "ARF_PARTIALLY_BLOCKED": "Partially blocked grid elements",
+    "WRF": "Floodplain width reduction",
+    "COLLAPSE_CELLS": "Collapse cell data"
 }
 
 SPATIALLY_VARIABLE = {
     "TOLSPATIAL": "Spatially Variable Tolerance Values",
     "FPFROUDE": "Spatially Variable Froude Values",
     "SHALLOWN_SPATIAL": "Spatially Variable Shallow-n Values",
+    "STEEP_SLOPEN": "Spatially Variable Steep Slope-n Values",
+    "STEEP_SLOPEN_GLOBAL": "Global Steep Slope-n Switch",
+    "LID_VOLUME": "Spatially Variable LID Volume Values",
 }
 
 LEVEE = {
     "LEVEE": "Levee and Failure Data",
     "LEVEE_GLOBAL": "Levee Global Data",
     "LEVEE_DATA": "Levee Data",
-    "LEVEE_FAILURE": "Levee Failure Data"
+    "LEVEE_FAILURE": "Levee Failure Data",
+    "BREACH_GLOBAL": "Breach Global Data",
+    "BREACH_INDIVIDUAL": "Breach Individual Data",
+    "FRAGILITY_CURVES": "Breach Fragility Curves",
 }
 
 EVAPOR = {
@@ -146,4 +158,32 @@ SD = {
     "SWMMFLODROPBOX": "Storm Drain Dropbox Data",
     "SWMM_INP": "SWMM Input File",
     "SWMM_INI": "SWMM Configuration File",
+}
+
+SEDIMENT = {
+    "MUDFLOW_PARAMS": "Mudflow Parameters",
+    "MUDFLOW_AREAS" : "Mudflow Areas",
+    "SED_PARAMS": "Sediment Parameters",
+    "SED_GROUPS": "Sediment Groups",
+    "SED_GROUPS_FRAC_DATA": "Sediment Groups Fraction Data",
+    "SED_RIGID_CELLS": "Sediment Rigid Cells",
+    "SED_SUPPLY_AREAS": "Sediment Supply Areas",
+    "SED_SUPPLY_FRAC_DATA": "Sediment Supply Fraction Data",
+    "SED_GROUPS_AREAS": "Sediment Groups Areas",
+}
+
+STREET = {
+    "STREET_GLOBAL": "Street Global Data",
+    "STREET_NAMES": "Street Names",
+    "STREET_SEG": "Street Segments Data",
+    "STREET_ELEMS": "Street Elements Data",
+}
+
+MULTIDOMAIN = {
+    "MULTIDOMAIN": "Multidomain Data",
+    "CADPTS": "CADPTS Data",
+}
+
+QGIS = {
+    "INFO": "QGIS Data",
 }

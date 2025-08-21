@@ -51,6 +51,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         self.file_lbl.setText(last_dir)
 
+        self.data_rb.setVisible(False)
+        self.hdf5_rb.setVisible(False)
+
         if self.in_or_out == "in":
             self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)
@@ -151,6 +154,36 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 if os.path.getsize(last_dir + r"\FPFROUDE.DAT") > 0:
                     self.spatial_froude_chbox.setChecked(True)
                     self.spatial_froude_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\STEEP_SLOPEN.DAT"):
+                if os.path.getsize(last_dir + r"\STEEP_SLOPEN.DAT") > 0:
+                    self.spatial_steep_slopen_chbox.setChecked(True)
+                    self.spatial_steep_slopen_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\LID_VOLUME.DAT"):
+                if os.path.getsize(last_dir + r"\LID_VOLUME.DAT") > 0:
+                    self.spatial_lid_volume_chbox.setChecked(True)
+                    self.spatial_lid_volume_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\SHALLOWN_SPATIAL.DAT"):
+                if os.path.getsize(last_dir + r"\SHALLOWN_SPATIAL.DAT") > 0:
+                    self.spatial_shallow_n_chbox.setChecked(True)
+                    self.spatial_shallow_n_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\TAILINGS.DAT"):
+                if os.path.getsize(last_dir + r"\TAILINGS.DAT") > 0:
+                    self.tailings_chbox.setChecked(True)
+                    self.tailings_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\TAILINGS_CV.DAT"):
+                if os.path.getsize(last_dir + r"\TAILINGS_CV.DAT") > 0:
+                    self.tailings_chbox.setChecked(True)
+                    self.tailings_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\TAILINGS_STACK_DEPTH.DAT"):
+                if os.path.getsize(last_dir + r"\TAILINGS_STACK_DEPTH.DAT") > 0:
+                    self.tailings_chbox.setChecked(True)
+                    self.tailings_chbox.setEnabled(True)
 
         elif self.in_or_out == "out":
             self.setWindowTitle("FLO-2D Components to Export")
@@ -310,6 +343,14 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.spatial_froude_chbox.setChecked(True)
                 self.spatial_froude_chbox.setEnabled(True)
 
+            if not self.gutils.is_table_empty("steep_slope_n_cells"):
+                self.spatial_steep_slopen_chbox.setChecked(True)
+                self.spatial_steep_slopen_chbox.setEnabled(True)
+
+            if not self.gutils.is_table_empty("lid_volume_cells"):
+                self.spatial_lid_volume_chbox.setChecked(True)
+                self.spatial_lid_volume_chbox.setEnabled(True)
+
             if not self.gutils.is_table_empty("grid"):
                 self.mannings_n_and_Topo_chbox.setChecked(True)
                 self.mannings_n_and_Topo_chbox.setEnabled(True)
@@ -387,6 +428,12 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         if self.spatial_froude_chbox.isChecked():
             self.components.append("Spatial Froude")
 
+        if self.spatial_steep_slopen_chbox.isChecked():
+            self.components.append("Spatial Steep Slope-n")
+
+        if self.spatial_lid_volume_chbox.isChecked():
+            self.components.append("LID Volume")
+
         if self.mannings_n_and_Topo_chbox.isChecked():
             self.components.append("Manning's n and Topo")
 
@@ -440,5 +487,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.spatial_tolerance_chbox.setChecked(select)
         if self.spatial_froude_chbox.isEnabled():
             self.spatial_froude_chbox.setChecked(select)
+        if self.spatial_steep_slopen_chbox.isEnabled():
+            self.spatial_steep_slopen_chbox.setChecked(select)
+        if self.spatial_lid_volume_chbox.isEnabled():
+            self.spatial_lid_volume_chbox.setChecked(select)
         if self.mannings_n_and_Topo_chbox.isEnabled():
             self.mannings_n_and_Topo_chbox.setChecked(select)

@@ -39,7 +39,11 @@ from qgis.core import (
     QgsUnitTypes,
     QgsSpatialIndex
 )
-import networkx as nx
+try:
+    import networkx as nx
+except ImportError:
+    pass
+
 from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, QUrl
 from qgis.PyQt.QtGui import QColor, QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import (
@@ -57,7 +61,7 @@ from qgis.PyQt.QtWidgets import (
     qApp,
 )
 
-import pyqtgraph as pg
+from ..deps import safe_pyqtgraph as pg
 
 from .dlg_sd_animator import SDAnimator
 from .dlg_sd_profile_view import SDProfileView
@@ -474,9 +478,24 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         swmm = 1 if self.gutils.get_cont_par("SWMM") == "1" else 0
         self.simulate_stormdrain_chbox.setChecked(swmm)
 
-        self.user_swmm_inlets_junctions_lyr.featureAdded.connect(self.inlet_junction_added)
-        self.user_swmm_outlets_lyr.featureAdded.connect(self.outlet_added)
-        self.user_swmm_storage_units_lyr.featureAdded.connect(self.storage_unit_added)
+        self.user_swmm_inlets_junctions_lyr.featureAdded.connect(
+            lambda fid: self._feature_added(self.user_swmm_inlets_junctions_lyr, fid, "user_swmm_inlets_junctions"))
+        self.user_swmm_outlets_lyr.featureAdded.connect(
+            lambda fid: self._feature_added(self.user_swmm_outlets_lyr, fid, "user_swmm_outlets"))
+        self.user_swmm_storage_units_lyr.featureAdded.connect(
+            lambda fid: self._feature_added(self.user_swmm_storage_units_lyr, fid, "user_swmm_storage_units"))
+
+        self.user_swmm_inlets_junctions_lyr.afterCommitChanges.connect(self.populate_profile_plot)
+        self.user_swmm_outlets_lyr.afterCommitChanges.connect(self.populate_profile_plot)
+        self.user_swmm_storage_units_lyr.afterCommitChanges.connect(self.populate_profile_plot)
+
+        self.user_swmm_inlets_junctions_lyr.geometryChanged.connect(
+            lambda fid, geom: self._geometry_changed(fid, geom, "user_swmm_inlets_junctions"))
+        self.user_swmm_outlets_lyr.geometryChanged.connect(
+            lambda fid, geom: self._geometry_changed(fid, geom, "user_swmm_outlets"))
+        self.user_swmm_storage_units_lyr.geometryChanged.connect(
+            lambda fid, geom: self._geometry_changed(fid, geom, "user_swmm_storage_units"))
+
         self.user_swmm_conduits_lyr.featureAdded.connect(self.conduit_added)
         self.user_swmm_weirs_lyr.featureAdded.connect(self.weir_added)
         self.user_swmm_pumps_lyr.featureAdded.connect(self.pump_added)
@@ -3653,7 +3672,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 row[1],
                                 "1.0",
                                 row[5],
-                                row[2] if row[2] != "?" else "",
+                                row[2] if row[2] != 0 else "",
                                 row[3] if row[3] != "?" else "",
                             ]
                             swmm_inp_file.write(line.format(*lrow))
@@ -5154,6 +5173,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         RPT_file = os.path.join(GDS_dir, "swmm.RPT")
         TOPO_file = os.path.join(GDS_dir, "TOPO.DAT")
         WSE_file = os.path.join(GDS_dir, "MAXWSELEV.OUT")
+        MH_file = os.path.join(GDS_dir, "ManholePop.OUT")
 
         if not os.path.isfile(RPT_file):
             RPT_file = None
@@ -5163,6 +5183,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if not os.path.isfile(WSE_file):
             WSE_file = None
+
+        if not os.path.isfile(MH_file):
+            MH_file = None
 
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
@@ -5423,9 +5446,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             i += 1
 
         QApplication.restoreOverrideCursor()
-        self.create_profile_plot(animated, existing_nodes_dict, RPT_file, TOPO_file, WSE_file)
+        self.create_profile_plot(animated, existing_nodes_dict, RPT_file, TOPO_file, WSE_file, MH_file)
 
-    def create_profile_plot(self, animated, existing_nodes_dict, rpt_file, topo_file, wse_file):
+    def create_profile_plot(self, animated, existing_nodes_dict, rpt_file, topo_file, wse_file, mh_file):
         """
         Function to create the profile plot using pyqtgraph
 
@@ -5438,6 +5461,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         manhole_diameter = 1.5 if self.gutils.get_cont_par("METRIC") == "1" else 5
 
         grid_elements = []
+        mh_pop = []
         for key, value in existing_nodes_dict.items():
             grid_elements.append(value[0])
 
@@ -5478,6 +5502,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     WseData = line.split()
                     if int(WseData[0]) in grid_elements:
                         WseDict[WseData[0]] = WseData[3]
+
+        if mh_file:
+            with open(mh_file, "r") as f:
+                for line in f:
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        mh_pop.append(parts[3])
 
         if not animated:
             # Create a new figure
@@ -5555,6 +5586,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             max_depths = []
             # Manholes
             for key, value in existing_nodes_dict.items():
+                facecolor = 'white'
+                if key in mh_pop:
+                    facecolor = 'red'
                 invert_elev = value[1]
                 max_depth = value[2]
                 length = value[3]
@@ -5563,7 +5597,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 distance_acc += length
                 rect = patches.Rectangle((distance_acc - (manhole_diameter / 2), invert_elev), manhole_diameter, max_depth,
                                          linewidth=1.5, edgecolor='black',
-                                         facecolor='white', zorder=2)
+                                         facecolor=facecolor, zorder=2)
                 ax.add_patch(rect)
 
             secax = ax.secondary_xaxis('top')
@@ -5620,9 +5654,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         else:
             if rpt_file:
-                sd_animator = SDAnimator(existing_nodes_dict, rpt_file, units, manhole_diameter)
+                self.sd_animator = SDAnimator(self.iface, existing_nodes_dict, rpt_file, units, manhole_diameter, mh_pop)
+                self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.sd_animator)
+                self.sd_animator.setFloating(True)
+                self.sd_animator.setGeometry(100, 100, 800, 600)
                 QApplication.restoreOverrideCursor()
-                sd_animator.show()
+                self.sd_animator.show()
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("No swmm.RPT file found!")
@@ -6312,11 +6349,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # Create a new memory layer for point geometries
             SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
 
-            crs = layer1.crs()  # crs is a QgsCoordinateReferenceSystem
-            unit = crs.mapUnits()  # unit is a QgsUnitTypes.DistanceUnit
-
-            if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+            # Meters
+            if self.gutils.get_cont_par("METRIC") == "1":
                 distance_units = "mts"
+            # Feet
             else:
                 distance_units = "feet"
 
@@ -6330,7 +6366,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
 
             fields = QgsFields()
-            fields.append(QgsField('name', QVariant.String))
+            fields.append(QgsField(name='name', type=QVariant.String))
 
             pr = SD_all_nodes_layer.dataProvider()
 
@@ -6814,8 +6850,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = "Pump Curve:   " + name
         self.plot.plot.setTitle("Pump Curve:   " + name)
 
-        if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+        # Meters
+        if self.gutils.get_cont_par("METRIC") == "1":
             units = "CMS"
+        # Feet
         else:
             units = "CFS"
 
@@ -7104,65 +7142,51 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("Storm Drain control data saved!")
             dlg_INP_groups.save_INP_control()
 
-    def inlet_junction_added(self, fid):
+    def _feature_added(self, layer, fid, table_name):
         """
-        Function to add an inlet/junction
+        Generic handler for featureAdded
         """
-        feat = next(self.user_swmm_inlets_junctions_lyr.getFeatures(QgsFeatureRequest(fid)))
-        geom = feat.geometry()
-        if geom is None:
+        feat = next(layer.getFeatures(QgsFeatureRequest(fid)), None)
+        if feat is None:
             return
+        geom = feat.geometry()
+        self._update_grid_field(fid, geom, table_name)
+        self.populate_profile_plot()
+
+    def _geometry_changed(self, fid, geom, table_name):
+        """
+        Generic handler for geometryChanged
+        """
+        self._update_grid_field(fid, geom, table_name)
+
+    def _update_grid_field(self, fid, geom, table_name):
+        """
+        Calculates grid ID based on geometry and updates the table
+        """
+        if geom is None or geom.isEmpty():
+            return
+
         point = geom.asPoint()
         grid_fid = self.gutils.grid_on_point(point.x(), point.y())
 
         self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_inlets_junctions
-                                SET 
-                                    grid = '{grid_fid}'
-                                WHERE 
-                                    fid = '{fid}';
-                            """)
+            UPDATE {table_name}
+            SET grid = '{grid_fid}'
+            WHERE fid = '{fid}';
+        """)
 
-    def outlet_added(self, fid):
-        """
-        Function to add an outlet
-        """
-        feat = next(self.user_swmm_outlets_lyr.getFeatures(QgsFeatureRequest(fid)))
-        geom = feat.geometry()
-        if geom is None:
-            return
-        point = geom.asPoint()
-        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+        if table_name == "user_swmm_inlets_junctions":
+            inlet_name = self.gutils.execute(f"""SELECT name FROM {table_name} WHERE fid = '{fid}'""").fetchone()
+            if inlet_name:
+                inlet_name = inlet_name[0]
+                has_rt = self.gutils.execute(f"""SELECT COUNT(*) FROM swmmflort WHERE name = '{inlet_name}'""").fetchone()
+                if has_rt[0]:
+                    self.gutils.execute(f"""
+                        UPDATE swmmflort
+                        SET grid_fid = '{grid_fid}'
+                        WHERE name = '{inlet_name}' AND fid = '{fid}';
+                    """)
 
-        self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_outlets
-                                SET 
-                                    grid = '{grid_fid}'
-                                WHERE 
-                                    fid = '{fid}';
-                            """)
-
-    def storage_unit_added(self, fid):
-        """
-        Function to add a storage unit
-        """
-        feat = next(self.user_swmm_storage_units_lyr.getFeatures(QgsFeatureRequest(fid)))
-        geom = feat.geometry()
-        if geom is None:
-            return
-        point = geom.asPoint()
-        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-
-        self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_storage_units
-                                SET 
-                                    grid = '{grid_fid}'
-                                WHERE 
-                                    fid = '{fid}';
-                            """)
 
     def conduit_added(self, fid):
         """
@@ -7401,6 +7425,94 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         return table, col[1]
 
         return None, None
+
+    def show_external_inflow(self, fid, node):
+        """
+        Function to show the external inflow table and plot
+        ij: inlet junctions
+        su: storage units
+        """
+
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
+            return False
+
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
+        # Get node name
+        if node == "ij":
+            node_name = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
+        else:
+            node_name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?", (fid,)).fetchone()
+
+        if not node_name:
+            return False
+        else:
+            node_name = node_name[0]
+
+        # Get storm drain external inflow ts name
+        time_series_name = self.gutils.execute(f"""SELECT time_series_name FROM swmm_inflows WHERE node_name = '{node_name}'""").fetchone()
+        if not time_series_name:
+            return False
+        else:
+            time_series_name = time_series_name[0]
+
+        # Get the time series data
+        time_series = self.gutils.execute(f"""SELECT date, time, value FROM swmm_time_series_data WHERE time_series_name = '{time_series_name}'""").fetchall()
+        time_list = []
+        discharge_list = []
+
+        for row in time_series:
+            date_str, time_str, value = row
+            # Combine date and time
+            dt = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M")
+
+            # Convert to hours relative to the first timestamp
+            hours = (dt - datetime.strptime(f"{time_series[0][0]} {time_series[0][1]}",
+                                            "%d/%m/%Y %H:%M")).total_seconds() / 3600.0
+
+            time_list.append(hours)
+            discharge_list.append(value)
+
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"External Inflow - {time_series_name}")
+        self.plot.plot.setLabel("bottom", text="Time (hrs)")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+
+        try:  # Build table.
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                            f"Discharge ({self.system_units[units][2]})"])
+
+            data = zip(time_list, discharge_list)
+            for time, discharge in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                discharge_data_model.appendRow([time_item, discharge_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(discharge_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("Error while building table for floodplain cross section!")
+            self.uc.log_info("Error while building table for floodplain cross section!")
+            return
 
 
 class SDTablesDelegate(QStyledItemDelegate):

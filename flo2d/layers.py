@@ -12,6 +12,7 @@ import time
 from collections import OrderedDict
 from os.path import normpath
 
+import processing
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.core import (
@@ -350,6 +351,32 @@ class Layers(object):
                     },
                 ),
                 (
+                    "user_steep_slope_n_areas",
+                    {
+                        "name": "Steep Slope n Areas",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Areas",
+                        "styles": ["user_steep_slope_n.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_lid_volume_areas",
+                    {
+                        "name": "LID Volume Areas",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Areas",
+                        "styles": ["user_lid_volume.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
                     "mult_areas",
                     {
                         "name": "Multiple Channel Areas",
@@ -546,6 +573,18 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": True
+                    },
+                ),
+                (
+                "mult_domains",
+                {
+                    "name": "Domains",
+                    "sgroup": "User Layers",
+                    "ssgroup": "Multiple Domains",
+                    "styles": ["domains.qml"],
+                    "attrs_edit_widgets": {},
+                    "readonly": False,
+                    "advanced": False
                     },
                 ),
                 # Schematic layers:
@@ -749,6 +788,31 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                # Multiple Domains layers:
+                (
+                    "schema_md_cells",
+                    {
+                        "name": "Multiple Domain Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["domain_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_md_connect_lines",
+                    {
+                        "name": "Connectivity Lines",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["connect_lines.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
                 # Storm Drain layers:
                 (
                     "swmmflo",
@@ -907,7 +971,7 @@ class Layers(object):
                         "readonly": False,
                         "advanced": True
                     },
-                ),                
+                ),
                 # Infiltration Layers
                 (
                     "infil",
@@ -1191,6 +1255,30 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                (
+                    "steep_slope_n_cells",
+                    {
+                        "name": "Steep Slope n Cells",
+                        "sgroup": "Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "lid_volume_cells",
+                    {
+                        "name": "LID Volume Cells",
+                        "sgroup": "Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
                 # Rain Tables:
                 (
                     "rain",
@@ -1251,6 +1339,28 @@ class Layers(object):
                     "raincell_data",
                     {
                         "name": "Realtime Rainfall Data",
+                        "sgroup": "Rain Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "flo2d_raincell",
+                    {
+                        "name": "Intersected Realtime Rainfall Data",
+                        "sgroup": "Rain Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "raincellraw",
+                    {
+                        "name": "Cumulative Realtime Rainfall Data",
                         "sgroup": "Rain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1384,6 +1494,31 @@ class Layers(object):
                     {
                         "name": "Breach Fragility Curves",
                         "sgroup": "Levee and Breach Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                # Multiple Domain Tables
+                (
+                    "mult_domains_methods",
+                    {
+                        "name": "Multiple Domains",
+                        "sgroup": "Multiple Domains Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "mult_domains_con",
+                    {
+                        "name": "Multiple Domains Connections",
+                        "sgroup": "Multiple Domains Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "visible": False,
@@ -2570,3 +2705,12 @@ class Layers(object):
                 return True
         except TypeError:
             self.uc.bar_warn("ERROR 121117.0544")
+
+    def reproject_simple(self, vlayer, target_crs, sink="memory:"):
+        if vlayer.crs().authid() == target_crs.authid():
+            return vlayer
+        out = processing.run(
+            "native:reprojectlayer",
+            {"INPUT": vlayer, "TARGET_CRS": target_crs, "OPERATION": "", "OUTPUT": sink},
+        )["OUTPUT"]
+        return out if out and out.isValid() else None
