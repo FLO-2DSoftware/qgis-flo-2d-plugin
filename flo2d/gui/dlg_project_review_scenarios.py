@@ -3,12 +3,14 @@ import os.path
 import re
 from collections import OrderedDict
 
+from qgis._core import QgsApplication
+
 try:
     import h5py
 except ImportError:
     pass
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import QSettings, Qt
+from PyQt5.QtWidgets import QFileDialog, QProgressDialog
 
 # FLO-2D Preprocessor tools for QGIS
 
@@ -45,6 +47,8 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         self.scenario3_btn.clicked.connect(lambda: self.select_scenario(3))
         self.scenario4_btn.clicked.connect(lambda: self.select_scenario(4))
         self.scenario5_btn.clicked.connect(lambda: self.select_scenario(5))
+
+        self.n_scenarios = None
 
         self.select_all_chbox.toggled.connect(self.select_all_datasets)
 
@@ -171,6 +175,15 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         scenario5 = s.value("FLO-2D/scenario5") if s.value("FLO-2D/scenario5") != "" else None
         scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
 
+        self.n_scenarios = len([s for s in scenarios if s is not None])
+
+        if self.n_scenarios == 0:
+            self.uc.bar_warn("No scenarios selected")
+            self.uc.log_info("No scenarios selected")
+            return False
+
+        QgsApplication.setOverrideCursor(Qt.WaitCursor)
+
         if self.stormdrain_chbox.isChecked():
             self.process_swmmrpt(scenarios, processed_results_file)
             self.process_SWMMQIN(scenarios, processed_results_file)
@@ -182,12 +195,22 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         if self.hydrostruct_chbox.isChecked():
             self.process_hydrostruct(scenarios, processed_results_file)
 
+        self.uc.bar_info("The selected data was process successfully!")
+        self.uc.log_info("The selected data was process successfully!")
+        QgsApplication.restoreOverrideCursor()
+
     def process_hydrostruct(self, scenarios, processed_results_file):
         """
         Function to process the HYDROSTRUCT file into the hdf5 file
         """
-        i = 1
-        for scenario in scenarios:
+
+        progDialog = QProgressDialog("Processing HYDROSTRUCT.OUT...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        for i, scenario in enumerate(scenarios, start=1):
+            progDialog.close()
             if scenario:
                 if os.path.exists(processed_results_file):
                     read_type = "a"
@@ -238,15 +261,20 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                                 break
 
 
-            i += 1
+        progDialog.close()
 
     def process_timdep(self, scenarios, processed_results_file):
         """
         Function to process the TIMPDEP file into the hdf5 file
         """
 
-        i = 1
-        for scenario in scenarios:
+        progDialog = QProgressDialog("Processing TIMDEP.HDF5...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        for i, scenario in enumerate(scenarios, start=1):
+            progDialog.setValue(i)
             if scenario:
                 if os.path.exists(processed_results_file):
                     read_type = "a"
@@ -287,14 +315,20 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                         #                               compression="gzip",
                         #                               compression_opts=9)
 
-            i += 1
+        progDialog.close()
 
     def process_SWMMQIN(self, scenarios, hdf5_file):
         """
         Function to process the SWMMQIN.OUT file into the hdf5 file
         """
-        i = 1
-        for scenario in scenarios:
+
+        progDialog = QProgressDialog("Processing SWMMQIN.OUT...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        for i, scenario in enumerate(scenarios, start=1):
+            progDialog.setValue(i)
             if scenario:
                 SWMMQIN = scenario + r"/SWMMQIN.OUT"
                 swmmqin_data = self.get_SWMMQIN(SWMMQIN)
@@ -309,14 +343,20 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                                 data=values,
                                 compression="gzip",
                                 compression_opts=9)
-            i += 1
+        progDialog.close()
 
     def process_SWMMOUTFIN(self, scenarios, hdf5_file):
         """
         Function to process the SWMMOUTFIN.OUT file into the hdf5 file
         """
-        i = 1
-        for scenario in scenarios:
+
+        progDialog = QProgressDialog("Processing SWMMOUTFIN.OUT...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        for i, scenario in enumerate(scenarios, start=1):
+            progDialog.setValue(i)
             if scenario:
                 SWMMOUTFIN = scenario + r"/SWMMOUTFIN.OUT"
                 swmmoutfin_data = self.get_SWMMOUTFIN(SWMMOUTFIN)
@@ -331,14 +371,20 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                                              data=values,
                                              compression="gzip",
                                              compression_opts=9)
-            i += 1
+        progDialog.close()
 
     def process_swmmrpt(self, scenarios, hdf5_file):
         """
         Function to process the SWMM.rpt file into the hdf5 file
         """
-        i = 1
-        for scenario in scenarios:
+
+        progDialog = QProgressDialog("Processing SWMM.RPT...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        for i, scenario in enumerate(scenarios, start=1):
+            progDialog.setValue(i)
             if scenario:
                 swmm_rpt = scenario + r"/swmm.RPT"
 
@@ -444,9 +490,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                                 compression="gzip",
                                 compression_opts=9
                             )
-
-            i += 1
-
+        progDialog.close()
 
     def close_dlg(self):
         """
