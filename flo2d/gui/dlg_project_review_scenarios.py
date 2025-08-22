@@ -46,6 +46,8 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         self.scenario4_btn.clicked.connect(lambda: self.select_scenario(4))
         self.scenario5_btn.clicked.connect(lambda: self.select_scenario(5))
 
+        self.select_all_chbox.toggled.connect(self.select_all_datasets)
+
         self.save_processed_results_file_btn.clicked.connect(self.save_processed_results_file)
         self.process_results_btn.clicked.connect(self.process_results)
         self.use_scenarios_grpbox.toggled.connect(self.populate_processed_results)
@@ -169,9 +171,62 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         scenario5 = s.value("FLO-2D/scenario5") if s.value("FLO-2D/scenario5") != "" else None
         scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
 
-        self.process_swmmrpt(scenarios, processed_results_file)
-        self.process_SWMMQIN(scenarios, processed_results_file)
-        self.process_SWMMOUTFIN(scenarios, processed_results_file)
+        if self.stormdrain_chbox.isChecked():
+            self.process_swmmrpt(scenarios, processed_results_file)
+            self.process_SWMMQIN(scenarios, processed_results_file)
+            self.process_SWMMOUTFIN(scenarios, processed_results_file)
+
+        if self.timdep_chbox.isChecked():
+            self.process_timdep(scenarios, processed_results_file)
+
+    def process_timdep(self, scenarios, processed_results_file):
+        """
+        Function to process the TIMPDEP file into the hdf5 file
+        """
+
+        i = 1
+        for scenario in scenarios:
+            if scenario:
+                if os.path.exists(processed_results_file):
+                    read_type = "a"
+                else:
+                    read_type = "w"
+                timdep_file = os.path.join(scenario, r"TIMDEP.HDF5")
+                with h5py.File(processed_results_file, read_type) as hdf:
+                    time_dependent = hdf.create_group(f"Scenario {i}/Time Dependent")
+                    with h5py.File(timdep_file, "r") as timdep_hdf:
+                        time_series = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Times'])
+                        time_series = time_series.flatten()
+                        time_dependent.create_dataset("Time Series",
+                                data=time_series,
+                                compression="gzip",
+                                compression_opts=9)
+
+                        flow_depth = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Values'])
+                        time_dependent.create_dataset("Depth",
+                                data=flow_depth,
+                                compression="gzip",
+                                compression_opts=9)
+
+                        wse = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/Floodplain Water Surface Elevation/Values'])
+                        time_dependent.create_dataset("WSE",
+                                                   data=wse,
+                                                   compression="gzip",
+                                                   compression_opts=9)
+
+                        velocity = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/Velocity MAG/Values'])
+                        time_dependent.create_dataset("Velocity",
+                                                   data=velocity,
+                                                   compression="gzip",
+                                                   compression_opts=9)
+                        #
+                        # channel_wse = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/Channel Water Surface Elevation/Values'])
+                        # channel_wse_group.create_dataset("Channel WSE",
+                        #                               data=channel_wse,
+                        #                               compression="gzip",
+                        #                               compression_opts=9)
+
+            i += 1
 
     def process_SWMMQIN(self, scenarios, hdf5_file):
         """
@@ -390,3 +445,20 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             self.uc.show_error("Error while reading file\n\n " + SWMMOUTFIN_file, e)
         finally:
             return data
+
+    def select_all_datasets(self):
+        """
+        Function to select all datasets
+        """
+        if self.select_all_chbox.isChecked():
+            self.timdep_chbox.setChecked(True)
+            self.stormdrain_chbox.setChecked(True)
+            self.hycross_chbox.setChecked(True)
+            self.fpxs_chbox.setChecked(True)
+            self.channels_chbox.setChecked(True)
+        else:
+            self.timdep_chbox.setChecked(False)
+            self.stormdrain_chbox.setChecked(False)
+            self.hycross_chbox.setChecked(False)
+            self.fpxs_chbox.setChecked(False)
+            self.channels_chbox.setChecked(False)
