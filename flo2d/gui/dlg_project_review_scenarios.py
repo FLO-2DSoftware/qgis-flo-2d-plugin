@@ -179,6 +179,67 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         if self.timdep_chbox.isChecked():
             self.process_timdep(scenarios, processed_results_file)
 
+        if self.hydrostruct_chbox.isChecked():
+            self.process_hydrostruct(scenarios, processed_results_file)
+
+    def process_hydrostruct(self, scenarios, processed_results_file):
+        """
+        Function to process the HYDROSTRUCT file into the hdf5 file
+        """
+        i = 1
+        for scenario in scenarios:
+            if scenario:
+                if os.path.exists(processed_results_file):
+                    read_type = "a"
+                else:
+                    read_type = "w"
+                ts_created = False
+                with h5py.File(processed_results_file, read_type) as hdf:
+                    hydrostruct = hdf.create_group(f"Scenario {i}/Hydraulic Structures")
+                    HYDROSTRUCT_file = os.path.join(scenario, r"HYDROSTRUCT.OUT")
+                    with open(HYDROSTRUCT_file, "r") as myfile:
+                        time_list = []
+                        discharge_list = []
+                        pattern = re.compile(
+                            r"THE\s+MAXIMUM\s+DISCHARGE\s+FOR:\s+(.+?)\s+STRUCTURE\s+NO\.\s+(\d+)\s+IS:",
+                            re.IGNORECASE
+                        )
+                        while True:
+                            try:
+                                line = next(myfile)
+                                match = re.search(pattern, line)
+                                if match:
+                                    matched_structure_name = match.group(1)
+                                    line = next(myfile)
+                                    while True:
+                                        try:
+                                            line = next(myfile)
+                                            line = line.split()
+                                            if line:
+                                                time_list.append(float(line[0]))
+                                                discharge_list.append((float(line[1]), float(line[2])))
+                                            else:
+                                                break
+                                        except StopIteration:
+                                            break
+                                    if not ts_created:
+                                        hydrostruct.create_dataset("Time Series",
+                                                                   data=time_list,
+                                                                   compression="gzip",
+                                                                   compression_opts=9)
+                                        ts_created = True
+                                    hydrostruct.create_dataset(matched_structure_name,
+                                                               data=discharge_list,
+                                                               compression="gzip",
+                                                               compression_opts=9)
+                                    time_list = []
+                                    discharge_list = []
+                            except StopIteration:
+                                break
+
+
+            i += 1
+
     def process_timdep(self, scenarios, processed_results_file):
         """
         Function to process the TIMPDEP file into the hdf5 file

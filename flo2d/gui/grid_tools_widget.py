@@ -12,7 +12,7 @@ import os
 import time
 import traceback
 
-from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES
+from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES, timdep_dataframe_from_hdf5_scenarios
 
 try:
     import h5py
@@ -1604,7 +1604,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         s = QSettings()
         processed_results_file = s.value("FLO-2D/processed_results", "")
         if os.path.exists(processed_results_file):
-            dict_df = self.dataframe_from_hdf5_scenarios(processed_results_file, grid_element)
+            dict_df = timdep_dataframe_from_hdf5_scenarios(processed_results_file, grid_element)
 
             try:
                 # Clear the plots
@@ -1646,7 +1646,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     data_model.setHorizontalHeaderLabels(headers)
 
                     for row_idx, row in enumerate(value):
-
                         if i == 0:
                             data_model.setItem(row_idx, 0,
                                                StandardItem("{:.2f}".format(row[0]) if row[0] is not None else ""))
@@ -1833,28 +1832,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                                           names='Time, Depth, Velocity, Water_Surface_Elevation')
 
         return data
-
-    def dataframe_from_hdf5_scenarios(self, hdf5_file, grid_element):
-        """
-        Function to get the data from hdf5 using numpy arrays.
-        """
-        scenario_data = {}
-        with h5py.File(hdf5_file, 'r') as hdf:
-            for j in range(1, 6):
-                base_path = f"Scenario {j}/Time Dependent"
-                try:
-                    time_series = hdf[f"{base_path}/Time Series"][()]
-                    flow_depth = hdf[f"{base_path}/Depth"][:, grid_element - 1]
-                    wse = hdf[f"{base_path}/WSE"][:, grid_element - 1]
-                    velocity = hdf[f"{base_path}/Velocity"][:, grid_element - 1]
-                    data = np.core.records.fromarrays(
-                        [time_series, flow_depth, velocity, wse],
-                        names='Time, Depth, Velocity, WSE'
-                    )
-                    scenario_data[f"S{j}"] = data
-                except KeyError:
-                    continue
-            return scenario_data
 
     def dataframe_from_out(self, out_file, grid_element):
         """

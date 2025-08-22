@@ -29,6 +29,7 @@ from .dlg_check_report import GenericCheckReportDialog
 from ..flo2dobjects import Structure
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
+from ..misc.project_review_utils import hydrostruct_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
 from ..utils import is_number, m_fdata
 from .table_editor_widget import StandardItem, StandardItemModel
@@ -841,26 +842,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
-        s = QSettings()
-        HYDROSTRUCT_file = s.value("FLO-2D/lastHYDROSTRUCTFile", "")
-        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-        # Check if there is an HYDROSTRUCT.OUT file on the FLO-2D QSettings
-        if not os.path.isfile(HYDROSTRUCT_file):
-            HYDROSTRUCT_file = GDS_dir + r"/HYDROSTRUCT.OUT"
-            # Check if there is an HYDROSTRUCT.OUT file on the export folder
-            if not os.path.isfile(HYDROSTRUCT_file):
-                self.uc.bar_warn(
-                    "No HYDROSTRUCT.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                self.uc.log_info(
-                    "No HYDROSTRUCT.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                return
-        # Check if the HYDROSTRUCT.OUT has data on it
-        if os.path.getsize(HYDROSTRUCT_file) == 0:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
-            self.uc.log_info("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
-            return
-
         # Get structure name from FID because the HYDROSTRUCT.OUT structure number is not always the same as the FID
         struct_name = self.gutils.execute(
             "SELECT structname FROM struct WHERE fid = ?;",
@@ -869,131 +850,211 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         if struct_name:
             struct_name = struct_name[0]
+        else:
+            self.uc.bar_warn("No Hydraulic Structure found!")
+            self.uc.log_info("No Hydraulic Structure found!")
+            return False
 
-        with open(HYDROSTRUCT_file, "r") as myfile:
-            time_list = []
-            discharge_list = []
-            pattern = r"THE MAXIMUM DISCHARGE FOR:\s+(\S+)\s+STRUCTURE\s+NO\.\s+(\d+)\s+IS:"
-            structure_name = None
-            while True:
-                try:
-                    line = next(myfile)
-                    match = re.search(pattern, line)
-                    if match:
-                        matched_structure_name = match.group(1)
-                        if matched_structure_name == struct_name:
-                            structure_name = matched_structure_name
-                            line = next(myfile)
-                            while True:
-                                line = next(myfile)
-                                if not line.strip():  # If the line is empty, exit the loop
-                                    break
-                                line = line.split()
-                                time_list.append(float(line[0]))
-                                discharge_list.append(float(line[1]))
-                            break
-                except StopIteration:
-                    break
+        s = QSettings()
 
-        self.plot.clear()
-        if self.plot.plot.legend is not None:
-            plot_scene = self.plot.plot.legend.scene()
-            if plot_scene is not None:
-                plot_scene.removeItem(self.plot.plot.legend)
+        processed_results_file = s.value("FLO-2D/processed_results", "")
+        if os.path.exists(processed_results_file):
+            # try:
 
-        self.plot.plot.legend = None
-        self.plot.plot.addLegend(offset=(0, 30))
-        self.plot.plot.setTitle(title=f"Hydraulic Structure: {structure_name}")
-        self.plot.plot.setLabel("bottom", text="Time (hrs)")
-        self.plot.plot.setLabel("left", text="")
-        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            dict_df = hydrostruct_dataframe_from_hdf5_scenarios(processed_results_file, struct_name)
+            self.uc.log_info(str(dict_df))
 
-        try:  # Build table.
-            discharge_data_model = StandardItemModel()
+            # Clear the plots
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
+
+            # Set up legend and plot title
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend(offset=(0, 30))
+            self.plot.plot.setTitle(title=f"Hydraulic Structure: {struct_name}")
+            self.plot.plot.setLabel("bottom", text="Time (hrs)")
+            self.plot.plot.setLabel("left", text="")
+
+            # Create a new data model for the table view.
+            data_model = StandardItemModel()
             self.tview.undoStack.clear()
-            self.tview.setModel(discharge_data_model)
-            discharge_data_model.clear()
-            headers = ["Time (hours)", f"Discharge ({self.system_units[units][2]})"]
-            discharge_data_model.setHorizontalHeaderLabels(headers)
+            self.tview.setModel(data_model)
+            data_model.clear()
+            headers = ["Time (hours)"]
 
-            data = zip(time_list, discharge_list)
-            for row, (time, discharge) in enumerate(data):
-                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                discharge_data_model.setItem(row, 0, time_item)
-                discharge_data_model.setItem(row, 1, discharge_item)
+            for i, (key, value) in enumerate(dict_df.items(), start=0):
+                self.plot.add_item(f"Inflow ({self.system_units[units][2]})", [value['Time'], value['Inflow']],
+                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
+                self.plot.add_item(f"Outflow ({self.system_units[units][2]})", [value['Time'], value['Outflow']],
+                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
 
-            self.tview.horizontalHeader().setStretchLastSection(True)
-            for col in range(3):
-                self.tview.setColumnWidth(col, 100)
-            for i in range(discharge_data_model.rowCount()):
-                self.tview.setRowHeight(i, 20)
-        except:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
-            self.uc.log_info("Error while building table for hydraulic structure discharge!")
-            return
+                headers.extend([
+                    f"{key} - Inflow ({self.system_units[units][2]})",
+                    f"{key} - Outflow ({self.system_units[units][2]})",
+                ])
+                data_model.setHorizontalHeaderLabels(headers)
 
-        use_prs = s.value("FLO-2D/use_prs", "")
-        if use_prs:
-            scenario1 = s.value("FLO-2D/scenario1") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario1") != "" else None
-            scenario2 = s.value("FLO-2D/scenario2") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario2") != "" else None
-            scenario3 = s.value("FLO-2D/scenario3") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario3") != "" else None
-            scenario4 = s.value("FLO-2D/scenario4") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario4") != "" else None
-            scenario5 = s.value("FLO-2D/scenario5") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario5") != "" else None
-            scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
-            j = 1
-            for scenario in scenarios:
-                if scenario:
-                    with open(scenario, "r") as myfile:
-                        time_list = []
-                        discharge_list = []
-                        pattern = r'THE MAXIMUM DISCHARGE FOR:\s+(\w+)\s+STRUCTURE\sNO.\s+(\d+)\s+IS:'
-                        structure_name = None
-                        while True:
-                            try:
+                for row_idx, row in enumerate(value):
+                    if i == 0:
+                        data_model.setItem(row_idx, 0,
+                                           StandardItem("{:.2f}".format(row[0]) if row[0] is not None else ""))
+                    data_model.setItem(row_idx, 1 + i * 2,
+                                       StandardItem("{:.2f}".format(row[1]) if row[1] is not None else ""))
+                    data_model.setItem(row_idx, 2 + i * 2,
+                                       StandardItem("{:.2f}".format(row[2]) if row[2] is not None else ""))
+
+            # except:
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.bar_warn("Error while creating the plots!")
+            #     self.uc.log_info("Error while creating the plots!")
+            #     return
+        else:
+            HYDROSTRUCT_file = s.value("FLO-2D/lastHYDROSTRUCTFile", "")
+            GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+            # Check if there is an HYDROSTRUCT.OUT file on the FLO-2D QSettings
+            if not os.path.isfile(HYDROSTRUCT_file):
+                HYDROSTRUCT_file = GDS_dir + r"/HYDROSTRUCT.OUT"
+                # Check if there is an HYDROSTRUCT.OUT file on the export folder
+                if not os.path.isfile(HYDROSTRUCT_file):
+                    self.uc.bar_warn(
+                        "No HYDROSTRUCT.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                    self.uc.log_info(
+                        "No HYDROSTRUCT.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                    return
+            # Check if the HYDROSTRUCT.OUT has data on it
+            if os.path.getsize(HYDROSTRUCT_file) == 0:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
+                self.uc.log_info("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
+                return
+
+            with open(HYDROSTRUCT_file, "r") as myfile:
+                time_list = []
+                discharge_list = []
+                pattern = r"THE MAXIMUM DISCHARGE FOR:\s+(\S+)\s+STRUCTURE\s+NO\.\s+(\d+)\s+IS:"
+                structure_name = None
+                while True:
+                    try:
+                        line = next(myfile)
+                        match = re.search(pattern, line)
+                        if match:
+                            matched_structure_name = match.group(1)
+                            if matched_structure_name == struct_name:
+                                structure_name = matched_structure_name
                                 line = next(myfile)
-                                match = re.search(pattern, line)
-                                if match:
-                                    matched_structure_name = match.group(1)
-                                    matched_structure_number = int(match.group(2))
-                                    if matched_structure_number == fid:
-                                        structure_name = matched_structure_name
-                                        line = next(myfile)
-                                        while True:
-                                            line = next(myfile)
-                                            if not line.strip():  # If the line is empty, exit the loop
-                                                break
-                                            line = line.split()
-                                            time_list.append(float(line[0]))
-                                            discharge_list.append(float(line[1]))
+                                while True:
+                                    line = next(myfile)
+                                    if not line.strip():  # If the line is empty, exit the loop
                                         break
-                            except StopIteration:
+                                    line = line.split()
+                                    time_list.append(float(line[0]))
+                                    discharge_list.append(float(line[1]))
                                 break
+                    except StopIteration:
+                        break
 
-                    if j == 1:
-                        color = Qt.yellow
-                    if j == 2:
-                        color = Qt.darkGreen
-                    if j == 3:
-                        color = Qt.green
-                    if j == 4:
-                        color = Qt.darkBlue
-                    if j == 5:
-                        color = Qt.blue
-                    self.plot.add_item(f"Discharge ({self.system_units[units][2]}) - Scenario {j}", [time_list, discharge_list],
-                                       col=QColor(color), sty=Qt.SolidLine)
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
 
-                    headers.extend([f"Discharge ({self.system_units[units][2]}) - Scenario {j}"])
-                    discharge_data_model.setHorizontalHeaderLabels(headers)
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend(offset=(0, 30))
+            self.plot.plot.setTitle(title=f"Hydraulic Structure: {structure_name}")
+            self.plot.plot.setLabel("bottom", text="Time (hrs)")
+            self.plot.plot.setLabel("left", text="")
+            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
 
-                    new_column_index = discharge_data_model.columnCount() - 1
-                    data = zip(time_list, discharge_list)
-                    for row, (_, discharge) in enumerate(data):
-                        discharge_item = StandardItem(
-                            "{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                        discharge_data_model.setItem(row, new_column_index, discharge_item)
+            try:  # Build table.
+                discharge_data_model = StandardItemModel()
+                self.tview.undoStack.clear()
+                self.tview.setModel(discharge_data_model)
+                discharge_data_model.clear()
+                headers = ["Time (hours)", f"Discharge ({self.system_units[units][2]})"]
+                discharge_data_model.setHorizontalHeaderLabels(headers)
 
+                data = zip(time_list, discharge_list)
+                for row, (time, discharge) in enumerate(data):
+                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                    discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                    discharge_data_model.setItem(row, 0, time_item)
+                    discharge_data_model.setItem(row, 1, discharge_item)
 
-                j += 1
+                self.tview.horizontalHeader().setStretchLastSection(True)
+                for col in range(3):
+                    self.tview.setColumnWidth(col, 100)
+                for i in range(discharge_data_model.rowCount()):
+                    self.tview.setRowHeight(i, 20)
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+                self.uc.log_info("Error while building table for hydraulic structure discharge!")
+                return
+
+        # use_prs = s.value("FLO-2D/use_prs", "")
+        # if use_prs:
+        #     scenario1 = s.value("FLO-2D/scenario1") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario1") != "" else None
+        #     scenario2 = s.value("FLO-2D/scenario2") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario2") != "" else None
+        #     scenario3 = s.value("FLO-2D/scenario3") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario3") != "" else None
+        #     scenario4 = s.value("FLO-2D/scenario4") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario4") != "" else None
+        #     scenario5 = s.value("FLO-2D/scenario5") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario5") != "" else None
+        #     scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
+        #     j = 1
+        #     for scenario in scenarios:
+        #         if scenario:
+        #             with open(scenario, "r") as myfile:
+        #                 time_list = []
+        #                 discharge_list = []
+        #                 pattern = r'THE MAXIMUM DISCHARGE FOR:\s+(\w+)\s+STRUCTURE\sNO.\s+(\d+)\s+IS:'
+        #                 structure_name = None
+        #                 while True:
+        #                     try:
+        #                         line = next(myfile)
+        #                         match = re.search(pattern, line)
+        #                         if match:
+        #                             matched_structure_name = match.group(1)
+        #                             matched_structure_number = int(match.group(2))
+        #                             if matched_structure_number == fid:
+        #                                 structure_name = matched_structure_name
+        #                                 line = next(myfile)
+        #                                 while True:
+        #                                     line = next(myfile)
+        #                                     if not line.strip():  # If the line is empty, exit the loop
+        #                                         break
+        #                                     line = line.split()
+        #                                     time_list.append(float(line[0]))
+        #                                     discharge_list.append(float(line[1]))
+        #                                 break
+        #                     except StopIteration:
+        #                         break
+        #
+        #             if j == 1:
+        #                 color = Qt.yellow
+        #             if j == 2:
+        #                 color = Qt.darkGreen
+        #             if j == 3:
+        #                 color = Qt.green
+        #             if j == 4:
+        #                 color = Qt.darkBlue
+        #             if j == 5:
+        #                 color = Qt.blue
+        #             self.plot.add_item(f"Discharge ({self.system_units[units][2]}) - Scenario {j}", [time_list, discharge_list],
+        #                                col=QColor(color), sty=Qt.SolidLine)
+        #
+        #             headers.extend([f"Discharge ({self.system_units[units][2]}) - Scenario {j}"])
+        #             discharge_data_model.setHorizontalHeaderLabels(headers)
+        #
+        #             new_column_index = discharge_data_model.columnCount() - 1
+        #             data = zip(time_list, discharge_list)
+        #             for row, (_, discharge) in enumerate(data):
+        #                 discharge_item = StandardItem(
+        #                     "{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+        #                 discharge_data_model.setItem(row, new_column_index, discharge_item)
+        #
+        #
+        #         j += 1
 
