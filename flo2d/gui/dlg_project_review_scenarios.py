@@ -166,7 +166,8 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         Function to process the results into a hdf5 for easy display on the FLO-2D table and plot
         """
         s = QSettings()
-        processed_results_file = s.value("FLO-2D/processed_results", "")
+        processed_results_file = self.processed_results_le.text()
+        self.s.setValue("FLO-2D/processed_results", processed_results_file)
 
         scenario1 = s.value("FLO-2D/scenario1") if s.value("FLO-2D/scenario1") != "" else None
         scenario2 = s.value("FLO-2D/scenario2") if s.value("FLO-2D/scenario2") != "" else None
@@ -195,9 +196,69 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         if self.hydrostruct_chbox.isChecked():
             self.process_hydrostruct(scenarios, processed_results_file)
 
+        if self.fpxs_chbox.isChecked():
+            self.process_fpxs(scenarios, processed_results_file)
+
         self.uc.bar_info("The selected data was process successfully!")
         self.uc.log_info("The selected data was process successfully!")
         QgsApplication.restoreOverrideCursor()
+
+    def process_fpxs(self, scenarios, processed_results_file):
+        """
+        Function to process the HYCROSS file into the hdf5 file
+        """
+
+        progDialog = QProgressDialog("Processing HYCROSS.OUT...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        for i, scenario in enumerate(scenarios, start=1):
+            progDialog.setValue(i)
+            if scenario:
+                if os.path.exists(processed_results_file):
+                    read_type = "a"
+                else:
+                    read_type = "w"
+                ts_created = False
+                with h5py.File(processed_results_file, read_type) as hdf:
+                    fpxs_group = hdf.create_group(f"Scenario {i}/Floodplain Cross Sections")
+                    HYCROSS_file = os.path.join(scenario, r"HYCROSS.OUT")
+                    with open(HYCROSS_file, "r") as myfile:
+                        while True:
+                            try:
+                                line = next(myfile)
+                            except StopIteration:
+                                break
+                            if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
+                                fpxs_name = f'Floodplain XS {line.split()[6]}'
+                                for _ in range(9):
+                                    line = next(myfile)
+                                time_list = []
+                                data_list = []
+                                while True:
+                                    try:
+                                        line = next(myfile)
+                                    except StopIteration:
+                                        break
+                                    if not line.strip():
+                                        break
+                                    line = line.split()
+                                    if line[0] == "VELOCITY":
+                                        for _ in range(5):
+                                            line = next(myfile)
+                                            line = line.split()
+                                    time_list.append(float(line[0]))
+                                    data_list.append((float(line[1]), float(line[2]), float(line[3]), float(line[4]),
+                                                      float(line[5])))
+                                if not ts_created:
+                                    fpxs_group.create_dataset("Time Series", data=time_list, compression="gzip",
+                                                              compression_opts=9)
+                                    ts_created = True
+                                fpxs_group.create_dataset(fpxs_name, data=data_list, compression="gzip",
+                                                          compression_opts=9)
+
+        progDialog.close()
 
     def process_hydrostruct(self, scenarios, processed_results_file):
         """
