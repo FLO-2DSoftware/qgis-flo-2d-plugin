@@ -239,9 +239,24 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         if self.fpxs_chbox.isChecked():
             self.process_fpxs(scenarios, processed_results_file)
 
+        if self.channels_chbox.isChecked():
+            self.process_channels(scenarios, processed_results_file)
+
         self.uc.bar_info("The selected data was process successfully!")
         self.uc.log_info("The selected data was process successfully!")
         QgsApplication.restoreOverrideCursor()
+
+    def process_channels(self, scenarios, processed_results_file):
+        """
+        Function to process HYCHAN.OUT file into the hdf5 file
+        """
+
+        progDialog = QProgressDialog("Processing HYCHAN.OUT...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        pass
 
     def process_fpxs(self, scenarios, processed_results_file):
         """
