@@ -5500,16 +5500,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     J3-38-32-2       FLOW             ts_test          FLOW     1.0      3.5      12       pattern_test
                     """
 
-                    name = inflow[0]
-                    constituent = inflow[1]
-                    time_series_name = inflow[2]
-                    scale_factor = inflow[5]
-                    if len(inflow) == 6:
-                        baseline = "?"
-                        pattern_name = "?"
-                    else:
-                        baseline = inflow[6]
-                        pattern_name = inflow[7]
+                    name = inflow[0] if len(inflow) > 0 else ""
+                    constituent = inflow[1] if len(inflow) > 1 else ""
+                    time_series_name = inflow[2] if len(inflow) > 2 else ""
+                    scale_factor = inflow[5] if len(inflow) > 5 else ""
+                    baseline = inflow[6] if len(inflow) > 6 and inflow[6] is not None else ""
+                    pattern_name = inflow[7] if len(inflow) > 7 and inflow[7] is not None else ""
 
                     if name in existing_inflows:
                         update_inflows += 1
