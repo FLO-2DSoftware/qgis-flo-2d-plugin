@@ -4334,7 +4334,7 @@ class Flo2D(object):
             self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
-        dlg_prs = ProjectReviewScenariosDialog(self.iface)
+        dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
         dlg_prs.show()
         while True:
             ok = dlg_prs.exec_()

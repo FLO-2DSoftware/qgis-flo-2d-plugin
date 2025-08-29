@@ -26,15 +26,28 @@
       <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
+      <item row="4" column="1">
+       <widget class="QLineEdit" name="scenario5_le"/>
+      </item>
+      <item row="4" column="2">
+       <widget class="QToolButton" name="scenario5_btn">
         <property name="text">
-         <string>Scenario 1</string>
+         <string>...</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
        <widget class="QLineEdit" name="scenario1_le"/>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="scenario4_le"/>
+      </item>
+      <item row="3" column="2">
+       <widget class="QToolButton" name="scenario4_btn">
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
       </item>
       <item row="0" column="2">
        <widget class="QToolButton" name="scenario1_btn">
@@ -43,18 +56,35 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="scenario3_le"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>Scenario 2</string>
+         <string>Scenario 4</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Scenario 5</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QToolButton" name="scenario2_btn">
+        <property name="text">
+         <string>...</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="scenario2_le"/>
       </item>
-      <item row="1" column="2">
-       <widget class="QToolButton" name="scenario2_btn">
+      <item row="2" column="2">
+       <widget class="QToolButton" name="scenario3_btn">
         <property name="text">
          <string>...</string>
         </property>
@@ -67,47 +97,72 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="scenario3_le"/>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Scenario 2</string>
+        </property>
+       </widget>
       </item>
-      <item row="2" column="2">
-       <widget class="QToolButton" name="scenario3_btn">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Scenario 1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QToolButton" name="del_scenario1_btn">
         <property name="text">
          <string>...</string>
         </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Scenario 4</string>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/remove.svg</normaloff>../img/remove.svg</iconset>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QLineEdit" name="scenario4_le"/>
-      </item>
-      <item row="3" column="2">
-       <widget class="QToolButton" name="scenario4_btn">
+      <item row="1" column="3">
+       <widget class="QToolButton" name="del_scenario2_btn">
         <property name="text">
          <string>...</string>
         </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Scenario 5</string>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/remove.svg</normaloff>../img/remove.svg</iconset>
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
-       <widget class="QLineEdit" name="scenario5_le"/>
-      </item>
-      <item row="4" column="2">
-       <widget class="QToolButton" name="scenario5_btn">
+      <item row="2" column="3">
+       <widget class="QToolButton" name="del_scenario3_btn">
         <property name="text">
          <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/remove.svg</normaloff>../img/remove.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QToolButton" name="del_scenario4_btn">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/remove.svg</normaloff>../img/remove.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QToolButton" name="del_scenario5_btn">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/remove.svg</normaloff>../img/remove.svg</iconset>
         </property>
        </widget>
       </item>

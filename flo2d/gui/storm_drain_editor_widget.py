@@ -4825,7 +4825,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         # First check Scenarios with processed results - If a processed results file is selected, use this file.
         # Otherwise, use the RPT file.
-        processed_results_file = s.value("FLO-2D/processed_results", "")
+        processed_results_file = self.get_cont_par("SCENARIOS_RESULTS")
         if os.path.exists(processed_results_file):
             results_file = processed_results_file
             units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"

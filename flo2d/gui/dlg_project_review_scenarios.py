@@ -28,11 +28,12 @@ uiDialog, qtBaseClass = load_ui("project_review_scenarios")
 
 
 class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
-    def __init__(self, iface):
+    def __init__(self, iface, gutils):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.setupUi(self)
         self.iface = iface
+        self.gutils = gutils
 
         self.uc = UserCommunication(iface, "FLO-2D")
         self.s = QSettings()
@@ -48,6 +49,12 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         self.scenario4_btn.clicked.connect(lambda: self.select_scenario(4))
         self.scenario5_btn.clicked.connect(lambda: self.select_scenario(5))
 
+        self.del_scenario1_btn.clicked.connect(lambda: self.delete_scenario(1))
+        self.del_scenario2_btn.clicked.connect(lambda: self.delete_scenario(2))
+        self.del_scenario3_btn.clicked.connect(lambda: self.delete_scenario(3))
+        self.del_scenario4_btn.clicked.connect(lambda: self.delete_scenario(4))
+        self.del_scenario5_btn.clicked.connect(lambda: self.delete_scenario(5))
+
         self.n_scenarios = None
 
         self.select_all_chbox.toggled.connect(self.select_all_datasets)
@@ -60,27 +67,32 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         """
         Function to populate the scenarios on the Project Review - Scenarios
         """
-        use_prs = self.s.value("FLO-2D/use_prs", "")
-        if use_prs:
+
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
+
+        scenario1 = self.gutils.get_cont_par("SCENARIO_1")
+        self.scenario1_le.setText(scenario1)
+        scenario2 = self.gutils.get_cont_par("SCENARIO_2")
+        self.scenario2_le.setText(scenario2)
+        scenario3 = self.gutils.get_cont_par("SCENARIO_3")
+        self.scenario3_le.setText(scenario3)
+        scenario4 = self.gutils.get_cont_par("SCENARIO_4")
+        self.scenario4_le.setText(scenario4)
+        scenario5 = self.gutils.get_cont_par("SCENARIO_5")
+        self.scenario5_le.setText(scenario5)
+
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        if processed_results_file:
+            self.processed_results_le.setText(processed_results_file)
+
+        if use_prs == '1':
             self.use_scenarios_grpbox.setChecked(True)
             self.process_results_grp.setEnabled(True)
+
         else:
             self.use_scenarios_grpbox.setChecked(False)
             self.process_results_grp.setEnabled(False)
 
-        scenario1 = self.s.value("FLO-2D/scenario1")
-        self.scenario1_le.setText(scenario1)
-        scenario2 = self.s.value("FLO-2D/scenario2")
-        self.scenario2_le.setText(scenario2)
-        scenario3 = self.s.value("FLO-2D/scenario3")
-        self.scenario3_le.setText(scenario3)
-        scenario4 = self.s.value("FLO-2D/scenario4")
-        self.scenario4_le.setText(scenario4)
-        scenario5 = self.s.value("FLO-2D/scenario5")
-        self.scenario5_le.setText(scenario5)
-
-        processed_results_file = self.s.value("FLO-2D/processed_results", "")
-        self.processed_results_le.setText(processed_results_file)
 
     def select_scenario(self, scenario_n):
         """
@@ -95,24 +107,52 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         if outdir:
             if scenario_n == 1:
                 self.scenario1_le.setText(outdir)
+                self.gutils.set_cont_par("SCENARIO_1", outdir)
             if scenario_n == 2:
                 self.scenario2_le.setText(outdir)
+                self.gutils.set_cont_par("SCENARIO_2", outdir)
             if scenario_n == 3:
                 self.scenario3_le.setText(outdir)
+                self.gutils.set_cont_par("SCENARIO_3", outdir)
             if scenario_n == 4:
                 self.scenario4_le.setText(outdir)
+                self.gutils.set_cont_par("SCENARIO_4", outdir)
             if scenario_n == 5:
                 self.scenario5_le.setText(outdir)
+                self.gutils.set_cont_par("SCENARIO_5", outdir)
 
             self.uc.bar_info("Scenario saved!")
             self.uc.log_info("Scenario saved!")
+
+    def delete_scenario(self, scenario_n):
+        """
+        Function to select the scenario using the QToolButton
+        """
+        if scenario_n == 1:
+            self.scenario1_le.setText("")
+            self.gutils.set_cont_par("SCENARIO_1", "")
+        if scenario_n == 2:
+            self.scenario2_le.setText("")
+            self.gutils.set_cont_par("SCENARIO_2", "")
+        if scenario_n == 3:
+            self.scenario3_le.setText("")
+            self.gutils.set_cont_par("SCENARIO_3", "")
+        if scenario_n == 4:
+            self.scenario4_le.setText("")
+            self.gutils.set_cont_par("SCENARIO_4", "")
+        if scenario_n == 5:
+            self.scenario5_le.setText("")
+            self.gutils.set_cont_par("SCENARIO_5", "")
+
+        self.uc.bar_info("Scenario deleted!")
+        self.uc.log_info("Scenario deleted!")
 
     def save_scenarios(self):
         """
         Function to save the scenarios to the QGIS settings
         """
         use_prs = self.use_scenarios_grpbox.isChecked()
-        self.s.setValue("FLO-2D/use_prs", use_prs)
+        self.gutils.set_cont_par("USE_SCENARIOS", use_prs)
 
         scenario1 = self.scenario1_le.text()
         scenario2 = self.scenario2_le.text()
@@ -120,15 +160,15 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         scenario4 = self.scenario4_le.text()
         scenario5 = self.scenario5_le.text()
 
-        self.s.setValue("FLO-2D/scenario1", scenario1)
-        self.s.setValue("FLO-2D/scenario2", scenario2)
-        self.s.setValue("FLO-2D/scenario3", scenario3)
-        self.s.setValue("FLO-2D/scenario4", scenario4)
-        self.s.setValue("FLO-2D/scenario5", scenario5)
+        self.gutils.set_cont_par("SCENARIO_1", scenario1)
+        self.gutils.set_cont_par("SCENARIO_2", scenario2)
+        self.gutils.set_cont_par("SCENARIO_3", scenario3)
+        self.gutils.set_cont_par("SCENARIO_4", scenario4)
+        self.gutils.set_cont_par("SCENARIO_5", scenario5)
 
         output_hdf5 = self.processed_results_le.text()
 
-        self.s.setValue("FLO-2D/processed_results", output_hdf5)
+        self.gutils.set_cont_par("SCENARIOS_RESULTS", output_hdf5)
 
         self.uc.bar_info("Scenarios saved!")
         self.uc.log_info("Scenarios saved!")
@@ -139,6 +179,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         """
         Function to enable/disable the processed results
         """
+        self.gutils.set_cont_par("USE_SCENARIOS", self.use_scenarios_grpbox.isChecked())
         if self.use_scenarios_grpbox.isChecked():
             self.process_results_grp.setEnabled(True)
         else:
@@ -165,15 +206,14 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         """
         Function to process the results into a hdf5 for easy display on the FLO-2D table and plot
         """
-        s = QSettings()
         processed_results_file = self.processed_results_le.text()
-        self.s.setValue("FLO-2D/processed_results", processed_results_file)
+        self.gutils.set_cont_par("SCENARIOS_RESULTS", processed_results_file)
 
-        scenario1 = s.value("FLO-2D/scenario1") if s.value("FLO-2D/scenario1") != "" else None
-        scenario2 = s.value("FLO-2D/scenario2") if s.value("FLO-2D/scenario2") != "" else None
-        scenario3 = s.value("FLO-2D/scenario3") if s.value("FLO-2D/scenario3") != "" else None
-        scenario4 = s.value("FLO-2D/scenario4") if s.value("FLO-2D/scenario4") != "" else None
-        scenario5 = s.value("FLO-2D/scenario5") if s.value("FLO-2D/scenario5") != "" else None
+        scenario1 = self.gutils.get_cont_par("SCENARIO_1") if self.gutils.get_cont_par("SCENARIO_1") != "" else None
+        scenario2 = self.gutils.get_cont_par("SCENARIO_2") if self.gutils.get_cont_par("SCENARIO_2") != "" else None
+        scenario3 = self.gutils.get_cont_par("SCENARIO_3") if self.gutils.get_cont_par("SCENARIO_3") != "" else None
+        scenario4 = self.gutils.get_cont_par("SCENARIO_4") if self.gutils.get_cont_par("SCENARIO_4") != "" else None
+        scenario5 = self.gutils.get_cont_par("SCENARIO_5") if self.gutils.get_cont_par("SCENARIO_5") != "" else None
         scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
 
         self.n_scenarios = len([s for s in scenarios if s is not None])
@@ -213,8 +253,9 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         progDialog.setValue(0)
         progDialog.forceShow()
 
-        for i, scenario in enumerate(scenarios, start=1):
+        for i, scenario in enumerate(scenarios, start=0):
             progDialog.setValue(i)
+            QgsApplication.processEvents()
             if scenario:
                 if os.path.exists(processed_results_file):
                     read_type = "a"
@@ -222,7 +263,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                     read_type = "w"
                 ts_created = False
                 with h5py.File(processed_results_file, read_type) as hdf:
-                    fpxs_group = hdf.create_group(f"Scenario {i}/Floodplain Cross Sections")
+                    fpxs_group = hdf.create_group(f"Scenario {i + 1}/Floodplain Cross Sections")
                     HYCROSS_file = os.path.join(scenario, r"HYCROSS.OUT")
                     with open(HYCROSS_file, "r") as myfile:
                         while True:
@@ -270,8 +311,9 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         progDialog.setValue(0)
         progDialog.forceShow()
 
-        for i, scenario in enumerate(scenarios, start=1):
-            progDialog.close()
+        for i, scenario in enumerate(scenarios, start=0):
+            progDialog.setValue(i)
+            QgsApplication.processEvents()
             if scenario:
                 if os.path.exists(processed_results_file):
                     read_type = "a"
@@ -279,7 +321,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                     read_type = "w"
                 ts_created = False
                 with h5py.File(processed_results_file, read_type) as hdf:
-                    hydrostruct = hdf.create_group(f"Scenario {i}/Hydraulic Structures")
+                    hydrostruct = hdf.create_group(f"Scenario {i + 1}/Hydraulic Structures")
                     HYDROSTRUCT_file = os.path.join(scenario, r"HYDROSTRUCT.OUT")
                     with open(HYDROSTRUCT_file, "r") as myfile:
                         time_list = []
@@ -321,7 +363,6 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                             except StopIteration:
                                 break
 
-
         progDialog.close()
 
     def process_timdep(self, scenarios, processed_results_file):
@@ -334,8 +375,9 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         progDialog.setValue(0)
         progDialog.forceShow()
 
-        for i, scenario in enumerate(scenarios, start=1):
+        for i, scenario in enumerate(scenarios, start=0):
             progDialog.setValue(i)
+            QgsApplication.processEvents()
             if scenario:
                 if os.path.exists(processed_results_file):
                     read_type = "a"
@@ -343,7 +385,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                     read_type = "w"
                 timdep_file = os.path.join(scenario, r"TIMDEP.HDF5")
                 with h5py.File(processed_results_file, read_type) as hdf:
-                    time_dependent = hdf.create_group(f"Scenario {i}/Time Dependent")
+                    time_dependent = hdf.create_group(f"Scenario {i + 1}/Time Dependent")
                     with h5py.File(timdep_file, "r") as timdep_hdf:
                         time_series = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Times'])
                         time_series = time_series.flatten()
@@ -388,8 +430,9 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         progDialog.setValue(0)
         progDialog.forceShow()
 
-        for i, scenario in enumerate(scenarios, start=1):
+        for i, scenario in enumerate(scenarios, start=0):
             progDialog.setValue(i)
+            QgsApplication.processEvents()
             if scenario:
                 SWMMQIN = scenario + r"/SWMMQIN.OUT"
                 swmmqin_data = self.get_SWMMQIN(SWMMQIN)
@@ -398,7 +441,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 else:
                     read_type = "w"
                 with h5py.File(hdf5_file, read_type) as hdf:
-                    group = hdf.create_group(f"Scenario {i}/Storm Drain/SWMMQIN")
+                    group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/SWMMQIN")
                     for key, values in swmmqin_data.items():
                         group.create_dataset(key,
                                 data=values,
@@ -416,8 +459,9 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         progDialog.setValue(0)
         progDialog.forceShow()
 
-        for i, scenario in enumerate(scenarios, start=1):
+        for i, scenario in enumerate(scenarios, start=0):
             progDialog.setValue(i)
+            QgsApplication.processEvents()
             if scenario:
                 SWMMOUTFIN = scenario + r"/SWMMOUTFIN.OUT"
                 swmmoutfin_data = self.get_SWMMOUTFIN(SWMMOUTFIN)
@@ -426,7 +470,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 else:
                     read_type = "w"
                 with h5py.File(hdf5_file, read_type) as hdf:
-                    group = hdf.create_group(f"Scenario {i}/Storm Drain/SWMMOUTFIN")
+                    group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/SWMMOUTFIN")
                     for key, values in swmmoutfin_data.items():
                         group.create_dataset(key,
                                              data=values,
@@ -444,8 +488,9 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         progDialog.setValue(0)
         progDialog.forceShow()
 
-        for i, scenario in enumerate(scenarios, start=1):
+        for i, scenario in enumerate(scenarios, start=0):
             progDialog.setValue(i)
+            QgsApplication.processEvents()
             if scenario:
                 swmm_rpt = scenario + r"/swmm.RPT"
 
@@ -518,7 +563,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 # Write to HDF5
                 with h5py.File(hdf5_file, read_type) as hdf:
                     # Create the time dataset
-                    time_group = hdf.create_group(f"Scenario {i}/Storm Drain")
+                    time_group = hdf.create_group(f"Scenario {i + 1}/Storm Drain")
                     time_group.create_dataset(
                         "Time Series",
                         data=np.array(list(zip(data, time)), dtype="S"),  # Convert to fixed-width strings
@@ -527,7 +572,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                     )
 
                     # Create the group structure for nodes
-                    nodes_group = hdf.create_group(f"Scenario {i}/Storm Drain/Nodes")
+                    nodes_group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/Nodes")
 
                     # Create a dataset for each node
                     for node_name, node_data in nodes.items():
@@ -540,7 +585,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                             )
 
                     # Create the group structure for links
-                    links_group = hdf.create_group(f"Scenario {i}/Storm Drain/Links")
+                    links_group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/Links")
 
                     # Create a dataset for each node
                     for link_name, link_data in links.items():

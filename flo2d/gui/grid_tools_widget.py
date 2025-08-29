@@ -1601,9 +1601,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
-        s = QSettings()
-        processed_results_file = s.value("FLO-2D/processed_results", "")
-        if os.path.exists(processed_results_file):
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
+
+        if use_prs == '1' and os.path.exists(processed_results_file):
             dict_df = timdep_dataframe_from_hdf5_scenarios(processed_results_file, grid_element)
 
             try:

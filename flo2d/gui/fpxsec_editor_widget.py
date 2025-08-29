@@ -307,8 +307,10 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
 
-        processed_results_file = s.value("FLO-2D/processed_results", "")
-        if os.path.exists(processed_results_file):
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
+
+        if use_prs == '1' and os.path.exists(processed_results_file):
             dict_df = hycross_dataframe_from_hdf5_scenarios(processed_results_file, fid)
             # try:
             # Clear the plots
