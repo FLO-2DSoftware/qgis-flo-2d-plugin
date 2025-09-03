@@ -5,6 +5,8 @@ from collections import OrderedDict
 
 from qgis._core import QgsApplication
 
+from ..flo2dobjects import ChannelSegment
+
 try:
     import h5py
 except ImportError:
@@ -34,6 +36,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.iface = iface
         self.gutils = gutils
+        self.parser = ParseDAT()
 
         self.uc = UserCommunication(iface, "FLO-2D")
         self.s = QSettings()
@@ -256,7 +259,37 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         progDialog.setValue(0)
         progDialog.forceShow()
 
-        pass
+        for i, scenario in enumerate(scenarios, start=0):
+            progDialog.setValue(i)
+            QgsApplication.processEvents()
+            if scenario:
+                if os.path.exists(processed_results_file):
+                    read_type = "a"
+                else:
+                    read_type = "w"
+                with h5py.File(processed_results_file, read_type) as hdf:
+                    hychan_profile_group = hdf.create_group(f"Scenario {i + 1}/Channels/Profiles")
+                    hychan_xs_group= hdf.create_group(f"Scenario {i + 1}/Channels/Cross Sections")
+                    HYCHAN_file = os.path.join(scenario, r"HYCHAN.OUT")
+
+                    peaks_dict, _ = self.parser.parse_hychan(HYCHAN_file, mode="peaks")
+                    ts_dict, _ = self.parser.parse_hychan(HYCHAN_file, mode="time_series")
+
+                    for key, values in peaks_dict.items():
+                        arr = np.array(values)
+                        hychan_profile_group.create_dataset(key,
+                                                   data=arr.T,
+                                                   compression="gzip",
+                                                   compression_opts=9)
+
+                    for key, values in ts_dict.items():
+                        arr = np.array(values)
+                        hychan_xs_group.create_dataset(key,
+                                                   data=arr.T,
+                                                   compression="gzip",
+                                                   compression_opts=9)
+
+        progDialog.close()
 
     def process_fpxs(self, scenarios, processed_results_file):
         """

@@ -1187,3 +1187,150 @@ class ParseDAT(object):
         for row in par:
             data.append(row)
         return head, data
+
+    def parse_hychan(self, HYCHAN_file, mode):
+        """
+        Function to parse the two types of HYCHAN.OUT - clear water and mudflow.
+        Modes:
+            - "peaks": Returns peak values (peaks_dict, peaks_list).
+            - "time_series": Returns time series data (ts_dict, ts_list).
+        """
+        result_dict = {}
+        result_list = []
+
+        def parse_data_line(line, max_sed_con, lists):
+            """Helper function to parse a single data line."""
+            line = line.split()
+            lists["time"].append(float(line[0]))
+            lists["elevation"].append(float(line[1]))
+            lists["depth"].append(float(line[2]))
+            lists["velocity"].append(float(line[3]))
+            lists["discharge"].append(float(line[4]))
+            lists["froude"].append(float(line[5]))
+            if max_sed_con is not None:
+                lists["con"].append(float(line[6]))
+            else:
+                lists["flow_area"].append(float(line[6]))
+                lists["w_perimeter"].append(float(line[7]))
+                lists["hyd_radius"].append(float(line[8]))
+                lists["top_width"].append(float(line[9]))
+                lists["width_depth"].append(float(line[10]))
+                lists["energy_slope"].append(float(line[11]))
+                lists["shear_stress"].append(float(line[12]))
+                lists["surf_area"].append(float(line[13]))
+
+        with open(HYCHAN_file, "r") as myfile:
+            while True:
+                try:
+                    # Initialize lists for data
+                    lists = {
+                        "time": [],
+                        "elevation": [],
+                        "depth": [],
+                        "velocity": [],
+                        "discharge": [],
+                        "froude": [],
+                        "flow_area": [],
+                        "con": [],
+                        "w_perimeter": [],
+                        "hyd_radius": [],
+                        "top_width": [],
+                        "width_depth": [],
+                        "energy_slope": [],
+                        "shear_stress": [],
+                        "surf_area": [],
+                    }
+                    line = next(myfile)
+                    if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line:
+                        grid = line.split()[-1]
+                        peak_discharge = max_water_elev = max_sed_con = None
+
+                        # Parse header lines
+                        for _ in range(3):
+                            line = next(myfile)
+                            if "DISCHARGE" in line:
+                                peak_discharge = float(line.split("=")[1].split()[0])
+                            elif "STAGE" in line:
+                                max_water_elev = float(line.split("=")[1].split()[0])
+                            elif "SEDIMENT" in line:
+                                max_sed_con = float(line.split("=")[1].split()[0])
+
+                        # Skip fixed 4 lines of table headers
+                        for _ in range(4):
+                            line = next(myfile)
+
+                        # Parse data rows
+                        while True:
+                            try:
+                                line = next(myfile)
+                                if not line.strip():  # If the line is empty, exit the loop
+                                    break
+                                parse_data_line(line, max_sed_con, lists)
+                            except StopIteration:
+                                # Handle the end of the file gracefully
+                                break
+
+                        # Handle results based on mode
+                        if mode == "peaks":
+                            if max_sed_con is not None:
+                                result_dict[grid] = [
+                                    max_water_elev,
+                                    peak_discharge,
+                                    max_sed_con,
+                                    max(lists["velocity"]),
+                                    max(lists["froude"]),
+                                    max(lists["con"]),
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
+                            else:
+                                result_dict[grid] = [
+                                    max_water_elev,
+                                    peak_discharge,
+                                    max(lists["velocity"]),
+                                    max(lists["froude"]),
+                                    max(lists["flow_area"]),
+                                    max(lists["w_perimeter"]),
+                                    max(lists["hyd_radius"]),
+                                    max(lists["top_width"]),
+                                    max(lists["width_depth"]),
+                                    max(lists["energy_slope"]),
+                                    max(lists["shear_stress"]),
+                                    max(lists["surf_area"]),
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
+                        elif mode == "time_series":
+                            if max_sed_con is not None:
+                                result_dict[grid] = [
+                                    lists["time"],
+                                    lists["elevation"],
+                                    lists["depth"],
+                                    lists["velocity"],
+                                    lists["discharge"],
+                                    lists["froude"],
+                                    lists["con"],
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
+                            else:
+                                result_dict[grid] = [
+                                    lists["time"],
+                                    lists["elevation"],
+                                    lists["depth"],
+                                    lists["velocity"],
+                                    lists["discharge"],
+                                    lists["froude"],
+                                    lists["flow_area"],
+                                    lists["w_perimeter"],
+                                    lists["hyd_radius"],
+                                    lists["top_width"],
+                                    lists["width_depth"],
+                                    lists["energy_slope"],
+                                    lists["shear_stress"],
+                                    lists["surf_area"],
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
+                    else:
+                        pass
+                except StopIteration:
+                    break
+
+        return result_dict, result_list

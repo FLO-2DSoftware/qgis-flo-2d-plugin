@@ -1,5 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QApplication
+from qgis._core import QgsMessageLog
+
 try:
     import h5py
 except ImportError:
@@ -96,3 +99,40 @@ def hycross_dataframe_from_hdf5_scenarios(hdf5_file, fpxs_id):
             except KeyError:
                 continue
         return scenario_data
+
+def hychan_dataframe_from_hdf5_scenarios(hdf5_file, uc, mode):
+    """
+    Function to get HYCHAN data from hdf5 using numpy arrays.
+    """
+    scenario_dict = {}
+    with h5py.File(hdf5_file, 'r') as hdf:
+        for j in range(1, 6):
+            # try:
+            fid_dict = {}
+            if mode == "peaks":
+                dataset_path = hdf[f"Scenario {j}/Channels/Profiles"]
+
+                for name, obj in dataset_path.items():
+                    fid_dict[name] = obj[()]
+
+                # Just store the raw rows into the dictionary
+                scenario_dict[f"S{j}"] = fid_dict
+            else:
+                pass
+                # base_path = f"Scenario {j}/Channels/Cross Sections"
+                #
+                # time_series = hdf[f"{base_path}/Time Series"][()]
+                # struct_data = hdf[f"{base_path}/Floodplain XS {fpxs_id}"][()]
+                # flow_width = struct_data[:, 0]
+                # ave_depth = struct_data[:, 1]
+                # wse = struct_data[:, 2]
+                # velocity = struct_data[:, 3]
+                # discharge = struct_data[:, 4]
+                # data = np.core.records.fromarrays(
+                #     [time_series, flow_width, ave_depth, wse, velocity, discharge],
+                #     names='Time, Flow Width, Ave. Depth, WSE, Velocity, Discharge'
+                # )
+                # scenario_data[f"S{j}"] = data
+            # except KeyError:
+            #     continue
+        return scenario_dict
