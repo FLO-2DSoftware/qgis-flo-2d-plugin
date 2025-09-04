@@ -2584,8 +2584,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     return
 
             self.tview.horizontalHeader().setStretchLastSection(True)
-            for col in range(3):
-                self.tview.setColumnWidth(data_model.columnCount(), 150)
+            for col in range(data_model.columnCount()):
+                self.tview.setColumnWidth(col, 150)
             for i in range(data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
         except:
