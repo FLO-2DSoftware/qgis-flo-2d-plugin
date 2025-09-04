@@ -14,6 +14,8 @@ from datetime import date, datetime, time, timedelta
 from math import isnan, modf
 from pathlib import Path
 
+from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES
+
 try:
     import h5py
 except ImportError:
@@ -4751,7 +4753,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     self.plot.plot.legend = None
                     self.plot.plot.addLegend()
-                    self.plot.plot.setTitle(title="Results for " + intersection)
+                    self.plot.plot.setTitle(title="Conduit - " + intersection)
                     self.plot.plot.setLabel("bottom", text="Time (hours)")
                     self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
                     self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
@@ -4825,8 +4827,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         # First check Scenarios with processed results - If a processed results file is selected, use this file.
         # Otherwise, use the RPT file.
-        processed_results_file = self.get_cont_par("SCENARIOS_RESULTS")
-        if os.path.exists(processed_results_file):
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
+
+        if use_prs == '1' and os.path.exists(processed_results_file):
             results_file = processed_results_file
             units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
             try:
@@ -5792,7 +5796,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             self.plot.plot.legend = None
             self.plot.plot.addLegend()
-            self.plot.plot.setTitle(title="Discharge " + node + " (grid " + grid + ")")
+            self.plot.plot.setTitle(title="Node - " + node + " (grid " + grid + ")")
             self.plot.plot.setLabel("bottom", text="Time (hours)")
             self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
             if SWMMOUTFINtimeseries:
@@ -5858,8 +5862,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.legend = None
         self.plot.plot.addLegend()
 
-        j = 1
-        for key, value in RPT_dict.items():
+        for j, (key, value) in enumerate(RPT_dict.items(), start=1):
 
             timeRPT, inflowRPT, floodingRPT, depthRPT, headRPT = [], [], [], [], []
             # timeInToSD, dischargeInToSD, returnInToSD = [], [], []
@@ -5888,66 +5891,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             #     if plot_scene is not None:
             #         plot_scene.removeItem(self.plot.plot.legend)
 
-            self.plot.plot.setTitle(title=key + " - Discharge " + node + " (grid " + grid + ")")
+            self.plot.plot.setTitle(title="Node - " + node + " (grid " + grid + ")")
             self.plot.plot.setLabel("bottom", text="Time (hours)")
 
-            variable_colors = {
-                1: ['#6BAF92', '#4E9B7F', '#31866C', '#186258', '#004D45'],
-                2: ['#5A82A6', '#416B91', '#2A557C', '#123F67', '#002A52'],
-                3: ['#C77A7A', '#AF6262', '#973B3B', '#7F2323', '#670C0C'],
-                4: ['#D9C26A', '#C0AC58', '#A89645', '#907032', '#78591F'],
-                5: ['#A6A6A6', '#8C8C8C', '#727272', '#595959', '#404040'],
-                6: ['#AA6BAF', '#934E9A', '#7C3185', '#651470', '#4F005B'],
-                7: ['#6BAFAA', '#4E9B95', '#318680', '#18626B', '#004D56']
-            }
-
             if j == 1:
-                pen_style = Qt.SolidLine
-                ti = QColor(variable_colors[1][0])
-                df = QColor(variable_colors[2][0])
-                rd = QColor(variable_colors[3][0])
-                id = QColor(variable_colors[4][0])
-                fl = QColor(variable_colors[5][0])
-                de = QColor(variable_colors[6][0])
-                he = QColor(variable_colors[7][0])
-            if j == 2:
-                pen_style = Qt.DashLine
-                ti = QColor(variable_colors[1][1])
-                df = QColor(variable_colors[2][1])
-                rd = QColor(variable_colors[3][1])
-                id = QColor(variable_colors[4][1])
-                fl = QColor(variable_colors[5][1])
-                de = QColor(variable_colors[6][1])
-                he = QColor(variable_colors[7][1])
-            if j == 3:
-                pen_style = Qt.DotLine
-                ti = QColor(variable_colors[1][2])
-                df = QColor(variable_colors[2][2])
-                rd = QColor(variable_colors[3][2])
-                id = QColor(variable_colors[4][2])
-                fl = QColor(variable_colors[5][2])
-                de = QColor(variable_colors[6][2])
-                he = QColor(variable_colors[7][2])
-            if j == 4:
-                pen_style = Qt.DashDotLine
-                ti = QColor(variable_colors[1][3])
-                df = QColor(variable_colors[2][3])
-                rd = QColor(variable_colors[3][3])
-                id = QColor(variable_colors[4][3])
-                fl = QColor(variable_colors[5][3])
-                de = QColor(variable_colors[6][3])
-                he = QColor(variable_colors[7][3])
-            if j == 5:
-                pen_style = Qt.DashDotDotLine
-                ti = QColor(variable_colors[1][4])
-                df = QColor(variable_colors[2][4])
-                rd = QColor(variable_colors[3][4])
-                id = QColor(variable_colors[4][4])
-                fl = QColor(variable_colors[5][4])
-                de = QColor(variable_colors[6][4])
-                he = QColor(variable_colors[7][4])
-            self.plot.add_item(key + f" - Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT],
-                               col=ti, sty=pen_style)
+                self.plot.add_item(f"S{j} - Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT],
+                                   col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0])
+            else:
+                self.plot.add_item(f"S{j} - Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT],
+                                   col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0], hide=True)
             # if SWMMOUTFINtimeseries:
             #     self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})",
             #                        [timeOutToFLO, dischargeOutToFLO], col=df, sty=Qt.SolidLine)
@@ -5957,14 +5909,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             #     self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})",
             #                        [timeInToSD, dischargeInToSD], col=id, sty=Qt.SolidLine,
             #                        hide=True)
-            self.plot.add_item(key + f" - Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT],
-                               col=fl, sty=pen_style, hide=True)
-            self.plot.add_item(key + f" - Depth ({self.system_units[units][0]})", [timeRPT, depthRPT],
-                               col=de, sty=pen_style, hide=True)
-            self.plot.add_item(key + f" - Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=he,
-                               sty=pen_style, hide=True)
+            self.plot.add_item(f"S{j} - Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT],
+                               col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[1], hide=True)
+            self.plot.add_item(f"S{j} - Depth ({self.system_units[units][0]})", [timeRPT, depthRPT],
+                               col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[2], hide=True)
+            self.plot.add_item(f"S{j} - Head ({self.system_units[units][0]})", [timeRPT, headRPT],
+                               col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[3], hide=True)
 
-            j += 1
 
         # try:  # Build table.
         discharge_data_model = StandardItemModel()
@@ -5978,14 +5929,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         #                                                 f"Flooding ({self.system_units[units][2]})",
         #                                                 f"Depth ({self.system_units[units][0]})",
         #                                                 f"Head ({self.system_units[units][0]})"])
-        i = 1
         headers = ["Time (hours)"]
-        for key, value in RPT_dict.items():
+        for i, (key, value) in enumerate(RPT_dict.items(), start=1):
             headers.extend([
-                       f"Scenario {i} - Inflow ({self.system_units[units][2]})",
-                       f"Scenario {i} - Flooding ({self.system_units[units][2]})",
-                       f"Scenario {i} - Depth ({self.system_units[units][0]})",
-                       f"Scenario {i} - Head ({self.system_units[units][0]})"])
+                       f"S{i} - Inflow ({self.system_units[units][2]})",
+                       f"S{i} - Flooding ({self.system_units[units][2]})",
+                       f"S{i} - Depth ({self.system_units[units][0]})",
+                       f"S{i} - Head ({self.system_units[units][0]})"])
             discharge_data_model.setHorizontalHeaderLabels(headers)
 
             # Loop through the rows of data and add them
@@ -6006,8 +5956,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         discharge_data_model.setItem(row_idx, column_idx, StandardItem("{:.2f}".format(x)))
                     else:
                         discharge_data_model.setItem(row_idx, column_idx, StandardItem(""))
-
-            i += 1
 
         # self.tview.horizontalHeader().setStretchLastSection(True)
         # for col in range(3):
@@ -6671,8 +6619,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
         
-        self.plot.plot.setTitle("Rating Table:   " + name)
-        self.plot_item_name = "Rating Table:   " + name
+        self.plot.plot.setTitle("Rating Table - " + name)
+        self.plot_item_name = "Rating Table - " + name
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     def update_rt_plot(self):
@@ -6847,8 +6795,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
     
-        self.plot_item_name = "Pump Curve:   " + name
-        self.plot.plot.setTitle("Pump Curve:   " + name)
+        self.plot_item_name = "Pump Curve - " + name
+        self.plot.plot.setTitle("Pump Curve - " + name)
 
         # Meters
         if self.gutils.get_cont_par("METRIC") == "1":

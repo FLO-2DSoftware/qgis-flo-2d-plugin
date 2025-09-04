@@ -323,7 +323,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             # Set up legend and plot title
             self.plot.plot.legend = None
             self.plot.plot.addLegend(offset=(0, 30))
-            self.plot.plot.setTitle(title=f"Floodplain XS {fid}")
+            self.plot.plot.setTitle(title=f"Floodplain XS - {fid}")
             self.plot.plot.setLabel("bottom", text="Time (hrs)")
             self.plot.plot.setLabel("left", text="")
 

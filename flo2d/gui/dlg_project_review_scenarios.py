@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import QFileDialog, QProgressDialog
 
 from .ui_utils import load_ui
 from ..flo2d_ie.flo2d_parser import ParseDAT
-from ..user_communication import UserCommunication
+from ..user_communication import UserCommunication, is_file_locked
 import numpy as np
 
 uiDialog, qtBaseClass = load_ui("project_review_scenarios")
@@ -210,6 +210,24 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         Function to process the results into a hdf5 for easy display on the FLO-2D table and plot
         """
         processed_results_file = self.processed_results_le.text()
+
+        # Check if file exists
+        if is_file_locked(processed_results_file):
+            self.uc.bar_error(
+                f"The processed results file ({os.path.basename(processed_results_file)}) is currently open or locked by another process!")
+            self.uc.log_info(
+                f"The processed results file ({os.path.basename(processed_results_file)}) is currently open or locked by another process!")
+            return
+
+        # Remove existing file
+        try:
+            if os.path.exists(processed_results_file):
+                os.remove(processed_results_file)
+            else:
+                pass
+        except Exception as e:
+            return
+
         self.gutils.set_cont_par("SCENARIOS_RESULTS", processed_results_file)
 
         scenario1 = self.gutils.get_cont_par("SCENARIO_1") if self.gutils.get_cont_par("SCENARIO_1") != "" else None
@@ -712,12 +730,14 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         if self.select_all_chbox.isChecked():
             self.timdep_chbox.setChecked(True)
             self.stormdrain_chbox.setChecked(True)
-            self.hycross_chbox.setChecked(True)
+            self.channels_chbox.setChecked(True)
             self.fpxs_chbox.setChecked(True)
             self.channels_chbox.setChecked(True)
+            self.hydrostruct_chbox.setChecked(True)
         else:
             self.timdep_chbox.setChecked(False)
             self.stormdrain_chbox.setChecked(False)
-            self.hycross_chbox.setChecked(False)
+            self.channels_chbox.setChecked(False)
             self.fpxs_chbox.setChecked(False)
             self.channels_chbox.setChecked(False)
+            self.hydrostruct_chbox.setChecked(False)

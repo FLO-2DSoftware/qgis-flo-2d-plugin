@@ -876,7 +876,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             # Set up legend and plot title
             self.plot.plot.legend = None
             self.plot.plot.addLegend(offset=(0, 30))
-            self.plot.plot.setTitle(title=f"Hydraulic Structure: {struct_name}")
+            self.plot.plot.setTitle(title=f"Hydraulic Structure - {struct_name}")
             self.plot.plot.setLabel("bottom", text="Time (hrs)")
             self.plot.plot.setLabel("left", text="")
 
@@ -888,9 +888,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             headers = ["Time (hours)"]
 
             for i, (key, value) in enumerate(dict_df.items(), start=0):
-                self.plot.add_item(f"Inflow ({self.system_units[units][2]})", [value['Time'], value['Inflow']],
+                self.plot.add_item(f"{key} - Inflow ({self.system_units[units][2]})", [value['Time'], value['Inflow']],
                                    col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
-                self.plot.add_item(f"Outflow ({self.system_units[units][2]})", [value['Time'], value['Outflow']],
+                self.plot.add_item(f"{key} - Outflow ({self.system_units[units][2]})", [value['Time'], value['Outflow']],
                                    col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
 
                 headers.extend([
@@ -966,7 +966,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
             self.plot.plot.legend = None
             self.plot.plot.addLegend(offset=(0, 30))
-            self.plot.plot.setTitle(title=f"Hydraulic Structure: {structure_name}")
+            self.plot.plot.setTitle(title=f"Hydraulic Structure - {structure_name}")
             self.plot.plot.setLabel("bottom", text="Time (hrs)")
             self.plot.plot.setLabel("left", text="")
             self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
