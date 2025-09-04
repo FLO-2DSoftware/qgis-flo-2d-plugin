@@ -4638,174 +4638,296 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return False
 
         s = QSettings()
-        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-        RPT_file = GDS_dir + r"\swmm.RPT"
-        # Check if there is an RPT file on the export folder
-        if not os.path.isfile(RPT_file):
-            self.uc.bar_warn(
-                "No swmm.RPT file found. Please ensure the simulation has completed and verify the project export folder.")
-            return
 
-        # Check if the swmm.RPT has data on it
-        if os.path.getsize(RPT_file) == 0:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("File  '" + os.path.basename(RPT_file) + "'  is empty!")
-            self.uc.bar_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
-                             "Select a valid .RPT file.")
-            return
+        # First check Scenarios with processed results - If a processed results file is selected, use this file.
+        # Otherwise, use the RPT file.
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
+        if use_prs == '1' and os.path.exists(processed_results_file):
+            results_file = processed_results_file
+            units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
 
-        if intersection:
-            with open(RPT_file) as f:
-                if not intersection in f.read():
-                    self.uc.bar_error("Link " + intersection + " not found in file " + RPT_file)
-                    self.uc.log_info("WARNING 111123.1742: Link " + intersection + " not found in file\n\n" + RPT_file +
-                                     "\n\nSelect a valid .RPT file.")
-                    return
+            # Clear the plot
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend()
+            self.plot.plot.setTitle(title="Conduit - " + intersection)
+            self.plot.plot.setLabel("bottom", text="Time (hours)")
+            self.plot.plot.setLabel("left", text="Units of measurement: " + units)
 
-        data = OrderedDict()
-        # Read RPT file.
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            # Clear the table
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            headers = ["Time (hours)"]
 
-            pd = ParseDAT()
-            par = pd.single_parser(RPT_file)
+            try:
+                RPT_dict = {}
+                with h5py.File(processed_results_file, 'r') as hdf:
+                    for j in range(1, 6):
+                        # Check if the node exists
+                        link_path = f"Scenario {j}/Storm Drain/Links/{intersection}"
+                        if link_path in hdf:
+                            ScenariostimeSeries = []
+                            # Read the node data
+                            link_data = hdf[link_path][:]
+                            time_series = hdf[f"Scenario {j}/Storm Drain/Time Series"][:]
 
-            previous = []
-            units = "CMS"
-            for row in par:
-                if "Flow" in row and "Units" in row:
-                    units = "CMS" if "CMS" in row else "CFS" if "CFS" in row else "CMS"
-                if previous:
-                    cell = previous[2]
-                    for _ in range(3):
-                        next(par)
-                if "<<<" in row and "Link" in row:
-                    cell = row[2]
-                    for _ in range(4):
-                        next(par)
-                if previous or ("<<<" in row and "Link" in row):
-                    previous = []
-                    data[cell] = []
-                    for row2 in par:
-                        if "<<<" in row2 and "Link" in row2:
-                            previous = row2
-                            break
-                        if row2:
-                            if len(row2) == 6:
-                                data[cell].append(list(row2))
+                            # Convert byte strings back to regular strings
+                            day = 0
+                            previousHour = -1
+                            hours_lst = []
+                            for row in time_series:
+                                time = row[1].decode("utf-8")
+                                currentHour, minutes, seconds = time.split(":")
+                                currentHour = int(currentHour)
+                                minutes = int(minutes) / 60
+                                seconds = int(seconds) / 3600
+                                if currentHour < previousHour:
+                                    day = day + 24
+                                previousHour = currentHour
+                                hour = day + currentHour + minutes + seconds
+                                hours_lst.append(hour)
+                            link_data = [list(map(float, row)) for row in link_data]
+                            # Combine time series with node data
+                            for i, row in enumerate(link_data):
+                                row.insert(0, hours_lst[i])
+                                ScenariostimeSeries.append(row)
+
+                            RPT_dict[f'Scenario {j}'] = ScenariostimeSeries
+
+                            # Plot discharge graph:
+                            self.uc.bar_info("Discharge for " + intersection + " from file  '" + results_file + "'")
+
+                            timeRPT, flowRPT, velocityRPT, depthRPT, percent_fullRPT = [], [], [], [], []
+
+                            for item in RPT_dict[f'Scenario {j}']:
+                                timeRPT.append(item[0] if not item[0] is None else float("NaN"))
+                                flowRPT.append(item[1] if not item[1] is None else float("NaN"))
+                                velocityRPT.append(item[2] if not item[2] is None else float("NaN"))
+                                depthRPT.append(item[3] if not item[3] is None else float("NaN"))
+                                percent_fullRPT.append(item[4] if not item[4] is None else float("NaN"))
+
+                            if j == 1:
+                                self.plot.add_item(f"S{j} - Flow ({self.system_units[units][2]})", [timeRPT, flowRPT],
+                                                   col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0])
                             else:
-                                break
+                                self.plot.add_item(f"S{j} - Flow ({self.system_units[units][2]})", [timeRPT, flowRPT],
+                                                   col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0], hide=True)
+                            self.plot.add_item(f"S{j} - Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT],
+                                               col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[1], hide=True)
+                            self.plot.add_item(f"S{j} - Depth ({self.system_units[units][0]})", [timeRPT, depthRPT],
+                                               col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[2], hide=True)
+                            self.plot.add_item(f"S{j} - Percent Full (%)", [timeRPT, percent_fullRPT],
+                                               col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[3], hide=True)
 
-            if data:
-                if intersection is False:
-                    intersection = next(iter(data.items()))[0]
-                if not intersection in data:
-                    QApplication.restoreOverrideCursor()
-                    self.plot.clear()
-                    self.tview.model().setRowCount(0)
-                    self.uc.bar_error("Link " + intersection + " not found in file  '" + RPT_file + "'")
 
-                    QApplication.restoreOverrideCursor()
-                    self.uc.log_info("WARNING 111123.1743: Link " + intersection + " not found in file\n\n" + RPT_file +
-                                     "\n\nSelect a valid .RPT file.")
-                    return
+                            headers.extend([f"S{j} - Flow ({self.system_units[units][2]})",
+                                            f"S{j} - Velocity ({self.system_units[units][1]})",
+                                            f"S{j} - Depth ({self.system_units[units][0]})",
+                                            f"S{j} - Percent Full (%)"])
+                            discharge_data_model.setHorizontalHeaderLabels(headers)
 
-                node_series = data[intersection]
-                I = 1
-                day = 0
-                previousHour = -1
-                RPTtimeSeries = []
+                            for row_idx, row in enumerate(RPT_dict[f'Scenario {j}']):
+                                items = [StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("") for x
+                                         in row]
+                                if j == 1:
+                                    discharge_data_model.setItem(row_idx, 0, items[0])
+                                discharge_data_model.setItem(row_idx, 1 + (j - 1) * 4, items[1])
+                                discharge_data_model.setItem(row_idx, 2 + (j - 1) * 4, items[2])
+                                discharge_data_model.setItem(row_idx, 3 + (j - 1) * 4, items[3])
+                                discharge_data_model.setItem(row_idx, 4 + (j - 1) * 4, items[4])
 
-                for nextTime in node_series:
-                    time = nextTime[1]
-                    flow = float(nextTime[2])
-                    velocity = float(nextTime[3])
-                    depth = float(nextTime[4])
-                    percent_full = float(nextTime[5])
-                    currentHour, minutes, seconds = time.split(":")
-                    currentHour = int(currentHour)
-                    minutes = int(minutes) / 60
-                    seconds = int(seconds) / 3600
-                    if currentHour < previousHour:
-                        day = day + 24
-                    previousHour = currentHour
-                    hour = day + currentHour + minutes + seconds
-                    RPTtimeSeries.append([hour, flow, velocity, depth, percent_full])
+                            self.tview.horizontalHeader().setStretchLastSection(True)
+                            for col in range(discharge_data_model.columnCount()):
+                                self.tview.setColumnWidth(col, 150)
+                            for i in range(discharge_data_model.rowCount()):
+                                self.tview.setRowHeight(i, 20)
 
-                # Plot discharge graph:
-                self.uc.bar_info("Results for link " + intersection + " from file  '" + RPT_file + "'")
+            except Exception as e:
+                self.uc.log_info(f"Error reading the processed results file {processed_results_file}: {e}")
+                self.uc.bar_error(f"Error reading the processed results file {processed_results_file}")
+                return
 
-                try:
-                    self.plot.clear()
-                    timeRPT, flowRPT, velocityRPT, depthRPT, percent_fullRPT = [], [], [], [], []
+            self.uc.bar_info(f"Reading scenarios processed results from {processed_results_file}")
+            self.uc.log_info(f"Reading scenarios processed results from {processed_results_file}")
 
-                    for row in RPTtimeSeries:
-                        timeRPT.append(row[0] if not row[0] is None else float("NaN"))
-                        flowRPT.append(row[1] if not row[1] is None else float("NaN"))
-                        velocityRPT.append(row[2] if not row[2] is None else float("NaN"))
-                        depthRPT.append(row[3] if not row[3] is None else float("NaN"))
-                        percent_fullRPT.append(row[4] if not row[4] is None else float("NaN"))
-
-                    if self.plot.plot.legend is not None:
-                        plot_scene = self.plot.plot.legend.scene()
-                        if plot_scene is not None:
-                            plot_scene.removeItem(self.plot.plot.legend)
-
-                    self.plot.plot.legend = None
-                    self.plot.plot.addLegend()
-                    self.plot.plot.setTitle(title="Conduit - " + intersection)
-                    self.plot.plot.setLabel("bottom", text="Time (hours)")
-                    self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Percent Full (%)", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
-
-                    # self.plot.plot.setLabel("left", text="Units of measurement: " + units)
-                    QApplication.restoreOverrideCursor()
-
-                except:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("Error while building plot for SD discharge!")
-                    return
-
-                try:  # Build table.
-                    discharge_data_model = StandardItemModel()
-                    self.tview.undoStack.clear()
-                    self.tview.setModel(discharge_data_model)
-                    discharge_data_model.clear()
-                    discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                                    f"Flow ({self.system_units[units][2]})",
-                                                                    f"Velocity ({self.system_units[units][1]})",
-                                                                    f"Depth ({self.system_units[units][0]})",
-                                                                    f"Percent Full (%)"])
-                    for row in RPTtimeSeries:
-                        items = [StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("") for x in row]
-                        discharge_data_model.appendRow(items)
-                    self.tview.horizontalHeader().setStretchLastSection(True)
-                    for col in range(3):
-                        self.tview.setColumnWidth(col, 100)
-                    for i in range(discharge_data_model.rowCount()):
-                        self.tview.setRowHeight(i, 20)
-                    QApplication.restoreOverrideCursor()
-                    return
-                except:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("Error while building table for SD discharge!")
-                    return
-
-            else:
-                QApplication.restoreOverrideCursor()
-                self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
-                self.uc.log_info("No time series found in file " + RPT_file + " for node " + intersection)
-
-            QApplication.restoreOverrideCursor()
             return True
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Reading .RPT file failed!")
-            self.uc.log_info("Reading .RPT file failed!")
-            return False
+        else:
+            GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+            RPT_file = GDS_dir + r"\swmm.RPT"
+            # Check if there is an RPT file on the export folder
+            if not os.path.isfile(RPT_file):
+                self.uc.bar_warn(
+                    "No swmm.RPT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+
+            # Check if the swmm.RPT has data on it
+            if os.path.getsize(RPT_file) == 0:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("File  '" + os.path.basename(RPT_file) + "'  is empty!")
+                self.uc.bar_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
+                                 "Select a valid .RPT file.")
+                return
+
+            if intersection:
+                with open(RPT_file) as f:
+                    if not intersection in f.read():
+                        self.uc.bar_error("Link " + intersection + " not found in file " + RPT_file)
+                        self.uc.log_info("WARNING 111123.1742: Link " + intersection + " not found in file\n\n" + RPT_file +
+                                         "\n\nSelect a valid .RPT file.")
+                        return
+
+            data = OrderedDict()
+            # Read RPT file.
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                pd = ParseDAT()
+                par = pd.single_parser(RPT_file)
+
+                previous = []
+                units = "CMS"
+                for row in par:
+                    if "Flow" in row and "Units" in row:
+                        units = "CMS" if "CMS" in row else "CFS" if "CFS" in row else "CMS"
+                    if previous:
+                        cell = previous[2]
+                        for _ in range(3):
+                            next(par)
+                    if "<<<" in row and "Link" in row:
+                        cell = row[2]
+                        for _ in range(4):
+                            next(par)
+                    if previous or ("<<<" in row and "Link" in row):
+                        previous = []
+                        data[cell] = []
+                        for row2 in par:
+                            if "<<<" in row2 and "Link" in row2:
+                                previous = row2
+                                break
+                            if row2:
+                                if len(row2) == 6:
+                                    data[cell].append(list(row2))
+                                else:
+                                    break
+
+                if data:
+                    if intersection is False:
+                        intersection = next(iter(data.items()))[0]
+                    if not intersection in data:
+                        QApplication.restoreOverrideCursor()
+                        self.plot.clear()
+                        self.tview.model().setRowCount(0)
+                        self.uc.bar_error("Link " + intersection + " not found in file  '" + RPT_file + "'")
+
+                        QApplication.restoreOverrideCursor()
+                        self.uc.log_info("WARNING 111123.1743: Link " + intersection + " not found in file\n\n" + RPT_file +
+                                         "\n\nSelect a valid .RPT file.")
+                        return
+
+                    node_series = data[intersection]
+                    I = 1
+                    day = 0
+                    previousHour = -1
+                    RPTtimeSeries = []
+
+                    for nextTime in node_series:
+                        time = nextTime[1]
+                        flow = float(nextTime[2])
+                        velocity = float(nextTime[3])
+                        depth = float(nextTime[4])
+                        percent_full = float(nextTime[5])
+                        currentHour, minutes, seconds = time.split(":")
+                        currentHour = int(currentHour)
+                        minutes = int(minutes) / 60
+                        seconds = int(seconds) / 3600
+                        if currentHour < previousHour:
+                            day = day + 24
+                        previousHour = currentHour
+                        hour = day + currentHour + minutes + seconds
+                        RPTtimeSeries.append([hour, flow, velocity, depth, percent_full])
+
+                    # Plot discharge graph:
+                    self.uc.bar_info("Results for link " + intersection + " from file  '" + RPT_file + "'")
+
+                    try:
+                        self.plot.clear()
+                        timeRPT, flowRPT, velocityRPT, depthRPT, percent_fullRPT = [], [], [], [], []
+
+                        for row in RPTtimeSeries:
+                            timeRPT.append(row[0] if not row[0] is None else float("NaN"))
+                            flowRPT.append(row[1] if not row[1] is None else float("NaN"))
+                            velocityRPT.append(row[2] if not row[2] is None else float("NaN"))
+                            depthRPT.append(row[3] if not row[3] is None else float("NaN"))
+                            percent_fullRPT.append(row[4] if not row[4] is None else float("NaN"))
+
+                        if self.plot.plot.legend is not None:
+                            plot_scene = self.plot.plot.legend.scene()
+                            if plot_scene is not None:
+                                plot_scene.removeItem(self.plot.plot.legend)
+
+                        self.plot.plot.legend = None
+                        self.plot.plot.addLegend()
+                        self.plot.plot.setTitle(title="Conduit - " + intersection)
+                        self.plot.plot.setLabel("bottom", text="Time (hours)")
+                        self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+                        self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                        self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+                        self.plot.add_item(f"Percent Full (%)", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+
+                        # self.plot.plot.setLabel("left", text="Units of measurement: " + units)
+                        QApplication.restoreOverrideCursor()
+
+                    except:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn("Error while building plot for SD discharge!")
+                        return
+
+                    try:  # Build table.
+                        discharge_data_model = StandardItemModel()
+                        self.tview.undoStack.clear()
+                        self.tview.setModel(discharge_data_model)
+                        discharge_data_model.clear()
+                        discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                                        f"Flow ({self.system_units[units][2]})",
+                                                                        f"Velocity ({self.system_units[units][1]})",
+                                                                        f"Depth ({self.system_units[units][0]})",
+                                                                        f"Percent Full (%)"])
+                        for row in RPTtimeSeries:
+                            items = [StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("") for x in row]
+                            discharge_data_model.appendRow(items)
+                        self.tview.horizontalHeader().setStretchLastSection(True)
+                        for col in range(3):
+                            self.tview.setColumnWidth(col, 100)
+                        for i in range(discharge_data_model.rowCount()):
+                            self.tview.setRowHeight(i, 20)
+                        QApplication.restoreOverrideCursor()
+                        return
+                    except:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn("Error while building table for SD discharge!")
+                        return
+
+                else:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
+                    self.uc.log_info("No time series found in file " + RPT_file + " for node " + intersection)
+
+                QApplication.restoreOverrideCursor()
+                return True
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_error("Reading .RPT file failed!")
+                self.uc.log_info("Reading .RPT file failed!")
+                return False
 
     def create_SD_discharge_table_and_plots(self, sd_type, intersection=None):
         """
@@ -4879,7 +5001,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             SWMMQIN_dict[f'Scenario {j}'] = SWMMQINtimeSeries
 
             except Exception as e:
-                print(f"Error: {e}")
+                self.uc.log_info(f"Error reading the processed results file {processed_results_file}: {e}")
+                self.uc.bar_error(f"Error reading the processed results file {processed_results_file}")
+                return
 
             self.uc.bar_info(f"Reading scenarios processed results from {processed_results_file}")
             self.uc.log_info(f"Reading scenarios processed results from {processed_results_file}")
