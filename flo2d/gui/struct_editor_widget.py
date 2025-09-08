@@ -861,58 +861,63 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
         if use_prs == '1' and os.path.exists(processed_results_file):
-            # try:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                dict_df = hydrostruct_dataframe_from_hdf5_scenarios(processed_results_file, struct_name)
 
-            dict_df = hydrostruct_dataframe_from_hdf5_scenarios(processed_results_file, struct_name)
-            self.uc.log_info(str(dict_df))
+                # Clear the plots
+                self.plot.clear()
+                if self.plot.plot.legend is not None:
+                    plot_scene = self.plot.plot.legend.scene()
+                    if plot_scene is not None:
+                        plot_scene.removeItem(self.plot.plot.legend)
 
-            # Clear the plots
-            self.plot.clear()
-            if self.plot.plot.legend is not None:
-                plot_scene = self.plot.plot.legend.scene()
-                if plot_scene is not None:
-                    plot_scene.removeItem(self.plot.plot.legend)
+                # Set up legend and plot title
+                self.plot.plot.legend = None
+                self.plot.plot.addLegend(offset=(0, 30))
+                self.plot.plot.setTitle(title=f"Hydraulic Structure - {struct_name}")
+                self.plot.plot.setLabel("bottom", text="Time (hrs)")
+                self.plot.plot.setLabel("left", text="")
 
-            # Set up legend and plot title
-            self.plot.plot.legend = None
-            self.plot.plot.addLegend(offset=(0, 30))
-            self.plot.plot.setTitle(title=f"Hydraulic Structure - {struct_name}")
-            self.plot.plot.setLabel("bottom", text="Time (hrs)")
-            self.plot.plot.setLabel("left", text="")
+                # Create a new data model for the table view.
+                data_model = StandardItemModel()
+                self.tview.undoStack.clear()
+                self.tview.setModel(data_model)
+                data_model.clear()
+                headers = ["Time (hours)"]
 
-            # Create a new data model for the table view.
-            data_model = StandardItemModel()
-            self.tview.undoStack.clear()
-            self.tview.setModel(data_model)
-            data_model.clear()
-            headers = ["Time (hours)"]
-
-            for i, (key, value) in enumerate(dict_df.items(), start=0):
-                self.plot.add_item(f"{key} - Inflow ({self.system_units[units][2]})", [value['Time'], value['Inflow']],
-                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
-                self.plot.add_item(f"{key} - Outflow ({self.system_units[units][2]})", [value['Time'], value['Outflow']],
-                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
-
-                headers.extend([
-                    f"{key} - Inflow ({self.system_units[units][2]})",
-                    f"{key} - Outflow ({self.system_units[units][2]})",
-                ])
-                data_model.setHorizontalHeaderLabels(headers)
-
-                for row_idx, row in enumerate(value):
+                for i, (key, value) in enumerate(dict_df.items(), start=0):
                     if i == 0:
-                        data_model.setItem(row_idx, 0,
-                                           StandardItem("{:.2f}".format(row[0]) if row[0] is not None else ""))
-                    data_model.setItem(row_idx, 1 + i * 2,
-                                       StandardItem("{:.2f}".format(row[1]) if row[1] is not None else ""))
-                    data_model.setItem(row_idx, 2 + i * 2,
-                                       StandardItem("{:.2f}".format(row[2]) if row[2] is not None else ""))
+                        self.plot.add_item(f"{key} - Inflow ({self.system_units[units][2]})", [value['Time'], value['Inflow']],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
+                    else:
+                        self.plot.add_item(f"{key} - Inflow ({self.system_units[units][2]})", [value['Time'], value['Inflow']],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0], hide=True)
+                    self.plot.add_item(f"{key} - Outflow ({self.system_units[units][2]})", [value['Time'], value['Outflow']],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
 
-            # except:
-            #     QApplication.restoreOverrideCursor()
-            #     self.uc.bar_warn("Error while creating the plots!")
-            #     self.uc.log_info("Error while creating the plots!")
-            #     return
+                    headers.extend([
+                        f"{key} - Inflow ({self.system_units[units][2]})",
+                        f"{key} - Outflow ({self.system_units[units][2]})",
+                    ])
+                    data_model.setHorizontalHeaderLabels(headers)
+
+                    for row_idx, row in enumerate(value):
+                        if i == 0:
+                            data_model.setItem(row_idx, 0,
+                                               StandardItem("{:.2f}".format(row[0]) if row[0] is not None else ""))
+                        data_model.setItem(row_idx, 1 + i * 2,
+                                           StandardItem("{:.2f}".format(row[1]) if row[1] is not None else ""))
+                        data_model.setItem(row_idx, 2 + i * 2,
+                                           StandardItem("{:.2f}".format(row[2]) if row[2] is not None else ""))
+
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("Error while creating the plots!")
+                self.uc.log_info("Error while creating the plots!")
+                return
+            finally:
+                QApplication.restoreOverrideCursor()
         else:
             HYDROSTRUCT_file = s.value("FLO-2D/lastHYDROSTRUCTFile", "")
             GDS_dir = s.value("FLO-2D/lastGdsDir", "")
