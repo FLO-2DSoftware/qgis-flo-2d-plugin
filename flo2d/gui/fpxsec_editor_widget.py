@@ -21,7 +21,8 @@ from qgis.PyQt.QtWidgets import QInputDialog
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2d_tools.schematic_tools import FloodplainXS
 from ..geopackage_utils import GeoPackageUtils
-from ..misc.project_review_utils import hycross_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
+from ..misc.project_review_utils import hycross_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES, \
+    crossq_dataframe_from_hdf5_scenarios
 from ..user_communication import UserCommunication
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
@@ -473,88 +474,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.uc.log_info("Error while building table for floodplain cross section!")
                 return
 
-        # use_prs = s.value("FLO-2D/use_prs", "")
-        # if use_prs:
-        #     scenario1 = s.value("FLO-2D/scenario1") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario1") != "" else None
-        #     scenario2 = s.value("FLO-2D/scenario2") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario2") != "" else None
-        #     scenario3 = s.value("FLO-2D/scenario3") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario3") != "" else None
-        #     scenario4 = s.value("FLO-2D/scenario4") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario4") != "" else None
-        #     scenario5 = s.value("FLO-2D/scenario5") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario5") != "" else None
-        #     scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
-        #     j = 1
-        #     for scenario in scenarios:
-        #         if scenario:
-        #             with open(scenario, "r") as myfile:
-        #                 while True:
-        #                     time_list = []
-        #                     discharge_list = []
-        #                     flow_width_list = []
-        #                     wse_list = []
-        #                     line = next(myfile)
-        #                     if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
-        #                         if line.split()[6] == str(fid):
-        #                             for _ in range(9):
-        #                                 line = next(myfile)
-        #                             while True:
-        #                                 try:
-        #                                     line = next(myfile)
-        #                                     if not line.strip():
-        #                                         break
-        #                                     line = line.split()
-        #                                     time_list.append(float(line[0]))
-        #                                     discharge_list.append(float(line[5]))
-        #                                     flow_width_list.append(float(line[1]))
-        #                                     wse_list.append(float(line[3]))
-        #                                 except StopIteration:
-        #                                     break
-        #                             break
-        #
-        #                 if j == 1:
-        #                     color1 = Qt.blue
-        #                     color2 = Qt.darkBlue
-        #                     color3 = "#3282F6"
-        #                 if j == 2:
-        #                     color1 = Qt.red
-        #                     color2 = Qt.darkRed
-        #                     color3 = "#3A0603"
-        #                 if j == 3:
-        #                     color1 = Qt.magenta
-        #                     color2 = Qt.darkMagenta
-        #                     color3 = "#EE8AF8"
-        #                 if j == 4:
-        #                     color1 = Qt.gray
-        #                     color2 = Qt.darkGray
-        #                     color3 = Qt.lightGray
-        #                 if j == 5:
-        #                     color1 = Qt.cyan
-        #                     color2 = Qt.darkCyan
-        #                     color3 = "#B0FBFD"
-        #
-        #             self.plot.add_item(f"Discharge ({self.system_units[units][2]}) - Scenario {j}", [time_list, discharge_list],
-        #                                col=QColor(color1), sty=Qt.SolidLine)
-        #             self.plot.add_item(f"Flow Width ({self.system_units[units][0]}) - Scenario {j}", [time_list, flow_width_list],
-        #                                col=QColor(color2), sty=Qt.SolidLine, hide=True)
-        #             self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]}) - Scenario {j}",
-        #                                [time_list, wse_list], col=QColor(color3), sty=Qt.SolidLine, hide=True)
-        #
-        #             headers.extend([f"Discharge ({self.system_units[units][2]}) - Scenario {j}",
-        #                             f"Flow Width ({self.system_units[units][0]}) - Scenario {j}",
-        #                             f"Water Surface Elevation ({self.system_units[units][0]}) - Scenario {j}"])
-        #             discharge_data_model.setHorizontalHeaderLabels(headers)
-        #
-        #             new_column_index = discharge_data_model.columnCount() - 3
-        #
-        #             data = zip(time_list, discharge_list, flow_width_list, wse_list)
-        #             for row, (_, discharge, flow, wse) in enumerate(data):
-        #                 discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-        #                 flow_item = StandardItem("{:.2f}".format(flow)) if flow is not None else StandardItem("")
-        #                 wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
-        #                 discharge_data_model.setItem(row, new_column_index, discharge_item)
-        #                 discharge_data_model.setItem(row, new_column_index + 1, flow_item)
-        #                 discharge_data_model.setItem(row, new_column_index + 2, wse_item)
-        #
-        #         j += 1
-
     def show_cells_hydrograph(self, table, fid):
         """
         Function to load the floodplain cells hydrograph from CROSSQ.OUT
@@ -569,45 +488,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
 
-        CROSSQ_file = s.value("FLO-2D/lastCROSSQFile", "")
-        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-        # Check if there is a CROSSQ.OUT file on the FLO-2D QSettings
-        if not os.path.isfile(CROSSQ_file):
-            CROSSQ_file = GDS_dir + r"/CROSSQ.OUT"
-            # Check if there is a CROSSQ.OUT file on the export folder
-            if not os.path.isfile(CROSSQ_file):
-                self.uc.bar_warn(
-                    "No CROSSQ.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                self.uc.log_info(
-                    "No CROSSQ.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                return
-        # Check if the CROSSQ.OUT has data on it
-        if os.path.getsize(CROSSQ_file) == 0:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("File  '" + os.path.basename(CROSSQ_file) + "'  is empty!")
-            self.uc.log_info("File  '" + os.path.basename(CROSSQ_file) + "'  is empty!")
-            return
-
         grid_fid = self.gutils.execute(f"SELECT grid_fid FROM fpxsec_cells WHERE fid = '{fid}'").fetchone()[0]
-
-        with open(CROSSQ_file, "r") as myfile:
-            while True:
-                time_list = []
-                discharge_list = []
-                line = next(myfile)
-                if len(line.split()) == 3 and line.split()[0] == str(grid_fid):
-                    time_list.append(float(line.split()[1]))
-                    discharge_list.append(float(line.split()[2]))
-                    while True:
-                        try:
-                            line = next(myfile)
-                            if len(line.split()) == 3:
-                                break
-                            time_list.append(float(line.split()[0]))
-                            discharge_list.append(float(line.split()[1]))
-                        except StopIteration:
-                            break
-                    break
 
         self.plot.clear()
         if self.plot.plot.legend is not None:
@@ -620,33 +501,113 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Floodplain Cell - {grid_fid}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
 
-        try:  # Build table.
-            discharge_data_model = StandardItemModel()
-            self.tview.undoStack.clear()
-            self.tview.setModel(discharge_data_model)
-            discharge_data_model.clear()
-            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                            f"Discharge ({self.system_units[units][2]})"])
+        discharge_data_model = StandardItemModel()
+        self.tview.undoStack.clear()
+        self.tview.setModel(discharge_data_model)
+        discharge_data_model.clear()
 
-            data = zip(time_list, discharge_list)
-            for time, discharge in data:
-                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                discharge_data_model.appendRow([time_item, discharge_item])
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
-            self.tview.horizontalHeader().setStretchLastSection(True)
-            for col in range(3):
-                self.tview.setColumnWidth(col, 100)
-            for i in range(discharge_data_model.rowCount()):
-                self.tview.setRowHeight(i, 20)
-            return
-        except:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Error while building table for floodplain cells!")
-            self.uc.log_info("Error while building table for floodplain cells!")
-            return
+        if use_prs == '1' and os.path.exists(processed_results_file):
+            dict_df = crossq_dataframe_from_hdf5_scenarios(processed_results_file, grid_fid)
+            headers = ["Time (hours)"]
+
+            for i, (scenario, dataset_dict) in enumerate(dict_df.items(), start=0):
+
+                discharge = dataset_dict[1]
+                time_series = dataset_dict[0]
+
+                min_len = min(len(time_series), len(discharge))
+                time_series = time_series[:min_len]
+                discharge = discharge[:min_len]
+
+                if i == 0:
+                    self.plot.add_item(f"{scenario} - Discharge ({self.system_units[units][2]})",
+                                       [time_series, discharge],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
+                else:
+                    self.plot.add_item(f"{scenario} - Discharge ({self.system_units[units][2]})",
+                                       [time_series, discharge],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0], hide=True)
+
+                headers.extend([f"{scenario} - Discharge ({self.system_units[units][2]})"])
+                discharge_data_model.setHorizontalHeaderLabels(headers)
+
+                data = zip(time_series, discharge)
+
+                for row_idx, (time, disch) in enumerate(data):
+                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                    discharge_item = StandardItem("{:.2f}".format(disch)) if disch is not None else StandardItem("")
+                    if i == 0:
+                        discharge_data_model.setItem(row_idx, 0,time_item)
+                    discharge_data_model.setItem(row_idx, 1 + i * 1, discharge_item)
+
+        else:
+
+            CROSSQ_file = s.value("FLO-2D/lastCROSSQFile", "")
+            GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+            # Check if there is a CROSSQ.OUT file on the FLO-2D QSettings
+            if not os.path.isfile(CROSSQ_file):
+                CROSSQ_file = GDS_dir + r"/CROSSQ.OUT"
+                # Check if there is a CROSSQ.OUT file on the export folder
+                if not os.path.isfile(CROSSQ_file):
+                    self.uc.bar_warn(
+                        "No CROSSQ.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                    self.uc.log_info(
+                        "No CROSSQ.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                    return
+            # Check if the CROSSQ.OUT has data on it
+            if os.path.getsize(CROSSQ_file) == 0:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("File  '" + os.path.basename(CROSSQ_file) + "'  is empty!")
+                self.uc.log_info("File  '" + os.path.basename(CROSSQ_file) + "'  is empty!")
+                return
+
+            with open(CROSSQ_file, "r") as myfile:
+                while True:
+                    time_list = []
+                    discharge_list = []
+                    line = next(myfile)
+                    if len(line.split()) == 3 and line.split()[0] == str(grid_fid):
+                        time_list.append(float(line.split()[1]))
+                        discharge_list.append(float(line.split()[2]))
+                        while True:
+                            try:
+                                line = next(myfile)
+                                if len(line.split()) == 3:
+                                    break
+                                time_list.append(float(line.split()[0]))
+                                discharge_list.append(float(line.split()[1]))
+                            except StopIteration:
+                                break
+                        break
+
+            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+
+            try:  # Build table.
+                discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                                f"Discharge ({self.system_units[units][2]})"])
+
+                data = zip(time_list, discharge_list)
+                for time, discharge in data:
+                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                    discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                    discharge_data_model.appendRow([time_item, discharge_item])
+
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_error("Error while building table for floodplain cells!")
+                self.uc.log_info("Error while building table for floodplain cells!")
+                return
+
+        self.tview.horizontalHeader().setStretchLastSection(True)
+        for col in range(discharge_data_model.columnCount()):
+            self.tview.setColumnWidth(col, 150)
+        for i in range(discharge_data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)
+        return
 
     def fpxs_feature_changed(self, fid):
         """

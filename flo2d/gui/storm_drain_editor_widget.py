@@ -6919,7 +6919,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
     
-        self.plot_item_name = "Pump Curve - " + name
+        self.plot_item_name = name
         self.plot.plot.setTitle("Pump Curve - " + name)
 
         # Meters
@@ -6978,7 +6978,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         #     self.create_pump_plot(self.plot_item_name.split(":   ")[1])
         # else:
         #     self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
-        self.create_pump_plot(self.plot_item_name.split(":   ")[1])
+        self.create_pump_plot(self.plot_item_name)
         self.plot.auto_range()
 
     def add_one_pump_curve(self):

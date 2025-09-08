@@ -1,7 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication
-from qgis._core import QgsMessageLog
 
 try:
     import h5py
@@ -100,7 +99,7 @@ def hycross_dataframe_from_hdf5_scenarios(hdf5_file, fpxs_id):
                 continue
         return scenario_data
 
-def hychan_dataframe_from_hdf5_scenarios(hdf5_file, uc, mode):
+def hychan_dataframe_from_hdf5_scenarios(hdf5_file, mode):
     """
     Function to get HYCHAN data from hdf5 using numpy arrays.
     """
@@ -126,6 +125,27 @@ def hychan_dataframe_from_hdf5_scenarios(hdf5_file, uc, mode):
 
                     # Just store the raw rows into the dictionary
                     scenario_dict[f"S{j}"] = fid_dict
+            except KeyError:
+                continue
+            finally:
+                QApplication.restoreOverrideCursor()
+        return scenario_dict
+
+def crossq_dataframe_from_hdf5_scenarios(hdf5_file, grid_element):
+    """
+    Function to get CROSSQ data from hdf5 using numpy arrays.
+    """
+    scenario_dict = {}
+    with h5py.File(hdf5_file, 'r') as hdf:
+        for j in range(1, 6):
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                dataset = hdf[f"Scenario {j}/Floodplain Cross Sections/Cells/{grid_element}"][()]
+                time_series = hdf[f"Scenario {j}/Floodplain Cross Sections/Time Series"][()]
+
+                # Just store the raw rows into the dictionary
+                scenario_dict[f"S{j}"] = [time_series, dataset]
+
             except KeyError:
                 continue
             finally:

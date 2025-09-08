@@ -259,6 +259,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
 
         if self.fpxs_chbox.isChecked():
             self.process_fpxs(scenarios, processed_results_file)
+            self.process_fpxs_cells(scenarios, processed_results_file)
 
         if self.channels_chbox.isChecked():
             self.process_channels(scenarios, processed_results_file)
@@ -364,6 +365,71 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                                     ts_created = True
                                 fpxs_group.create_dataset(fpxs_name, data=data_list, compression="gzip",
                                                           compression_opts=9)
+
+        progDialog.close()
+
+    def process_fpxs_cells(self, scenarios, processed_results_file):
+        """
+        Function to process the CROSSQ file into the hdf5 file
+        """
+
+        progDialog = QProgressDialog("Processing CROSSQ.OUT...", None, 0, self.n_scenarios)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.forceShow()
+
+        for i, scenario in enumerate(scenarios, start=0):
+            progDialog.setValue(i)
+            QgsApplication.processEvents()
+            if not scenario:
+                continue
+
+            read_type = "a" if os.path.exists(processed_results_file) else "w"
+            with h5py.File(processed_results_file, read_type) as hdf:
+                # require_group avoids errors if the group already exists
+                fpxs_group = hdf.require_group(f"Scenario {i + 1}/Floodplain Cross Sections/Cells")
+
+                CROSSQ_file = os.path.join(scenario, "CROSSQ.OUT")
+                with open(CROSSQ_file, "r", encoding="utf-8", errors="replace") as myfile:
+                    pushback = None  # holds a header line for the next iteration
+
+                    while True:
+                        try:
+                            # read either the saved header or the next line
+                            line = pushback if pushback is not None else next(myfile)
+                            pushback = None
+                        except StopIteration:
+                            break
+
+                        parts = line.split()
+                        if len(parts) == 3 and parts[0].isdigit():
+                            grid = str(int(parts[0]))
+                            discharge_list = [float(parts[2])]
+
+                            # gather rows until the next header or a blank line
+                            while True:
+                                try:
+                                    line = next(myfile)
+                                except StopIteration:
+                                    line = ""
+                                if not line.strip():
+                                    break
+                                sp = line.split()
+                                if len(sp) == 3 and sp[0].isdigit():
+                                    # save this header for the outer loop
+                                    pushback = line
+                                    break
+                                discharge_list.append(float(sp[1]))
+
+                            # write dataset, overwrite if it already exists
+                            if grid in fpxs_group:
+                                del fpxs_group[grid]
+                            fpxs_group.create_dataset(
+                                grid,
+                                data=discharge_list,
+                                compression="gzip",
+                                compression_opts=9,
+                            )
 
         progDialog.close()
 

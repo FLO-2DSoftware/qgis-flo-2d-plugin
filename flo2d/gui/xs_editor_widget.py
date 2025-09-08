@@ -2040,7 +2040,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             # Check if this is a Project Review Scenarios or regular plot
             if use_prs == '1' and os.path.exists(processed_results_file):
 
-                dict_df = hychan_dataframe_from_hdf5_scenarios(processed_results_file, self.uc, mode="peaks")
+                dict_df = hychan_dataframe_from_hdf5_scenarios(processed_results_file, mode="peaks")
 
                 for i, (scenario, fid_dict) in enumerate(dict_df.items(), start=0):
 
@@ -2637,7 +2637,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             # Check if this is a Project Review Scenarios or regular plot
             if use_prs == '1' and os.path.exists(processed_results_file):
 
-                dict_df = hychan_dataframe_from_hdf5_scenarios(processed_results_file, self.uc, mode="time_series")
+                dict_df = hychan_dataframe_from_hdf5_scenarios(processed_results_file, mode="time_series")
                 headers = ["Time (hours)"]
                 for i, (scenario, fid_dict) in enumerate(dict_df.items(), start=0):
                     values = fid_dict[xc_fid]
@@ -2684,13 +2684,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                            col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
 
                     if len(values) == 7:
-                        headers = [f"{scenario} - Elevation ({self.system_units[units][0]})",
+                        headers.extend([f"{scenario} - Elevation ({self.system_units[units][0]})",
                                    f"{scenario} - Thalweg depth ({self.system_units[units][0]})",
                                    f"{scenario} - Velocity ({self.system_units[units][1]})",
                                    f"{scenario} - Discharge ({self.system_units[units][2]})",
                                    f"{scenario} - Froude",
                                    f"{scenario} - Concentration"
-                                  ]
+                                  ])
                         data_model.setHorizontalHeaderLabels(headers)
 
                         data = zip(values[:, 0],
