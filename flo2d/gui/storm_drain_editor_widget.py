@@ -4931,7 +4931,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def create_SD_discharge_table_and_plots(self, sd_type, intersection=None):
+    def create_SD_discharge_table_and_plots(self, sd_type, intersection=None, grid=None):
         """
         Export Storm Drain Discharge plots.
         """
@@ -4943,8 +4943,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
 
-        SWMMQINtimeSeries = []
-        SWMMOUTFINtimeSeries = []
         RPT_dict = {}
         SWMMQIN_dict = {}
         SWMMOUTFIN_dict = {}
@@ -4954,63 +4952,88 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
         use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
+        # try:
+
         if use_prs == '1' and os.path.exists(processed_results_file):
             results_file = processed_results_file
             units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
-            try:
-                with h5py.File(processed_results_file, 'r') as hdf:
-                    for j in range(1, 6):
-                        # Check if the node exists
-                        node_path = f"Scenario {j}/Storm Drain/Nodes/{intersection}"
-                        swmmqin_path = f"Scenario {j}/Storm Drain/SWMMQIN/{intersection}"
-                        if node_path in hdf:
-                            ScenariostimeSeries = []
-                            # Read the node data
-                            node_data = hdf[node_path][:]
-                            time_series = hdf[f"Scenario {j}/Storm Drain/Time Series"][:]
+            # try:
+            with h5py.File(processed_results_file, 'r') as hdf:
 
-                            # Convert byte strings back to regular strings
-                            day = 0
-                            previousHour = -1
-                            hours_lst = []
-                            for row in time_series:
-                                time = row[1].decode("utf-8")
-                                currentHour, minutes, seconds = time.split(":")
-                                currentHour = int(currentHour)
-                                minutes = int(minutes) / 60
-                                seconds = int(seconds) / 3600
-                                if currentHour < previousHour:
-                                    day = day + 24
-                                previousHour = currentHour
-                                hour = day + currentHour + minutes + seconds
-                                hours_lst.append(hour)
-                            node_data = [list(map(float, row)) for row in node_data]
-                            # Combine time series with node data
-                            for i, row in enumerate(node_data):
-                                row.insert(0, hours_lst[i])
-                                ScenariostimeSeries.append(row)
+                time_series = hdf[f"Scenario 1/Storm Drain/Time Series"][:]
+                # Convert byte strings back to regular strings
+                day = 0
+                previousHour = -1
+                hours_lst = []
+                for row in time_series:
+                    time = row[1].decode("utf-8")
+                    currentHour, minutes, seconds = time.split(":")
+                    currentHour = int(currentHour)
+                    minutes = int(minutes) / 60
+                    seconds = int(seconds) / 3600
+                    if currentHour < previousHour:
+                        day = day + 24
+                    previousHour = currentHour
+                    hour = day + currentHour + minutes + seconds
+                    hours_lst.append(hour)
 
-                            RPT_dict[f'Scenario {j}'] = ScenariostimeSeries
+                for j in range(1, 6):
 
-                        if swmmqin_path in hdf:
-                            # Read the node data
-                            swmmqin_data = hdf[swmmqin_path][:]
-                            swmmqin_data = [list(map(float, row)) for row in swmmqin_data]
-                            # Combine time series with node data
-                            for row in swmmqin_data:
-                                SWMMQINtimeSeries.append(row)
+                    ScenariostimeSeries = []
+                    SWMMQINtimeSeries = []
+                    SWMMOUTFINtimeSeries = []
 
-                            SWMMQIN_dict[f'Scenario {j}'] = SWMMQINtimeSeries
+                    # Check if the node exists
+                    node_path = f"Scenario {j}/Storm Drain/Nodes/{intersection}"
+                    swmmqin_path = f"Scenario {j}/Storm Drain/SWMMQIN/{intersection}"
+                    swmmoutfin_path = f"Scenario {j}/Storm Drain/SWMMOUTFIN/{grid}"
+                    self.uc.log_info(str(swmmoutfin_path))
+                    if node_path in hdf:
+                        # Read the node data
+                        node_data = hdf[node_path][:]
 
-            except Exception as e:
-                self.uc.log_info(f"Error reading the processed results file {processed_results_file}: {e}")
-                self.uc.bar_error(f"Error reading the processed results file {processed_results_file}")
-                return
+                        node_data = [list(map(float, row)) for row in node_data]
+
+                        # Combine time series with node data
+                        for i, row in enumerate(node_data):
+                            row.insert(0, hours_lst[i])
+                            ScenariostimeSeries.append(row)
+
+                        RPT_dict[f'Scenario {j}'] = ScenariostimeSeries
+
+                    if swmmqin_path in hdf:
+                        # Read the node data
+                        swmmqin_data = hdf[swmmqin_path][:]
+                        swmmqin_data = [list(map(float, row)) for row in swmmqin_data]
+                        # Combine time series with node data
+                        for i, row in enumerate(swmmqin_data):
+                            # row.insert(0, hours_lst[i])
+                            SWMMQINtimeSeries.append(row)
+
+                        SWMMQIN_dict[f'Scenario {j}'] = SWMMQINtimeSeries
+
+                    if swmmoutfin_path in hdf:
+                        # Read the node data
+                        swmmoutfin_data = hdf[swmmoutfin_path][:]
+                        swmmoutfin_data = [list(map(float, row)) for row in swmmoutfin_data]
+                        # Combine time series with node data
+                        for i, row in enumerate(swmmoutfin_data):
+                            # row.insert(0, hours_lst[i])
+                            SWMMOUTFINtimeSeries.append(row)
+
+                        SWMMOUTFIN_dict[f'Scenario {j}'] = SWMMOUTFINtimeSeries
+
+            # except Exception as e:
+            #     self.uc.log_info(f"Error reading the processed results file {processed_results_file}: {e}")
+            #     self.uc.bar_error(f"Error reading the processed results file {processed_results_file}")
+            #     return
 
             self.uc.bar_info(f"Reading scenarios processed results from {processed_results_file}")
             self.uc.log_info(f"Reading scenarios processed results from {processed_results_file}")
 
             # Plot discharge graph:
+            # self.uc.log_info(f"{SWMMQIN_dict}")
+            self.uc.log_info(f"{SWMMOUTFIN_dict}")
             self.uc.bar_info("Discharge for " + intersection + " from file  '" + results_file + "'")
             self.show_discharge_table_and_plot_scenarios(intersection, units, RPT_dict, SWMMQIN_dict, SWMMOUTFIN_dict, sd_type)
 
@@ -5052,6 +5075,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             data = OrderedDict()
             # Read RPT file.
             try:
+
+                SWMMQINtimeSeries = []
+                SWMMOUTFINtimeSeries = []
+
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
                 pd = ParseDAT()
@@ -5170,6 +5197,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
             return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.bar_error("Error while creating the plots!")
+        #     self.uc.log_info("Error while creating the plots!")
+        #     return False
+        #
+        # finally:
+        #     QApplication.restoreOverrideCursor()
 
     def block_saving(self):
         model = self.tview.model()
@@ -5924,40 +5960,78 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.plot.plot.addLegend()
             self.plot.plot.setTitle(title="Node - " + node + " (grid " + grid + ")")
             self.plot.plot.setLabel("bottom", text="Time (hours)")
+
             self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-            if SWMMOUTFINtimeseries:
-                self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine)
-            if SWMMQINtimeSeries:
-                self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine)
-                self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
             self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
             self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
             self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+            if SWMMOUTFINtimeseries:
+                self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+            if SWMMQINtimeSeries:
+                self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
 
             try: # Build table.
                 discharge_data_model = StandardItemModel()
                 self.tview.undoStack.clear()
                 self.tview.setModel(discharge_data_model)
                 discharge_data_model.clear()
-                discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                                f"Inflow ({self.system_units[units][2]})",
-                                                                f"Flooding ({self.system_units[units][2]})",
-                                                                f"Depth ({self.system_units[units][0]})",
-                                                                f"Head ({self.system_units[units][0]})"])
-                for row in RPTseries:
-                    items = [StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("") for x in row]
-                    discharge_data_model.appendRow(items)
-                self.tview.horizontalHeader().setStretchLastSection(True)
-                for col in range(3):
-                    self.tview.setColumnWidth(col, 100)
-                for i in range(discharge_data_model.rowCount()):
-                    self.tview.setRowHeight(i, 20)
+                headers = ["Time (hours)",
+                            f"Inflow ({self.system_units[units][2]})",
+                            f"Flooding ({self.system_units[units][2]})",
+                            f"Depth ({self.system_units[units][0]})",
+                            f"Head ({self.system_units[units][0]})"]
+                if SWMMOUTFINtimeseries:
+                    headers.append(f"Discharge to FLO-2D ({self.system_units[units][2]})")
+                if SWMMQINtimeSeries:
+                    headers.append(f"Return Discharge to FLO-2D ({self.system_units[units][2]})")
+                    headers.append(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})")
+                discharge_data_model.setHorizontalHeaderLabels(headers)
+
+                # Prepare data for merging
+                max_len = max(
+                    len(RPTseries),
+                    len(SWMMOUTFINtimeseries) if SWMMOUTFINtimeseries else 0,
+                    len(SWMMQINtimeSeries) if SWMMQINtimeSeries else 0
+                )
+
+                for i in range(max_len):
+                    row = []
+                    # RPTseries columns
+                    if i < len(RPTseries):
+                        row.extend([StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("") for x in
+                                    RPTseries[i]])
+                    else:
+                        row.extend([StandardItem("") for _ in range(5)])
+                    # SWMMOUTFINtimeseries columns
+                    if SWMMOUTFINtimeseries:
+                        if i < len(SWMMOUTFINtimeseries):
+                            row.append(
+                                StandardItem("{:.2f}".format(SWMMOUTFINtimeseries[i][1])) if SWMMOUTFINtimeseries[i][
+                                                                                                 1] is not None else StandardItem(
+                                    ""))
+                        else:
+                            row.append(StandardItem(""))
+                    # SWMMQINtimeSeries columns
+                    if SWMMQINtimeSeries:
+                        if i < len(SWMMQINtimeSeries):
+                            row.append(StandardItem("{:.2f}".format(SWMMQINtimeSeries[i][2])) if SWMMQINtimeSeries[i][
+                                                                                                     2] is not None else StandardItem(
+                                ""))
+                            row.append(StandardItem("{:.2f}".format(SWMMQINtimeSeries[i][1])) if SWMMQINtimeSeries[i][
+                                                                                                     1] is not None else StandardItem(
+                                ""))
+                        else:
+                            row.append(StandardItem(""))
+                            row.append(StandardItem(""))
+                    discharge_data_model.appendRow(row)
+
                 return
             except:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("Error while building table for SD discharge!")
                 return
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("Error while creating discharge plot for node "  + node, e)
@@ -5983,16 +6057,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             grid = "?"
 
-            # try:  # Build plot.
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
         self.plot.plot.legend = None
         self.plot.plot.addLegend()
+        self.plot.plot.setTitle(title="Node - " + node + " (grid " + grid + ")")
+        self.plot.plot.setLabel("bottom", text="Time (hours)")
 
         for j, (key, value) in enumerate(RPT_dict.items(), start=1):
 
             timeRPT, inflowRPT, floodingRPT, depthRPT, headRPT = [], [], [], [], []
-            # timeInToSD, dischargeInToSD, returnInToSD = [], [], []
-            # timeOutToFLO, dischargeOutToFLO = [], []
+            timeInToSD, dischargeInToSD, returnInToSD = [], [], []
+            timeOutToFLO, dischargeOutToFLO = [], []
 
             for row in value:
                 timeRPT.append(row[0] if not row[0] is None else float("NaN"))
@@ -6001,24 +6081,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 depthRPT.append(row[3] if not row[3] is None else float("NaN"))
                 headRPT.append(row[4] if not row[4] is None else float("NaN"))
 
-            # if SWMMQINtimeSeries:
-            #     for row in SWMMQINtimeSeries:
-            #         timeInToSD.append(row[0] if not row[0] is None else float("NaN"))
-            #         dischargeInToSD.append(row[1] if not row[1] is None else float("NaN"))
-            #         returnInToSD.append(row[2] if not row[2] is None else float("NaN"))
-            #
-            # if SWMMOUTFINtimeseries:
-            #     for row in SWMMOUTFINtimeseries:
-            #         timeOutToFLO.append(row[0] if not row[0] is None else float("NaN"))
-            #         dischargeOutToFLO.append(row[1] if not row[1] is None else float("NaN"))
+            if SWMMQIN_dict:
+                for row in SWMMQIN_dict[f'Scenario {j}']:
+                    timeInToSD.append(row[0] if not row[0] is None else float("NaN"))
+                    dischargeInToSD.append(row[1] if not row[1] is None else float("NaN"))
+                    returnInToSD.append(row[2] if not row[2] is None else float("NaN"))
 
-            # if self.plot.plot.legend is not None:
-            #     plot_scene = self.plot.plot.legend.scene()
-            #     if plot_scene is not None:
-            #         plot_scene.removeItem(self.plot.plot.legend)
-
-            self.plot.plot.setTitle(title="Node - " + node + " (grid " + grid + ")")
-            self.plot.plot.setLabel("bottom", text="Time (hours)")
+            if SWMMOUTFIN_dict:
+                for row in SWMMOUTFIN_dict[f'Scenario {j}']:
+                    timeOutToFLO.append(row[0] if not row[0] is None else float("NaN"))
+                    dischargeOutToFLO.append(row[1] if not row[1] is None else float("NaN"))
 
             if j == 1:
                 self.plot.add_item(f"S{j} - Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT],
@@ -6026,68 +6098,119 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 self.plot.add_item(f"S{j} - Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT],
                                    col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0], hide=True)
-            # if SWMMOUTFINtimeseries:
-            #     self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})",
-            #                        [timeOutToFLO, dischargeOutToFLO], col=df, sty=Qt.SolidLine)
-            # if SWMMQINtimeSeries:
-            #     self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})",
-            #                        [timeInToSD, returnInToSD], col=rd, sty=Qt.SolidLine)
-            #     self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})",
-            #                        [timeInToSD, dischargeInToSD], col=id, sty=Qt.SolidLine,
-            #                        hide=True)
             self.plot.add_item(f"S{j} - Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT],
                                col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[1], hide=True)
             self.plot.add_item(f"S{j} - Depth ({self.system_units[units][0]})", [timeRPT, depthRPT],
                                col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[2], hide=True)
             self.plot.add_item(f"S{j} - Head ({self.system_units[units][0]})", [timeRPT, headRPT],
                                col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[3], hide=True)
+            if SWMMOUTFIN_dict:
+                self.plot.add_item(f"S{j} - Discharge to FLO-2D ({self.system_units[units][2]})",
+                                   [timeOutToFLO, dischargeOutToFLO], col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[4], hide=True)
+            if SWMMQIN_dict:
+                self.plot.add_item(f"S{j} - Return Discharge to FLO-2D ({self.system_units[units][2]})",
+                                   [timeInToSD, returnInToSD], col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0], hide=True)
+                self.plot.add_item(f"S{j} - Inflow Discharge to Storm Drain ({self.system_units[units][2]})",
+                                   [timeInToSD, dischargeInToSD], col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[1], hide=True)
 
 
         # try:  # Build table.
+        # Build table
         discharge_data_model = StandardItemModel()
         self.tview.undoStack.clear()
         self.tview.setModel(discharge_data_model)
         discharge_data_model.clear()
 
+        has_out = bool(SWMMOUTFIN_dict)
+        has_in = bool(SWMMQIN_dict)
 
-        # discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
-        #                                                 f"Inflow ({self.system_units[units][2]})",
-        #                                                 f"Flooding ({self.system_units[units][2]})",
-        #                                                 f"Depth ({self.system_units[units][0]})",
-        #                                                 f"Head ({self.system_units[units][0]})"])
+        # 1) Build headers once, in the same order we will fill cells
         headers = ["Time (hours)"]
-        for i, (key, value) in enumerate(RPT_dict.items(), start=1):
+
+        # Use numeric scenario order if keys are "Scenario X"
+        def scenario_iter(d):
+            # Fall back to .items() if keys are not like "Scenario X"
+            try:
+                return [(k, d[k]) for k in sorted(d.keys(), key=lambda s: int(s.split()[-1]))]
+            except Exception:
+                return list(d.items())
+
+        for i, (key, value) in enumerate(scenario_iter(RPT_dict), start=1):
             headers.extend([
-                       f"S{i} - Inflow ({self.system_units[units][2]})",
-                       f"S{i} - Flooding ({self.system_units[units][2]})",
-                       f"S{i} - Depth ({self.system_units[units][0]})",
-                       f"S{i} - Head ({self.system_units[units][0]})"])
-            discharge_data_model.setHorizontalHeaderLabels(headers)
+                f"S{i} - Total Inflow ({self.system_units[units][2]})",
+                f"S{i} - Flooding ({self.system_units[units][2]})",
+                f"S{i} - Depth ({self.system_units[units][0]})",
+                f"S{i} - Head ({self.system_units[units][0]})",
+            ])
+            if has_out:
+                headers.append(f"S{i} - Discharge to FLO-2D ({self.system_units[units][2]})")
+            if has_in:
+                # Note the header order: Return first, then Inflow
+                headers.append(f"S{i} - Return Discharge to FLO-2D ({self.system_units[units][2]})")
+                headers.append(f"S{i} - Inflow Discharge to Storm Drain ({self.system_units[units][2]})")
 
-            # Loop through the rows of data and add them
-            for row_idx, row in enumerate(value):
-                # Set the time for the first scenario (first column)
+        discharge_data_model.setHorizontalHeaderLabels(headers)
+
+        # Fixed per-scenario width
+        W = 4 + (1 if has_out else 0) + (2 if has_in else 0)
+
+        # 2) Fill RPT columns
+        for i, (key, series) in enumerate(scenario_iter(RPT_dict), start=1):
+            base = 1 + (i - 1) * W  # start of this scenario's block
+            for row_idx, row in enumerate(series):
+                # Time in column 0 once
                 if i == 1:
-                    if row[0] is not None:
-                        discharge_data_model.setItem(row_idx, 0, StandardItem("{:.2f}".format(row[0])))
-                    else:
-                        discharge_data_model.setItem(row_idx, 0, StandardItem(""))
+                    discharge_data_model.setItem(
+                        row_idx, 0,
+                        StandardItem("{:.2f}".format(row[0])) if row[0] is not None else StandardItem("")
+                    )
+                # RPT values occupy offsets 0..3 in the block
+                for k, x in enumerate(row[1:5]):  # inflow, flooding, depth, head
+                    col = base + k
+                    discharge_data_model.setItem(
+                        row_idx, col,
+                        StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("")
+                    )
 
-                # Now handle the rest of the scenarios (columns 1-4, 5-8, etc.)
-                for col_idx, x in enumerate(row[1:], start=1):  # Skipping time for other scenarios
-                    # Calculate the column for each scenario
-                    column_idx = col_idx + (i - 1) * 4
-                    # Set the value in the correct column for the scenario
-                    if x is not None:
-                        discharge_data_model.setItem(row_idx, column_idx, StandardItem("{:.2f}".format(x)))
-                    else:
-                        discharge_data_model.setItem(row_idx, column_idx, StandardItem(""))
+        # 3) Fill OUTFIN one column per scenario at offset 4
+        if has_out:
+            for i, (key, series) in enumerate(scenario_iter(SWMMOUTFIN_dict), start=1):
+                base = 1 + (i - 1) * W
+                for row_idx, row in enumerate(series):
+                    # Only value is row[1]; row[0] is time
+                    x = row[1] if len(row) > 1 else None
+                    col = base + 4
+                    discharge_data_model.setItem(
+                        row_idx, col,
+                        StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("")
+                    )
 
-        # self.tview.horizontalHeader().setStretchLastSection(True)
-        # for col in range(3):
-        #     self.tview.setColumnWidth(col, 100)
-        # for i in range(discharge_data_model.rowCount()):
-        #     self.tview.setRowHeight(i, 20)
+        # 4) Fill QIN two columns per scenario at offsets 5 and 6
+        # Your headers are [Return, Inflow], but SWMMQIN rows are [time, inflow, return]
+        if has_in:
+            for i, (key, series) in enumerate(scenario_iter(SWMMQIN_dict), start=1):
+                base = 1 + (i - 1) * W
+                for row_idx, row in enumerate(series):
+                    inflow = row[1] if len(row) > 1 else None
+                    ret = row[2] if len(row) > 2 else None
+                    # Return first at offset 5
+                    col_ret = base + 5
+                    discharge_data_model.setItem(
+                        row_idx, col_ret,
+                        StandardItem("{:.2f}".format(ret)) if ret is not None else StandardItem("")
+                    )
+                    # Inflow second at offset 6
+                    col_inf = base + 6
+                    discharge_data_model.setItem(
+                        row_idx, col_inf,
+                        StandardItem("{:.2f}".format(inflow)) if inflow is not None else StandardItem("")
+                    )
+
+        self.tview.horizontalHeader().setStretchLastSection(True)
+        for col in range(discharge_data_model.columnCount()):
+            self.tview.setColumnWidth(col, 150)
+        for i in range(discharge_data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)
         return
         # except:
         #     QApplication.restoreOverrideCursor()

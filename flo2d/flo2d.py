@@ -3882,7 +3882,7 @@ class Flo2D(object):
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_inlets_junctions WHERE fid = ?",
                                          (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('node', name)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('node', name, grid)
 
     @connection_required
     def show_sd_outfall_discharge(self, fid=None):
@@ -3895,7 +3895,7 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('outfall', name)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('outfall', name, grid)
 
     @connection_required
     def show_sd_su_discharge(self, fid=None):
@@ -3908,7 +3908,7 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_storage_units WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('storage_unit', name)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('storage_unit', name, grid)
 
     @connection_required
     def show_conduit_discharge(self, fid=None):
