@@ -55,6 +55,7 @@ from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
 from ..flo2dobjects import ChannelSegment, UserCrossSection
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_tributaries import TributariesDialog
+from ..misc.project_review_utils import hychan_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
 from ..utils import is_number, m_fdata
 from .plot_widget import PlotWidget
@@ -1992,153 +1993,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Error while building table for channel!")
             return
 
-    def parse_hychan(self, HYCHAN_file, mode):
-        """
-        Function to parse the two types of HYCHAN.OUT - clear water and mudflow.
-        Modes:
-            - "peaks": Returns peak values (peaks_dict, peaks_list).
-            - "time_series": Returns time series data (ts_dict, ts_list).
-        """
-        result_dict = {}
-        result_list = []
-
-        def parse_data_line(line, max_sed_con, lists):
-            """Helper function to parse a single data line."""
-            line = line.split()
-            lists["time"].append(float(line[0]))
-            lists["elevation"].append(float(line[1]))
-            lists["depth"].append(float(line[2]))
-            lists["velocity"].append(float(line[3]))
-            lists["discharge"].append(float(line[4]))
-            lists["froude"].append(float(line[5]))
-            if max_sed_con is not None:
-                lists["con"].append(float(line[6]))
-            else:
-                lists["flow_area"].append(float(line[6]))
-                lists["w_perimeter"].append(float(line[7]))
-                lists["hyd_radius"].append(float(line[8]))
-                lists["top_width"].append(float(line[9]))
-                lists["width_depth"].append(float(line[10]))
-                lists["energy_slope"].append(float(line[11]))
-                lists["shear_stress"].append(float(line[12]))
-                lists["surf_area"].append(float(line[13]))
-
-        with open(HYCHAN_file, "r") as myfile:
-            while True:
-                try:
-                    # Initialize lists for data
-                    lists = {
-                        "time": [],
-                        "elevation": [],
-                        "depth": [],
-                        "velocity": [],
-                        "discharge": [],
-                        "froude": [],
-                        "flow_area": [],
-                        "con": [],
-                        "w_perimeter": [],
-                        "hyd_radius": [],
-                        "top_width": [],
-                        "width_depth": [],
-                        "energy_slope": [],
-                        "shear_stress": [],
-                        "surf_area": [],
-                    }
-                    line = next(myfile)
-                    if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line:
-                        grid = line.split()[-1]
-                        peak_discharge = max_water_elev = max_sed_con = None
-
-                        # Parse header lines
-                        for _ in range(3):
-                            line = next(myfile)
-                            if "DISCHARGE" in line:
-                                peak_discharge = float(line.split("=")[1].split()[0])
-                            elif "STAGE" in line:
-                                max_water_elev = float(line.split("=")[1].split()[0])
-                            elif "SEDIMENT" in line:
-                                max_sed_con = float(line.split("=")[1].split()[0])
-
-                        # Skip fixed 4 lines of table headers
-                        for _ in range(4):
-                            line = next(myfile)
-
-                        # Parse data rows
-                        while True:
-                            try:
-                                line = next(myfile)
-                                if not line.strip():  # If the line is empty, exit the loop
-                                    break
-                                parse_data_line(line, max_sed_con, lists)
-                            except StopIteration:
-                                # Handle the end of the file gracefully
-                                break
-
-                        # Handle results based on mode
-                        if mode == "peaks":
-                            if max_sed_con is not None:
-                                result_dict[grid] = [
-                                    max_water_elev,
-                                    peak_discharge,
-                                    max_sed_con,
-                                    max(lists["velocity"]),
-                                    max(lists["froude"]),
-                                    max(lists["con"]),
-                                ]
-                                result_list.append((grid, *result_dict[grid]))
-                            else:
-                                result_dict[grid] = [
-                                    max_water_elev,
-                                    peak_discharge,
-                                    max(lists["velocity"]),
-                                    max(lists["froude"]),
-                                    max(lists["flow_area"]),
-                                    max(lists["w_perimeter"]),
-                                    max(lists["hyd_radius"]),
-                                    max(lists["top_width"]),
-                                    max(lists["width_depth"]),
-                                    max(lists["energy_slope"]),
-                                    max(lists["shear_stress"]),
-                                    max(lists["surf_area"]),
-                                ]
-                                result_list.append((grid, *result_dict[grid]))
-                        elif mode == "time_series":
-                            if max_sed_con is not None:
-                                result_dict[grid] = [
-                                    lists["time"],
-                                    lists["elevation"],
-                                    lists["depth"],
-                                    lists["velocity"],
-                                    lists["discharge"],
-                                    lists["froude"],
-                                    lists["con"],
-                                ]
-                                result_list.append((grid, *result_dict[grid]))
-                            else:
-                                result_dict[grid] = [
-                                    lists["time"],
-                                    lists["elevation"],
-                                    lists["depth"],
-                                    lists["velocity"],
-                                    lists["discharge"],
-                                    lists["froude"],
-                                    lists["flow_area"],
-                                    lists["w_perimeter"],
-                                    lists["hyd_radius"],
-                                    lists["top_width"],
-                                    lists["width_depth"],
-                                    lists["energy_slope"],
-                                    lists["shear_stress"],
-                                    lists["surf_area"],
-                                ]
-                                result_list.append((grid, *result_dict[grid]))
-                    else:
-                        pass
-                except StopIteration:
-                    break
-
-        return result_dict, result_list
-
     def show_channel_peaks(self, table, fid):
         """
         Function to show the channel peaks
@@ -2150,115 +2004,20 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
         s = QSettings()
-        HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
-        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-        # Check if there is an HYCHAN.OUT file on the FLO-2D QSettings
-        if not os.path.isfile(HYCHAN_file):
-            HYCHAN_file = GDS_dir + r"/HYCHAN.OUT"
-            # Check if there is an HYCHAN.OUT file on the export folder
-            if not os.path.isfile(HYCHAN_file):
-                self.uc.bar_warn(
-                    "No HYCHAN.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                return
-        # Check if the HYCHAN.OUT has data on it
-        if os.path.getsize(HYCHAN_file) == 0:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("File  '" + os.path.basename(HYCHAN_file) + "'  is empty!")
-            return
-
-        peaks_dict, peaks_list = self.parse_hychan(HYCHAN_file, mode="peaks")
-
-        if self.plot.plot.legend is not None:
-            plot_scene = self.plot.plot.legend.scene()
-            if plot_scene is not None:
-                plot_scene.removeItem(self.plot.plot.legend)
 
         self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
         self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
         # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
         if not self.chan_seg.get_profiles():
             return
-        self.plot.clear()
-        sta, lb, rb, bed = [], [], [], []
-        max_water_elev = []
-        peak_discharge = []
-        max_sed_con = []
-        max_velocity = []
-        max_froude = []
-        max_con = []
-        max_flow_area = []
-        max_w_perimeter = []
-        max_hyd_radius = []
-        max_top_width = []
-        max_width_depth = []
-        max_energy_slope = []
-        max_shear_stress = []
-        max_surf_area = []
-
         ordered_dict = self.chan_seg.profiles.items()
 
-        for item in ordered_dict:
-            key = str(item[0])
-            if key in peaks_dict:
-                values = peaks_dict[key]
-                # Mudflow
-                if len(values) == 6:
-                    item[1].update({'max_water_elev': float(peaks_dict[key][0]),
-                                    'peak_discharge': float(peaks_dict[key][1]),
-                                    'max_sed_con': float(peaks_dict[key][2]),
-                                    'max_velocity': float(peaks_dict[key][3]),
-                                    'max_froude': float(peaks_dict[key][4]),
-                                    'max_con': float(peaks_dict[key][5])}
-                                   )
-                # Clear Water
-                else:
-                    item[1].update({'max_water_elev': float(peaks_dict[key][0]),
-                                    'peak_discharge': float(peaks_dict[key][1]),
-                                    'max_velocity': float(peaks_dict[key][2]),
-                                    'max_froude': float(peaks_dict[key][3]),
-                                    'max_flow_area': float(peaks_dict[key][4]),
-                                    'max_w_perimeter': float(peaks_dict[key][5]),
-                                    'max_hyd_radius': float(peaks_dict[key][6]),
-                                    'max_top_width': float(peaks_dict[key][7]),
-                                    'max_width_depth': float(peaks_dict[key][8]),
-                                    'max_energy_slope': float(peaks_dict[key][9]),
-                                    'max_shear_stress': float(peaks_dict[key][10]),
-                                    'max_surf_area': float(peaks_dict[key][11])}
-                                   )
-
-        for st, data in ordered_dict:
-            if "max_sed_con" in data.keys():
-                if data["max_water_elev"] == 0:
-                    data["max_water_elev"] = data["bed_elev"]
-                sta.append(data["station"])
-                lb.append(data["lbank_elev"])
-                rb.append(data["rbank_elev"])
-                bed.append(data["bed_elev"])
-                max_water_elev.append(data["max_water_elev"])
-                peak_discharge.append(data["peak_discharge"])
-                max_sed_con.append(data["max_sed_con"])
-                max_velocity.append(data["max_velocity"])
-                max_froude.append(data["max_froude"])
-                max_con.append(data["max_con"])
-            elif "max_water_elev" in data.keys():
-                if data["max_water_elev"] == 0:
-                    data["max_water_elev"] = data["bed_elev"]
-                sta.append(data["station"])
-                lb.append(data["lbank_elev"])
-                rb.append(data["rbank_elev"])
-                bed.append(data["bed_elev"])
-                max_water_elev.append(data["max_water_elev"])
-                peak_discharge.append(data["peak_discharge"])
-                max_velocity.append(data["max_velocity"])
-                max_froude.append(data["max_froude"])
-                max_flow_area.append(data["max_flow_area"])
-                max_w_perimeter.append(data["max_w_perimeter"])
-                max_hyd_radius.append(data["max_hyd_radius"])
-                max_top_width.append(data["max_top_width"])
-                max_width_depth.append(data["max_width_depth"])
-                max_energy_slope.append(data["max_energy_slope"])
-                max_shear_stress.append(data["max_shear_stress"])
-                max_surf_area.append(data["max_surf_area"])
+        # Clear the plot
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
 
         self.plot.plot.legend = None
         self.plot.plot.addLegend(offset=(0, 30))
@@ -2266,122 +2025,574 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setLabel("bottom", text="Channel length")
         self.plot.plot.setLabel("left", text="")
 
-        self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-        self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-        self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        if len(max_sed_con) > 0:
-            self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
-            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Concentration", [sta, max_con], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-        else:
-            self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
-            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress], col=QColor(Qt.darkYellow), hide=True)
-            self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, max_surf_area], col=QColor(Qt.darkMagenta), hide=True)
+        # Clear the table
+        data_model = StandardItemModel()
+        self.tview.undoStack.clear()
+        self.tview.setModel(data_model)
+        data_model.clear()
 
-        try:  # Build table.
-            data_model = StandardItemModel()
-            self.tview.undoStack.clear()
-            self.tview.setModel(data_model)
-            data_model.clear()
-            if len(max_sed_con) > 0:
-                data_model.setHorizontalHeaderLabels([f"Station ({self.system_units[units][0]})",
-                                                      f"Bed elevation ({self.system_units[units][0]})",
-                                                      f"Left bank ({self.system_units[units][0]})",
-                                                      f"Right bank ({self.system_units[units][0]})",
-                                                      f"Max. Water ({self.system_units[units][0]})",
-                                                      f"Velocity ({self.system_units[units][1]})",
-                                                      f"Froude",
-                                                      f"Concentration (By Vol)"])
-                data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_con)
-                for station, bed_elev, left_bank, right_bank, mw, vel, fr, con in data:
-                    station_item = StandardItem("{:.2f}".format(station)) if station is not None else StandardItem("")
-                    bed_item = StandardItem("{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
-                    left_bank_item = StandardItem("{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
-                    right_bank_item = StandardItem("{:.2f}".format(right_bank)) if right_bank is not None else StandardItem("")
-                    max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
-                    velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
-                    froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
-                    con_item = StandardItem("{:.2f}".format(con)) if con is not None else StandardItem("")
-                    data_model.appendRow([station_item,
-                                          bed_item,
-                                          left_bank_item,
-                                          right_bank_item,
-                                          max_water_item,
-                                          velocity_item,
-                                          froude_item,
-                                          con_item,
-                                          ])
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
+
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            # Check if this is a Project Review Scenarios or regular plot
+            if use_prs == '1' and os.path.exists(processed_results_file):
+
+                dict_df = hychan_dataframe_from_hdf5_scenarios(processed_results_file, mode="peaks")
+
+                for i, (scenario, fid_dict) in enumerate(dict_df.items(), start=0):
+
+                    sta, lb, rb, bed = [], [], [], []
+                    max_water_elev = []
+                    peak_discharge = []
+                    max_sed_con = []
+                    max_velocity = []
+                    max_froude = []
+                    max_con = []
+                    max_flow_area = []
+                    max_w_perimeter = []
+                    max_hyd_radius = []
+                    max_top_width = []
+                    max_width_depth = []
+                    max_energy_slope = []
+                    max_shear_stress = []
+                    max_surf_area = []
+
+                    for item in ordered_dict:
+                        key = str(item[0])
+                        if key in fid_dict:
+                            values = fid_dict[key]
+                            if len(values) == 6:
+                                item[1].update({'max_water_elev': float(fid_dict[key][0]),
+                                                'peak_discharge': float(fid_dict[key][1]),
+                                                'max_sed_con': float(fid_dict[key][2]),
+                                                'max_velocity': float(fid_dict[key][3]),
+                                                'max_froude': float(fid_dict[key][4]),
+                                                'max_con': float(fid_dict[key][5])}
+                                               )
+                            # Clear Water
+                            else:
+                                item[1].update({'max_water_elev': float(fid_dict[key][0]),
+                                                'peak_discharge': float(fid_dict[key][1]),
+                                                'max_velocity': float(fid_dict[key][2]),
+                                                'max_froude': float(fid_dict[key][3]),
+                                                'max_flow_area': float(fid_dict[key][4]),
+                                                'max_w_perimeter': float(fid_dict[key][5]),
+                                                'max_hyd_radius': float(fid_dict[key][6]),
+                                                'max_top_width': float(fid_dict[key][7]),
+                                                'max_width_depth': float(fid_dict[key][8]),
+                                                'max_energy_slope': float(fid_dict[key][9]),
+                                                'max_shear_stress': float(fid_dict[key][10]),
+                                                'max_surf_area': float(fid_dict[key][11])}
+                                               )
+
+                    for st, data in ordered_dict:
+                        if "max_sed_con" in data.keys():
+                            if data["max_water_elev"] == 0:
+                                data["max_water_elev"] = data["bed_elev"]
+                            sta.append(data["station"])
+                            lb.append(data["lbank_elev"])
+                            rb.append(data["rbank_elev"])
+                            bed.append(data["bed_elev"])
+                            max_water_elev.append(data["max_water_elev"])
+                            peak_discharge.append(data["peak_discharge"])
+                            max_sed_con.append(data["max_sed_con"])
+                            max_velocity.append(data["max_velocity"])
+                            max_froude.append(data["max_froude"])
+                            max_con.append(data["max_con"])
+                        elif "max_water_elev" in data.keys():
+                            if data["max_water_elev"] == 0:
+                                data["max_water_elev"] = data["bed_elev"]
+                            sta.append(data["station"])
+                            lb.append(data["lbank_elev"])
+                            rb.append(data["rbank_elev"])
+                            bed.append(data["bed_elev"])
+                            max_water_elev.append(data["max_water_elev"])
+                            peak_discharge.append(data["peak_discharge"])
+                            max_velocity.append(data["max_velocity"])
+                            max_froude.append(data["max_froude"])
+                            max_flow_area.append(data["max_flow_area"])
+                            max_w_perimeter.append(data["max_w_perimeter"])
+                            max_hyd_radius.append(data["max_hyd_radius"])
+                            max_top_width.append(data["max_top_width"])
+                            max_width_depth.append(data["max_width_depth"])
+                            max_energy_slope.append(data["max_energy_slope"])
+                            max_shear_stress.append(data["max_shear_stress"])
+                            max_surf_area.append(data["max_surf_area"])
+
+                    if i == 0:
+                        self.plot.add_item(f"{scenario} - Bed elevation ({self.system_units[units][0]})", [sta, bed],
+                                           col=QColor(Qt.black), sty=Qt.SolidLine)
+                        self.plot.add_item(f"{scenario} - Left bank ({self.system_units[units][0]})", [sta, lb],
+                                           col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+                        self.plot.add_item(f"{scenario} - Right bank ({self.system_units[units][0]})", [sta, rb],
+                                           col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+                        self.plot.add_item(f"{scenario} - Max. Water ({self.system_units[units][0]})", [sta, max_water_elev],
+                                           col=SCENARIO_COLOURS[i], sty=Qt.SolidLine)
+                    else:
+                        self.plot.add_item(f"{scenario} - Bed elevation ({self.system_units[units][0]})", [sta, bed],
+                                           col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+                        self.plot.add_item(f"{scenario} - Left bank ({self.system_units[units][0]})", [sta, lb],
+                                           col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+                        self.plot.add_item(f"{scenario} - Right bank ({self.system_units[units][0]})", [sta, rb],
+                                           col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
+                        self.plot.add_item(f"{scenario} - Max. Water ({self.system_units[units][0]})", [sta, max_water_elev],
+                                           col=SCENARIO_COLOURS[i], sty=Qt.SolidLine, hide=True)
+                    if len(max_sed_con) > 0:
+                        self.plot.add_item(f"{scenario} - Velocity ({self.system_units[units][1]})", [sta, max_velocity],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                        self.plot.add_item(f"{scenario} - Froude", [sta, max_froude],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+                        self.plot.add_item(f"{scenario} - Concentration", [sta, max_con],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
+                    else:
+                        self.plot.add_item(f"{scenario} - Velocity ({self.system_units[units][1]})", [sta, max_velocity],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                        self.plot.add_item(f"{scenario} - Froude", [sta, max_froude],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+                        self.plot.add_item(f"{scenario} - Flow area ({self.system_units[units][3]})", [sta, max_flow_area],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
+                        self.plot.add_item(f"{scenario} - Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[4], hide=True)
+                        self.plot.add_item(f"{scenario} - Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                        self.plot.add_item(f"{scenario} - Top width ({self.system_units[units][0]})", [sta, max_top_width],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+                        self.plot.add_item(f"{scenario} - Width/Depth", [sta, max_width_depth],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
+                        self.plot.add_item(f"{scenario} - Energy slope", [sta, max_energy_slope],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[4], hide=True)
+                        self.plot.add_item(f"{scenario} - Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                        self.plot.add_item(f"{scenario} - Surface area ({self.system_units[units][3]})", [sta, max_surf_area],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+
+                    # try:  # Build table.
+
+                    if len(max_sed_con) > 0:
+
+                        if i == 0:
+                            headers = [f"{scenario} - Station ({self.system_units[units][0]})",
+                                        f"{scenario} - Bed elevation ({self.system_units[units][0]})",
+                                        f"{scenario} - Left bank ({self.system_units[units][0]})",
+                                        f"{scenario} - Right bank ({self.system_units[units][0]})",
+                                        f"{scenario} - Max. Water ({self.system_units[units][0]})",
+                                        f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                        f"{scenario} - Froude",
+                                        f"{scenario} - Concentration (By Vol)"]
+
+                            data_model.setHorizontalHeaderLabels(headers)
+
+                            data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_con)
+                            for station, bed_elev, left_bank, right_bank, mw, vel, fr, con in data:
+                                station_item = StandardItem(
+                                    "{:.2f}".format(station)) if station is not None else StandardItem("")
+                                bed_item = StandardItem(
+                                    "{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                                left_bank_item = StandardItem(
+                                    "{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                                right_bank_item = StandardItem(
+                                    "{:.2f}".format(right_bank)) if right_bank is not None else StandardItem("")
+                                max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
+                                velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
+                                froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
+                                con_item = StandardItem("{:.2f}".format(con)) if con is not None else StandardItem("")
+                                data_model.appendRow([station_item,
+                                                      bed_item,
+                                                      left_bank_item,
+                                                      right_bank_item,
+                                                      max_water_item,
+                                                      velocity_item,
+                                                      froude_item,
+                                                      con_item,
+                                                      ])
+                        else:
+                            headers.extend([f"{scenario} - Station ({self.system_units[units][0]})",
+                                           f"{scenario} - Bed elevation ({self.system_units[units][0]})",
+                                           f"{scenario} - Left bank ({self.system_units[units][0]})",
+                                           f"{scenario} - Right bank ({self.system_units[units][0]})",
+                                           f"{scenario} - Max. Water ({self.system_units[units][0]})",
+                                           f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                           f"{scenario} - Froude",
+                                           f"{scenario} - Concentration (By Vol)"])
+                            data_model.setHorizontalHeaderLabels(headers)
+
+                            data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_con)
+                            for row_idx, (station, bed_elev, left_bank, right_bank, mw, vel, fr, con) in enumerate(data):
+                                station_item = StandardItem(
+                                    "{:.2f}".format(station)) if station is not None else StandardItem("")
+                                bed_item = StandardItem(
+                                    "{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                                left_bank_item = StandardItem(
+                                    "{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                                right_bank_item = StandardItem(
+                                    "{:.2f}".format(right_bank)) if right_bank is not None else StandardItem("")
+                                max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
+                                velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
+                                froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
+                                con_item = StandardItem("{:.2f}".format(con)) if con is not None else StandardItem("")
+
+                                data_model.setItem(row_idx, i * 8, station_item)
+                                data_model.setItem(row_idx, 1 + i * 8, bed_item)
+                                data_model.setItem(row_idx, 2 + i * 8, left_bank_item)
+                                data_model.setItem(row_idx, 3 + i * 8, right_bank_item)
+                                data_model.setItem(row_idx, 4 + i * 8, max_water_item)
+                                data_model.setItem(row_idx, 5 + i * 8, velocity_item)
+                                data_model.setItem(row_idx, 6 + i * 8, froude_item)
+                                data_model.setItem(row_idx, 7 + i * 8, con_item)
+
+                    else:
+                        if i == 0:
+                            headers = [f"{scenario} - Station ({self.system_units[units][0]})",
+                                       f"{scenario} - Bed elevation ({self.system_units[units][0]})",
+                                       f"{scenario} - Left bank ({self.system_units[units][0]})",
+                                       f"{scenario} - Right bank ({self.system_units[units][0]})",
+                                       f"{scenario} - Max. Water ({self.system_units[units][0]})",
+                                       f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                       f"{scenario} - Froude",
+                                       f"{scenario} - Flow area ({self.system_units[units][3]})",
+                                       f"{scenario} - Wetted perimeter ({self.system_units[units][0]})",
+                                       f"{scenario} - Hydraulic radius ({self.system_units[units][0]})",
+                                       f"{scenario} - Top width ({self.system_units[units][0]})",
+                                       f"{scenario} - Width/Depth",
+                                       f"{scenario} - Energy slope",
+                                       f"{scenario} - Shear stress ({self.system_units[units][4]})",
+                                       f"{scenario} - Surface area ({self.system_units[units][3]})"]
+
+                            data_model.setHorizontalHeaderLabels(headers)
+
+                            data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_flow_area,
+                                       max_w_perimeter, max_hyd_radius, max_top_width, max_width_depth,
+                                       max_energy_slope, max_shear_stress, max_surf_area)
+                            for station, bed_elev, left_bank, right_bank, mw, vel, fr, fa, wp, hr, tw, wd, es, ss, sa in data:
+                                station_item = StandardItem(
+                                    "{:.2f}".format(station)) if station is not None else StandardItem("")
+                                bed_item = StandardItem(
+                                    "{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                                left_bank_item = StandardItem(
+                                    "{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                                right_bank_item = StandardItem(
+                                    "{:.2f}".format(right_bank)) if right_bank is not None else StandardItem(
+                                    "")
+                                max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
+                                velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
+                                froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
+                                flow_area_item = StandardItem("{:.2f}".format(fa)) if fa is not None else StandardItem("")
+                                wet_perim_item = StandardItem("{:.2f}".format(wp)) if wp is not None else StandardItem("")
+                                h_radius_item = StandardItem("{:.2f}".format(hr)) if hr is not None else StandardItem("")
+                                top_width_item = StandardItem("{:.2f}".format(tw)) if tw is not None else StandardItem("")
+                                widthdepth_item = StandardItem("{:.2f}".format(wd)) if wd is not None else StandardItem("")
+                                ener_slo_item = StandardItem("{:.2f}".format(es)) if es is not None else StandardItem("")
+                                shearstress_item = StandardItem("{:.2f}".format(ss)) if ss is not None else StandardItem("")
+                                surfacearea_item = StandardItem("{:.2f}".format(sa)) if sa is not None else StandardItem("")
+                                data_model.appendRow([station_item,
+                                                      bed_item,
+                                                      left_bank_item,
+                                                      right_bank_item,
+                                                      max_water_item,
+                                                      velocity_item,
+                                                      froude_item,
+                                                      flow_area_item,
+                                                      wet_perim_item,
+                                                      h_radius_item,
+                                                      top_width_item,
+                                                      widthdepth_item,
+                                                      ener_slo_item,
+                                                      shearstress_item,
+                                                      surfacearea_item,
+                                                      ])
+                        else:
+                            headers.extend([f"{scenario} - Station ({self.system_units[units][0]})",
+                                           f"{scenario} - Bed elevation ({self.system_units[units][0]})",
+                                           f"{scenario} - Left bank ({self.system_units[units][0]})",
+                                           f"{scenario} - Right bank ({self.system_units[units][0]})",
+                                           f"{scenario} - Max. Water ({self.system_units[units][0]})",
+                                           f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                           f"{scenario} - Froude",
+                                           f"{scenario} - Flow area ({self.system_units[units][3]})",
+                                           f"{scenario} - Wetted perimeter ({self.system_units[units][0]})",
+                                           f"{scenario} - Hydraulic radius ({self.system_units[units][0]})",
+                                           f"{scenario} - Top width ({self.system_units[units][0]})",
+                                           f"{scenario} - Width/Depth",
+                                           f"{scenario} - Energy slope",
+                                           f"{scenario} - Shear stress ({self.system_units[units][4]})",
+                                           f"{scenario} - Surface area ({self.system_units[units][3]})"])
+                            data_model.setHorizontalHeaderLabels(headers)
+
+                            data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_flow_area,
+                                       max_w_perimeter, max_hyd_radius, max_top_width, max_width_depth,
+                                       max_energy_slope, max_shear_stress, max_surf_area)
+
+                            for row_idx, (station, bed_elev, left_bank, right_bank, mw, vel, fr, fa, wp, hr, tw, wd, es, ss, sa) in enumerate(data):
+                                station_item = StandardItem(
+                                    "{:.2f}".format(station)) if station is not None else StandardItem("")
+                                bed_item = StandardItem(
+                                    "{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                                left_bank_item = StandardItem(
+                                    "{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                                right_bank_item = StandardItem(
+                                    "{:.2f}".format(right_bank)) if right_bank is not None else StandardItem(
+                                    "")
+                                max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem(
+                                    "")
+                                velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem(
+                                    "")
+                                froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
+                                flow_area_item = StandardItem("{:.2f}".format(fa)) if fa is not None else StandardItem(
+                                    "")
+                                wet_perim_item = StandardItem("{:.2f}".format(wp)) if wp is not None else StandardItem(
+                                    "")
+                                h_radius_item = StandardItem("{:.2f}".format(hr)) if hr is not None else StandardItem(
+                                    "")
+                                top_width_item = StandardItem("{:.2f}".format(tw)) if tw is not None else StandardItem(
+                                    "")
+                                widthdepth_item = StandardItem("{:.2f}".format(wd)) if wd is not None else StandardItem(
+                                    "")
+                                ener_slo_item = StandardItem("{:.2f}".format(es)) if es is not None else StandardItem(
+                                    "")
+                                shearstress_item = StandardItem(
+                                    "{:.2f}".format(ss)) if ss is not None else StandardItem("")
+                                surfacearea_item = StandardItem(
+                                    "{:.2f}".format(sa)) if sa is not None else StandardItem("")
+
+                                data_model.setItem(row_idx, i * 15, station_item)
+                                data_model.setItem(row_idx, 1 + i * 15, bed_item)
+                                data_model.setItem(row_idx, 2 + i * 15, left_bank_item)
+                                data_model.setItem(row_idx, 3 + i * 15, right_bank_item)
+                                data_model.setItem(row_idx, 4 + i * 15, max_water_item)
+                                data_model.setItem(row_idx, 5 + i * 15, velocity_item)
+                                data_model.setItem(row_idx, 6 + i * 15, froude_item)
+                                data_model.setItem(row_idx, 7 + i * 15, flow_area_item)
+                                data_model.setItem(row_idx, 8 + i * 15, wet_perim_item)
+                                data_model.setItem(row_idx, 9 + i * 15, h_radius_item)
+                                data_model.setItem(row_idx, 10 + i * 15, top_width_item)
+                                data_model.setItem(row_idx, 11 + i * 15, widthdepth_item)
+                                data_model.setItem(row_idx, 12 + i * 15, ener_slo_item)
+                                data_model.setItem(row_idx, 13 + i * 15, shearstress_item)
+                                data_model.setItem(row_idx, 14 + i * 15, surfacearea_item)
+
+                    # except:
+                    #     self.uc.bar_warn("Error while building table for channel!")
+                    #     return
             else:
-                data_model.setHorizontalHeaderLabels([f"Station ({self.system_units[units][0]})",
-                                                      f"Bed elevation ({self.system_units[units][0]})",
-                                                      f"Left bank ({self.system_units[units][0]})",
-                                                      f"Right bank ({self.system_units[units][0]})",
-                                                      f"Max. Water ({self.system_units[units][0]})",
-                                                      f"Velocity ({self.system_units[units][1]})",
-                                                      f"Froude",
-                                                      f"Flow area ({self.system_units[units][3]})",
-                                                      f"Wetted perimeter ({self.system_units[units][0]})",
-                                                      f"Hydraulic radius ({self.system_units[units][0]})",
-                                                      f"Top width ({self.system_units[units][0]})",
-                                                      f"Width/Depth",
-                                                      f"Energy slope",
-                                                      f"Shear stress ({self.system_units[units][4]})",
-                                                      f"Surface area ({self.system_units[units][3]})"])
 
-                data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_flow_area, max_w_perimeter, max_hyd_radius, max_top_width, max_width_depth,
-                           max_energy_slope, max_shear_stress, max_surf_area)
-                for station, bed_elev, left_bank, right_bank, mw, vel, fr, fa, wp, hr, tw, wd, es, ss, sa in data:
-                    station_item = StandardItem("{:.2f}".format(station)) if station is not None else StandardItem("")
-                    bed_item = StandardItem("{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
-                    left_bank_item = StandardItem("{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
-                    right_bank_item = StandardItem("{:.2f}".format(right_bank)) if right_bank is not None else StandardItem(
-                        "")
-                    max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
-                    velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
-                    froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
-                    flow_area_item = StandardItem("{:.2f}".format(fa)) if fa is not None else StandardItem("")
-                    wet_perim_item = StandardItem("{:.2f}".format(wp)) if wp is not None else StandardItem("")
-                    h_radius_item = StandardItem("{:.2f}".format(hr)) if hr is not None else StandardItem("")
-                    top_width_item = StandardItem("{:.2f}".format(tw)) if tw is not None else StandardItem("")
-                    widthdepth_item = StandardItem("{:.2f}".format(wd)) if wd is not None else StandardItem("")
-                    ener_slo_item = StandardItem("{:.2f}".format(es)) if es is not None else StandardItem("")
-                    shearstress_item = StandardItem("{:.2f}".format(ss)) if ss is not None else StandardItem("")
-                    surfacearea_item = StandardItem("{:.2f}".format(sa)) if sa is not None else StandardItem("")
-                    data_model.appendRow([station_item,
-                                          bed_item,
-                                          left_bank_item,
-                                          right_bank_item,
-                                          max_water_item,
-                                          velocity_item,
-                                          froude_item,
-                                          flow_area_item,
-                                          wet_perim_item,
-                                          h_radius_item,
-                                          top_width_item,
-                                          widthdepth_item,
-                                          ener_slo_item,
-                                          shearstress_item,
-                                          surfacearea_item,
-                                          ])
+                HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
+                GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+                # Check if there is an HYCHAN.OUT file on the FLO-2D QSettings
+                if not os.path.isfile(HYCHAN_file):
+                    HYCHAN_file = GDS_dir + r"/HYCHAN.OUT"
+                    # Check if there is an HYCHAN.OUT file on the export folder
+                    if not os.path.isfile(HYCHAN_file):
+                        self.uc.bar_warn(
+                            "No HYCHAN.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                        return
+                # Check if the HYCHAN.OUT has data on it
+                if os.path.getsize(HYCHAN_file) == 0:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("File  '" + os.path.basename(HYCHAN_file) + "'  is empty!")
+                    return
+
+                sta, lb, rb, bed = [], [], [], []
+                max_water_elev = []
+                peak_discharge = []
+                max_sed_con = []
+                max_velocity = []
+                max_froude = []
+                max_con = []
+                max_flow_area = []
+                max_w_perimeter = []
+                max_hyd_radius = []
+                max_top_width = []
+                max_width_depth = []
+                max_energy_slope = []
+                max_shear_stress = []
+                max_surf_area = []
+
+                peaks_dict, peaks_list = self.parser.parse_hychan(HYCHAN_file, mode="peaks")
+
+                for item in ordered_dict:
+                    key = str(item[0])
+                    if key in peaks_dict:
+                        values = peaks_dict[key]
+                        # Mudflow
+                        if len(values) == 6:
+                            item[1].update({'max_water_elev': float(peaks_dict[key][0]),
+                                            'peak_discharge': float(peaks_dict[key][1]),
+                                            'max_sed_con': float(peaks_dict[key][2]),
+                                            'max_velocity': float(peaks_dict[key][3]),
+                                            'max_froude': float(peaks_dict[key][4]),
+                                            'max_con': float(peaks_dict[key][5])}
+                                           )
+                        # Clear Water
+                        else:
+                            item[1].update({'max_water_elev': float(peaks_dict[key][0]),
+                                            'peak_discharge': float(peaks_dict[key][1]),
+                                            'max_velocity': float(peaks_dict[key][2]),
+                                            'max_froude': float(peaks_dict[key][3]),
+                                            'max_flow_area': float(peaks_dict[key][4]),
+                                            'max_w_perimeter': float(peaks_dict[key][5]),
+                                            'max_hyd_radius': float(peaks_dict[key][6]),
+                                            'max_top_width': float(peaks_dict[key][7]),
+                                            'max_width_depth': float(peaks_dict[key][8]),
+                                            'max_energy_slope': float(peaks_dict[key][9]),
+                                            'max_shear_stress': float(peaks_dict[key][10]),
+                                            'max_surf_area': float(peaks_dict[key][11])}
+                                           )
+
+                for st, data in ordered_dict:
+                    if "max_sed_con" in data.keys():
+                        if data["max_water_elev"] == 0:
+                            data["max_water_elev"] = data["bed_elev"]
+                        sta.append(data["station"])
+                        lb.append(data["lbank_elev"])
+                        rb.append(data["rbank_elev"])
+                        bed.append(data["bed_elev"])
+                        max_water_elev.append(data["max_water_elev"])
+                        peak_discharge.append(data["peak_discharge"])
+                        max_sed_con.append(data["max_sed_con"])
+                        max_velocity.append(data["max_velocity"])
+                        max_froude.append(data["max_froude"])
+                        max_con.append(data["max_con"])
+                    elif "max_water_elev" in data.keys():
+                        if data["max_water_elev"] == 0:
+                            data["max_water_elev"] = data["bed_elev"]
+                        sta.append(data["station"])
+                        lb.append(data["lbank_elev"])
+                        rb.append(data["rbank_elev"])
+                        bed.append(data["bed_elev"])
+                        max_water_elev.append(data["max_water_elev"])
+                        peak_discharge.append(data["peak_discharge"])
+                        max_velocity.append(data["max_velocity"])
+                        max_froude.append(data["max_froude"])
+                        max_flow_area.append(data["max_flow_area"])
+                        max_w_perimeter.append(data["max_w_perimeter"])
+                        max_hyd_radius.append(data["max_hyd_radius"])
+                        max_top_width.append(data["max_top_width"])
+                        max_width_depth.append(data["max_width_depth"])
+                        max_energy_slope.append(data["max_energy_slope"])
+                        max_shear_stress.append(data["max_shear_stress"])
+                        max_surf_area.append(data["max_surf_area"])
+
+                self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+                self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+                self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+                if len(max_sed_con) > 0:
+                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
+                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Concentration", [sta, max_con], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                else:
+                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
+                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress], col=QColor(Qt.darkYellow), hide=True)
+                    self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, max_surf_area], col=QColor(Qt.darkMagenta), hide=True)
+
+                try:  # Build table.
+
+                    if len(max_sed_con) > 0:
+                        data_model.setHorizontalHeaderLabels([f"Station ({self.system_units[units][0]})",
+                                                              f"Bed elevation ({self.system_units[units][0]})",
+                                                              f"Left bank ({self.system_units[units][0]})",
+                                                              f"Right bank ({self.system_units[units][0]})",
+                                                              f"Max. Water ({self.system_units[units][0]})",
+                                                              f"Velocity ({self.system_units[units][1]})",
+                                                              f"Froude",
+                                                              f"Concentration (By Vol)"])
+                        data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_con)
+                        for station, bed_elev, left_bank, right_bank, mw, vel, fr, con in data:
+                            station_item = StandardItem("{:.2f}".format(station)) if station is not None else StandardItem("")
+                            bed_item = StandardItem("{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                            left_bank_item = StandardItem("{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                            right_bank_item = StandardItem("{:.2f}".format(right_bank)) if right_bank is not None else StandardItem("")
+                            max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
+                            velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
+                            froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
+                            con_item = StandardItem("{:.2f}".format(con)) if con is not None else StandardItem("")
+                            data_model.appendRow([station_item,
+                                                  bed_item,
+                                                  left_bank_item,
+                                                  right_bank_item,
+                                                  max_water_item,
+                                                  velocity_item,
+                                                  froude_item,
+                                                  con_item,
+                                                  ])
+                    else:
+                        data_model.setHorizontalHeaderLabels([f"Station ({self.system_units[units][0]})",
+                                                              f"Bed elevation ({self.system_units[units][0]})",
+                                                              f"Left bank ({self.system_units[units][0]})",
+                                                              f"Right bank ({self.system_units[units][0]})",
+                                                              f"Max. Water ({self.system_units[units][0]})",
+                                                              f"Velocity ({self.system_units[units][1]})",
+                                                              f"Froude",
+                                                              f"Flow area ({self.system_units[units][3]})",
+                                                              f"Wetted perimeter ({self.system_units[units][0]})",
+                                                              f"Hydraulic radius ({self.system_units[units][0]})",
+                                                              f"Top width ({self.system_units[units][0]})",
+                                                              f"Width/Depth",
+                                                              f"Energy slope",
+                                                              f"Shear stress ({self.system_units[units][4]})",
+                                                              f"Surface area ({self.system_units[units][3]})"])
+
+                        data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_flow_area, max_w_perimeter, max_hyd_radius, max_top_width, max_width_depth,
+                                   max_energy_slope, max_shear_stress, max_surf_area)
+                        for station, bed_elev, left_bank, right_bank, mw, vel, fr, fa, wp, hr, tw, wd, es, ss, sa in data:
+                            station_item = StandardItem("{:.2f}".format(station)) if station is not None else StandardItem("")
+                            bed_item = StandardItem("{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                            left_bank_item = StandardItem("{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                            right_bank_item = StandardItem("{:.2f}".format(right_bank)) if right_bank is not None else StandardItem(
+                                "")
+                            max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
+                            velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
+                            froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
+                            flow_area_item = StandardItem("{:.2f}".format(fa)) if fa is not None else StandardItem("")
+                            wet_perim_item = StandardItem("{:.2f}".format(wp)) if wp is not None else StandardItem("")
+                            h_radius_item = StandardItem("{:.2f}".format(hr)) if hr is not None else StandardItem("")
+                            top_width_item = StandardItem("{:.2f}".format(tw)) if tw is not None else StandardItem("")
+                            widthdepth_item = StandardItem("{:.2f}".format(wd)) if wd is not None else StandardItem("")
+                            ener_slo_item = StandardItem("{:.2f}".format(es)) if es is not None else StandardItem("")
+                            shearstress_item = StandardItem("{:.2f}".format(ss)) if ss is not None else StandardItem("")
+                            surfacearea_item = StandardItem("{:.2f}".format(sa)) if sa is not None else StandardItem("")
+                            data_model.appendRow([station_item,
+                                                  bed_item,
+                                                  left_bank_item,
+                                                  right_bank_item,
+                                                  max_water_item,
+                                                  velocity_item,
+                                                  froude_item,
+                                                  flow_area_item,
+                                                  wet_perim_item,
+                                                  h_radius_item,
+                                                  top_width_item,
+                                                  widthdepth_item,
+                                                  ener_slo_item,
+                                                  shearstress_item,
+                                                  surfacearea_item,
+                                                  ])
+
+                except:
+                    self.uc.bar_warn("Error while building table for channel!")
+                    return
 
             self.tview.horizontalHeader().setStretchLastSection(True)
-            for col in range(3):
-                self.tview.setColumnWidth(col, 100)
+            for col in range(data_model.columnCount()):
+                self.tview.setColumnWidth(col, 150)
             for i in range(data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-            return
         except:
-            self.uc.bar_warn("Error while building table for channel!")
-            return
+            self.uc.bar_error("Error while loading channel cross section data!")
+            self.uc.bar_info("Error while loading channel cross section data!")
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def show_hydrograph(self, table, fid):
         """
@@ -2395,180 +2606,347 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
         s = QSettings()
-        HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
-        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-        # Check if there is an HYCHAN.OUT file on the FLO-2D QSettings
-        if not os.path.isfile(HYCHAN_file):
-            HYCHAN_file = GDS_dir + r"/HYCHAN.OUT"
-            # Check if there is an HYCHAN.OUT file on the export folder
-            if not os.path.isfile(HYCHAN_file):
-                self.uc.bar_warn(
-                    "No HYCHAN.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                return
-        # Check if the HYCHAN.OUT has data on it
-        if os.path.getsize(HYCHAN_file) == 0:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("File  '" + os.path.basename(HYCHAN_file) + "'  is empty!")
-            return
 
-        xc_fid = str(self.gutils.execute(f"SELECT fid FROM chan_elems WHERE id = '{fid}'").fetchone()[0])
-
-        ts_dict, ts_list = self.parse_hychan(HYCHAN_file, mode="time_series")
-
+        # Clear the plot
         self.plot.clear()
         if self.plot.plot.legend is not None:
             plot_scene = self.plot.plot.legend.scene()
             if plot_scene is not None:
                 plot_scene.removeItem(self.plot.plot.legend)
 
-        values = ts_dict[xc_fid]
-
-        # Check if discharge is empty
-        if all(value == 0 for value in values[4]):
-            data_model = StandardItemModel()
-            self.tview.undoStack.clear()
-            self.tview.setModel(data_model)
-            data_model.clear()
-            self.uc.bar_warn("This channel cross section has no flow data!")
-            self.uc.log_info("This channel cross section has no flow data!")
-            return
+        xc_fid = str(self.gutils.execute(f"SELECT fid FROM chan_elems WHERE id = '{fid}'").fetchone()[0])
 
         self.plot.plot.legend = None
         self.plot.plot.addLegend(offset=(0, 30))
         self.plot.plot.setTitle(title=f"Cross Section - {xc_fid}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [values[0], values[4]], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item(f"Elevation ({self.system_units[units][0]})", [values[0], values[1]], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [values[0], values[2]], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [values[0], values[3]], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item(f"Froude", [values[0], values[5]], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-        if len(values) == 7:
-            self.plot.add_item(f"Concentration", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-        else:
-            self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [values[0], values[7]], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [values[0], values[8]], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Top width ({self.system_units[units][0]})", [values[0], values[9]], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Width/Depth", [values[0], values[10]], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Energy slope", [values[0], values[11]], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [values[0], values[12]], col=QColor(Qt.darkYellow), hide=True)
-            self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [values[0], values[13]], col=QColor(Qt.darkMagenta), hide=True)
 
-        try:  # Build table.
-            data_model = StandardItemModel()
-            self.tview.undoStack.clear()
-            self.tview.setModel(data_model)
-            data_model.clear()
-            if len(values) == 7:
-                data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                      f"Elevation ({self.system_units[units][0]})",
-                                                      f"Thalweg depth ({self.system_units[units][0]})",
-                                                      f"Velocity ({self.system_units[units][1]})",
-                                                      f"Discharge ({self.system_units[units][2]})",
-                                                      f"Froude",
-                                                      f"Concentration"
-                                                      ])
+        # Clear the table
+        data_model = StandardItemModel()
+        self.tview.undoStack.clear()
+        self.tview.setModel(data_model)
+        data_model.clear()
 
-                data = zip(values[0],
-                           values[1],
-                           values[2],
-                           values[3],
-                           values[4],
-                           values[5],
-                           values[6])
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
-                for time, elevation, thalweg, velocity, discharge, froude, concentration in data:
-                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-                    elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
-                    thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
-                    velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
-                    discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                    froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
-                    concentration_item = StandardItem("{:.2f}".format(concentration)) if concentration is not None else StandardItem("")
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-                    data_model.appendRow([time_item,
-                                          elevation_item,
-                                          thalweg_item,
-                                          velocity_item,
-                                          discharge_item,
-                                          froude_item,
-                                          concentration_item])
+            # Check if this is a Project Review Scenarios or regular plot
+            if use_prs == '1' and os.path.exists(processed_results_file):
+
+                dict_df = hychan_dataframe_from_hdf5_scenarios(processed_results_file, mode="time_series")
+                headers = ["Time (hours)"]
+                for i, (scenario, fid_dict) in enumerate(dict_df.items(), start=0):
+                    values = fid_dict[xc_fid]
+
+                    # Check if discharge is empty
+                    if all(value == 0 for value in values[4]):
+                        self.uc.bar_warn("This channel cross section has no flow data!")
+                        self.uc.log_info("This channel cross section has no flow data!")
+                        return
+
+                    if i == 0:
+                        self.plot.add_item(f"{scenario} - Discharge ({self.system_units[units][2]})", [values[:, 0], values[:, 4]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
+                    else:
+                        self.plot.add_item(f"{scenario} - Discharge ({self.system_units[units][2]})", [values[:, 0], values[:, 4]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0], hide=True)
+                    self.plot.add_item(f"{scenario} - Elevation ({self.system_units[units][0]})", [values[:, 0], values[:, 1]],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                    self.plot.add_item(f"{scenario} - Thalweg depth ({self.system_units[units][0]})", [values[:, 0], values[:, 2]],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+                    self.plot.add_item(f"{scenario} - Velocity ({self.system_units[units][1]})", [values[:, 0], values[:, 3]],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
+                    self.plot.add_item(f"{scenario} - Froude", [values[:, 0], values[:, 5]],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[4], hide=True)
+                    if len(values) == 7:
+                        self.plot.add_item(f"{scenario} - Concentration", [values[:, 0], values[:, 6]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0], hide=True)
+                    else:
+                        self.plot.add_item(f"{scenario} - Flow area ({self.system_units[units][3]})", [values[:, 0], values[:, 6]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                        self.plot.add_item(f"{scenario} - Wetted perimeter ({self.system_units[units][0]})", [values[:, 0], values[:, 7]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+                        self.plot.add_item(f"{scenario} - Hydraulic radius ({self.system_units[units][0]})", [values[:, 0], values[:, 8]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
+                        self.plot.add_item(f"{scenario} - Top width ({self.system_units[units][0]})", [values[:, 0], values[:, 9]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[4], hide=True)
+                        self.plot.add_item(f"{scenario} - Width/Depth", [values[:, 0], values[:, 10]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0], hide=True)
+                        self.plot.add_item(f"{scenario} - Energy slope", [values[:, 0], values[:, 11]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                        self.plot.add_item(f"{scenario} - Shear stress ({self.system_units[units][4]})", [values[:, 0], values[:, 12]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+                        self.plot.add_item(f"{scenario} - Surface Area ({self.system_units[units][3]})", [values[:, 0], values[:, 13]],
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
+
+                    if len(values) == 7:
+                        headers.extend([f"{scenario} - Elevation ({self.system_units[units][0]})",
+                                   f"{scenario} - Thalweg depth ({self.system_units[units][0]})",
+                                   f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                   f"{scenario} - Discharge ({self.system_units[units][2]})",
+                                   f"{scenario} - Froude",
+                                   f"{scenario} - Concentration"
+                                  ])
+                        data_model.setHorizontalHeaderLabels(headers)
+
+                        data = zip(values[:, 0],
+                                   values[:, 1],
+                                   values[:, 2],
+                                   values[:, 3],
+                                   values[:, 4],
+                                   values[:, 5],
+                                   values[:, 6])
+
+                        for time, elevation, thalweg, velocity, discharge, froude, concentration in data:
+                            time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                            elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
+                            thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
+                            velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                            discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                            froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
+                            concentration_item = StandardItem("{:.2f}".format(concentration)) if concentration is not None else StandardItem("")
+
+                            data_model.appendRow([time_item,
+                                                  elevation_item,
+                                                  thalweg_item,
+                                                  velocity_item,
+                                                  discharge_item,
+                                                  froude_item,
+                                                  concentration_item])
+
+                    else:
+
+                        headers.extend([f"{scenario} - Elevation ({self.system_units[units][0]})",
+                                       f"{scenario} - Thalweg depth ({self.system_units[units][0]})",
+                                       f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                       f"{scenario} - Discharge ({self.system_units[units][2]})",
+                                       f"{scenario} - Froude",
+                                       f"{scenario} - Flow area ({self.system_units[units][2]})",
+                                       f"{scenario} - Wetted perimeter ({self.system_units[units][0]})",
+                                       f"{scenario} - Hydraulic radius ({self.system_units[units][0]})",
+                                       f"{scenario} - Top width ({self.system_units[units][0]})",
+                                       f"{scenario} - Width/Depth",
+                                       f"{scenario} - Energy slope",
+                                       f"{scenario} - Shear stress ({self.system_units[units][4]})",
+                                       f"{scenario} - Surface Area ({self.system_units[units][3]})",
+                                       ])
+                        data_model.setHorizontalHeaderLabels(headers)
+
+                        data = zip(values[:, 0],
+                                   values[:, 1],
+                                   values[:, 2],
+                                   values[:, 3],
+                                   values[:, 4],
+                                   values[:, 5],
+                                   values[:, 6],
+                                   values[:, 7],
+                                   values[:, 8],
+                                   values[:, 9],
+                                   values[:, 10],
+                                   values[:, 11],
+                                   values[:, 12],
+                                   values[:, 13])
+
+                        for row_idx, (time, elevation, thalweg, velocity, discharge, froude, flow_area, w_perimeter, hyd_radius, top_width, width_depth, energy_slope, shear_stress, surf_area) in enumerate(data):
+                            time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                            elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
+                            thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
+                            velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                            discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                            froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
+                            flow_area_item = StandardItem("{:.2f}".format(flow_area)) if flow_area is not None else StandardItem("")
+                            w_perimeter_item = StandardItem("{:.2f}".format(w_perimeter)) if w_perimeter is not None else StandardItem("")
+                            hyd_radius_item = StandardItem("{:.2f}".format(hyd_radius)) if hyd_radius is not None else StandardItem("")
+                            top_width_item = StandardItem("{:.2f}".format(top_width)) if top_width is not None else StandardItem("")
+                            width_depth_item = StandardItem("{:.2f}".format(width_depth)) if width_depth is not None else StandardItem("")
+                            energy_slope_item = StandardItem("{:.2f}".format(energy_slope)) if energy_slope is not None else StandardItem("")
+                            shear_stress_item = StandardItem("{:.2f}".format(shear_stress)) if shear_stress is not None else StandardItem("")
+                            surf_area_item = StandardItem("{:.2f}".format(surf_area)) if surf_area is not None else StandardItem("")
+
+                            if i == 0:
+                                data_model.setItem(row_idx, 0, time_item)
+                            data_model.setItem(row_idx, 1 + i * 13, elevation_item)
+                            data_model.setItem(row_idx, 2 + i * 13, thalweg_item)
+                            data_model.setItem(row_idx, 3 + i * 13, velocity_item)
+                            data_model.setItem(row_idx, 4 + i * 13, discharge_item)
+                            data_model.setItem(row_idx, 5 + i * 13, froude_item)
+                            data_model.setItem(row_idx, 6 + i * 13, flow_area_item)
+                            data_model.setItem(row_idx, 7 + i * 13, w_perimeter_item)
+                            data_model.setItem(row_idx, 8 + i * 13, hyd_radius_item)
+                            data_model.setItem(row_idx, 9 + i * 13, top_width_item)
+                            data_model.setItem(row_idx, 10 + i * 13, width_depth_item)
+                            data_model.setItem(row_idx, 11 + i * 13, energy_slope_item)
+                            data_model.setItem(row_idx, 12 + i * 13, shear_stress_item)
+                            data_model.setItem(row_idx, 13 + i * 13, surf_area_item)
 
             else:
-                data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                      f"Elevation ({self.system_units[units][0]})",
-                                                      f"Thalweg depth ({self.system_units[units][0]})",
-                                                      f"Velocity ({self.system_units[units][1]})",
-                                                      f"Discharge ({self.system_units[units][2]})",
-                                                      f"Froude",
-                                                      f"Flow area ({self.system_units[units][2]})",
-                                                      f"Wetted perimeter ({self.system_units[units][0]})",
-                                                      f"Hydraulic radius ({self.system_units[units][0]})",
-                                                      f"Top width ({self.system_units[units][0]})",
-                                                      f"Width/Depth",
-                                                      f"Energy slope",
-                                                      f"Shear stress ({self.system_units[units][4]})",
-                                                      f"Surface Area ({self.system_units[units][3]})",
-                                                      ])
 
-                data = zip(values[0],
-                           values[1],
-                           values[2],
-                           values[3],
-                           values[4],
-                           values[5],
-                           values[6],
-                           values[7],
-                           values[8],
-                           values[9],
-                           values[10],
-                           values[11],
-                           values[12],
-                           values[13])
+                HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
+                GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+                # Check if there is an HYCHAN.OUT file on the FLO-2D QSettings
+                if not os.path.isfile(HYCHAN_file):
+                    HYCHAN_file = GDS_dir + r"/HYCHAN.OUT"
+                    # Check if there is an HYCHAN.OUT file on the export folder
+                    if not os.path.isfile(HYCHAN_file):
+                        self.uc.bar_warn(
+                            "No HYCHAN.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                        return
+                # Check if the HYCHAN.OUT has data on it
+                if os.path.getsize(HYCHAN_file) == 0:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("File  '" + os.path.basename(HYCHAN_file) + "'  is empty!")
+                    return
 
-                for time, elevation, thalweg, velocity, discharge, froude, flow_area, w_perimeter, hyd_radius, top_width, width_depth, energy_slope, shear_stress, surf_area in data:
-                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-                    elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
-                    thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
-                    velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
-                    discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                    froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
-                    flow_area_item = StandardItem("{:.2f}".format(flow_area)) if flow_area is not None else StandardItem("")
-                    w_perimeter_item = StandardItem("{:.2f}".format(w_perimeter)) if w_perimeter is not None else StandardItem("")
-                    hyd_radius_item = StandardItem("{:.2f}".format(hyd_radius)) if hyd_radius is not None else StandardItem("")
-                    top_width_item = StandardItem("{:.2f}".format(top_width)) if top_width is not None else StandardItem("")
-                    width_depth_item = StandardItem("{:.2f}".format(width_depth)) if width_depth is not None else StandardItem("")
-                    energy_slope_item = StandardItem("{:.2f}".format(energy_slope)) if energy_slope is not None else StandardItem("")
-                    shear_stress_item = StandardItem("{:.2f}".format(shear_stress)) if shear_stress is not None else StandardItem("")
-                    surf_area_item = StandardItem("{:.2f}".format(surf_area)) if surf_area is not None else StandardItem("")
+                ts_dict, ts_list = self.parser.parse_hychan(HYCHAN_file, mode="time_series")
+
+                values = ts_dict[xc_fid]
+
+                # Check if discharge is empty
+                if all(value == 0 for value in values[4]):
+                    data_model = StandardItemModel()
+                    self.tview.undoStack.clear()
+                    self.tview.setModel(data_model)
+                    data_model.clear()
+                    self.uc.bar_warn("This channel cross section has no flow data!")
+                    self.uc.log_info("This channel cross section has no flow data!")
+                    return
+
+                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [values[0], values[4]], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+                self.plot.add_item(f"Elevation ({self.system_units[units][0]})", [values[0], values[1]], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [values[0], values[2]], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [values[0], values[3]], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Froude", [values[0], values[5]], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+                if len(values) == 7:
+                    self.plot.add_item(f"Concentration", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                else:
+                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [values[0], values[7]], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [values[0], values[8]], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [values[0], values[9]], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Width/Depth", [values[0], values[10]], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Energy slope", [values[0], values[11]], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [values[0], values[12]], col=QColor(Qt.darkYellow), hide=True)
+                    self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [values[0], values[13]], col=QColor(Qt.darkMagenta), hide=True)
+
+                try:  # Build table.
+                    if len(values) == 7:
+                        data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                              f"Elevation ({self.system_units[units][0]})",
+                                                              f"Thalweg depth ({self.system_units[units][0]})",
+                                                              f"Velocity ({self.system_units[units][1]})",
+                                                              f"Discharge ({self.system_units[units][2]})",
+                                                              f"Froude",
+                                                              f"Concentration"
+                                                              ])
+
+                        data = zip(values[0],
+                                   values[1],
+                                   values[2],
+                                   values[3],
+                                   values[4],
+                                   values[5],
+                                   values[6])
+
+                        for time, elevation, thalweg, velocity, discharge, froude, concentration in data:
+                            time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                            elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
+                            thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
+                            velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                            discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                            froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
+                            concentration_item = StandardItem("{:.2f}".format(concentration)) if concentration is not None else StandardItem("")
+
+                            data_model.appendRow([time_item,
+                                                  elevation_item,
+                                                  thalweg_item,
+                                                  velocity_item,
+                                                  discharge_item,
+                                                  froude_item,
+                                                  concentration_item])
+
+                    else:
+                        data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                              f"Elevation ({self.system_units[units][0]})",
+                                                              f"Thalweg depth ({self.system_units[units][0]})",
+                                                              f"Velocity ({self.system_units[units][1]})",
+                                                              f"Discharge ({self.system_units[units][2]})",
+                                                              f"Froude",
+                                                              f"Flow area ({self.system_units[units][2]})",
+                                                              f"Wetted perimeter ({self.system_units[units][0]})",
+                                                              f"Hydraulic radius ({self.system_units[units][0]})",
+                                                              f"Top width ({self.system_units[units][0]})",
+                                                              f"Width/Depth",
+                                                              f"Energy slope",
+                                                              f"Shear stress ({self.system_units[units][4]})",
+                                                              f"Surface Area ({self.system_units[units][3]})",
+                                                              ])
+
+                        data = zip(values[0],
+                                   values[1],
+                                   values[2],
+                                   values[3],
+                                   values[4],
+                                   values[5],
+                                   values[6],
+                                   values[7],
+                                   values[8],
+                                   values[9],
+                                   values[10],
+                                   values[11],
+                                   values[12],
+                                   values[13])
+
+                        for time, elevation, thalweg, velocity, discharge, froude, flow_area, w_perimeter, hyd_radius, top_width, width_depth, energy_slope, shear_stress, surf_area in data:
+                            time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                            elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
+                            thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
+                            velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                            discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                            froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
+                            flow_area_item = StandardItem("{:.2f}".format(flow_area)) if flow_area is not None else StandardItem("")
+                            w_perimeter_item = StandardItem("{:.2f}".format(w_perimeter)) if w_perimeter is not None else StandardItem("")
+                            hyd_radius_item = StandardItem("{:.2f}".format(hyd_radius)) if hyd_radius is not None else StandardItem("")
+                            top_width_item = StandardItem("{:.2f}".format(top_width)) if top_width is not None else StandardItem("")
+                            width_depth_item = StandardItem("{:.2f}".format(width_depth)) if width_depth is not None else StandardItem("")
+                            energy_slope_item = StandardItem("{:.2f}".format(energy_slope)) if energy_slope is not None else StandardItem("")
+                            shear_stress_item = StandardItem("{:.2f}".format(shear_stress)) if shear_stress is not None else StandardItem("")
+                            surf_area_item = StandardItem("{:.2f}".format(surf_area)) if surf_area is not None else StandardItem("")
 
 
-                    data_model.appendRow([time_item,
-                                          elevation_item,
-                                          thalweg_item,
-                                          velocity_item,
-                                          discharge_item,
-                                          froude_item,
-                                          flow_area_item,
-                                          w_perimeter_item,
-                                          hyd_radius_item,
-                                          top_width_item,
-                                          width_depth_item,
-                                          energy_slope_item,
-                                          shear_stress_item,
-                                          surf_area_item])
+                            data_model.appendRow([time_item,
+                                                  elevation_item,
+                                                  thalweg_item,
+                                                  velocity_item,
+                                                  discharge_item,
+                                                  froude_item,
+                                                  flow_area_item,
+                                                  w_perimeter_item,
+                                                  hyd_radius_item,
+                                                  top_width_item,
+                                                  width_depth_item,
+                                                  energy_slope_item,
+                                                  shear_stress_item,
+                                                  surf_area_item])
+
+                except:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+                    return
 
             self.tview.horizontalHeader().setStretchLastSection(True)
-            for col in range(3):
-                self.tview.setColumnWidth(col, 100)
+            for col in range(data_model.columnCount()):
+                self.tview.setColumnWidth(col, 150)
             for i in range(data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-            return
         except:
+            self.uc.bar_error("Error while loading channel cross section data!")
+            self.uc.log_info("Error while loading channel cross section data!")
+        finally:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
-            return
 
     def reassign_xs_rightbanks_grid_id_from_schematized_rbanks(self, xs_seg_fid, right_bank_fid):
         """Takes all schematized left bank cross sections (from 'cham_elems' layer) identified by 'xs_seg_fid', and

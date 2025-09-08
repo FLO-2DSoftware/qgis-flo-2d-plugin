@@ -851,7 +851,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.tview.setColumnWidth(col, 100)
         for i in range(self.rain_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
-        self.plot.plot.setTitle("Grid: {}".format(fid))
+        self.plot.plot.setTitle("Grid - {}".format(fid))
         self.plot.plot.setLabel("bottom", text="Time (minutes)")
         self.plot.plot.setLabel("left", text="Rainfall ({})".format(si))
         self.update_plot()

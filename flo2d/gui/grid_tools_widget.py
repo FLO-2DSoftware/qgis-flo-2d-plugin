@@ -12,10 +12,13 @@ import os
 import time
 import traceback
 
+from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES, timdep_dataframe_from_hdf5_scenarios
+
 try:
     import h5py
 except ImportError:
     pass
+
 import numpy as np
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QColor
@@ -1598,149 +1601,212 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
-        # check if there is a FLO-2D mesh file.
-        has_mesh = False
-        temporal_mesh = False
-        flo2d_mesh = False
-        mesh_layer = None
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
-        # Check for mesh layer
-        layers = QgsProject.instance().mapLayers().values()
-        for layer in layers:
-            if isinstance(layer, QgsMeshLayer):
-                mesh_layer = layer
-                has_mesh = True
+        if use_prs == '1' and os.path.exists(processed_results_file):
+            dict_df = timdep_dataframe_from_hdf5_scenarios(processed_results_file, grid_element)
 
-        if has_mesh:
-            # Check temporal layer
-            temporal_properties = mesh_layer.temporalProperties()
-            if temporal_properties.isActive():
-                temporal_mesh = True
-
-        if has_mesh and temporal_mesh:
-            self.uc.bar_info("Reading data from mesh layer!")
-            self.uc.log_info("Reading data from mesh layer!")
             try:
-                df = self.dataframe_from_mesh(mesh_layer, grid_element)
+                # Clear the plots
+                self.plot.clear()
+                if self.plot.plot.legend is not None:
+                    plot_scene = self.plot.plot.legend.scene()
+                    if plot_scene is not None:
+                        plot_scene.removeItem(self.plot.plot.legend)
+
+                # Set up legend and plot title
+                self.plot.plot.legend = None
+                self.plot.plot.addLegend(offset=(0, 30))
+                self.plot.plot.setTitle(title=f"Grid Element - {grid_element}")
+                self.plot.plot.setLabel("bottom", text="Time (hrs)")
+                self.plot.plot.setLabel("left", text="")
+
+                # Create a new data model for the table view.
+                data_model = StandardItemModel()
+                self.tview.undoStack.clear()
+                self.tview.setModel(data_model)
+                data_model.clear()
+                headers = ["Time (hours)"]
+
+                # Create the plot items for each scenario and fill the table view.
+                for i, (key, value) in enumerate(dict_df.items(), start=0):
+                    self.plot.add_item(f"{key} - Depth ({self.system_units[units][0]}) ", [value['Time'], value['Depth']],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
+                    self.plot.add_item(f"{key} - Velocity ({self.system_units[units][1]})", [value['Time'], value['Velocity']],
+                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                    self.plot.add_item(f"{key} - WSE ({self.system_units[units][0]})",
+                                       [value['Time'], value['WSE']], col=SCENARIO_COLOURS[i],
+                                       sty=SCENARIO_STYLES[2], hide=True)
+
+                    headers.extend([
+                        f"{key} - Depth ({self.system_units[units][0]})",
+                        f"{key} - Velocity ({self.system_units[units][1]})",
+                        f"{key} - WSE ({self.system_units[units][0]})"
+                    ])
+                    data_model.setHorizontalHeaderLabels(headers)
+
+                    for row_idx, row in enumerate(value):
+                        if i == 0:
+                            data_model.setItem(row_idx, 0,
+                                               StandardItem("{:.2f}".format(row[0]) if row[0] is not None else ""))
+                        data_model.setItem(row_idx, 1 + i * 3,
+                                           StandardItem("{:.2f}".format(row[1]) if row[1] is not None else ""))
+                        data_model.setItem(row_idx, 2 + i * 3,
+                                           StandardItem("{:.2f}".format(row[2]) if row[2] is not None else ""))
+                        data_model.setItem(row_idx, 3 + i * 3,
+                                           StandardItem("{:.2f}".format(row[3]) if row[3] is not None else ""))
+
             except:
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("Error while retrieving data from mesh layer!")
-                self.uc.log_info("Error while retrieving data from mesh layer!")
+                self.uc.bar_warn("Error while creating the plots!")
+                self.uc.log_info("Error while creating the plots!")
                 return
 
         else:
-            # Check if there is an TIMDEP.OUT file on the export folder and has data
-            s = QSettings()
-            project_dir = s.value("FLO-2D/lastGdsDir")
-            TIMDEPOUT_file = project_dir + r"/TIMDEP.OUT"
-            TIMDEPHDF5_file = project_dir + r"/TIMDEP.HDF5"
+            # check if there is a FLO-2D mesh file.
+            has_mesh = False
+            temporal_mesh = False
+            flo2d_mesh = False
+            mesh_layer = None
 
-            # Check if the TIMDEP_file.HDF5 exists
-            if os.path.isfile(TIMDEPHDF5_file):
-                # Check if the TIMDEP_file.HDF5 has data on it
-                if os.path.getsize(TIMDEPHDF5_file) == 0:
+            # Check for mesh layer
+            layers = QgsProject.instance().mapLayers().values()
+            for layer in layers:
+                if isinstance(layer, QgsMeshLayer):
+                    mesh_layer = layer
+                    has_mesh = True
+
+            if has_mesh:
+                # Check temporal layer
+                temporal_properties = mesh_layer.temporalProperties()
+                if temporal_properties.isActive():
+                    temporal_mesh = True
+
+            if has_mesh and temporal_mesh:
+                self.uc.bar_info("Reading data from mesh layer!")
+                self.uc.log_info("Reading data from mesh layer!")
+                try:
+                    df = self.dataframe_from_mesh(mesh_layer, grid_element)
+                except:
                     QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
-                    self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                    self.uc.bar_warn("Error while retrieving data from mesh layer!")
+                    self.uc.log_info("Error while retrieving data from mesh layer!")
                     return
-                else:
-                    self.uc.bar_info("Reading data from TIMDEP.HDF5!")
-                    self.uc.log_info("Reading data from TIMDEP.HDF5!")
-                    try:
-                        df = self.dataframe_from_hdf5(TIMDEPHDF5_file, grid_element)
-                    except:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.bar_warn("Error while retrieving data from TIMDEP.HDF5!")
-                        self.uc.log_info("Error while retrieving data from TIMDEP.HDF5!")
-                        return
+
             else:
-                # Check if the TIMDEP_file.OUT exists
-                if not os.path.isfile(TIMDEPOUT_file):
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn(
-                        "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
-                        "Please ensure the simulation has completed and verify the project export folder.")
-                    self.uc.log_info(
-                        "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
-                        "Please ensure the simulation has completed and verify the project export folder.")
-                    return
-                else:
-                    # Check if the TIMDEP_file.OUT has data on it
-                    if os.path.getsize(TIMDEPOUT_file) == 0:
+                # Check if there is an TIMDEP.OUT file on the export folder and has data
+                s = QSettings()
+                project_dir = s.value("FLO-2D/lastGdsDir")
+                TIMDEPOUT_file = project_dir + r"/TIMDEP.OUT"
+                TIMDEPHDF5_file = project_dir + r"/TIMDEP.HDF5"
+
+                # Check if the TIMDEP_file.HDF5 exists
+                if os.path.isfile(TIMDEPHDF5_file):
+                    # Check if the TIMDEP_file.HDF5 has data on it
+                    if os.path.getsize(TIMDEPHDF5_file) == 0:
                         QApplication.restoreOverrideCursor()
                         self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
                         self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
                         return
                     else:
-                        self.uc.bar_info("Reading data from TIMDEP.OUT!")
-                        self.uc.log_info("Reading data from TIMDEP.OUT!")
+                        self.uc.bar_info("Reading data from TIMDEP.HDF5!")
+                        self.uc.log_info("Reading data from TIMDEP.HDF5!")
                         try:
-                            df = self.dataframe_from_out(TIMDEPOUT_file, grid_element)
+                            df = self.dataframe_from_hdf5(TIMDEPHDF5_file, grid_element)
                         except:
                             QApplication.restoreOverrideCursor()
-                            self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
-                            self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
+                            self.uc.bar_warn("Error while retrieving data from TIMDEP.HDF5!")
+                            self.uc.log_info("Error while retrieving data from TIMDEP.HDF5!")
                             return
+                else:
+                    # Check if the TIMDEP_file.OUT exists
+                    if not os.path.isfile(TIMDEPOUT_file):
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn(
+                            "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                            "Please ensure the simulation has completed and verify the project export folder.")
+                        self.uc.log_info(
+                            "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                            "Please ensure the simulation has completed and verify the project export folder.")
+                        return
+                    else:
+                        # Check if the TIMDEP_file.OUT has data on it
+                        if os.path.getsize(TIMDEPOUT_file) == 0:
+                            QApplication.restoreOverrideCursor()
+                            self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                            self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                            return
+                        else:
+                            self.uc.bar_info("Reading data from TIMDEP.OUT!")
+                            self.uc.log_info("Reading data from TIMDEP.OUT!")
+                            try:
+                                df = self.dataframe_from_out(TIMDEPOUT_file, grid_element)
+                            except:
+                                QApplication.restoreOverrideCursor()
+                                self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
+                                self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
+                                return
 
-        try:  # Create the plots
-            self.plot.clear()
-            if self.plot.plot.legend is not None:
-                plot_scene = self.plot.plot.legend.scene()
-                if plot_scene is not None:
-                    plot_scene.removeItem(self.plot.plot.legend)
+            try:  # Create the plots
+                self.plot.clear()
+                if self.plot.plot.legend is not None:
+                    plot_scene = self.plot.plot.legend.scene()
+                    if plot_scene is not None:
+                        plot_scene.removeItem(self.plot.plot.legend)
 
-            self.plot.plot.legend = None
-            self.plot.plot.addLegend(offset=(0, 30))
-            self.plot.plot.setTitle(title=f"Grid Element - {grid_element}")
-            self.plot.plot.setLabel("bottom", text="Time (hrs)")
-            self.plot.plot.setLabel("left", text="")
-            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
-            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water_Surface_Elevation']], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+                self.plot.plot.legend = None
+                self.plot.plot.addLegend(offset=(0, 30))
+                self.plot.plot.setTitle(title=f"Grid Element - {grid_element}")
+                self.plot.plot.setLabel("bottom", text="Time (hrs)")
+                self.plot.plot.setLabel("left", text="")
+                self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
+                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water_Surface_Elevation']], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
 
-        except:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while creating the plots!")
-            self.uc.log_info("Error while creating the plots!")
-            return
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("Error while creating the plots!")
+                self.uc.log_info("Error while creating the plots!")
+                return
 
-        try:  # Build table.
-            data_model = StandardItemModel()
-            self.tview.undoStack.clear()
-            self.tview.setModel(data_model)
-            data_model.clear()
-            data_model.setHorizontalHeaderLabels([
-                "Time (hours)",
-                f"Depth ({self.system_units[units][0]})",
-                f"Velocity ({self.system_units[units][1]})",
-                f"Water Surface Elevation ({self.system_units[units][0]})"
-            ])
+            try:  # Build table.
+                data_model = StandardItemModel()
+                self.tview.undoStack.clear()
+                self.tview.setModel(data_model)
+                data_model.clear()
+                data_model.setHorizontalHeaderLabels([
+                    "Time (hours)",
+                    f"Depth ({self.system_units[units][0]})",
+                    f"Velocity ({self.system_units[units][1]})",
+                    f"Water Surface Elevation ({self.system_units[units][0]})"
+                ])
 
-            data = zip(df['Time'],
-                       df['Depth'],
-                       df['Velocity'],
-                       df['Water_Surface_Elevation']
-                       )
-            for time, depth, velocity, wse in data:
-                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-                depth_item = StandardItem("{:.2f}".format(depth)) if depth is not None else StandardItem("")
-                velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
-                wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
-                data_model.appendRow([time_item,
-                                      depth_item,
-                                      velocity_item,
-                                      wse_item])
+                data = zip(df['Time'],
+                           df['Depth'],
+                           df['Velocity'],
+                           df['Water_Surface_Elevation']
+                           )
+                for time, depth, velocity, wse in data:
+                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                    depth_item = StandardItem("{:.2f}".format(depth)) if depth is not None else StandardItem("")
+                    velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                    wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
+                    data_model.appendRow([time_item,
+                                          depth_item,
+                                          velocity_item,
+                                          wse_item])
 
-            self.tview.horizontalHeader().setStretchLastSection(True)
-            for col in range(3):
-                self.tview.setColumnWidth(col, 100)
-            for i in range(data_model.rowCount()):
-                self.tview.setRowHeight(i, 20)
-        except:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while creating table for grid element!")
-            self.uc.log_info("Error while creating table for grid element!")
-            return
+                self.tview.horizontalHeader().setStretchLastSection(True)
+                for col in range(3):
+                    self.tview.setColumnWidth(col, 100)
+                for i in range(data_model.rowCount()):
+                    self.tview.setRowHeight(i, 20)
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("Error while creating table for grid element!")
+                self.uc.log_info("Error while creating table for grid element!")
+                return
 
         QApplication.restoreOverrideCursor()
 

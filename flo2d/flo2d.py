@@ -72,6 +72,7 @@ from .gui.dlg_import_multidomain import ImportMultipleDomainsDialog
 from .gui.dlg_issues import ErrorsDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
+from .gui.dlg_project_review_scenarios import ProjectReviewScenariosDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.dlg_schema2user import Schema2UserDialog
@@ -548,6 +549,11 @@ class Flo2D(object):
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/project-review.svg"),
+                    "Project Review - Scenarios",
+                    lambda: self.show_project_review_dialog(),
+                ),
                 (
                     os.path.join(self.plugin_dir, "img/hazus.svg"),
                     "HAZUS",
@@ -1539,7 +1545,7 @@ class Flo2D(object):
 
                     s = QSettings()
                     s.setValue("FLO-2D/last_flopro_project", qgs_file)
-                    s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
+                    # s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
                     window_title = s.value("FLO-2D/last_flopro_project", "")
                     self.iface.mainWindow().setWindowTitle(window_title)
                     QApplication.restoreOverrideCursor()
@@ -1579,7 +1585,7 @@ class Flo2D(object):
 
                 s = QSettings()
                 s.setValue("FLO-2D/last_flopro_project", qgs_file)
-                s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
+                # s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
@@ -3876,7 +3882,7 @@ class Flo2D(object):
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_inlets_junctions WHERE fid = ?",
                                          (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('node', name)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('node', name, grid)
 
     @connection_required
     def show_sd_outfall_discharge(self, fid=None):
@@ -3889,7 +3895,7 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('outfall', name)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('outfall', name, grid)
 
     @connection_required
     def show_sd_su_discharge(self, fid=None):
@@ -3902,7 +3908,7 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_storage_units WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('storage_unit', name)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('storage_unit', name, grid)
 
     @connection_required
     def show_conduit_discharge(self, fid=None):
@@ -4318,10 +4324,31 @@ class Flo2D(object):
         #     )
 
     @connection_required
+    def show_project_review_dialog(self):
+        """
+        Function to show the project review dialog
+        """
+        self.uncheck_all_info_tools()
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
+            return
+
+        dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
+        dlg_prs.show()
+        while True:
+            ok = dlg_prs.exec_()
+            if ok:
+                break
+            else:
+                return
+
+    @connection_required
     def show_hazus_dialog(self):
         self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         s = QSettings()
