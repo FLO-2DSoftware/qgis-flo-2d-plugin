@@ -357,7 +357,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         for j, subdomain_name in enumerate(export_subdomains, start=1):
 
             subdomains = self.gutils.execute(
-                f"SELECT fid, subdomain_name FROM mult_domains_methods WHERE subdomain_name = '{subdomain_name}';").fetchone()
+                f"SELECT fid_method, subdomain_name FROM mult_domains_methods WHERE subdomain_name = '{subdomain_name}';").fetchone()
 
             if subdomains:
                 # Figure out the downstream domains

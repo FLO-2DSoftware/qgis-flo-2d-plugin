@@ -124,7 +124,7 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
             if subdomain_cbo:
                 fid_query = self.gutils.execute(
-                    "SELECT fid FROM mult_domains_methods WHERE subdomain_name = ?", (subdomain_cbo,)
+                    "SELECT fid_method FROM mult_domains_methods WHERE subdomain_name = ?", (subdomain_cbo,)
                 ).fetchone()
                 fid_value = fid_query[0] if fid_query else "NULL"
             else:
@@ -233,56 +233,6 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                 # Create the connectivity
                 if subdomain_connectivity[1] in [NULL, "", None]:
                     pass
-
-                    # if self.gutils.is_table_empty("grid"):
-                    #     self.uc.bar_warn("There is no grid! Please create it before running tool.")
-                    #     self.uc.log_info("There is no grid! Please create it before running tool.")
-                    #     return
-                    #
-                    # # Create the intersected lines
-                    # polygon_layer = self.lyrs.data["mult_domains"]["qlyr"]
-                    #
-                    # # Create a new memory layer for intersections with the same CRS as the polygon layer
-                    # intersection_layer = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-                    # provider = intersection_layer.dataProvider()
-                    #
-                    # # Collect all features from the polygon layer
-                    # features = list(polygon_layer.getFeatures())
-                    #
-                    # # Initialize a counter for the intersection feature's fid
-                    # intersection_id = 1
-                    #
-                    # tolerance = 0.1
-                    #
-                    # # Iterate over all unique pairs of polygons using itertools.combinations
-                    # for feat1, feat2 in itertools.combinations(features, 2):
-                    #     geom1_buff = feat1.geometry().buffer(tolerance, 5)  # Apply buffer with a segment count of 5
-                    #     geom2_buff = feat2.geometry().buffer(tolerance, 5)
-                    #
-                    #     # Check if the two geometries touch (i.e., share a boundary)
-                    #     if geom1_buff.intersection(geom2_buff):
-                    #         # Compute the shared border between the two geometries
-                    #         original_geom1 = feat1.geometry()
-                    #         original_geom2 = feat2.geometry()
-                    #         intersect_geom = original_geom1.intersection(original_geom2)
-                    #
-                    #         # Create a new feature for the intersection layer
-                    #         new_feat = QgsFeature()
-                    #         new_feat.setGeometry(intersect_geom)
-                    #         # Here we assume that the polygon layer's unique identifier is stored in the "fid" field.
-                    #         new_feat.setAttributes([intersection_id, feat1["fid"], feat2["fid"], ""])
-                    #         provider.addFeature(new_feat)
-                    #
-                    #         intersection_id += 1
-                    #
-                    # self.uc.log_info("Connectivity saved!")
-                    # self.uc.bar_info("Connectivity saved!")
-                    #
-                    # self.lyrs.data["user_md_connect_lines"]["qlyr"].triggerRepaint()
-                    #
-                    # self.close_dlg()
-                    #
-                    # return
 
                 # Import the connectivity
                 else:
