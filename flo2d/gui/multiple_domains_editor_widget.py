@@ -216,9 +216,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.intersected_domains()
 
-        self.mult_domains.triggerRepaint()
-        self.schema_md_cells.triggerRepaint()
-        self.user_md_connect_lines.triggerRepaint()
+        self.lyrs.lyrs_to_repaint = [self.schema_md_cells, self.mult_domains, self.user_md_connect_lines]
+        self.lyrs.repaint_layers()
 
         self.uc.bar_info("Schematizing multiple domains finished!")
         self.uc.log_info("Schematizing multiple domains finished!")
@@ -324,10 +323,14 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.gutils.clear_tables("mult_domains_methods")
         self.gutils.clear_tables("mult_domains_con")
 
+        self.save_user_md()
+
         self.uc.bar_info("Schematized multiple domains deleted!")
         self.uc.log_info("Schematized multiple domains deleted!")
 
         self.lyrs.clear_rubber()
+        self.lyrs.lyrs_to_repaint = [self.schema_md_cells]
+        self.lyrs.repaint_layers()
 
         QApplication.restoreOverrideCursor()
 
