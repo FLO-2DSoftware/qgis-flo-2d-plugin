@@ -7663,11 +7663,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for row in time_series:
             date_str, time_str, value = row
             # Combine date and time
-            dt = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M")
-
-            # Convert to hours relative to the first timestamp
-            hours = (dt - datetime.strptime(f"{time_series[0][0]} {time_series[0][1]}",
-                                            "%d/%m/%Y %H:%M")).total_seconds() / 3600.0
+            try:
+                dt = datetime.strptime(f"{date_str} {time_str}", "%m/%d/%Y %H:%M")
+                first_dt = datetime.strptime(f"{time_series[0][0]} {time_series[0][1]}", "%m/%d/%Y %H:%M")
+                hours = (dt - first_dt).total_seconds() / 3600.0
+            except Exception as e:
+                dt = datetime.strptime(f"{time_str}", "%H:%M")
+                first_dt = datetime.strptime(f"{time_series[0][1]}", "%H:%M")
+                hours = (dt - first_dt).total_seconds() / 3600.0
 
             time_list.append(hours)
             discharge_list.append(value)
