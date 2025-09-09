@@ -244,7 +244,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                         for rainfall, fid in timestep_data:
                             data_qry += [(time_interval, fid, round(rainfall,4))]
 
-                        time_interval += 1
+                        time_interval += time_step
 
                     self.gutils.batch_execute(data_qry)
 
@@ -827,7 +827,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             """
             header = ["Time", "Cumulative Realtime Rainfall"]
         else:
-            qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
+            qry = "SELECT (time_interval / 60), iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
             header = ["Time", "Realtime Rainfall"]
         rainfall = self.gutils.execute(qry, (fid,))
         self.create_plot()
@@ -851,7 +851,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.rain_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.plot.plot.setTitle("Grid - {}".format(fid))
-        self.plot.plot.setLabel("bottom", text="Time (minutes)")
+        self.plot.plot.setLabel("bottom", text="Time (hours)")
         self.plot.plot.setLabel("left", text="Rainfall ({})".format(si))
         self.update_plot()
         self.plot.auto_range()
