@@ -203,12 +203,19 @@ class UserCommunication(object):
         icon=QMessageBox.Information,
     ):
         if self.iface is not None:
-            m = QMessageBox()
+            parent = self.iface.mainWindow()
+            m = QMessageBox(parent)
             m.setWindowTitle(title)
             m.setText(text)
             m.setStandardButtons(standard_buttons)
             m.setDefaultButton(default)
             m.setIcon(icon)
+
+            m.setWindowModality(Qt.ApplicationModal)
+            m.setWindowFlags(m.windowFlags() | Qt.WindowStaysOnTopHint)
+            m.raise_()
+            m.activateWindow()
+
             return m.exec_()
         else:
             print(text)
