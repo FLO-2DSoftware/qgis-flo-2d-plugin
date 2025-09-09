@@ -820,6 +820,7 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
+            self.f2d_widget.setup_project_folder()
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -1157,6 +1158,7 @@ class Flo2D(object):
                 s = QSettings()
                 s.setValue("FLO-2D/lastGdsDir", project_dir)
                 s.setValue("FLO-2D/last_flopro", flo2d_dir)
+                self.f2d_widget.setup_project_folder()
                 if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
                     # show advanced layers
                     if advanced_layers:
@@ -1206,6 +1208,7 @@ class Flo2D(object):
                 s = QSettings()
                 s.setValue("FLO-2D/lastGdsDir", project_dir)
                 s.setValue("FLO-2D/last_flopro", flo2d_dir)
+                self.f2d_widget.setup_project_folder()
 
                 if project_dir != "" and flo2d_dir != "":
                     s.setValue("FLO-2D/run_settings", True)
@@ -1519,6 +1522,7 @@ class Flo2D(object):
                     s = QSettings()
                     s.setValue("FLO-2D/last_flopro_project", qgs_file)
                     s.setValue("FLO-2D/lastGdsDir", os.path.dirname(old_gpkg))
+                    self.f2d_widget.setup_project_folder()
                     window_title = s.value("FLO-2D/last_flopro_project", "")
                     self.iface.mainWindow().setWindowTitle(window_title)
                     QApplication.restoreOverrideCursor()
@@ -1794,6 +1798,7 @@ class Flo2D(object):
             return
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
+        self.f2d_widget.setup_project_folder()
         bname = os.path.basename(fname)
         if self.f2g.set_parser(fname):
             topo = self.f2g.parser.dat_files["TOPO.DAT"]
@@ -2163,6 +2168,7 @@ class Flo2D(object):
 
             # Update the lastGdsDir to the original
             s.setValue("FLO-2D/lastGdsDir", last_dir)
+            self.f2d_widget.setup_project_folder()
             self.gutils.enable_geom_triggers()
         else:
             self.gutils.enable_geom_triggers()
@@ -2227,6 +2233,7 @@ class Flo2D(object):
         indir = os.path.dirname(input_hdf5)
         s = QSettings()
         s.setValue("FLO-2D/lastGdsDir", indir)
+        self.f2d_widget.setup_project_folder()
         self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
         self.f2g.set_parser(input_hdf5)
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -2529,6 +2536,7 @@ class Flo2D(object):
         outdir = QFileDialog.getExistingDirectory(None, "Select directory of files to be imported", directory=last_dir)
         if outdir:
             s.setValue("FLO-2D/lastGdsDir", outdir)
+            self.f2d_widget.setup_project_folder()
             bname = "CONT.DAT"
             fname = outdir + "/CONT.DAT"
             if self.f2g.set_parser(fname):
@@ -2727,6 +2735,7 @@ class Flo2D(object):
             return
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
+        self.f2d_widget.setup_project_folder()
         bname = os.path.basename(fname)
 
         if bname.lower().endswith("inp"):
@@ -2899,6 +2908,7 @@ class Flo2D(object):
         if outdir:
 
             s.setValue("FLO-2D/lastGdsDir", outdir)
+            self.f2d_widget.setup_project_folder()
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
             export_calls = ["export_arf",
@@ -3310,6 +3320,7 @@ class Flo2D(object):
 
             dir_name = os.path.dirname(fname)
             s.setValue("FLO-2D/lastGdsDir", dir_name)
+            self.f2d_widget.setup_project_folder()
 
             sd_user_tables = [
                 'user_swmm_inlets_junctions',

@@ -65,9 +65,9 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_multiple_channels_editor()
         self.setup_multiple_domains_editor()
         self.setup_pre_processing_tools()
-
-        # Setup the project folder
-        self.setup_project_folder()
+        #
+        # # Setup the project folder
+        # self.setup_project_folder()
 
         self.cgroups = [
             self.grid_tools_grp,
@@ -94,7 +94,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.collapse_groups_btn.clicked.connect(self.collapse_all_groups)
         self.show_flo2d_table_btn.clicked.connect(self.show_f2d_table)
         self.show_flo2d_plot_btn.clicked.connect(self.show_f2d_plot)
-        self.clear_rubberband_btn.clicked.connect(self.lyrs.clear_rubber)
+        self.clear_rubberband_btn.clicked.connect(self.clear_rubberband)
         self.project_folder_selector_btn.clicked.connect(self.get_project_dir)
 
         # clear rubberband when collapsing the BC editor
@@ -111,8 +111,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
             if isinstance(widget, QgsDockWidget):
                 if widget.windowTitle() == "FLO-2D Table Editor":
                     if not widget.isHidden():
-                        self.uc.bar_info("FLO-2D Table Editor is currently open...")
-                        self.uc.log_info("FLO-2D Table Editor is currently open...")
+                        widget.setHidden(True)
                     else:
                         widget.setHidden(False)
 
@@ -124,8 +123,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
             if isinstance(widget, QgsDockWidget):
                 if widget.windowTitle() == "FLO-2D Plot":
                     if not widget.isHidden():
-                        self.uc.bar_info("FLO-2D Plot is currently open...")
-                        self.uc.log_info("FLO-2D Plot is currently open...")
+                        widget.setHidden(True)
                     else:
                         widget.setHidden(False)
 
@@ -245,3 +243,13 @@ class FLO2DWidget(qtBaseClass, uiDialog):
             return
         self.project_folder_le.setText(project_dir)
         s.setValue("FLO-2D/lastGdsDir", project_dir)
+
+    def clear_rubberband(self):
+        """
+        Function to clear all rubberbands from all layers, the FLO-2D Table and plot
+        """
+
+        self.lyrs.clear_rubber()
+        self.plot.clear()
+        self.table.clear()
+
