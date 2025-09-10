@@ -3998,6 +3998,17 @@ class Flo2D(object):
             self.uc.bar_warn("There is no schematic cross-section data to display!")
 
     @connection_required
+    def show_fpxsec_info(self, fid=None):
+        """
+        Show floodplain cross-section info.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        self.f2d_widget.fpxsec_editor.show_fpxsec_info(fid)
+
+    @connection_required
     def show_bc_editor(self, fid=None):
         """
         Show boundary editor.
@@ -4618,6 +4629,7 @@ class Flo2D(object):
             "user_swmm_orifices": self.show_sd_orifice_attributes,
             "user_swmm_pumps": self.show_sd_pump_attributes,
             "user_swmm_storage_units": self.show_sd_storage_unit_attributes,
+            "fpxsec": self.show_fpxsec_info
         }
 
     def restore_settings(self):

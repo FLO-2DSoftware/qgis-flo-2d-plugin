@@ -63,7 +63,8 @@ class InfoTool(QgsMapToolIdentify):
             "user_swmm_orifices",
             "user_swmm_weirs",
             "user_swmm_storage_units",
-            "grid"
+            "grid",
+            "fpxsec"
         ]
         # try:
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
