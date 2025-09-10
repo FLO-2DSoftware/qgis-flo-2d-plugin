@@ -9373,9 +9373,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         chan_rows = self.execute(chan_sql).fetchall()
         if not chan_rows:
+            self.gutils.set_cont_par("ICHANNEL", 0)
             return False
         else:
-            pass
+            self.gutils.set_cont_par("ICHANNEL", 1)
 
         channel_group = self.parser.channel_group
         channel_group.create_dataset('CHAN_GLOBAL', [])
@@ -9653,9 +9654,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         chan_rows = self.execute(chan_sql).fetchall()
         if not chan_rows:
+            self.gutils.set_cont_par("ICHANNEL", 0)
             return False
         else:
-            pass
+            self.gutils.set_cont_par("ICHANNEL", 1)
 
         chan = os.path.join(outdir, "CHAN.DAT")
         bank = os.path.join(outdir, "CHANBANK.DAT")
@@ -9903,6 +9905,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 ORDER BY sd.fid;
                             """
 
+            if self.execute(hystruct_sql).fetchone() is None:
+                self.gutils.set_cont_par("IHYDRSTRUCT", 0)
+                return False
+            else:
+                self.gutils.set_cont_par("IHYDRSTRUCT", 1)
+
             # line1 = "S" + "  {}" * 9 + "\n"
             line2 = "C" + "  {}" * 5 + "\n"
             line3 = "R" + "  {}" * 5 + "\n"
@@ -10132,6 +10140,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     sd.struct_fid = ? AND md.domain_fid = {subdomain}
                                 ORDER BY sd.fid;
                             """
+
+            if self.execute(hystruct_sql).fetchone() is None:
+                self.gutils.set_cont_par("IHYDRSTRUCT", 0)
+                return False
+            else:
+                self.gutils.set_cont_par("IHYDRSTRUCT", 1)
 
             line1 = "S" + "  {}" * 9 + "\n"
             line2 = "C" + "  {}" * 5 + "\n"
@@ -10405,8 +10419,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             streets_elem_sql = """SELECT seg_fid, istdir, widr FROM street_elems WHERE seg_fid = ? ORDER BY fid;"""
 
             head = self.execute(street_gen_sql).fetchone()
+
             if head is None:
+                self.gutils.set_cont_par("MSTREET", 0)
                 return False
+            else:
+                self.gutils.set_cont_par("MSTREET", 1)
 
             street_group = self.parser.street_group
 
@@ -10454,10 +10472,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line4 = " W" + "  {}" * 2 + "\n"
 
             head = self.execute(street_gen_sql).fetchone()
+
             if head is None:
+                self.gutils.set_cont_par("MSTREET", 0)
                 return False
             else:
-                pass
+                self.gutils.set_cont_par("MSTREET", 1)
+
             street = os.path.join(outdir, "STREET.DAT")
             with open(street, "w") as s:
                 s.write(line1.format(*head[1:]))
@@ -10517,6 +10538,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 schema_md_cells md ON bc.grid_fid = md.grid_fid
                              WHERE 
                                 arf < 1 AND md.domain_fid = {subdomain};"""
+
+            if self.execute(tbc_sql).fetchone() is None and self.execute(pbc_sql).fetchone() is None:
+                self.gutils.set_cont_par("IWRFS", 0)
+                return False
+            else:
+                self.gutils.set_cont_par("IWRFS", 1)
 
             line1 = "S  {}\n"
             line2 = " T   {}\n"
@@ -10609,6 +10636,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              WHERE 
                                 arf < 1 AND md.domain_fid = {subdomain};"""
 
+            if self.execute(tbc_sql).fetchone() is None and self.execute(pbc_sql).fetchone() is None:
+                self.gutils.set_cont_par("IWRFS", 0)
+                return False
+            else:
+                self.gutils.set_cont_par("IWRFS", 1)
+
             line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
             option = self.execute(cont_sql).fetchone()
             if option is None:
@@ -10688,6 +10721,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         mult_sql = """SELECT * FROM mult;"""
         head = self.execute(mult_sql).fetchone()
         mults = []
+        has_mult = False
+        has_simple_mult = False
 
         mult_group = self.parser.mult_group
         # Check if there is any multiple channel cells defined.
@@ -10712,6 +10747,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         md.domain_fid = {subdomain}
                     ORDER BY 
                         mc.grid_fid;"""
+
+                if self.execute(mult_cell_sql).fetchone() is not None:
+                    has_mult = True
 
                 global_data_values = " {}" * 9 + "\n"
                 five_values = " {}" * 5 + "\n"
@@ -10756,6 +10794,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ORDER BY 
                         smc.grid_fid;"""
 
+                if self.execute(simple_mult_cell_sql).fetchone() is not None:
+                    has_simple_mult = True
+
                 global_data_values = "{}" + "\n"
                 grid_values = "{}" + "\n"
 
@@ -10784,11 +10825,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
                 return False
 
+        if has_mult or has_simple_mult:
+            self.gutils.set_cont_par("IMULTC", 1)
+        else:
+            self.gutils.set_cont_par("IMULTC", 0)
+
         self.parser.write_groups(mult_group)
         return True
 
     def export_mult_dat(self, outdir, subdomain):
         rtrn = True
+        has_mult = False
+        has_simple_mult = False
         if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells"):
             return False
 
@@ -10822,6 +10870,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         md.domain_fid = {subdomain}
                     ORDER BY 
                         mc.grid_fid;"""
+
+                if self.execute(mult_cell_sql).fetchone() is not None:
+                    has_mult = True
 
                 line1 = " {}" * 8 + "\n"
                 line2 = " {}" * 5 + "\n"
@@ -10865,6 +10916,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ORDER BY 
                         smc.grid_fid;"""
 
+                if self.execute(simple_mult_cell_sql).fetchone() is not None:
+                    has_simple_mult = True
+
                 line1 = "{}" + "\n"
                 line2 = "{}" + "\n"
 
@@ -10881,14 +10935,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 vals = [x if x is not None else "" for x in row]
                                 sm.write(line2.format(*vals))
-                if repeats:
-                    self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
-                return True
+                    if repeats:
+                        self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
                 return False
+
+        if has_mult or has_simple_mult:
+            self.gutils.set_cont_par("IMULTC", 1)
+        else:
+            self.gutils.set_cont_par("IMULTC", 0)
 
         return rtrn
 
@@ -11599,6 +11657,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         line6 = "C  {0}  {1}\n"
         line7 = "P  {0}  {1}  {2}\n"
 
+        has_levee = self.execute(levee_data_sql).fetchone()
+        if has_levee is None:
+            self.gutils.set_cont_par("LEVEE", 0)
+            return False
+        else:
+            self.gutils.set_cont_par("LEVEE", 1)
+
         general = self.execute(levee_gen_sql).fetchone()
         if general is None:
             general = (0, 0, None, None)
@@ -11716,6 +11781,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line5 = "W  {0}  {1}  {2}  {3}  {4}  {5}  {6}\n"
             line6 = "C  {0}  {1}\n"
             line7 = "P  {0}  {1}  {2}\n"
+
+            has_levee = self.execute(levee_data_sql).fetchone()
+            if has_levee is None:
+                self.gutils.set_cont_par("LEVEE", 0)
+                return False
+            else:
+                self.gutils.set_cont_par("LEVEE", 1)
 
             general = self.execute(levee_gen_sql).fetchone()
             if general is None:
@@ -12395,6 +12467,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             nodes_names = []
             links_names = []
 
+            has_junctions = False
+            has_outfalls = False
+            has_storage = False
+            has_conduits = False
+            has_pumps = False
+            has_orifices = False
+            has_weirs = False
+
             with open(swmm_file, "w") as swmm_inp_file:
                 no_in_out_conduits = 0
                 no_in_out_pumps = 0
@@ -12511,6 +12591,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not junctions_rows:
                         pass
                     else:
+                        has_junctions = True
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[JUNCTIONS]")
                         swmm_inp_file.write("\n;;               Invert     Max.       Init.      Surcharge  Ponded")
@@ -12573,6 +12654,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not outfalls_rows:
                         pass
                     else:
+                        has_outfalls = True
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[OUTFALLS]")
                         swmm_inp_file.write("\n;;               Invert     Outfall      Stage/Table       Tide")
@@ -12670,6 +12752,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not storages_rows:
                         pass
                     else:
+                        has_storage = True
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[STORAGE]")
                         swmm_inp_file.write(
@@ -12764,6 +12847,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not conduits_rows:
                         pass
                     else:
+                        has_conduits = True
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[CONDUITS]")
                         swmm_inp_file.write(
@@ -12828,6 +12912,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not pumps_rows:
                         pass
                     else:
+                        has_pumps = True
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[PUMPS]")
                         swmm_inp_file.write(
@@ -12891,6 +12976,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not orifices_rows:
                         pass
                     else:
+                        has_orifices = True
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[ORIFICES]")
                         swmm_inp_file.write(
@@ -12956,6 +13042,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not weirs_rows:
                         pass
                     else:
+                        has_weirs = True
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[WEIRS]")
                         swmm_inp_file.write(
@@ -13794,6 +13881,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ini_file.write("\n[Results]")
                     ini_file.write("\nSaved=1")
                     ini_file.write("\nCurrent=1")
+
+            if any((has_junctions, has_outfalls, has_storage, has_conduits, has_pumps, has_orifices, has_weirs)):
+                self.gutils.set_cont_par("SWMM", 1)
+            else:
+                ini_file = outdir + "/SWMM.INI"
+                swmm_file = outdir + "/SWMM.INP"
+                if os.path.isfile(ini_file):
+                    os.remove(ini_file)
+                if os.path.isfile(swmm_file):
+                    os.remove(swmm_file)
+                self.gutils.set_cont_par("SWMM", 0)
 
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 

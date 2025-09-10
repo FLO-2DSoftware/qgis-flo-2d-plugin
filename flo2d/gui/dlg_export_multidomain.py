@@ -175,7 +175,6 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
             export_calls = [
-                "export_cont_toler",
                 "export_tolspatial",
                 "export_inflow",
                 # "export_tailings",
@@ -212,6 +211,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # "export_wstime",
                 "export_shallowNSpatial",
                 "export_mannings_n_topo",
+                "export_cont_toler"
             ]
 
             # Add a dummy cell to the outflow cells to show the Outflow checkbox
@@ -245,6 +245,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             if ok:
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
+                s.setValue("FLO-2D/lastGdsDir", self.export_directory_le.text())
 
                 if dlg_components.data_rb.isChecked():
                     export_type = "data"
