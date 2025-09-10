@@ -14,6 +14,7 @@ import traceback
 from PyQt5.QtCore import QSettings, Qt, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices
 from PyQt5.QtWidgets import QApplication
+from qgis._core import QgsPointXY, QgsGeometry
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
@@ -70,6 +71,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.help_btn.clicked.connect(self.show_fp_xs_widget_help)
 
         self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
+        self.schema_fpxsec_lyr = self.lyrs.data["fpxsec"]["qlyr"]
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -684,5 +686,102 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return [4, 2]
         elif 292.5 <= perp_azimuth < 337.5:
             return [8, 6]
+
+    def show_fpxsec_info(self, fid):
+        """
+        Function to show the floodplain cross-section info: Elevation and Roughness
+        """
+        try:
+
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            units = "m" if self.gutils.get_cont_par("METRIC") == "1" else "ft"
+
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
+
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend(offset=(0, 30))
+            self.plot.plot.setTitle(title=f"Floodplain XS - {fid}")
+            self.plot.plot.setLabel("bottom", text=f"Station ({units})")
+            self.plot.plot.setLabel("left", text="")
+
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+
+            fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
+            cell_qry = """SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = ?;"""
+
+            feat_iter = self.schema_fpxsec_lyr.getFeatures(QgsFeatureRequest(fid))
+            feature = next(feat_iter, None)
+            if feature is not None:
+                geom = feature.geometry()
+                geom_poly = geom.asPolyline()
+                start, end = geom_poly[0], geom_poly[-1]
+
+                # Getting start grid fid and its centroid
+                start_gid = fpxs.grid_on_point(start.x(), start.y())
+                start_wkt = self.gutils.execute(cell_qry, (start_gid,)).fetchone()[0]
+                start_x, start_y = [float(s) for s in start_wkt.strip("POINT()").split()]
+                # Finding shift vector between original start point and start grid centroid
+                shift = QgsPointXY(start_x, start_y) - start
+                # Shifting start and end point of line
+                start += shift
+                end += shift
+                # Calculating and adjusting line angle
+                azimuth = start.azimuth(end)
+                if azimuth < 0:
+                    azimuth += 360
+                closest_angle = round(azimuth / 45) * 45
+                rotation = closest_angle - azimuth
+                end_geom = QgsGeometry.fromPointXY(end)
+                end_geom.rotate(rotation, start)
+                end_point = end_geom.asPoint()
+                # Getting shifted and rotated end grid fid and its centroid
+                end_gid = fpxs.grid_on_point(end_point.x(), end_point.y())
+                step = fpxs.cell_size if closest_angle % 90 == 0 else fpxs.diagonal
+                end_wkt = self.gutils.execute(cell_qry, (end_gid,)).fetchone()[0]
+                end_x, end_y = [float(e) for e in end_wkt.strip("POINT()").split()]
+                fpxec_line = QgsGeometry.fromPolylineXY([QgsPointXY(start_x, start_y), QgsPointXY(end_x, end_y)])
+                sampling_points = tuple(fpxs.interpolate_points(fpxec_line, step))
+
+                elevation_data = []
+                roughness_data = []
+                step_data = [0]
+                cumulative_step = 0
+                for _, gid in sampling_points:
+                    elevation_data.append(self.gutils.execute("SELECT elevation FROM grid WHERE fid = ?;", (gid,)).fetchone()[0])
+                    roughness_data.append(self.gutils.execute("SELECT n_value FROM grid WHERE fid = ?;", (gid,)).fetchone()[0])
+                    cumulative_step += step
+                    step_data.append(cumulative_step)
+
+                self.plot.add_item(f"Elevation ({units})", [step_data[:-1], elevation_data],
+                                   col=QColor(Qt.black), sty=Qt.SolidLine)
+                self.plot.add_item(f"Mannings", [step_data[:-1], roughness_data],
+                                   col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+
+                headers = ["Station", f"Elevation ({units})", f"Mannings"]
+                data_model.setHorizontalHeaderLabels(headers)
+
+                data = zip(step_data, elevation_data, roughness_data)
+                for row, (step, elev, roughness) in enumerate(data):
+                    step_item = StandardItem("{:.2f}".format(step)) if step is not None else StandardItem("")
+                    elev_item = StandardItem("{:.2f}".format(elev)) if elev is not None else StandardItem("")
+                    roughness_item = StandardItem("{:.2f}".format(roughness)) if roughness is not None else StandardItem("")
+                    data_model.setItem(row, 0, step_item)
+                    data_model.setItem(row, 1, elev_item)
+                    data_model.setItem(row, 2, roughness_item)
+
+        except Exception as e:
+            self.uc.bar_error("Error while building the plots!")
+            self.uc.log_info("Error while building the plots!")
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
 
