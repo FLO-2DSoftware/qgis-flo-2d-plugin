@@ -11255,6 +11255,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
                 areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
                 cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
                 cells_d_sql = f"""SELECT 
                                                 md.domain_cell 
@@ -11295,6 +11296,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                             ORDER BY 
                                                 sg.fid;
                                         """
+                check_idebrv = f"""SELECT 
+                                            md.domain_cell 
+                                        FROM 
+                                            mud_cells AS mc
+                                        JOIN 
+                                            schema_md_cells md ON mc.grid_fid = md.grid_fid
+                                        WHERE 
+                                            md.domain_fid = {subdomain};"""
+
+            if self.execute(areas_d_sql).fetchone() is not None and self.execute(check_idebrv).fetchone() is not None:
+                self.gutils.set_cont_par("IDEBRV", 1)
+            else:
+                self.gutils.set_cont_par("IDEBRV", 0)
 
             one_value = "{0}\n"
             two_values = "{0}  {1}\n"
@@ -11453,6 +11467,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
                 areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
                 cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
                 cells_d_sql = f"""SELECT 
                                     md.domain_cell 
@@ -11493,6 +11508,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 ORDER BY 
                                     sg.fid;
                             """
+
+                check_idebrv = f"""SELECT 
+                                        md.domain_cell 
+                                    FROM 
+                                        mud_cells AS mc
+                                    JOIN 
+                                        schema_md_cells md ON mc.grid_fid = md.grid_fid
+                                    WHERE 
+                                        md.domain_fid = {subdomain};"""
+
+            if self.execute(areas_d_sql).fetchone() is not None and self.execute(check_idebrv).fetchone() is not None:
+                self.gutils.set_cont_par("IDEBRV", 1)
+            else:
+                self.gutils.set_cont_par("IDEBRV", 0)
 
             line1 = "M  {0}  {1}  {2}  {3}  {4}  {5}\n"
             line2 = "C  {0}  {1}  {2}  {3}  {4}  {5}  {6} {7}  {8}\n"
