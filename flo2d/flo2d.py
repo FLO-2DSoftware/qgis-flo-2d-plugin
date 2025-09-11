@@ -865,6 +865,8 @@ class Flo2D(object):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(gpkg_path))
+            s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
+            self.f2d_widget.setup_project_folder()
 
             self.new_gpkg = gpkg_path
             proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]

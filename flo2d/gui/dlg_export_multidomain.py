@@ -175,7 +175,6 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
             export_calls = [
-                "export_cont_toler",
                 "export_tolspatial",
                 "export_inflow",
                 # "export_tailings",
@@ -212,6 +211,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # "export_wstime",
                 "export_shallowNSpatial",
                 "export_mannings_n_topo",
+                "export_cont_toler"
             ]
 
             # Add a dummy cell to the outflow cells to show the Outflow checkbox
@@ -245,6 +245,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             if ok:
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
+                s.setValue("FLO-2D/lastGdsDir", self.export_directory_le.text())
 
                 if dlg_components.data_rb.isChecked():
                     export_type = "data"
@@ -390,9 +391,6 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     os.makedirs(export_folder)
 
                 if export_method in [0, 2, 4]:
-                    # Remove the dummy cell on the outflow_cells
-                    if dummy_added:
-                        self.gutils.execute("DELETE FROM outflow_cells WHERE fid = 1;")
 
                     if export_type == "data":
                         self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomains[0])
@@ -527,6 +525,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # Update progress dialog
                 progDialog.setValue(j)
                 QApplication.processEvents()
+
+        # Remove the dummy cell on the outflow_cells
+        if dummy_added:
+            self.gutils.execute("DELETE FROM outflow_cells WHERE fid = 1;")
 
         if export_method in [2, 3]:
             subdomain_connectivities_names = self.gutils.execute(f"""
