@@ -1388,6 +1388,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'outflow';").fetchone()
         if not exist_user_bc:
             self.uc.bar_warn("There are no outflow User Boundary Conditions (points, lines, or polygons) defined.")
+            self.uc.log_info("There are no outflow User Boundary Conditions (points, lines, or polygons) defined.")
         if not self.gutils.is_table_empty("all_schem_bc"):
             if not self.uc.question(
                     "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
@@ -1460,7 +1461,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.gutils.execute("DELETE FROM outflow_cells;")
-
+            total_inserted = 0
             for geom_type in ['point', 'line', 'polygon']:
                 ins_qry = f"""INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
                             SELECT outflow.fid as outflow_fid, g.fid as grid_fid, abc.geom_type
@@ -1480,7 +1481,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 abc.geom_type = '{geom_type}' AND
                                 outflow.geom_type = '{geom_type}';"""
                 inserted = self.gutils.execute(ins_qry)
-
+                total_inserted += getattr(inserted, "rowcount", 0)
             # outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()
             # # Fix outflow_cells:
             # for oc in outflow_cells:
@@ -1522,7 +1523,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             """)
 
             QApplication.restoreOverrideCursor()
-            return inserted.rowcount
+            return total_inserted
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 180319.1434: Schematizing of outflows aborted!\n", e)
