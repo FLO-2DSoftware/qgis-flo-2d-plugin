@@ -7677,16 +7677,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not data_written:
                 os.remove(outflow)
 
-            QApplication.restoreOverrideCursor()
             if warning != "":
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" + warning
                 msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
                 self.uc.show_warn(msg)
+                QApplication.restoreOverrideCursor()
             return True
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!\n", e)
+            self.uc.log_info("ERROR 101218.1543: exporting OUTFLOW.DAT failed!")
             return False
 
     def export_outflow_hdf5(self, subdomain):

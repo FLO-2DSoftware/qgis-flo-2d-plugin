@@ -391,9 +391,6 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     os.makedirs(export_folder)
 
                 if export_method in [0, 2, 4]:
-                    # Remove the dummy cell on the outflow_cells
-                    if dummy_added:
-                        self.gutils.execute("DELETE FROM outflow_cells WHERE fid = 1;")
 
                     if export_type == "data":
                         self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomains[0])
@@ -528,6 +525,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # Update progress dialog
                 progDialog.setValue(j)
                 QApplication.processEvents()
+
+        # Remove the dummy cell on the outflow_cells
+        if dummy_added:
+            self.gutils.execute("DELETE FROM outflow_cells WHERE fid = 1;")
 
         if export_method in [2, 3]:
             subdomain_connectivities_names = self.gutils.execute(f"""
