@@ -675,7 +675,7 @@ class Inflow(GeoPackageUtils):
         values = [x if x is not None else "" for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row["name"]
-        self.time_series_fid = self.row["time_series_fid"]
+        self.time_series_fid = self.row["time_series_fid"] if self.row["time_series_fid"] else None
         self.ident = self.row["ident"]
         self.inoutfc = self.row["inoutfc"]
         self.geom_type = self.row["geom_type"]
@@ -708,11 +708,12 @@ class Inflow(GeoPackageUtils):
         if fetch:
             return self.get_time_series()
 
-    def get_time_series(self):
+    def get_time_series(self, add_time_series=True):
         qry = "SELECT fid, name FROM inflow_time_series ORDER BY fid;"
         self.time_series = self.execute(qry).fetchall()
         if not self.time_series:
-            self.time_series = self.add_time_series(fetch=True)
+            if add_time_series:
+                self.time_series = self.add_time_series(fetch=True)
         return self.time_series
 
     def get_data_name(self, fid=None):
