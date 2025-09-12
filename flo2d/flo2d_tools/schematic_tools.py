@@ -708,9 +708,10 @@ def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
         nv = QgsVector(0, 1)
         # for each line crossing a grid element
         for lid, gid, elev in lid_gid_elev:
-            pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
-            if pts is None:
-                pass
+            pts_c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
+            if pts_c is None:
+                continue
+            pts, c = pts_c
             if gid not in gids:
                 schem_lines[gid] = {}
                 schem_lines[gid]["lines"] = {}
