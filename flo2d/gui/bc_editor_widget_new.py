@@ -230,7 +230,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         self.gutils.fill_empty_inflow_names()
         self.gutils.fill_empty_outflow_names()
-
         self.populate_bcs(show_last_edited=True)
 
         self.repaint_bcs()
@@ -249,7 +248,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             # Update inflow or outflow names:
             self.gutils.fill_empty_inflow_names()
             self.gutils.fill_empty_outflow_names()
-
             # populate widgets and show last edited bc
             self.populate_bcs(show_last_edited=True)
         self.repaint_bcs()
@@ -383,6 +381,13 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to change the name of the BC Time Series
         """
+
+        inflow_ts_name = cb.currentText()
+        if not inflow_ts_name:
+            self.uc.bar_info("There is no time series. Please, add or select one first.")
+            self.uc.log_info("No time series selected. Please, add or select one first.")
+            return
+
         new_name, ok = QInputDialog.getText(None, "Change data name", "New name:")
         if not ok or not new_name:
             return
@@ -445,6 +450,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.delete_inflow_bc_btn.setDisabled(False)
             self.inflow_bc_center_btn.setDisabled(False)
             self.inflow_type_label.setDisabled(False)
+            self.component_label.setDisabled(False)
             self.inflow_type_cbo.setDisabled(False)
             self.ifc_fplain_radio.setDisabled(False)
             self.ifc_chan_radio.setDisabled(False)
@@ -459,18 +465,13 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
     def inflow_changed(self):
         self.bc_type = "inflow"
-        bc_idx = self.inflow_bc_name_cbo.currentIndex()
-        cur_data = self.inflow_bc_name_cbo.itemData(bc_idx)
-        if cur_data:
-            self.in_fid, self.ts_fid = cur_data
-        else:
-            return
+
+        bc_name = self.inflow_bc_name_cbo.currentText()
+        self.in_fid = self.gutils.execute("SELECT fid FROM inflow WHERE name = ?", (bc_name,)).fetchone()[0]
+        self.ts_fid = self.gutils.execute("SELECT time_series_fid FROM inflow WHERE fid = ?", (self.in_fid,)).fetchone()[0]
+
         self.inflow = Inflow(self.in_fid, self.iface.f2d["con"], self.iface)
         self.inflow.get_row()
-        if not is_number(self.ts_fid) or self.ts_fid == -1:
-            self.ts_fid = 0
-        else:
-            self.ts_fid = int(self.ts_fid)
         self.populate_inflow_data_cbo()
 
         if self.inflow.ident == "F":
@@ -499,20 +500,31 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Read and set inflow properties.
         """
-        self.time_series = self.inflow.get_time_series()
+        self.time_series = self.inflow.get_time_series(add_time_series=False)
         if not self.time_series:
-            self.uc.bar_warn("No data series for this inflow.")
+            self.uc.bar_info("No Time Series for this inflow.")
+            self.uc.log_info("No Time Series for this inflow.")
             return
         self.inflow_tseries_cbo.clear()
-        cur_idx = 0
         for i, row in enumerate(self.time_series):
-            row = [x if x is not None else "" for x in row]
             ts_fid, ts_name = row
+            # If there is no name defined for the TS, set the default one
             if not ts_name:
                 ts_name = "Time Series {}".format(ts_fid)
+                self.gutils.execute("UPDATE inflow_time_series SET name = ? WHERE fid = ?", (ts_name, ts_fid))
             self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
-        self.uc.log_info(str(self.inflow.time_series_fid))
-        self.inflow_tseries_cbo.setCurrentIndex(int(float(self.inflow.time_series_fid)) - 1)
+        inflow_name = self.inflow_bc_name_cbo.currentText()
+        row = self.gutils.execute("SELECT time_series_fid FROM inflow WHERE name = ?", (inflow_name,)).fetchone()[0]
+        if row:
+            time_series_fid = row
+            ts_row = self.gutils.execute("SELECT name FROM inflow_time_series WHERE fid = ?", (time_series_fid,)).fetchone()
+            if ts_row:
+                time_series_name = ts_row[0]
+                idx = self.inflow_tseries_cbo.findText(time_series_name)
+                self.inflow_tseries_cbo.setCurrentIndex(idx)
+        else:
+            self.inflow_tseries_cbo.setCurrentIndex(-1)
+            return
         self.inflow_data_changed()
 
     def inflow_data_changed(self):
@@ -733,25 +745,51 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to delete/clear the time series
         """
-        q = "Are you sure, you want delete the current Time Series?"
-        if not self.uc.question(q):
-            return
+
         self.bc_type = type
         if type == "inflow":
-            inflow_bc_idx = cb.currentIndex() + 1
+            inflow_ts_name = cb.currentText()
+            if not inflow_ts_name:
+                self.uc.bar_info("There is no time series selected. Please, add one first.")
+                self.uc.log_info("There is no time series selected. Please, add one first.")
+                return
+            q = f"Are you sure you want to delete <b>{inflow_ts_name}</b>? \n\nThis will remove <b>{inflow_ts_name}</b> from all inflows that use it, along with its data."
+            if not self.uc.question(q):
+                return
+            # Remove the TS from the cbo
+            cb.removeItem(cb.currentIndex())
+            cb.setCurrentIndex(-1)
+            inflow_ts_fid = self.gutils.execute("SELECT fid FROM inflow_time_series WHERE name = ?", (inflow_ts_name,)).fetchone()[0]
+            # Delete the TS data
             qry = f"""
                     DELETE FROM inflow_time_series_data
-                    WHERE series_fid = {inflow_bc_idx};
+                    WHERE series_fid = {inflow_ts_fid};
                    """
             self.gutils.execute(qry)
+            # Delete the TS
             qry = f"""
                     DELETE FROM inflow_time_series
-                    WHERE fid = {inflow_bc_idx};
+                    WHERE fid = {inflow_ts_fid};
                    """
             self.gutils.execute(qry)
-            self.populate_inflow_data_cbo()
-            self.inflow_data_changed()
+            # Remove the TS from the inflow
+            qry = f"""
+                    UPDATE inflow
+                    SET time_series_fid = NULL
+                    WHERE time_series_fid = {inflow_ts_fid};
+                   """
+            self.gutils.execute(qry)
+
+            self.uc.bar_info(f"{inflow_ts_name} deleted!")
+            self.uc.log_info(f"{inflow_ts_name} deleted!")
+
+            # self.populate_inflow_data_cbo()
+            # self.inflow_data_changed()
+
         if type == "outflow":
+            q = "Are you sure, you want delete the current Time Series?"
+            if not self.uc.question(q):
+                return
             outflow_bc_idx = self.outflow.get_cur_data_fid()
             if self.outflow.typ in [5, 6, 7, 8]:
                 qry = f"""
@@ -898,15 +936,29 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         if inf[gid]["time_series"]:
                             time_series_fid = self.gutils.execute(
                                 f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'").fetchone()[0]
-                            n_ts_fids = self.gutils.execute(
-                                f"SELECT fid FROM inflow_time_series_data WHERE series_fid = {time_series_fid}").fetchall()
+                            # If the time series fid is None, then we need to create a new time series
+                            if not time_series_fid:
+                                time_series_fid = current_ts_fid
+                                self.gutils.execute(
+                                    f"UPDATE inflow SET time_series_fid = {time_series_fid} WHERE fid = {inflow_fid}"
+                                )
+                                time_series_name = f"Time Series {current_ts_fid}"
+                                self.gutils.execute(
+                                    "INSERT INTO inflow_time_series (fid, name) VALUES (?, ?)",
+                                    (current_ts_fid, time_series_name)
+                                )
+                                self.gutils.execute(
+                                    "INSERT OR REPLACE INTO inflow_time_series_data (series_fid) VALUES (?)",
+                                    (current_ts_fid,)
+                                )
+                                current_ts_fid += 1
+
+                            n_ts_fids = self.gutils.execute(f"SELECT fid FROM inflow_time_series_data WHERE series_fid = {time_series_fid}").fetchall()
                             for n in zip(n_ts_fids, inf[gid]["time_series"]):
                                 if n[1][3]:
                                     batch_updates.append((time_series_fid, n[1][1], n[1][2], n[1][3], n[0][0]))
                                 else:
                                     batch_updates.append((time_series_fid, n[1][1], n[1][2], n[0][0]))
-
-                self.uc.log_info(str(batch_updates))
 
                 if batch_updates:
                     if len(batch_updates[0]) == 4:
@@ -1333,11 +1385,13 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.bc_data_model.clear()
         self.plot.clear()
         if type == "inflow":
-            if not self.inflow:
-                return
-            if not self.inflow.time_series_fid:
-                return
-            self.inflow.add_time_series()
+            last_ts_fid = self.gutils.execute("SELECT MAX(fid) FROM inflow_time_series;").fetchone()[0]
+            if last_ts_fid is None:
+                last_ts_fid = 1
+            else:
+                last_ts_fid += 1
+            ts_name = "Time Series {}".format(last_ts_fid)
+            self.inflow.add_time_series(name=ts_name)
             self.populate_inflow_data_cbo()
         elif type == "outflow":
             if not self.outflow:
@@ -1354,10 +1408,30 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # Code to test the performance
         # start_time = time.time()
 
+        # Check for existing user BC
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'inflow';").fetchone()
         if not exist_user_bc:
             self.uc.bar_warn("There are no inflow User Boundary Conditions (points, lines, or polygons) defined.")
-        if not self.gutils.is_table_empty("all_schem_bc"):
+            self.uc.log_info("There are no inflow User Boundary Conditions (points, lines, or polygons) defined.")
+            return
+
+        # Check for NULL time_series_fid
+        null_ts_fid = self.gutils.execute("SELECT name FROM inflow WHERE time_series_fid IS NULL;").fetchall()
+        if null_ts_fid:
+            null_inflows = [n[0] for n in null_ts_fid]
+            converted_inflows = "\n".join(null_inflows)
+            message = (
+                "The following inflow boundary conditions have no Time Series assigned.\n\n"
+                f"{converted_inflows}\n\n"
+                "Please assign a Time Series to all inflow boundary conditions and try again."
+            )
+            self.uc.show_info(message)
+            self.uc.log_info(message)
+            return
+
+        # Check for existing schematized BC
+        existing_inflow_bc = self.gutils.execute("SELECT * FROM all_schem_bc WHERE type = 'inflow';").fetchone()
+        if existing_inflow_bc:
             if not self.uc.question(
                     "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
             ):
@@ -1389,7 +1463,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if not exist_user_bc:
             self.uc.bar_warn("There are no outflow User Boundary Conditions (points, lines, or polygons) defined.")
             self.uc.log_info("There are no outflow User Boundary Conditions (points, lines, or polygons) defined.")
-        if not self.gutils.is_table_empty("all_schem_bc"):
+
+        # Check for existing schematized BC
+        existing_inflow_bc = self.gutils.execute("SELECT * FROM all_schem_bc WHERE type = 'outflow';").fetchone()
+        if existing_inflow_bc:
             if not self.uc.question(
                     "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
             ):
@@ -1779,6 +1856,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_bc_center_btn.setDisabled(True)
             self.inflow_type_label.setDisabled(True)
             self.inflow_type_cbo.setDisabled(True)
+            self.component_label.setDisabled(True)
             self.ifc_fplain_radio.setDisabled(True)
             self.ifc_chan_radio.setDisabled(True)
             self.inflow_tseries_label.setDisabled(True)
@@ -2203,6 +2281,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.delete_inflow_bc_btn.setDisabled(True)
             self.inflow_bc_center_btn.setDisabled(True)
             self.inflow_type_label.setDisabled(True)
+            self.component_label.setDisabled(True)
             self.inflow_type_cbo.setDisabled(True)
             self.ifc_fplain_radio.setDisabled(True)
             self.ifc_chan_radio.setDisabled(True)
