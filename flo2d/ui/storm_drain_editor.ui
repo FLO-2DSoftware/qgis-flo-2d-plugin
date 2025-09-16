@@ -624,6 +624,9 @@
      </item>
      <item>
       <widget class="QCheckBox" name="simulate_stormdrain_chbox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check/Uncheck to enable/disable storm drain simulation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Simulate Storm Drain</string>
        </property>
