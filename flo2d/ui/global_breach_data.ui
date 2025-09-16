@@ -70,8 +70,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>458</width>
-        <height>273</height>
+        <width>454</width>
+        <height>262</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
@@ -404,7 +404,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_34">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GD50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream face (riprap material). &lt;/p&gt;&lt;p&gt;If GD50DF = 0.0, then GD50DF = GD50S.&lt;/p&gt;&lt;p&gt;Range:1 - 100 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GD50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream face (riprap material). &lt;/p&gt;&lt;p&gt;If GD50DF = 0.0, then GD50DF = GD50S.&lt;/p&gt;&lt;p&gt;Range: 1 - 100 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Riprap size</string>
@@ -548,7 +548,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_3">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GZC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global average slope of the upstream and downstream face of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZC is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: GZC = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;If there is no core set GZC = 0.0;&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GZC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global average slope of the upstream and downstream face of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZC is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: GZC = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;If there is no core set GZC = 0.0.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Core average face slope</string>
