@@ -9705,6 +9705,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
 
+                # if subdomain:
+                #     # Check if there is not an existing channel outflow BC then create one
+                #     if not self.gutils.execute("SELECT COUNT(*) FROM outflow_cells WHERE grid_fid = ?", (eid,)).fetchone():
+                #         self.gutils.execute("INSERT INTO outflow (fid) VALUES (1);")
+                #         out_fid = self.gutils.execute("SELECT MAX(fid) FROM outflow;").fetchone()
+                #         if out_fid and out_fid[0]:
+                #             out_fid = out_fid[0] + 1
+                #         else:
+                #             out_fid = 1
+                #         self.gutils.execute("INSERT INTO outflow_cells (fid) VALUES (1);")
+
                 if row[5]: # ibaseflow
                     if str(row[5]) != "":
                         bLines += "B " + str(row[5]) + "\n"
