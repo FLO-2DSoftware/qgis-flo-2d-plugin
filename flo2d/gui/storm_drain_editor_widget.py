@@ -4987,7 +4987,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     node_path = f"Scenario {j}/Storm Drain/Nodes/{intersection}"
                     swmmqin_path = f"Scenario {j}/Storm Drain/SWMMQIN/{intersection}"
                     swmmoutfin_path = f"Scenario {j}/Storm Drain/SWMMOUTFIN/{grid}"
-                    self.uc.log_info(str(swmmoutfin_path))
                     if node_path in hdf:
                         # Read the node data
                         node_data = hdf[node_path][:]

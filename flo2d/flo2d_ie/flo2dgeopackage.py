@@ -8590,7 +8590,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             project_dir = os.path.dirname(self.parser.hdf5_filepath)
-            self.uc.log_info(str(project_dir))
 
             raincell = os.path.join(project_dir, "RAINCELL.HDF5")
             if os.path.exists(raincell):
@@ -8732,7 +8731,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             project_dir = os.path.dirname(self.parser.hdf5_filepath)
-            self.uc.log_info(str(project_dir))
 
             raincellraw = os.path.join(project_dir, "RAINCELLRAW.HDF5")
             if os.path.exists(raincellraw):
