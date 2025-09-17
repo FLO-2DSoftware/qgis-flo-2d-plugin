@@ -320,8 +320,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_inflow_dat(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
         inflow_sql = [
-            """INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""",
-            4,
+            """INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""",
+            5,
         ]
         cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
         ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
@@ -374,7 +374,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 for i, gid in enumerate(inf, 1):
                     row = inf[gid]["row"]
-                    inflow_sql += [(i, row[0], row[1], i)]
+                    inflow_sql += [(i, row[0], row[1], 'point',i)]
                     cells_sql += [(i, gid)]
                     if inf[gid]["time_series"]:
                         ts_sql += [(i, "Time series " + str(i))]
@@ -689,10 +689,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_outflow_dat(self):
         outflow_sql = [
             """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
-                                            chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-            8,
+                                            chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
+            9,
         ]
-        cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES""", 2]
+        cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type) VALUES""", 3]
         qh_params_sql = ["""INSERT INTO qh_params (fid) VALUES""", 1]
         qh_params_data_sql = [
             """INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""",
@@ -725,6 +725,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_tab_fid = 0
         ts_fid = 0
         fid = 1
+        bc_fid = self.gutils.execute("SELECT MAX(tab_bc_fid) FROM all_schem_bc").fetchone()
+        if bc_fid and bc_fid[0]:
+            bc_fid = bc_fid[0] + 1
+        else:
+            bc_fid = 1
         for gid, values in data.items():
             chan_out = values["K"]
             fp_out = values["O"]
@@ -768,11 +773,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     chan_qhpar_fid,
                     chan_qhtab_fid,
                     fp_tser_fid,
-                    fid,
+                    'point',
+                    bc_fid,
                 )
             ]
-            cells_sql += [(fid, gid)]
+            cells_sql += [(fid, gid, 'point')]
             fid += 1
+            bc_fid += 1
 
         self.batch_execute(
             qh_params_sql,
@@ -827,13 +834,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )
 
                 floodplain_outflow_sql = [
-                    """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-                    8,
+                    """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
+                    9,
                 ]
 
                 channel_outflow_sql = [
-                    """INSERT INTO outflow (fid, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-                    8,
+                    """INSERT INTO outflow (fid, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
+                    9,
                 ]
 
                 cells_sql = ["""INSERT OR REPLACE INTO outflow_cells (outflow_fid, grid_fid, geom_type) VALUES""", 3]
@@ -868,6 +875,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     0,
                                     0,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
@@ -898,6 +906,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     0,
                                     0,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
