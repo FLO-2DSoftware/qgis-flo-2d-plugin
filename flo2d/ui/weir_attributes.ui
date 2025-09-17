@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>371</width>
-        <height>429</height>
+        <width>390</width>
+        <height>490</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -83,6 +83,9 @@
            <layout class="QGridLayout" name="gridLayout_3">
             <item row="7" column="0">
              <widget class="QLabel" name="label_8">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;End Contractions &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Number of end contractions for a TRANSVERSE or TRAPEZOIDAL weir whose length is shorter than the channel it is placed in. &lt;/p&gt;&lt;p&gt;Either 0, 1, or 2 depending on if no ends, one end, or both ends are beveled in from the side walls. &lt;/p&gt;&lt;p&gt;Rsnge: 0 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>End Contraction</string>
               </property>
@@ -90,6 +93,9 @@
             </item>
             <item row="5" column="0">
              <widget class="QLabel" name="label_6">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Discharge Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Discharge coefficient for flow through the central portion of the weir (for flow in CFS when using US units or CMS when using SI units). &lt;/p&gt;&lt;p&gt;Typical values are: 3.33 US (1.84 SI) for sharp crested transverse weirs, 2.5 - 3.3 US (1.38 - 1.83 SI) for broad crested rectangular weirs, 2.4 - 2.8 US (1.35 - 1.55 SI) for V-notch (triangular) weirs &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Discharge Coeff.</string>
               </property>
@@ -97,6 +103,9 @@
             </item>
             <item row="8" column="0">
              <widget class="QLabel" name="label_9">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;End Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Discharge coefficient for flow through the triangular ends of a TRAPEZOIDAL weir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>End Coeff.</string>
               </property>
@@ -104,6 +113,9 @@
             </item>
             <item row="10" column="0">
              <widget class="QLabel" name="label_10">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Height &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Vertical height of weir opening.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Height</string>
               </property>
@@ -118,6 +130,9 @@
             </item>
             <item row="11" column="0">
              <widget class="QLabel" name="label_11">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Length &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Horizontal length of weir opening.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Length</string>
               </property>
@@ -162,6 +177,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Name &lt;/span&gt;&lt;/p&gt;&lt;p&gt;User-assigned weir name. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Name</string>
               </property>
@@ -169,6 +187,9 @@
             </item>
             <item row="3" column="0">
              <widget class="QLabel" name="label_4">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Type &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Weir type: TRANSVERSE, SIDEFLOW, V-NOTCH, or TRAPEZOIDAL.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Type</string>
               </property>
@@ -176,6 +197,9 @@
             </item>
             <item row="6" column="0">
              <widget class="QLabel" name="label_7">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Flap Gate &lt;/span&gt;&lt;/p&gt;&lt;p&gt;YES if the weir has a flap gate that prevents backflow, NO if it does not. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Flapgate</string>
               </property>
@@ -189,10 +213,17 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="weir_name"/>
+             <widget class="QLineEdit" name="weir_name">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on inlet side of weir. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Inlet</string>
               </property>
@@ -210,28 +241,52 @@
              </widget>
             </item>
             <item row="3" column="1" colspan="3">
-             <widget class="QComboBox" name="weir_type"/>
+             <widget class="QComboBox" name="weir_type">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Type &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="4" column="1" colspan="3">
              <widget class="QDoubleSpinBox" name="weir_crest_height"/>
             </item>
             <item row="5" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="weir_disch_coeff"/>
+             <widget class="QDoubleSpinBox" name="weir_disch_coeff">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Discharge Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="6" column="1" colspan="3">
-             <widget class="QComboBox" name="weir_flap_gate"/>
+             <widget class="QComboBox" name="weir_flap_gate">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Flap Gate &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="8" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="weir_end_coeff"/>
+             <widget class="QDoubleSpinBox" name="weir_end_coeff">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;End Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="9" column="1" colspan="3">
              <widget class="QComboBox" name="weir_shape"/>
             </item>
             <item row="10" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="weir_height"/>
+             <widget class="QDoubleSpinBox" name="weir_height">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Height &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="11" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="weir_length"/>
+             <widget class="QDoubleSpinBox" name="weir_length">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Length &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="12" column="1" colspan="3">
              <widget class="QDoubleSpinBox" name="weir_side_slope"/>
@@ -246,6 +301,9 @@
                 <width>0</width>
                 <height>20</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>-</string>
@@ -270,6 +328,9 @@
             </item>
             <item row="7" column="1" colspan="3">
              <widget class="QSpinBox" name="weir_end_contrac">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;End Contractions &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <number>2</number>
               </property>

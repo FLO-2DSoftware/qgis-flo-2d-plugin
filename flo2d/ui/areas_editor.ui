@@ -35,6 +35,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_froude_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected Froude Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -62,6 +65,9 @@
           </item>
           <item row="0" column="2">
            <widget class="QToolButton" name="del_froude_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current Froude Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -129,6 +135,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_roughness_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected Roughness.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -146,6 +155,9 @@
           </item>
           <item row="0" column="2">
            <widget class="QToolButton" name="del_roughness_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current Roughness.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -200,6 +212,9 @@
          <layout class="QGridLayout" name="gridLayout_9">
           <item row="0" column="2">
            <widget class="QToolButton" name="del_blocked_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current Blocked Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -227,6 +242,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_blocked_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected Blocked Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -291,6 +309,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_steep_slopen_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected Steep Slope-n.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -318,6 +339,9 @@
           </item>
           <item row="0" column="2">
            <widget class="QToolButton" name="del_steep_slopen_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current Steep Slope-n.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -425,6 +449,9 @@
          <layout class="QGridLayout" name="gridLayout_8">
           <item row="0" column="2">
            <widget class="QToolButton" name="del_tolerance_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current Tolerant Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -449,6 +476,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_tolerance_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected Tolerance Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -512,6 +542,9 @@
           </item>
           <item row="0" column="2">
            <widget class="QToolButton" name="del_shallown_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current Shallow-n Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -536,6 +569,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_shallown_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected Shallow-n.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -650,6 +686,9 @@
          <layout class="QGridLayout" name="gridLayout_3">
           <item row="0" column="2">
            <widget class="QToolButton" name="del_no_exchange_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current No-Exchange Channel Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -677,6 +716,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_no_exchange_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected No-Exchange Channel Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -750,6 +792,9 @@
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="2">
            <widget class="QToolButton" name="del_building_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current Building Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -777,6 +822,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_building_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected Building Areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -896,6 +944,9 @@
           </item>
           <item row="0" column="3">
            <widget class="QToolButton" name="eye_lid_volume_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected LID Volume.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -910,6 +961,9 @@
           </item>
           <item row="0" column="2">
            <widget class="QToolButton" name="del_lid_volume_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current LID Volume.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
