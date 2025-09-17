@@ -523,6 +523,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 idx = self.inflow_tseries_cbo.findText(time_series_name)
                 self.inflow_tseries_cbo.setCurrentIndex(idx)
         else:
+            self.bc_table.clear()
+            self.plot.clear()
             self.inflow_tseries_cbo.setCurrentIndex(-1)
             return
         self.inflow_data_changed()
