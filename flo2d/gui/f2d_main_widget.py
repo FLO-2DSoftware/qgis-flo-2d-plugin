@@ -128,6 +128,8 @@ class FLO2DWidget(qtBaseClass, uiDialog):
                         widget.setHidden(False)
 
     def collapse_all_groups(self):
+        self.plot.clear()
+        self.table.clear()
         for grp in self.cgroups:
             grp.setCollapsed(True)
 
