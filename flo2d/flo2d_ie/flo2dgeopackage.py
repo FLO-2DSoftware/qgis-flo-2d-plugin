@@ -9748,7 +9748,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to export xsection data to hdf5 file
         """
         try:
-            chan_n_sql = """SELECT DISTINCT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            if not subdomain:
+                chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            else:
+                chan_n_sql = f"""
+                    SELECT 
+                        cn.nxsecnum,
+                        cn.xsecname
+                    FROM 
+                        chan_n AS cn
+                    JOIN
+                        schema_md_cells md ON cn.elem_fid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY cn.nxsecnum;
+                        """
+
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
 
             xsec_line = """{0}  {1}\n"""
@@ -9763,11 +9778,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             channel_group.create_dataset('XSEC_NAME', [])
             channel_group.create_dataset('XSEC_DATA', [])
 
-            for nxecnum, xsecname in chan_n:
-                channel_group.datasets["XSEC_NAME"].data.append(
-                    create_array(xsec_line, 2, np.bytes_, tuple([nxecnum, xsecname])))
-                for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                    channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
+            for i, (nxecnum, xsecname) in enumerate(chan_n, start=1):
+                if not subdomain:
+                    channel_group.datasets["XSEC_NAME"].data.append(
+                        create_array(xsec_line, 2, np.bytes_, tuple([nxecnum, xsecname])))
+                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                        channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
+                else:
+                    channel_group.datasets["XSEC_NAME"].data.append(
+                        create_array(xsec_line, 2, np.bytes_, tuple([i, xsecname])))
+                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                        channel_group.datasets["XSEC_DATA"].data.append([i, xi, yi])
 
             self.parser.write_groups(channel_group)
             return True
@@ -9779,7 +9800,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_xsec_dat(self, outdir, subdomain):
         try:
-            chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+
+            if not subdomain:
+                chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            else:
+                chan_n_sql = f"""
+                    SELECT 
+                        cn.nxsecnum,
+                        cn.xsecname
+                    FROM 
+                        chan_n AS cn
+                    JOIN
+                        schema_md_cells md ON cn.elem_fid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY cn.nxsecnum;
+                        """
+
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
 
             xsec_line = """X     {0}  {1}\n"""
@@ -9794,10 +9831,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             xsec = os.path.join(outdir, "XSEC.DAT")
             with open(xsec, "w") as x:
-                for nxecnum, xsecname in chan_n:
-                    x.write(xsec_line.format(nxecnum, xsecname))
-                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                        x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
+                    for i, (nxecnum, xsecname) in enumerate(chan_n, start=1):
+                        if not subdomain:
+                            x.write(xsec_line.format(nxecnum, xsecname))
+                            for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                                x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
+                        else:
+                            x.write(xsec_line.format(i, xsecname))
+                            for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                                x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
 
             return True
 
