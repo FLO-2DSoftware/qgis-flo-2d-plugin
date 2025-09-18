@@ -9674,9 +9674,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
                 # A single line for each channel segment. The next lines will be the grid elements of
                 # this channel segment.
-                for elems in self.execute(
+                for i, elems in enumerate(self.execute(
                         chan_elems_sql, (fid,)
-                ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                ), start=1):
+                    # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                     # 'chan_elems' table (the cross sections in the schematic layer),
                     #  that has the 'fid' value indicated (the channel segment id).
                     elems = [
@@ -9695,7 +9696,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     # line (format to write), fcn_idx (?), and xlen_idx (?)
                     res_query = self.execute(sql, (eid,)).fetchone()
                     if res_query is not None:
-                        res = [x if x is not None else "" for x in res_query]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+                        res = [x if x is not None else "" for x in res_query] # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+                        if subdomain:
+                            # Adjust the natural shape
+                            if typ not in ['R', 'V', 'T']:
+                                res[1] = i
+                        self.uc.log_info(str(res))
                         res.insert(
                             fcn_idx, fcn
                         )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
