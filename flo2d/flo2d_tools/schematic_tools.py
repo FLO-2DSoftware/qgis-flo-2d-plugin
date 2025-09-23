@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import math
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -1507,6 +1507,9 @@ class ChannelsSchematizer(GeoPackageUtils):
 
         # Saving schematized and interpolated cross sections
         sqls = []
+        ordered = []
+        lbankgrids = []
+        rbankgrids = []
         prev_node_pos = QgsPointXY()  # direction of the previous node used to give direction of xs with no right bank
         for i in range(len(cross_section_definitions)):
             (
@@ -1526,6 +1529,10 @@ class ChannelsSchematizer(GeoPackageUtils):
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
                 continue
+
+            lbankgrids.append(lbankgrid)
+            rbankgrids.append(rbankgrid)
+
             if lbankgrid == rbankgrid:
                 rbankgrid = 0
 
@@ -1569,6 +1576,70 @@ class ChannelsSchematizer(GeoPackageUtils):
                 geom_pt1 = QgsPointXY(pt1.x() - dx, pt1.y() + dy)
                 geom_pt2 = QgsPointXY(pt1.x() + dx, pt1.y() - dy)
 
+            x1, y1 = pt1.x(), pt1.y()
+            x2, y2 = pt2.x(), pt2.y()
+
+            dx = x2 - x1
+            dy = y2 - y1
+            L = math.hypot(dx, dy)
+
+            seen = set()
+
+            def add_grid_id(gid):
+                if gid and gid not in seen:
+                    seen.add(gid)
+                    ordered.append(gid)
+
+            if L == 0:
+                try:
+                    add_grid_id(self.grid_on_point(x1, y1))
+                except Exception:
+                    pass
+
+            x1, y1 = pt1.x(), pt1.y()
+            x2, y2 = pt2.x(), pt2.y()
+
+            dx = x2 - x1
+            dy = y2 - y1
+            L = math.hypot(dx, dy)
+
+            seen = set()
+
+            def add_grid_id(gid):
+                if gid and gid not in seen:
+                    seen.add(gid)
+                    ordered.append(gid)
+
+            if L == 0:
+                # no “between” cells when endpoints are excluded
+                pass
+            else:
+                # Step along the segment only (no perpendicular sweep)
+                step = max(self.cell_size / 4.0, 1e-9)  # finer than 1/2 cell to avoid skips
+                n_steps = max(1, int(math.ceil(L / step)))
+
+                for k in range(1, n_steps):  # 1..n_steps-1 → excludes endpoints
+                    t = k / n_steps
+                    sx = x1 + t * dx
+                    sy = y1 + t * dy
+                    try:
+                        gid = self.grid_on_point(sx, sy)
+                        add_grid_id(gid)
+                    except Exception:
+                        continue
+
+                # tiny overreach along the segment direction to catch fence sitters (still excludes endpoints)
+                tx, ty = dx / L, dy / L
+                eps = 1e-6 * self.cell_size
+                for ex, ey in ((x1 + eps * tx, y1 + eps * ty), (x2 - eps * tx, y2 - eps * ty)):
+                    try:
+                        gid = self.grid_on_point(ex, ey)
+                        add_grid_id(gid)
+                    except Exception:
+                        pass
+
+
+
             prev_node_pos = pt1
             sqls.append(
                 (
@@ -1576,6 +1647,10 @@ class ChannelsSchematizer(GeoPackageUtils):
                     vals,
                 )
             )
+
+        ordered = [g for g in ordered if g not in lbankgrids and g not in rbankgrids]
+
+        self.uc.log_info(str(ordered))
         cursor = self.con.cursor()
         for qry, vals in sqls:
             try:

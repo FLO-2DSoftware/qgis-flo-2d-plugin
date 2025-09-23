@@ -695,10 +695,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         Function to schematize the channels
         """
+
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             self.uc.log_info("There is no grid! Please create it before running tool.")
             return
+
         if self.gutils.is_table_empty("user_left_bank"):
             if not self.gutils.is_table_empty("chan"):
                 if not self.uc.question(
@@ -721,15 +723,18 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             "xsec_n_data",
                             "noexchange_chan_cells",
                             "chan_wsel",
-                            "chan_elems_interp"
+                            "chan_elems_interp",
+                            "chan_interior_nodes"
                         )
                     return
             else:
                 self.uc.bar_warn("There are no User Left Bank lines! Please digitize them before running the tool.")
                 return
+
         if self.gutils.is_table_empty("user_xsections"):
             self.uc.bar_warn("There are no User Cross Sections! Please digitize them before running the tool.")
             return
+
         if not self.gutils.is_table_empty("chan"):
             if not self.uc.question(
                     "There are already Schematized Channel Segments (Left Banks) and Cross Sections. Overwrite them?"
@@ -745,7 +750,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             cs.create_schematized_channels()
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
                 "ERROR 060319.1611: Schematizing left bank lines failed !\n"
@@ -763,40 +767,38 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
             return
-        QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()
 
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             cs.copy_features_from_user_channel_layer_to_schematized_channel_layer()
             cs.copy_features_from_user_xsections_layer_to_schematized_xsections_layer()
-
             self.gutils.create_xs_type_n_r_t_v_tables()
-
             cs.copy_user_xs_data_to_schem()
-
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 060319.1743: Schematizing failed while processing attributes! "
                 "Please check your User Layers."
             )
             return
-        QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()
 
         if not self.gutils.is_table_empty("chan_elems"):
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 cs.make_distance_table()
             except Exception as e:
-                QApplication.restoreOverrideCursor()
                 self.uc.log_info(traceback.format_exc())
                 self.uc.show_warn(
                     "WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n"
                     "Please check your User Layers."
                 )
                 return
-            QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor()
         else:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
@@ -804,6 +806,20 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 "Schematic Channel Cross Sections layer is empty!"
             )
             return
+
+        # Fill the chan_interior_nodes table
+        # try:
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        # cs.fill_chan_interior_nodes_table()
+        # except Exception as e:
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn(
+        #         "WARNING 060319.1746: Schematizing failed while filling chan_interior_nodes table!\n\n"
+        #         "Please check your User Layers."
+        #     )
+        #     return
+        # finally:
+        #     QApplication.restoreOverrideCursor()
 
         chan_schem = self.lyrs.data["chan"]["qlyr"]
         chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
