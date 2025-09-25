@@ -338,6 +338,10 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         ]
     )
 
+
+
+
+
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -384,14 +388,17 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         # self.courantNumbersGroup.setObjectName("ColoredGroupBox")
         # self.courantNumbersGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
 
-        self.polulate_values_JJ()
+        self.populate_values_JJ()
+
+        self._wire_switch_guards()
+
 
     def set_spinbox_JJ(self, key, spin):
         values = self.PARAMS[key]
         spin.setDecimals(values["dec"])
         spin.setRange(values["min"], values["max"])
 
-    def polulate_values_JJ(self):
+    def populate_values_JJ(self):
         try:
             _mud = False
             _sed = False
@@ -475,6 +482,60 @@ class ContToler_JJ(qtBaseClass, uiDialog):
     def ISED_currentIndexChanged(self):
         if self.ISED.currentIndex() in [1, 2]:
             self.IDEBRV.setChecked(False)
+
+
+
+    def _guard_switch(self, checkbox, ok_predicate, warn_msg: str):
+        if checkbox.isChecked() and not ok_predicate():
+            self.uc.bar_warn(warn_msg)
+            self.uc.log_info(warn_msg)
+            checkbox.setChecked(False)
+
+    def _has(self, table_name: str) -> bool:
+        return not self.gutils.is_table_empty(table_name)
+
+    def _any(self, *tables: str) -> bool:
+        return any(self._has(t) for t in tables)
+
+    def _all(self, *tables: str) -> bool:
+        return all(self._has(t) for t in tables)
+
+    def _wire_switch_guards(self):
+        mapping = [
+            (self.ICHANNEL, lambda: self._has("chan"),
+             "No channels data configured!"),
+
+            (self.IMULTC, lambda: self._any("mult_cells", "simple_mult_cells"),
+             "No multiple channels data configured!"),
+
+            (self.MSTREET, lambda: self._has("streets"),
+             "No streets data configured!"),
+
+            (self.IEVAP, lambda: self._has("evapor"),
+             "No evaporation data configured!"),
+
+            (self.IHYDRSTRUCT, lambda: self._has("struct"),
+             "No hydraulic structures data configured!"),
+
+            (self.IRAIN, lambda: self._has("rain"),
+             "No rainfall data configured!"),
+
+            (self.INFIL, lambda: self._has("infil"),
+             "No Infiltration data configured!"),
+
+            (self.IWRFS, lambda: self._has("blocked_cells"),
+             "No ARF data configured!"),
+
+            (self.LEVEE, lambda: self._has("levee_data"),
+             "No levees data configured!"),
+
+            (self.SWMM, lambda: self._has("swmmflo"),
+             "No storm drain data configured!"),
+        ]
+
+        for cb, pred, msg in mapping:
+            if cb is not None:  # in case some switches are not present in this dialog
+                cb.clicked.connect(lambda _=None, c=cb, p=pred, m=msg: self._guard_switch(c, p, m))
 
     def IDEBRV_clicked(self):
         if self.IDEBRV.isChecked() and self.ISED.currentIndex() != 0:
