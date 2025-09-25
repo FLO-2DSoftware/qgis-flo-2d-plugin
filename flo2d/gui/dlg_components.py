@@ -46,6 +46,17 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         QApplication.restoreOverrideCursor()
 
+    def _pre_check_decision(self, chb, has_data, switch_on=None, *, default_when_no_switch=True):
+        if not has_data:
+            chb.setEnabled(False)
+            chb.setChecked(False)
+            return
+        chb.setEnabled(True)
+        if switch_on is None:
+            chb.setChecked(bool(default_when_no_switch))
+        else:
+            chb.setChecked(bool(switch_on))
+
     def populate_components_dialog(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -243,125 +254,64 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
             self.components_note_lbl.setVisible(show_note)
 
-            if not self.gutils.is_table_empty("chan"):
-                self.channels_chbox.setChecked(True)
-                self.channels_chbox.setEnabled(True)
+            has = lambda t: not self.gutils.is_table_empty(t)
+            opt = lambda k: options.get(k, "")
 
-            if not self.gutils.is_table_empty("blocked_cells"):
-                self.reduction_factors_chbox.setChecked(True)
-                self.reduction_factors_chbox.setEnabled(True)
+            self._pre_check_decision(self.channels_chbox, has("chan"), opt("ICHANNEL") == "1")
+            self._pre_check_decision(self.evaporation_chbox, has("evapor"), opt("IEVAP") == "1")
+            self._pre_check_decision(self.infiltration_chbox, has("infil"), opt("INFIL") == "1")
+            self._pre_check_decision(self.hydr_struct_chbox, has("struct"), opt("IHYDRSTRUCT") == "1")
+            self._pre_check_decision(self.rain_chbox, has("rain"), opt("IRAIN") == "1")
+            self._pre_check_decision(self.reduction_factors_chbox, has("blocked_cells"), opt("IWRFS") == "1")
+            self._pre_check_decision(self.levees_chbox, has("levee_data"), opt("LEVEE") == "1")
+            self._pre_check_decision(self.streets_chbox, has("streets"), opt("MSTREET") == "1")
+            self._pre_check_decision(self.storm_drain_chbox, has("swmmflo"), opt("SWMM") == "1")
 
-            if not self.gutils.is_table_empty("streets"):
-                self.streets_chbox.setChecked(True)
-                self.streets_chbox.setEnabled(True)
+            mudsed_has = has("mud") or has("sed")
+            mudsed_on = (opt("ISED") == "1") or (opt("MUD") in ("1", "2"))
+            self._pre_check_decision(self.mud_and_sed_chbox, mudsed_has, mudsed_on)
 
-            if not self.gutils.is_table_empty("outflow_cells"):
-                self.outflow_elements_chbox.setChecked(True)
-                self.outflow_elements_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("inflow") or not self.gutils.is_table_empty("reservoirs") or not self.gutils.is_table_empty("tailing_reservoirs"):
-                self.inflow_elements_chbox.setChecked(True)
-                self.inflow_elements_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("levee_data"):
-                self.levees_chbox.setChecked(True)
-                self.levees_chbox.setEnabled(True)
-
-            # Multiple channels:
-            if options["IMULTC"] == "1":
-                if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info(
-                        "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
-                    )
+            mult_has = has("mult_cells") or has("simple_mult_cells")
+            if opt("IMULTC") == "1":
+                if not mult_has:
                     self.gutils.set_cont_par("IMULTC", 0)
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                else:  # There are Mult or simple channels cells:
-                    if self.gutils.is_table_empty("mult"):
-                        # There are mult or simple channels but 'mult' (globals) is empty: set globals:
-                        self.gutils.fill_empty_mult_globals()
-                    self.multiple_channels_chbox.setChecked(True)
-                    self.multiple_channels_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("breach"):
-                qry = "SELECT ilevfail FROM levee_general"
-                row = self.gutils.execute(qry).fetchone()
-                if row[0] == 2:
-                    self.breach_chbox.setChecked(True)
-                    self.breach_chbox.setEnabled(True)
+                    self._pre_check_decision(self.multiple_channels_chbox, False, False)
                 else:
-                    self.breach_chbox.setChecked(False)
+                    if self.gutils.is_table_empty("mult"):
+                        self.gutils.fill_empty_mult_globals()
+                    self._pre_check_decision(self.multiple_channels_chbox, True, True)
+            else:
+                self._pre_check_decision(self.multiple_channels_chbox, mult_has, False)
+
+            if has("breach"):
+                row = self.gutils.execute("SELECT ilevfail FROM levee_general").fetchone()
+                if row and row[0] == 2:
+                    self.breach_chbox.setEnabled(True)
+                    self.breach_chbox.setChecked(True)
+                else:
                     self.breach_chbox.setEnabled(False)
+                    self.breach_chbox.setChecked(False)
+            else:
+                self.breach_chbox.setEnabled(False)
+                self.breach_chbox.setChecked(False)
 
-            if not self.gutils.is_table_empty("gutter_cells"):
-                self.gutters_chbox.setChecked(True)
-                self.gutters_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("infil"):
-                self.infiltration_chbox.setChecked(True)
-                self.infiltration_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("fpxsec"):
-                self.floodplain_xs_chbox.setChecked(True)
-                self.floodplain_xs_chbox.setEnabled(True)
-
-            # Mud and Sediment Transport:
-            ISED = self.gutils.get_cont_par("ISED")
-            MUD = self.gutils.get_cont_par("MUD")
-            if ISED == "1" or MUD in ["1", "2"]:
-                if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
-                    self.mud_and_sed_chbox.setChecked(True)
-                    self.mud_and_sed_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("evapor"):
-                self.evaporation_chbox.setChecked(True)
-                self.evaporation_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("struct"):
-                self.hydr_struct_chbox.setChecked(True)
-                self.hydr_struct_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("rain"):
-                self.rain_chbox.setChecked(True)
-                self.rain_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("swmmflo"):
-                self.storm_drain_chbox.setChecked(True)
-                self.storm_drain_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("spatialshallow") and not self.gutils.is_table_empty(
-                "spatialshallow_cells"
-            ):
-                self.spatial_shallow_n_chbox.setChecked(True)
-                self.spatial_shallow_n_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("tolspatial"):
-                self.spatial_tolerance_chbox.setChecked(True)
-                self.spatial_tolerance_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("fpfroude"):
-                self.spatial_froude_chbox.setChecked(True)
-                self.spatial_froude_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("steep_slope_n_cells"):
-                self.spatial_steep_slopen_chbox.setChecked(True)
-                self.spatial_steep_slopen_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("lid_volume_cells"):
-                self.spatial_lid_volume_chbox.setChecked(True)
-                self.spatial_lid_volume_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("grid"):
-                self.mannings_n_and_Topo_chbox.setChecked(True)
-                self.mannings_n_and_Topo_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("tailing_cells"):
-                self.tailings_chbox.setChecked(True)
-                self.tailings_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("outrc"):
-                self.outrc_chbox.setChecked(True)
-                self.outrc_chbox.setEnabled(True)
+            self._pre_check_decision(self.outflow_elements_chbox, has("outflow_cells"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.inflow_elements_chbox,
+                                   has("inflow") or has("reservoirs") or has("tailing_reservoirs"), None,
+                                   default_when_no_switch=True)
+            self._pre_check_decision(self.gutters_chbox, has("gutter_cells"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.floodplain_xs_chbox, has("fpxsec"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.spatial_shallow_n_chbox, has("spatialshallow") and has("spatialshallow_cells"),
+                                   None, default_when_no_switch=True)
+            self._pre_check_decision(self.spatial_tolerance_chbox, has("tolspatial"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.spatial_froude_chbox, has("fpfroude"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.spatial_steep_slopen_chbox, has("steep_slope_n_cells"), None,
+                                   default_when_no_switch=True)
+            self._pre_check_decision(self.spatial_lid_volume_chbox, has("lid_volume_cells"), None,
+                                   default_when_no_switch=True)
+            self._pre_check_decision(self.mannings_n_and_Topo_chbox, has("grid"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.tailings_chbox, has("tailing_cells"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.outrc_chbox, has("outrc"), None, default_when_no_switch=True)
 
         else:
             QApplication.restoreOverrideCursor()
