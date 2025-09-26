@@ -666,7 +666,7 @@ class TestFlo2dGeoPackageHDF5(unittest.TestCase):
 
     def test_import_fpfroude(self):
         self.f2g.import_fpfroude()
-        count = self.f2g.execute("""SELECT COUNT(fid) FROM fpfroude;""").fetchone()[0]
+        count = self.f2g.execute("""SELECT COUNT(fid) FROM fpfroude_cells;""").fetchone()[0]
         self.assertEqual(count, 54315)
 
     def test_import_swmmflo(self):
@@ -690,7 +690,7 @@ class TestFlo2dGeoPackageHDF5(unittest.TestCase):
 
     def test_import_tolspatial(self):
         self.f2g.import_tolspatial()
-        count = self.f2g.execute("""SELECT COUNT(fid) FROM tolspatial;""").fetchone()[0]
+        count = self.f2g.execute("""SELECT COUNT(fid) FROM tolspatial_cells;""").fetchone()[0]
         self.assertEqual(count, 18245)
 
     def test_export_cont(self):

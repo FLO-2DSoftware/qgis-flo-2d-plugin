@@ -10964,7 +10964,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
+                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
             else:
                 tol_cells_sql = f"""SELECT 
                                         md.domain_cell,
@@ -11005,7 +11005,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tolspatial_cells"):
                 return False
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
+                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
             else:
                 tol_cells_sql = f"""SELECT 
                                         md.domain_cell,
@@ -12193,8 +12193,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 fpfroude_sql = """
                     SELECT grid_fid, froudefp
-                    FROM fpfroude_cells 
-                    ORDER BY grid_fid;
+                    FROM fpfroude_cells;
                 """
             else:
                 fpfroude_sql = f"""
@@ -12242,8 +12241,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 fpfroude_sql = """
                     SELECT grid_fid, froudefp
-                    FROM fpfroude_cells
-                    ORDER BY grid_fid;
+                    FROM fpfroude_cells;
                 """
             else:
                 fpfroude_sql = f"""
