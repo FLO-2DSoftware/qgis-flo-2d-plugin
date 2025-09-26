@@ -329,17 +329,15 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.storm_drain_chbox.setChecked(True)
                 self.storm_drain_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("spatialshallow") and not self.gutils.is_table_empty(
-                "spatialshallow_cells"
-            ):
+            if  not self.gutils.is_table_empty("spatialshallow_cells"):
                 self.spatial_shallow_n_chbox.setChecked(True)
                 self.spatial_shallow_n_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("tolspatial"):
+            if not self.gutils.is_table_empty("tolspatial_cells"):
                 self.spatial_tolerance_chbox.setChecked(True)
                 self.spatial_tolerance_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("fpfroude"):
+            if not self.gutils.is_table_empty("fpfroude_cells"):
                 self.spatial_froude_chbox.setChecked(True)
                 self.spatial_froude_chbox.setEnabled(True)
 
