@@ -809,18 +809,18 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         # Fill the chan_interior_nodes table
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.fill_chan_interior_nodes_table()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn(
-                "WARNING 060319.1746: Schematizing failed while filling chan_interior_nodes table!\n\n"
-                "Please check your User Layers."
-            )
-            return
-        finally:
-            QApplication.restoreOverrideCursor()
+        # try:
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.fill_chan_interior_nodes_table()
+        # except Exception as e:
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn(
+        #         "WARNING 060319.1746: Schematizing failed while filling chan_interior_nodes table!\n\n"
+        #         "Please check your User Layers."
+        #     )
+        #     return
+        # finally:
+        #     QApplication.restoreOverrideCursor()
 
         chan_schem = self.lyrs.data["chan"]["qlyr"]
         chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
@@ -912,13 +912,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
             # Insert interior grids (GeomFromText converts back into geometry)
             self.gutils.execute("""
-                    INSERT INTO chan_interior_nodes (grid_fid)
-                    SELECT g.fid
-                    FROM grid g
-                    WHERE ST_Intersects(CastAutomagic(g.geom), GeomFromText(?))
-                      AND NOT ST_Intersects(CastAutomagic(g.geom), GeomFromText(?))
-                      AND NOT ST_Intersects(CastAutomagic(g.geom), GeomFromText(?))
-                """, (poly_wkt, lbank_wkt, rbank_wkt))
+                INSERT INTO chan_interior_nodes (grid_fid)
+                SELECT g.fid
+                FROM grid g
+                WHERE (
+                        ST_Area(ST_Intersection(CastAutomagic(g.geom), GeomFromText(:poly)))
+                        / ST_Area(CastAutomagic(g.geom))
+                      ) >= 0.8
+                  AND NOT ST_Intersects(ST_Centroid(CastAutomagic(g.geom)), GeomFromText(:lbank))
+                  AND NOT ST_Intersects(ST_Centroid(CastAutomagic(g.geom)), GeomFromText(:rbank));
+            """, {"poly": poly_wkt, "lbank": lbank_wkt, "rbank": rbank_wkt})
 
     def check_schematized_channel(self):
         """
@@ -3361,9 +3364,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_info("Confluences deleted!")
             self.uc.log_info("Confluences deleted!")
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             self.uc.log_info(repr(e))
             self.uc.show_error("Delete Confluences Error!", e)
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def effective_user_cross_section(self, fid, name):
         """Return the cross section split between banks"""
