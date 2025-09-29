@@ -19,6 +19,7 @@ from qgis._core import QgsFeatureRequest, QgsGeometry
 from qgis.core import QgsWkbTypes
 
 from .rainfall_io import HDFProcessor
+from ..flo2d_tools.schematic_tools import ChannelsSchematizer
 
 try:
     import h5py
@@ -2079,6 +2080,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             QApplication.restoreOverrideCursor()
 
+    def import_chan_interior_nodes(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_chan_interior_nodes_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            pass
+
+    def import_chan_interior_nodes_dat(self):
+
+        chan_interior_nodes_sql = [
+            """INSERT INTO chan_interior_nodes (grid_fid) VALUES""",
+            1,
+        ]
+
+        self.clear_tables("chan_interior_nodes")
+
+        # Look first for CHAN_INTERIOR_NODES.OUT file
+        try:
+            chan_interior_nodes = self.parser.parse_chan_interior_nodes()
+            chan_interior_nodes_sql += [(int(item[0]),) for item in chan_interior_nodes]
+            self.batch_execute(chan_interior_nodes_sql)
+        # If the file is not available, calculate from schematized data
+        except:
+            self.gutils.fill_chan_interior_nodes_table()
+
     def import_xsec(self):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_xsec_dat()
@@ -2425,9 +2450,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if value_missing:
                 warnng += "\n\nThere are values missing in BRIDGE_XSEC.DAT"
             if warnng != "":
-                QApplication.restoreOverrideCursor()
                 self.uc.show_info(warnng)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
 
         except Exception:
             QApplication.restoreOverrideCursor()
@@ -9557,7 +9580,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
         chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
 
         if not subdomain:
             chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
@@ -9570,6 +9592,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
             chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
             chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
+            chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
         else:
             subdomain_fids = self.execute(f"""
                 SELECT 
@@ -9686,6 +9709,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     md.domain_fid = {subdomain}
                 ORDER BY ne.fid;
                 """
+
+            chan_conf_sql = f"""SELECT 
+                                    md.domain_cell  
+                               FROM 
+                                    chan_confluences AS cc
+                               JOIN
+                                    schema_md_cells md ON cc.chan_elem_fid = md.grid_fid
+                               WHERE 
+                                    md.domain_fid = {subdomain}
+                               ORDER BY 
+                                    cc.fid;"""
 
         segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
         chan_r = "R" + "  {}" * 7 + "\n"

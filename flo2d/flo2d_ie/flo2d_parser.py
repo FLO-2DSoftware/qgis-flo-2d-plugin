@@ -370,6 +370,7 @@ class ParseDAT(object):
             "GUTTER.DAT": None,
             "WSTIME.DAT": None,
             "OUTRC.DAT": None,
+            "CHAN_INTERIOR_NODES.OUT": None,
         }
         self.cont_rows = [
             ["SIMUL", "TOUT", "LGPLOT", "METRIC", "IBACKUP", "build"],
@@ -873,6 +874,12 @@ class ParseDAT(object):
                 pass
               
         return segments, wsel, confluence, noexchange
+
+    def parse_chan_interior_nodes(self):
+        chan_interior_nodes = self.dat_files["CHAN_INTERIOR_NODES.OUT"]
+        par = self.single_parser(chan_interior_nodes)
+        data = [row for row in par]
+        return data
 
     def parse_xsec(self):
         xsec = self.dat_files["XSEC.DAT"]
