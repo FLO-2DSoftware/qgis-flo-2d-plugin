@@ -936,6 +936,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 0,
                                 0,
                                 0,
+                                'point',
                                 bc_fid,
                             )
                         ]
@@ -964,6 +965,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         0,
                                         0,
                                         int(ts_id),
+                                        'point',
                                         bc_fid,
                                     )
                                 ]
@@ -988,6 +990,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         0,
                                         0,
                                         0,
+                                        'point',
                                         bc_fid,
                                     )
                                 ]
@@ -1032,6 +1035,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     qh_params_id,
                                     0,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
@@ -1071,6 +1075,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     0,
                                     qh_table_id,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
