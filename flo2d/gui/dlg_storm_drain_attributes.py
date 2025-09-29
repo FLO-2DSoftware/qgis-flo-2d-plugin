@@ -505,10 +505,9 @@ class InletAttributes(qtBaseClass, uiDialog):
                 if baseline == 0.0 and time_series_name == "":
                     self.external_inflow.setCurrentIndex(0)
                 else:
+                    self.uc.bar_info("Storm Drain external inflow saved for inlet " + name)
+                    self.uc.log_info("Storm Drain external inflow saved for inlet " + name)
                     self.external_inflow.setCurrentIndex(1)
-
-            self.uc.bar_info("Storm Drain external inflow saved for inlet " + name)
-            self.uc.log_info("Storm Drain external inflow saved for inlet " + name)
 
     def external_inflow_btn_chk(self):
         """
@@ -1252,7 +1251,6 @@ class OutletAttributes(qtBaseClass, uiDialog):
 
                             idx = self.time_series.findText(time_series_name)
                             self.time_series.setCurrentIndex(idx)
-
                         break
                     else:
                         break
@@ -3046,10 +3044,11 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
                             idx = self.swmm_time_series_cbo.findText(time_series_name)
                             self.swmm_time_series_cbo.setCurrentIndex(idx)
 
-                        # self.uc.bar_info("Storm Drain external time series saved for inlet " + "?????")
                         break
                     else:
                         break
+                else:
+                    break
             else:
                 break
 
@@ -3078,6 +3077,10 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
 
             self.gutils.execute(update_sql, ("FLOW", baseline, pattern, file, scale, self.node))
         else:
+            if file == "" and baseline == 0.0:
+                self.uc.bar_warn("Either a baseline or a time series must be specified to use External Inflow!")
+                self.uc.log_info("Either a baseline or a time series must be specified to use External Inflow!")
+                return
             insert_sql = """INSERT INTO swmm_inflows 
                             (   node_name, 
                                 constituent, 
@@ -3221,33 +3224,70 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
 
         # For future use
         try:
-            pass
+            self.inflow_time_series_tblw.setRowCount(0)
+            with open(time_series_file, "r") as tsf:
+                row_idx = 0
+                for i, line in enumerate(tsf):
+                    line = line.strip()
+                    if not line or line.startswith(";"):
+                        continue
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        self.inflow_time_series_tblw.insertRow(row_idx)
+                        date_item = QTableWidgetItem(parts[0])
+                        time_item = QTableWidgetItem(parts[1])
+                        value_item = QTableWidgetItem(parts[2])
+                        self.inflow_time_series_tblw.setItem(row_idx, 0, date_item)
+                        self.inflow_time_series_tblw.setItem(row_idx, 1, time_item)
+                        self.inflow_time_series_tblw.setItem(row_idx, 2, value_item)
+                        row_idx += 1
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 140220.0807: reading time series data file failed!", e)
             return
 
     def is_ok_to_save(self):
+
         if self.name_le.text() == "":
-            self.uc.bar_warn("Time Series name required!", 2)
-            self.time_series_name = ""
-            self.values_ok = False
+            ts_fid = self.gutils.execute("SELECT MAX(fid) FROM swmm_time_series").fetchone()
+            if ts_fid and ts_fid[0]:
+                ts_fid = ts_fid[0] + 1
+            else:
+                ts_fid = 1
+            ts_name = f"FLO-2D_time_series_{ts_fid}"
+            self.name_le.setText(ts_name)
+            self.time_series_name = ts_name
 
-        elif " " in self.name_le.text():
-            self.uc.bar_warn("Spaces not allowed in Time Series name!", 2)
-            self.time_series_name = ""
-            self.values_ok = False
+        if " " in self.name_le.text():
+            name = self.name_le.text().replace(" ", "_")
+            self.name_le.setText(name)
+            self.time_series_name = name
 
-        elif self.description_le.text() == "":
-            self.uc.bar_warn("Time Series description required!", 2)
-            self.values_ok = False
+        if self.description_le.text() == "":
+            self.description_le.setText("FLO-2D Time Series")
 
-        elif self.use_table_radio.isChecked() and self.inflow_time_series_tblw.rowCount() == 0:
-            self.uc.bar_warn("Time Series table can't be empty!", 2)
-            self.values_ok = False
+        if self.use_table_radio.isChecked():
+            empty_table = self.inflow_time_series_tblw.rowCount() == 0
+            empty_cell = False
+            for row in range(self.inflow_time_series_tblw.rowCount()):
+                for col in [1, 2]:
+                    item = self.inflow_time_series_tblw.item(row, col)
+                    if item is None or not item.text().strip():
+                        empty_cell = True
+                        break
+                if empty_cell:
+                    break
+            if empty_table or empty_cell:
+                self.uc.bar_warn("Time Series table can't be empty or have empty values in time/value columns!")
+                self.uc.log_info("Time Series table can't be empty or have empty values in time/value columns!")
+                self.values_ok = False
+            else:
+                self.values_ok = True
 
         elif self.external_radio.isChecked() and self.file_le.text() == "":
-            self.uc.bar_warn("Data file name required!", 2)
+            self.uc.bar_warn("Data file name required!")
+            self.uc.log_info("Data file name required!")
             self.values_ok = False
         else:
             self.values_ok = True

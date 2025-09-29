@@ -320,8 +320,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_inflow_dat(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
         inflow_sql = [
-            """INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""",
-            4,
+            """INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""",
+            5,
         ]
         cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
         ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
@@ -374,7 +374,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 for i, gid in enumerate(inf, 1):
                     row = inf[gid]["row"]
-                    inflow_sql += [(i, row[0], row[1], i)]
+                    inflow_sql += [(i, row[0], row[1], 'point',i)]
                     cells_sql += [(i, gid)]
                     if inf[gid]["time_series"]:
                         ts_sql += [(i, "Time series " + str(i))]
@@ -689,10 +689,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_outflow_dat(self):
         outflow_sql = [
             """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
-                                            chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-            8,
+                                            chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
+            9,
         ]
-        cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES""", 2]
+        cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type) VALUES""", 3]
         qh_params_sql = ["""INSERT INTO qh_params (fid) VALUES""", 1]
         qh_params_data_sql = [
             """INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""",
@@ -725,6 +725,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_tab_fid = 0
         ts_fid = 0
         fid = 1
+        bc_fid = self.gutils.execute("SELECT MAX(tab_bc_fid) FROM all_schem_bc").fetchone()
+        if bc_fid and bc_fid[0]:
+            bc_fid = bc_fid[0] + 1
+        else:
+            bc_fid = 1
         for gid, values in data.items():
             chan_out = values["K"]
             fp_out = values["O"]
@@ -768,11 +773,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     chan_qhpar_fid,
                     chan_qhtab_fid,
                     fp_tser_fid,
-                    fid,
+                    'point',
+                    bc_fid,
                 )
             ]
-            cells_sql += [(fid, gid)]
+            cells_sql += [(fid, gid, 'point')]
             fid += 1
+            bc_fid += 1
 
         self.batch_execute(
             qh_params_sql,
@@ -827,13 +834,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )
 
                 floodplain_outflow_sql = [
-                    """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-                    8,
+                    """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
+                    9,
                 ]
 
                 channel_outflow_sql = [
-                    """INSERT INTO outflow (fid, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-                    8,
+                    """INSERT INTO outflow (fid, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
+                    9,
                 ]
 
                 cells_sql = ["""INSERT OR REPLACE INTO outflow_cells (outflow_fid, grid_fid, geom_type) VALUES""", 3]
@@ -868,6 +875,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     0,
                                     0,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
@@ -898,6 +906,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     0,
                                     0,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
@@ -2622,7 +2631,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ]
                 # collapse_sql = ["""INSERT INTO user_blocked_areas (geom, collapse, calc_arf, calc_wrf) VALUES""", 4]
 
-                self.clear_tables("blocked_cells", "user_blocked_areas")
+                self.clear_tables("blocked_cells")
 
                 i = 1
 
@@ -3650,20 +3659,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.import_fpfroude_hdf5()
 
     def import_fpfroude_dat(self):
-        fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]
-        cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES""", 2]
+        try:
+            cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
 
-        self.clear_tables("fpfroude", "fpfroude_cells")
-        data = self.parser.parse_fpfroude()
-        gids = (x[0] for x in data)
-        cells = self.grid_centroids(gids)
-        for i, row in enumerate(data, 1):
-            gid, froudefp = row
-            geom = self.build_square(cells[gid], self.shrink)
-            fpfroude_sql += [(geom, froudefp)]
-            cells_sql += [(i, gid)]
+            self.clear_tables("fpfroude_cells")
+            data = self.parser.parse_fpfroude()
+            for i, row in enumerate(data, 1):
+                gid, froudefp = row
+                cells_sql += [(i, gid, float(froudefp))]
 
-        self.batch_execute(fpfroude_sql, cells_sql)
+            self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing FPFROUDE data from DATA failed!", e)
+            self.uc.log_info("ERROR: Importing FPFROUDE data from DATA failed!")
 
     def import_fpfroude_hdf5(self):
         try:
@@ -3671,22 +3681,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if fpfroude_group:
                 fpfroude_group = fpfroude_group[0]
 
-                fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]
-                cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES""", 2]
+                cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
 
-                self.clear_tables("fpfroude", "fpfroude_cells")
+                self.clear_tables("fpfroude_cells")
 
                 # Process FPFROUDE dataset
                 if "FPFROUDE" in fpfroude_group.datasets:
                     data = fpfroude_group.datasets["FPFROUDE"].data
                     for i, row in enumerate(data, start=1):
                         grid, froudefp = row
-                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
-                        fpfroude_sql += [(geom, froudefp)]
-                        cells_sql += [(i, int(grid))]
-
-                if fpfroude_sql:
-                    self.batch_execute(fpfroude_sql)
+                        cells_sql += [(i, int(grid), float(froudefp))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -3703,24 +3707,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.import_steep_slopen_hdf5()
 
     def import_steep_slopen_dat(self):
-        cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
+        try:
+            cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
 
-        self.clear_tables("steep_slope_n_cells")
+            self.clear_tables("steep_slope_n_cells")
 
-        data = self.parser.parse_steep_slopen()
+            data = self.parser.parse_steep_slopen()
 
-        first_value = int(data[0][0])  # Get the first value from the first line
+            first_value = int(data[0][0])  # Get the first value from the first line
 
-        if first_value == 0:
-            return
-        elif first_value == 1:
-            cells_sql += [(1, 0)]
-        elif first_value == 2:
-            grid_ids = [int(row[0]) for row in data[1:]]
-            for grid_id in grid_ids:
-                cells_sql += [(0, grid_id)]
+            if first_value == 0:
+                return
+            elif first_value == 1:
+                cells_sql += [(1, 0)]
+            elif first_value == 2:
+                grid_ids = [int(row[0]) for row in data[1:]]
+                for grid_id in grid_ids:
+                    cells_sql += [(0, grid_id)]
 
-        self.batch_execute(cells_sql)
+            self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing STEEP_SLOPEN data from DATA failed!", e)
+            self.uc.log_info("ERROR: Importing STEEP_SLOPEN data from DATA failed!")
 
     def import_steep_slopen_hdf5(self):
         try:
@@ -3728,10 +3738,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if steep_slopen_group:
                 steep_slopen_group = steep_slopen_group[0]
 
-                user_steep_slopen_sql = ["""INSERT INTO user_steep_slope_n_areas (geom, global) VALUES""", 2]
                 cells_sql = ["""INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
 
-                self.clear_tables("steep_slope_n_cells", "user_steep_slope_n_areas")
+                self.clear_tables("steep_slope_n_cells")
 
                 # Process STEEP_SLOPEN_GLOBAL dataset
                 if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
@@ -3746,15 +3755,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if "STEEP_SLOPEN" in steep_slopen_group.datasets:
                             grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
                             for i, grid in enumerate(grid_elems, start=1):
-                                geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
                                 cells_sql += [(0, i, int(grid))]
-                                user_steep_slopen_sql += [(geom, 0)]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
-
-                if user_steep_slopen_sql:
-                    self.batch_execute(user_steep_slopen_sql)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -3768,17 +3772,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.import_lid_volume_hdf5()
 
     def import_lid_volume_dat(self):
-        cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
+        try:
 
-        self.clear_tables("lid_volume_cells")
+            cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
 
-        data = self.parser.parse_lid_volume()
+            self.clear_tables("lid_volume_cells")
 
-        for i, row in enumerate(data, 1):
-            gid, volume = row
-            cells_sql += [(gid, volume)]
+            data = self.parser.parse_lid_volume()
 
-        self.batch_execute(cells_sql)
+            for i, row in enumerate(data, 1):
+                gid, volume = row
+                cells_sql += [(gid, volume)]
+
+            self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing LID_VOLUME data from DATA failed!", e)
+            self.uc.log_info("ERROR: Importing LID_VOLUME data from DATA failed!")
 
     def import_lid_volume_hdf5(self):
         try:
@@ -3786,7 +3797,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if lid_volume_group:
                 lid_volume_group = lid_volume_group[0]
 
-                user_lid_volume_sql = ["""INSERT INTO user_lid_volume_areas (geom, volume) VALUES""", 2]
                 cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, area_fid, volume) VALUES""", 3]
 
                 self.clear_tables("lid_volume_cells")
@@ -3796,15 +3806,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     data = lid_volume_group.datasets["LID_VOLUME"].data
                     for i, row in enumerate(data, start=1):
                         grid, lid_volume = row
-                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
-                        user_lid_volume_sql += [(geom, lid_volume)]
                         cells_sql += [(int(grid), i, lid_volume)]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
-
-                if user_lid_volume_sql:
-                    self.batch_execute(user_lid_volume_sql)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -6074,26 +6079,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.import_tolspatial_hdf5()
 
     def import_tolspatial_dat(self):
-        tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]
-        cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES""", 2]
+        try:
+            cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid, tol) VALUES""", 3]
 
-        self.clear_tables("tolspatial", "tolspatial_cells")
-        data = self.parser.parse_tolspatial()
-        gids = (x[0] for x in data)
-        cells = self.grid_centroids(gids)
-        for i, row in enumerate(data, 1):
-            gid, tol = row
-            geom = self.build_square(cells[gid], self.shrink)
-            tolspatial_sql += [(geom, tol)]
-            cells_sql += [(i, gid)]
+            self.clear_tables("tolspatial_cells")
+            data = self.parser.parse_tolspatial()
+            for i, row in enumerate(data, 1):
+                gid, tol = row
+                cells_sql += [(i, gid, float(tol))]
 
-        self.batch_execute(tolspatial_sql, cells_sql)
+            self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing LID_VOLUME data from DATA failed!", e)
+            self.uc.log_info("ERROR: Importing LID_VOLUME data from DATA failed!")
 
     def import_tolspatial_hdf5(self):
-        tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]
-        cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES""", 2]
 
-        self.clear_tables("tolspatial", "tolspatial_cells")
+        cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid, tol) VALUES""", 3]
+
+        self.clear_tables("tolspatial_cells")
 
         try:
             # Access the TOLSPATIAL dataset
@@ -6104,15 +6110,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
 
                     # Process each row in the dataset
-                    gids = set()
                     for i, row in enumerate(tolspatial_data, 1):
                         gid, tol = row
-                        gids.add(gid)
-                        geom = self.build_square(self.grid_centroids([gid])[gid], self.cell_size)
-                        tolspatial_sql += [(geom, tol)]
-                        cells_sql += [(i, gid)]
+                        cells_sql += [(i, gid, float(tol))]
 
-                    self.batch_execute(tolspatial_sql, cells_sql)
+                    self.batch_execute(cells_sql)
                     return True
 
         except Exception as e:
@@ -6128,20 +6130,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.import_shallowNSpatial_hdf5()
 
     def import_shallowNSpatial_dat(self):
-        shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
-        cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
+        try:
+            cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid, shallow_n) VALUES""", 3]
 
-        self.clear_tables("spatialshallow", "spatialshallow_cells")
-        data = self.parser.parse_shallowNSpatial()
-        gids = (x[0] for x in data)
-        cells = self.grid_centroids(gids)
-        for i, row in enumerate(data, 1):
-            gid, shallow_n = row
-            geom = self.build_square(cells[gid], self.shrink)
-            shallowNSpatial_sql += [(geom, shallow_n)]
-            cells_sql += [(i, gid)]
+            self.clear_tables("spatialshallow_cells")
+            data = self.parser.parse_shallowNSpatial()
+            for i, row in enumerate(data, 1):
+                gid, shallow_n = row
+                cells_sql += [(i, gid, float(shallow_n))]
 
-        self.batch_execute(shallowNSpatial_sql, cells_sql)
+            self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing SHALLOWN_SPATIAL data from DATA failed!", e)
+            self.uc.log_info("ERROR: Importing SHALLOWN_SPATIAL data from DATA failed!")
 
     def import_shallowNSpatial_hdf5(self):
         try:
@@ -6149,22 +6152,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if shallowNSpatial_group:
                 shallowNSpatial_group = shallowNSpatial_group[0]
 
-                shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
-                cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
+                cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid, shallow_n) VALUES""", 3]
 
-                self.clear_tables("spatialshallow", "spatialshallow_cells")
+                self.clear_tables("spatialshallow_cells")
 
                 # Process SHALLOWN_SPATIAL dataset
                 if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
                     data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
                     for i, row in enumerate(data, start=1):
                         grid, shallowNSpatial = row
-                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
-                        shallowNSpatial_sql += [(geom, shallowNSpatial)]
-                        cells_sql += [(i, int(grid))]
-
-                if shallowNSpatial_sql:
-                    self.batch_execute(shallowNSpatial_sql)
+                        cells_sql += [(i, int(grid), float(shallowNSpatial))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -11020,84 +11017,80 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         # check if there is any tolerance data defined.
         try:
-            if self.is_table_empty("tolspatial"):
+            if self.is_table_empty("tolspatial_cells"):
                 return False
-            tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
+
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
             else:
                 tol_cells_sql = f"""SELECT 
-                                        md.domain_cell
+                                        md.domain_cell,
+                                        tc.tol
                                     FROM 
                                         tolspatial_cells AS tc
                                     JOIN 
                                         schema_md_cells md ON tc.grid_fid = md.grid_fid    
                                     WHERE 
-                                        area_fid = ? AND md.domain_fid = {subdomain}"""
+                                        md.domain_fid = {subdomain}"""
 
             two_values = "{0}  {1}\n"
 
-            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value)
+            tol_rows = self.execute(tol_cells_sql).fetchall()  # A list of pairs (fid number, tolerance value)
 
-            if not tol_poly_rows:
+            if not tol_rows:
                 return False
-            else:
-                pass
 
             spatially_variable_group = self.parser.spatially_variable_group
             spatially_variable_group.create_dataset('TOLSPATIAL', [])
 
-            for fid, tol in tol_poly_rows:
-                for row in self.execute(tol_cells_sql, (fid,)):
-                    gid = row[0]
-                    spatially_variable_group.datasets["TOLSPATIAL"].data.append(
-                        create_array(two_values, 2, np.float64, gid, tol))
+            for gid, tol in tol_rows:
+                spatially_variable_group.datasets["TOLSPATIAL"].data.append(
+                    create_array(two_values, 2, np.float64, gid, tol))
 
             self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
+            self.uc.show_error("Error while exporting TOLSPATIAL to hdf5 file!", e)
+            self.uc.log_info("Error while exporting TOLSPATIAL to hdf5 file!")
             return False
 
     def export_tolspatial_dat(self, outdir, subdomain):
         # check if there is any tolerance data defined.
         try:
-            if self.is_table_empty("tolspatial"):
+            if self.is_table_empty("tolspatial_cells"):
                 return False
-            tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
             else:
                 tol_cells_sql = f"""SELECT 
-                                        md.domain_cell
+                                        md.domain_cell,
+                                        tc.tol
                                     FROM 
                                         tolspatial_cells AS tc
                                     JOIN 
                                         schema_md_cells md ON tc.grid_fid = md.grid_fid    
                                     WHERE 
-                                        area_fid = ? AND md.domain_fid = {subdomain}"""
+                                        md.domain_fid = {subdomain}"""
 
             line1 = "{0}  {1}\n"
 
-            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value),
+            tol_rows = self.execute(tol_cells_sql).fetchall()  # A list of pairs (fid number, tolerance value),
             # one for each tolerance polygon.                                                       #(fid, tol), that is, (polygon fid, tolerance value)
-            if not tol_poly_rows:
+            if not tol_rows:
                 return False
-            else:
-                pass
+
             tolspatial_dat = os.path.join(outdir, "TOLSPATIAL.DAT")  # path and name of file to write
             with open(tolspatial_dat, "w") as t:
-                for fid, tol in tol_poly_rows:
-                    for row in self.execute(tol_cells_sql, (fid,)):
-                        gid = row[0]
-                        t.write(line1.format(gid, tol))
+                for gid, tol in tol_rows:
+                    t.write(line1.format(gid, tol))
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
+            self.uc.show_error("Error while exporting TOLSPATIAL.DAT!", e)
+            self.uc.log_info("Error while exporting TOLSPATIAL.DAT!")
             return False
 
     def export_gutter(self, output=None):
@@ -12251,25 +12244,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_fpfroude_hdf5(self, subdomain):
         # check if there is any limiting Froude number defined.
         try:
-            if self.is_table_empty("fpfroude"):
+            if self.is_table_empty("fpfroude_cells"):
                 return False
 
             if not subdomain:
                 fpfroude_sql = """
-                    SELECT fc.grid_fid, f.froudefp
-                    FROM fpfroude_cells AS fc
-                    JOIN fpfroude AS f ON fc.area_fid = f.fid
-                    ORDER BY fc.area_fid;
+                    SELECT grid_fid, froudefp
+                    FROM fpfroude_cells;
                 """
             else:
                 fpfroude_sql = f"""
                                 SELECT 
                                     md.domain_cell, 
-                                    f.froudefp
+                                    fc.froudefp
                                 FROM 
                                     fpfroude_cells AS fc
-                                JOIN 
-                                    fpfroude AS f ON fc.area_fid = f.fid
                                 JOIN 
                                     schema_md_cells AS md ON fc.grid_fid = md.grid_fid
                                 WHERE 
@@ -12295,32 +12284,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE failed!.\n", e)
+            self.uc.show_error("Error while exporting FPFROUDE to hdf5 file!", e)
+            self.uc.log_info("Error while exporting FPFROUDE to hdf5 file!")
             return False
 
     def export_fpfroude_dat(self, outdir, subdomain):
         try:
             # Check if there is any limiting Froude number defined.
-            if self.is_table_empty("fpfroude"):
+            if self.is_table_empty("fpfroude_cells"):
                 return False
 
             # Single query to get all necessary data
             if not subdomain:
                 fpfroude_sql = """
-                    SELECT fc.grid_fid, f.froudefp
-                    FROM fpfroude_cells AS fc
-                    JOIN fpfroude AS f ON fc.area_fid = f.fid
-                    ORDER BY fc.area_fid;
+                    SELECT grid_fid, froudefp
+                    FROM fpfroude_cells;
                 """
             else:
                 fpfroude_sql = f"""
                                 SELECT 
                                     md.domain_cell, 
-                                    f.froudefp
+                                    fc.froudefp
                                 FROM 
                                     fpfroude_cells AS fc
-                                JOIN 
-                                    fpfroude AS f ON fc.area_fid = f.fid
                                 JOIN 
                                     schema_md_cells AS md ON fc.grid_fid = md.grid_fid
                                 WHERE 
@@ -12344,7 +12330,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
+            self.uc.show_error("Error while exporting FPFROUDE.DAT!", e)
+            self.uc.log_info("Error while exporting FPFROUDE.DAT!")
             return False
 
     def export_shallowNSpatial(self, output=None, subdomain=None):
@@ -12358,24 +12345,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to export shallow n values to hdf5 file
         """
         try:
-            if self.is_table_empty("spatialshallow"):
+            if self.is_table_empty("spatialshallow_cells"):
                 return False
-            shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
+
             if not subdomain:
-                cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                cell_sql = """SELECT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
             else:
                 cell_sql = f"""SELECT 
-                                    md.domain_cell 
+                                    md.domain_cell,
+                                    ss.shallow_n 
                                 FROM 
                                     spatialshallow_cells AS ss
                                 JOIN 
                                     schema_md_cells md ON ss.grid_fid = md.grid_fid
                                 WHERE 
-                                    area_fid = ? AND md.domain_fid = {subdomain};"""
+                                    md.domain_fid = {subdomain};"""
 
             line1 = "{0} {1}\n"
 
-            shallow_rows = self.execute(shallow_sql).fetchall()
+            shallow_rows = self.execute(cell_sql).fetchall()
             if not shallow_rows:
                 return False
             else:
@@ -12384,57 +12372,55 @@ class Flo2dGeoPackage(GeoPackageUtils):
             spatially_variable_group = self.parser.spatially_variable_group
             spatially_variable_group.create_dataset('SHALLOWN_SPATIAL', [])
 
-            for fid, shallow_n in shallow_rows:
-                for row in self.execute(cell_sql, (fid,)):
-                    gid = row[0]
-                    spatially_variable_group.datasets["SHALLOWN_SPATIAL"].data.append(
-                        create_array(line1, 2, np.float64, gid, shallow_n))
+            for gid, shallow_n in shallow_rows:
+                spatially_variable_group.datasets["SHALLOWN_SPATIAL"].data.append(
+                    create_array(line1, 2, np.float64, gid, shallow_n))
 
             self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL failed!", e)
+            self.uc.show_error("Error while exporting SHALLOWN_SPATIAL to hdf5 file!", e)
+            self.uc.log_info("Error while exporting SHALLOWN_SPATIAL to hdf5 file!")
             return False
 
     def export_shallowNSpatial_dat(self, outdir, subdomain):
         # check if there is any shallow-n defined.
         try:
-            if self.is_table_empty("spatialshallow"):
+            if self.is_table_empty("spatialshallow_cells"):
                 return False
-            shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
+
             if not subdomain:
-                cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                cell_sql = """SELECT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
             else:
                 cell_sql = f"""SELECT 
-                                    md.domain_cell 
+                                    md.domain_cell, 
+                                    ss.shallow_n
                                 FROM 
                                     spatialshallow_cells AS ss
                                 JOIN 
                                     schema_md_cells md ON ss.grid_fid = md.grid_fid
                                 WHERE 
-                                    area_fid = ? AND md.domain_fid = {subdomain};"""
+                                    md.domain_fid = {subdomain};"""
 
             line1 = "{0} {1}\n"
 
-            shallow_rows = self.execute(shallow_sql).fetchall()
+            shallow_rows = self.execute(cell_sql).fetchall()
             if not shallow_rows:
                 return False
-            else:
-                pass
+
             shallow_dat = os.path.join(outdir, "SHALLOWN_SPATIAL.DAT")
             with open(shallow_dat, "w") as s:
-                for fid, shallow_n in shallow_rows:
-                    for row in self.execute(cell_sql, (fid,)):
-                        gid = row[0]
-                        s.write(line1.format(gid, shallow_n))
+                for gid, shallow_n in shallow_rows:
+                    s.write(line1.format(gid, shallow_n))
 
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
+            self.uc.show_error("Error while exporting SHALLOWN_SPATIAL.DAT!", e)
+            self.uc.log_info("Error while exporting SHALLOWN_SPATIAL.DAT!")
             return False
 
     def export_swmmflo(self, output=None, subdomain=None):

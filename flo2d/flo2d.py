@@ -4009,6 +4009,8 @@ class Flo2D(object):
             return
 
         self.f2d_widget.fpxsec_editor.show_fpxsec_info(fid)
+        self.f2d_widget.fpxsec_editor_grp.setCollapsed(False)
+        self.f2d_widget.fpxsec_editor.populate_cbos(fid=fid)
 
     @connection_required
     def show_bc_editor(self, fid=None):

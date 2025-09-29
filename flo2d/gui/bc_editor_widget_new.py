@@ -315,23 +315,38 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.create_outflow_line_bc_btn.setChecked(False)
         self.create_outflow_polygon_bc_btn.setChecked(False)
 
-    def populate_bcs(self, bc_fid=None, show_last_edited=False, widget_setup=False):
+    def populate_bcs(self, bc_fid=None, show_last_edited=False, widget_setup=False, typ='both'):
         """
         Function to populate data into the
         """
         self.lyrs.clear_rubber()
-        if self.inflow_grpbox.isChecked():
-            self.populate_inflows(
-                inflow_fid=bc_fid,
-                show_last_edited=show_last_edited,
-                widget_setup=widget_setup,
-            )
-        if self.outflow_grpbox.isChecked():
-            self.populate_outflows(
-                outflow_fid=bc_fid,
-                show_last_edited=show_last_edited,
-                widget_setup=widget_setup,
-            )
+        if typ == 'both':
+            if self.inflow_grpbox.isChecked():
+                self.populate_inflows(
+                    inflow_fid=bc_fid,
+                    show_last_edited=show_last_edited,
+                    widget_setup=widget_setup,
+                )
+            if self.outflow_grpbox.isChecked():
+                self.populate_outflows(
+                    outflow_fid=bc_fid,
+                    show_last_edited=show_last_edited,
+                    widget_setup=widget_setup,
+                )
+        if typ == 'inflow':
+            if self.inflow_grpbox.isChecked():
+                self.populate_inflows(
+                    inflow_fid=bc_fid,
+                    show_last_edited=show_last_edited,
+                    widget_setup=widget_setup,
+                )
+        if typ == 'outflow':
+            if self.outflow_grpbox.isChecked():
+                self.populate_outflows(
+                    outflow_fid=bc_fid,
+                    show_last_edited=show_last_edited,
+                    widget_setup=widget_setup,
+                )
 
     def get_user_bc_lyr_for_geomtype(self, geom_type):
         table_name = "user_bc_{}s".format(geom_type)
@@ -490,8 +505,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if not self.inflow.geom_type:
             return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.inflow.geom_type)
-        self.show_inflow_rb()
         if self.inflow_bc_center_btn.isChecked():
+            self.show_inflow_rb()
             feat = next(self.bc_lyr.getFeatures(QgsFeatureRequest(self.inflow.bc_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -1974,25 +1989,27 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         fid = {bc_fid}"""
 
             typ = self.gutils.execute(qry).fetchone()[0]
-            self.populate_bcs(bc_fid)
             if typ == "inflow":
+                self.populate_bcs(bc_fid, typ=typ)
                 self.populate_inflow_data_cbo()
             if typ == "outflow":
+                self.populate_bcs(bc_fid, typ=typ)
                 self.populate_outflow_data_cbo()
 
     def outflow_changed(self):
         self.bc_type = "outflow"
         self.enable_outflow_types()
-        bc_idx = self.outflow_bc_name_cbo.currentIndex()
-        cur_data = self.outflow_bc_name_cbo.itemData(bc_idx)
+
+        bc_name = self.outflow_bc_name_cbo.currentText()
+        self.out_fid = self.gutils.execute("SELECT fid FROM outflow WHERE name = ?", (bc_name,)).fetchone()[0]
+        self.type_fid = self.gutils.execute("SELECT type FROM outflow WHERE fid = ?", (self.out_fid,)).fetchone()[0]
+        self.geom_type = self.gutils.execute("SELECT geom_type FROM outflow WHERE fid = ?", (self.out_fid,)).fetchone()[0]
+
         self.bc_tview.undoStack.clear()
         self.bc_tview.setModel(self.bc_data_model)
         self.bc_data_model.clear()
         self.plot.clear()
-        if cur_data:
-            self.out_fid, self.type_fid, self.geom_type = cur_data
-        else:
-            return
+
         self.outflow = Outflow(self.out_fid, self.iface.f2d["con"], self.iface)
         self.outflow.get_row()
         if not is_number(self.outflow.typ):
