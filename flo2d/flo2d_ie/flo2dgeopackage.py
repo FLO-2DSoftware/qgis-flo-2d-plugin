@@ -7632,25 +7632,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                             JOIN 
                                                 mult_domains_con mdc ON mdc.fid = md.domain_fid
                                             WHERE 
-                                                domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                                                domain_fid = ? 
+                                                    AND 
+                                                down_domain_fid IS NOT NULL 
+                                                    AND 
+                                                down_domain_fid IN ({placeholders})
+                                                    AND
+                                                md.grid_fid NOT IN (SELECT grid_fid FROM chan_interior_nodes)
                                             ORDER BY 
                                                 down_domain_fid, domain_cell;
                                         """
                         outflow_md_cells = self.execute(outflow_md_cells_sql, (subdomain, *fid_subdomains)).fetchall()
+
+                        lbank_grids = self.execute(f"""
+                                            SELECT 
+                                                left_grid_md.domain_cell
+                                            FROM 
+                                                chan_elems as ce
+                                            JOIN
+                                                schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                                            """).fetchall()
+                        if lbank_grids:
+                            lbank_grids = [item for sublist in lbank_grids for item in sublist]
+
                         for cell in outflow_md_cells:
                             gid = cell[0]
-                            subdomain_hydrograph_grid_elements.append(gid)
-                            hydro_out = cell[1]
-                            if hydro_out > 9:
-                                # Check if the hydro_out value is in the mapping
-                                if hydro_out in fid_mapping:
-                                    # Replace the hydro_out value with the mapped value
-                                    hydro_out = fid_mapping[hydro_out]
-                            ident = "O{0}".format(hydro_out)
-                            o.write(o_line.format(ident, gid))
-                            data_written = True
-                            if border is not None and gid in border:
-                                border.remove(gid)
+                            if gid not in lbank_grids:
+                                subdomain_hydrograph_grid_elements.append(gid)
+                                hydro_out = cell[1]
+                                if hydro_out > 9:
+                                    # Check if the hydro_out value is in the mapping
+                                    if hydro_out in fid_mapping:
+                                        # Replace the hydro_out value with the mapped value
+                                        hydro_out = fid_mapping[hydro_out]
+                                ident = "O{0}".format(hydro_out)
+                                o.write(o_line.format(ident, gid))
+                                data_written = True
+                                if border is not None and gid in border:
+                                    border.remove(gid)
+                            else:
+                                o.write(k_line.format(gid))
 
                 # Write O1, O2, ... lines:
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
@@ -7783,29 +7804,53 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         JOIN 
                                             mult_domains_con mdc ON mdc.fid = md.domain_fid
                                         WHERE 
-                                            domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                                            domain_fid = ? 
+                                                AND 
+                                            down_domain_fid IS NOT NULL 
+                                                AND 
+                                            down_domain_fid IN ({placeholders})
+                                                AND
+                                            md.grid_fid NOT IN (SELECT grid_fid FROM chan_interior_nodes)
                                         ORDER BY 
                                             down_domain_fid, domain_cell;
                                         """
                 outflow_md_cells = self.execute(outflow_md_cells_sql,
                                                 (subdomain, *fid_subdomains)).fetchall()
 
+                lbank_grids = self.execute(f"""
+                                            SELECT 
+                                                left_grid_md.domain_cell
+                                            FROM 
+                                                chan_elems as ce
+                                            JOIN
+                                                schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                                            """).fetchall()
+                if lbank_grids:
+                    lbank_grids = [item for sublist in lbank_grids for item in sublist]
+
                 for cell in outflow_md_cells:
                     gid = cell[0]
-                    subdomain_hydrograph_grid_elements.append(gid)
-                    hydro_out = cell[1]
-                    if hydro_out > 9:
-                        # Check if the hydro_out value is in the mapping
-                        if hydro_out in fid_mapping:
-                            # Replace the hydro_out value with the mapped value
-                            hydro_out = fid_mapping[hydro_out]
-                    try:
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                    except:
-                        bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    if gid not in lbank_grids:
+                        subdomain_hydrograph_grid_elements.append(gid)
+                        hydro_out = cell[1]
+                        if hydro_out > 9:
+                            # Check if the hydro_out value is in the mapping
+                            if hydro_out in fid_mapping:
+                                # Replace the hydro_out value with the mapped value
+                                hydro_out = fid_mapping[hydro_out]
+                        try:
+                            bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                                create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                        except:
+                            bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
+                            bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                                create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    else:
+                        try:
+                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                        except:
+                            bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
+                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
                     data_written = True
 
                     # ident = "O{0}".format(hydro_out)
@@ -9452,6 +9497,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 2, np.int_, eid, rbank))
 
+            # Set down_domain_fid to NULL on connectivity cell on the channel right bank for subdomain
+            if subdomain:
+                self.gutils.execute(
+                    "UPDATE schema_md_cells SET down_domain_fid = NULL WHERE domain_fid = ? AND domain_cell = ?;",
+                    (subdomain, rbank)
+                )
+
         segment_added = []
         for row in self.execute(chan_wsel_sql):
             if row[0] not in segment_added:
@@ -9698,7 +9750,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             # Adjust the natural shape
                             if typ not in ['R', 'V', 'T']:
                                 res[1] = i
-                        self.uc.log_info(str(res))
                         res.insert(
                             fcn_idx, fcn
                         )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
@@ -9708,16 +9759,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
 
-                # if subdomain:
-                #     # Check if there is not an existing channel outflow BC then create one
-                #     if not self.gutils.execute("SELECT COUNT(*) FROM outflow_cells WHERE grid_fid = ?", (eid,)).fetchone():
-                #         self.gutils.execute("INSERT INTO outflow (fid) VALUES (1);")
-                #         out_fid = self.gutils.execute("SELECT MAX(fid) FROM outflow;").fetchone()
-                #         if out_fid and out_fid[0]:
-                #             out_fid = out_fid[0] + 1
-                #         else:
-                #             out_fid = 1
-                #         self.gutils.execute("INSERT INTO outflow_cells (fid) VALUES (1);")
+                # Set the geometry to NULL on connectivity cell on the channel right bank for subdomain
+                if subdomain:
+                    self.gutils.execute(
+                        "UPDATE schema_md_cells SET down_domain_fid = NULL WHERE domain_fid = ? AND domain_cell = ?;",
+                        (subdomain, rbank)
+                    )
 
                 if row[5]: # ibaseflow
                     if str(row[5]) != "":

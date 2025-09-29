@@ -355,6 +355,11 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         progDialog.show()
         QApplication.processEvents()
 
+        # Remove connectivity grid inside channels
+        channel_interior_nodes = self.gutils.execute("""SELECT grid_fid FROM chan_interior_nodes;""").fetchall()
+        if channel_interior_nodes:
+            channel_interior_nodes = [item[0] for item in channel_interior_nodes]
+
         for j, subdomain_name in enumerate(export_subdomains, start=1):
 
             subdomains = self.gutils.execute(
@@ -422,10 +427,11 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                     md.write(mdline_n.format(connected_subdomain))
                                     up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomains[0]} and down_domain_fid = {connected_subdomain};"""
                                     for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
-                                        down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
-                                        down_cells = self.gutils.execute(down_cells_qry).fetchall()
-                                        if down_cells:
-                                            md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
+                                        if grid_fid not in channel_interior_nodes:
+                                            down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
+                                            down_cells = self.gutils.execute(down_cells_qry).fetchall()
+                                            if down_cells:
+                                                md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
                         if export_type == "hdf5":
                             self.f2g.parser.write_mode = "a"
                             multipledomain_group = self.f2g.parser.multipledomain_group
@@ -433,11 +439,12 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                             for connected_subdomain in connected_subdomains:
                                 up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomains[0]} and down_domain_fid = {connected_subdomain};"""
                                 for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
-                                    down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
-                                    down_cells = self.gutils.execute(down_cells_qry).fetchall()
-                                    if down_cells:
-                                        multipledomain_group.datasets["MULTIDOMAIN"].data.append(
-                                            [connected_subdomain, up_cell, down_cells[0][0]])
+                                    if grid_fid not in channel_interior_nodes:
+                                        down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
+                                        down_cells = self.gutils.execute(down_cells_qry).fetchall()
+                                        if down_cells:
+                                            multipledomain_group.datasets["MULTIDOMAIN"].data.append(
+                                                [connected_subdomain, up_cell, down_cells[0][0]])
                             self.f2g.parser.write_groups(multipledomain_group)
 
                 # ONLY MULTIDOMAIN.DAT
@@ -449,10 +456,11 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                 md.write(mdline_n.format(connected_subdomain))
                                 up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomains[0]} and down_domain_fid = {connected_subdomain};"""
                                 for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
-                                    down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
-                                    down_cells = self.gutils.execute(down_cells_qry).fetchall()
-                                    if down_cells:
-                                        md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
+                                    if grid_fid not in channel_interior_nodes:
+                                        down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
+                                        down_cells = self.gutils.execute(down_cells_qry).fetchall()
+                                        if down_cells:
+                                            md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
 
                 # CADPTS_DSx.DAT
                 elif export_method == 2:

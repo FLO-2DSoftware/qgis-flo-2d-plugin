@@ -809,18 +809,18 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         # Fill the chan_interior_nodes table
-        # try:
-        #     QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.fill_chan_interior_nodes_table()
-        # except Exception as e:
-        #     self.uc.log_info(traceback.format_exc())
-        #     self.uc.show_warn(
-        #         "WARNING 060319.1746: Schematizing failed while filling chan_interior_nodes table!\n\n"
-        #         "Please check your User Layers."
-        #     )
-        #     return
-        # finally:
-        #     QApplication.restoreOverrideCursor()
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.fill_chan_interior_nodes_table()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn(
+                "WARNING 060319.1746: Schematizing failed while filling chan_interior_nodes table!\n\n"
+                "Please check your User Layers."
+            )
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
 
         chan_schem = self.lyrs.data["chan"]["qlyr"]
         chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
