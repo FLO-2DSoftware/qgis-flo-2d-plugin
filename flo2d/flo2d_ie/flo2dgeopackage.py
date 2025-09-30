@@ -9752,6 +9752,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(chan, "w") as c, open(bank, "w") as b:
             ISED = self.gutils.get_cont_par("ISED")
 
+            i = 1
             for row in chan_rows:
                 row = [x if x is not None else "0" for x in row]
                 fid = row[0]
@@ -9762,9 +9763,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
                 # A single line for each channel segment. The next lines will be the grid elements of
                 # this channel segment.
-                for i, elems in enumerate(self.execute(
-                        chan_elems_sql, (fid,)
-                ), start=1):
+                for elems in self.execute(chan_elems_sql, (fid,)):
                     # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                     # 'chan_elems' table (the cross sections in the schematic layer),
                     #  that has the 'fid' value indicated (the channel segment id).
@@ -9789,6 +9788,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             # Adjust the natural shape
                             if typ not in ['R', 'V', 'T']:
                                 res[1] = i
+                                i += 1
                         res.insert(
                             fcn_idx, fcn
                         )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
