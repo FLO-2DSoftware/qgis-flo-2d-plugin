@@ -11,14 +11,13 @@
 import os
 
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QPushButton
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("components")
-
 
 class ComponentsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, in_or_out):
@@ -33,8 +32,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
-        self.current_lyr = None
+        # self.current_lyr = None
         self.components = []
+        self.export_overrides = {}
         self.in_or_out = in_or_out
 
         self.components_buttonBox.accepted.connect(self.select_components)
@@ -56,6 +56,54 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             chb.setChecked(bool(default_when_no_switch))
         else:
             chb.setChecked(bool(switch_on))
+
+    def _ask_export_decision(self, title, body):
+        m = QMessageBox(self)
+        m.setIcon(QMessageBox.Question)
+        m.setWindowTitle(title)
+        m.setText(body)
+        btn_on = QPushButton("Switch ON and Export")
+        btn_keep_off = QPushButton("Export but Keep OFF")
+        btn_cancel = QPushButton("Cancel")
+        m.addButton(btn_on, QMessageBox.AcceptRole)
+        m.addButton(btn_keep_off, QMessageBox.DestructiveRole)
+        m.addButton(btn_cancel, QMessageBox.RejectRole)
+        m.setDefaultButton(btn_keep_off)
+        clicked = m.exec_()
+        b = m.clickedButton()
+        if b is btn_on:
+            return "on_and_export"
+        elif b is btn_keep_off:
+            return "export_only"
+        return "cancel"
+
+    def _ask_mudsed_decision(self):
+        m = QMessageBox(self)
+        m.setIcon(QMessageBox.Question)
+        m.setWindowTitle("Component switch is OFF")
+        m.setText(
+            f"The CONT.DAT switch for <b>Mud/Debris/Sediment</b> is currently <b>OFF</b>."
+            "<br><br>Which physical process do you want to enable?"
+        )
+        btn_mud = QPushButton("Mud/Debris")
+        btn_sed = QPushButton("Sediment Transport")
+        btn_two = QPushButton("Two phase")
+        btn_cancel = QPushButton("None (Cancel)")
+        m.addButton(btn_mud, QMessageBox.AcceptRole)
+        m.addButton(btn_sed, QMessageBox.AcceptRole)
+        m.addButton(btn_two, QMessageBox.AcceptRole)
+        m.addButton(btn_cancel, QMessageBox.RejectRole)
+        m.setDefaultButton(btn_mud)
+
+        m.exec_()
+        b = m.clickedButton()
+        if b is btn_mud:
+            return "mud"
+        if b is btn_sed:
+            return "sed"
+        if b is btn_two:
+            return "two_phase"
+        return "cancel"
 
     def populate_components_dialog(self):
         s = QSettings()
@@ -198,58 +246,36 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         elif self.in_or_out == "out":
             self.setWindowTitle("FLO-2D Components to Export")
-            self.file_lbl.setText(last_dir)
             show_note = False
 
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.gutils.execute(sql).fetchall()}
 
-            if options["ICHANNEL"] == "0" and not self.gutils.is_table_empty("chan"):
-                self.channels_chbox.setText("*" + self.channels_chbox.text() + "*")
-                show_note = True
+            asterisk_rules = [
+                ("ICHANNEL", "chan", self.channels_chbox),
+                ("IEVAP", "evapor", self.evaporation_chbox),
+                ("IHYDRSTRUCT", "struct", self.hydr_struct_chbox),
+                ("IMULTC", ("mult_cells", "simple_mult_cells"), self.multiple_channels_chbox),
+                ("INFIL", "infil", self.infiltration_chbox),
+                ("IRAIN", "rain", self.rain_chbox),
+                ("IWRFS", "blocked_cells", self.reduction_factors_chbox),
+                ("LEVEE", "levee_data", self.levees_chbox),
+                ("MSTREET", "streets", self.streets_chbox),
+                ("SWMM", "swmmflo", self.storm_drain_chbox),
+            ]
+            for cont_key, tables, chb in asterisk_rules:
+                tables = (tables,) if isinstance(tables, str) else tables
+                if options[cont_key] == "0" and any(not self.gutils.is_table_empty(t) for t in tables):
+                    chb.setText("*" + chb.text() + "*")
+                    show_note = True
 
-            if options["IEVAP"] == "0" and not self.gutils.is_table_empty("evapor"):
-                self.evaporation_chbox.setText("*" + self.evaporation_chbox.text() + "*")
-                show_note = True
+            mud_off = options.get("MUD", "0") not in ("1", "2")
+            sed_off = options.get("ISED", "0") != "1"
+            mud_has = not self.gutils.is_table_empty("mud")
+            sed_has = not self.gutils.is_table_empty("sed")
 
-            if options["IHYDRSTRUCT"] == "0" and not self.gutils.is_table_empty("struct"):
-                self.hydr_struct_chbox.setText("*" + self.hydr_struct_chbox.text() + "*")
-                show_note = True
-
-            if options["IMULTC"] == "0" and not (
-                self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells")
-            ):
-                self.multiple_channels_chbox.setText("*" + self.multiple_channels_chbox.text() + "*")
-                show_note = True
-
-            if options["INFIL"] == "0" and not self.gutils.is_table_empty("infil"):
-                self.infiltration_chbox.setText("*" + self.infiltration_chbox.text() + "*")
-                show_note = True
-
-            if options["IRAIN"] == "0" and not self.gutils.is_table_empty("rain"):
-                self.rain_chbox.setText("*" + self.rain_chbox.text() + "*")
-                show_note = True
-
-            if (options["ISED"] == "0" and not self.gutils.is_table_empty("sed")) and (
-                options["MUD"] == "0" and not self.gutils.is_table_empty("mud")
-            ):
+            if mud_off and sed_off and (mud_has or sed_has):
                 self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
-                show_note = True
-
-            if options["IWRFS"] == "0" and not self.gutils.is_table_empty("blocked_cells"):
-                self.reduction_factors_chbox.setText("*" + self.reduction_factors_chbox.text() + "*")
-                show_note = True
-
-            if options["LEVEE"] == "0" and not self.gutils.is_table_empty("levee_data"):
-                self.levees_chbox.setText("*" + self.levees_chbox.text() + "*")
-                show_note = True
-
-            if options["MSTREET"] == "0" and not self.gutils.is_table_empty("streets"):
-                self.streets_chbox.setText("*" + self.streets_chbox.text() + "*")
-                show_note = True
-
-            if options["SWMM"] == "0" and not self.gutils.is_table_empty("swmmflo"):
-                self.storm_drain_chbox.setText("*" + self.storm_drain_chbox.text() + "*")
                 show_note = True
 
             self.components_note_lbl.setVisible(show_note)
@@ -317,129 +343,203 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
 
+    _SWITCH_KEYS = {
+        "Channels": "ICHANNEL",
+        "Evaporation": "IEVAP",
+        "Infiltration": "INFIL",
+        "Hydraulic Structures": "IHYDRSTRUCT",
+        "Rain": "IRAIN",
+        "Reduction Factors": "IWRFS",
+        "Levees": "LEVEE",
+        "Streets": "MSTREET",
+        "Storm Drain": "SWMM",
+        "Multiple Channels": "IMULTC",
+        "Mudflow and Sediment Transport": ("MUD", "ISED"),
+    }
+
+    def _has(self, table_name):
+        return not self.gutils.is_table_empty(table_name)
+
     def select_components(self):
+        self.components = []
+        self.export_overrides = {}
+
+        sql = "SELECT name, value FROM cont;"
+        options = {o: (v if v is not None else "0") for o, v in self.gutils.execute(sql).fetchall()}
+
+        def switch_is_on(k):
+            return options.get(k, "0") == "1"
+
+        def guard_and_record(comp_label, *, data_has, switch_keys):
+            if not data_has:
+                for k in ((switch_keys,) if isinstance(switch_keys, str) else switch_keys):
+                    self.export_overrides.pop(k, None)
+                return True
+
+            keys = (switch_keys,) if isinstance(switch_keys, str) else tuple(switch_keys)
+
+            any_off = any(not switch_is_on(k) for k in keys)
+
+            if any_off:
+                title = "Component switch is OFF"
+                body = (
+                    f"The CONT.DAT switch for <b>{comp_label}</b> is currently <b>OFF</b>."
+                    "<br><br>How would you like to proceed?"
+                )
+                decision = self._ask_export_decision(title, body)
+
+                if decision == "cancel":
+                    for k in keys:
+                        self.export_overrides.pop(k, None)
+                    return False
+
+                for k in keys:
+                    self.export_overrides[k] = decision
+                return True
+            for k in keys:
+                self.export_overrides[k] = "on_and_export"
+            return True
+
         if self.channels_chbox.isChecked():
-            self.components.append("Channels")
+            chan_has = self._has("chan") or self._has("xsec")
+            if guard_and_record("Channels", data_has=chan_has, switch_keys=self._SWITCH_KEYS["Channels"]):
+                self.components.append("Channels")
+
+        if self.evaporation_chbox.isChecked():
+            if guard_and_record("Evaporation", data_has=self._has("evapor"), switch_keys=self._SWITCH_KEYS["Evaporation"]):
+                self.components.append("Evaporation")
+
+        if self.hydr_struct_chbox.isChecked():
+            if guard_and_record("Hydraulic Structures", data_has=self._has("struct"),
+                                switch_keys=self._SWITCH_KEYS["Hydraulic Structures"]):
+                self.components.append("Hydraulic Structures")
+
+        if self.infiltration_chbox.isChecked():
+            if guard_and_record("Infiltration", data_has=self._has("infil"), switch_keys=self._SWITCH_KEYS["Infiltration"]):
+                self.components.append("Infiltration")
+
+        if self.rain_chbox.isChecked():
+            if guard_and_record("Rain", data_has=self._has("rain"), switch_keys=self._SWITCH_KEYS["Rain"]):
+                self.components.append("Rain")
 
         if self.reduction_factors_chbox.isChecked():
-            self.components.append("Reduction Factors")
+            if guard_and_record("Reduction Factors", data_has=self._has("blocked_cells"),
+                                switch_keys=self._SWITCH_KEYS["Reduction Factors"]):
+                self.components.append("Reduction Factors")
+
+        if self.levees_chbox.isChecked():
+            levee_has = self._has("levee_data") or self._has("levee") or self._has("levee_lines")
+            if guard_and_record("Levees", data_has=levee_has, switch_keys=self._SWITCH_KEYS["Levees"]):
+                self.components.append("Levees")
 
         if self.streets_chbox.isChecked():
-            self.components.append("Streets")
+            if guard_and_record("Streets", data_has=self._has("streets"), switch_keys=self._SWITCH_KEYS["Streets"]):
+                self.components.append("Streets")
+
+        if self.storm_drain_chbox.isChecked():
+            sd_has = self._has("swmmflo") or self._has("swmmoutf")
+            if guard_and_record("Storm Drain", data_has=sd_has, switch_keys=self._SWITCH_KEYS["Storm Drain"]):
+                self.components.append("Storm Drain")
+
+        if self.multiple_channels_chbox.isChecked():
+            mult_has = self._has("mult_cells") or self._has("simple_mult_cells")
+            if guard_and_record("Multiple Channels", data_has=mult_has, switch_keys=self._SWITCH_KEYS["Multiple Channels"]):
+                self.components.append("Multiple Channels")
+
+        if self.mud_and_sed_chbox.isChecked():
+            mud_has = self._has("mud")
+            sed_has = self._has("sed")
+            has_any = mud_has or sed_has
+
+            sql = "SELECT name, value FROM cont;"
+            options = {o: (v if v is not None else "0") for o, v in self.gutils.execute(sql).fetchall()}
+            keys = self._SWITCH_KEYS["Mudflow and Sediment Transport"]
+
+            if not has_any:
+                for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                    self.export_overrides.pop(k, None)
+                self.components.append("Mudflow and Sediment Transport")
+            else:
+                mud_on = options.get("MUD", "0") in ("1", "2")
+                sed_on = options.get("ISED", "0") == "1"
+                both_off = (not mud_on) and (not sed_on)
+
+                if both_off:
+                    choice = self._ask_mudsed_decision()
+                    if choice == "cancel":
+                        for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                            self.export_overrides.pop(k, None)
+                    else:
+                        for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                            self.export_overrides.pop(k, None)
+
+                        if choice == "mud":
+                            self.export_overrides["MUD"] = "on_and_export"
+                            self.export_overrides["ISED"] = "export_only"
+                            self.export_overrides["_MUD_MODE"] = "mud"
+                        elif choice == "sed":
+                            self.export_overrides["ISED"] = "on_and_export"
+                            self.export_overrides["MUD"] = "export_only"
+                            self.export_overrides["_MUD_MODE"] = "sed"
+                        elif choice == "two_phase":
+                            self.export_overrides["MUD"] = "on_and_export"
+                            self.export_overrides["ISED"] = "export_only"
+                            self.export_overrides["_MUD_MODE"] = "two_phase"
+
+                        self.components.append("Mudflow and Sediment Transport")
+                else:
+                    for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                        self.export_overrides[k] = "on_and_export"
+
+                    self.export_overrides["_MUD_MODE"] = (
+                        "two_phase" if options.get("MUD") == "2"
+                        else "mud" if options.get("MUD") == "1"
+                        else "sed" if options.get("ISED") == "1"
+                        else "none"
+                    )
+                    self.components.append("Mudflow and Sediment Transport")
 
         if self.outflow_elements_chbox.isChecked():
             self.components.append("Outflow Elements")
-
         if self.inflow_elements_chbox.isChecked():
             self.components.append("Inflow Elements")
-
-        if self.levees_chbox.isChecked():
-            self.components.append("Levees")
-
-        if self.multiple_channels_chbox.isChecked():
-            self.components.append("Multiple Channels")
-
-        if self.breach_chbox.isChecked():
-            self.components.append("Breach")
-
         if self.gutters_chbox.isChecked():
             self.components.append("Gutters")
-
-        if self.infiltration_chbox.isChecked():
-            self.components.append("Infiltration")
-
         if self.floodplain_xs_chbox.isChecked():
             self.components.append("Floodplain Cross Sections")
-
-        if self.mud_and_sed_chbox.isChecked():
-            self.components.append("Mudflow and Sediment Transport")
-
-        if self.evaporation_chbox.isChecked():
-            self.components.append("Evaporation")
-
-        if self.hydr_struct_chbox.isChecked():
-            self.components.append("Hydraulic  Structures")
-
-        if self.mudflo_chbox.isChecked():
-            self.components.append("MODFLO-2D")
-
-        if self.rain_chbox.isChecked():
-            self.components.append("Rain")
-
-        if self.storm_drain_chbox.isChecked():
-            self.components.append("Storm Drain")
-
         if self.spatial_shallow_n_chbox.isChecked():
             self.components.append("Spatial Shallow-n")
-
         if self.spatial_tolerance_chbox.isChecked():
             self.components.append("Spatial Tolerance")
-
         if self.spatial_froude_chbox.isChecked():
             self.components.append("Spatial Froude")
-
         if self.spatial_steep_slopen_chbox.isChecked():
             self.components.append("Spatial Steep Slope-n")
-
         if self.spatial_lid_volume_chbox.isChecked():
             self.components.append("LID Volume")
-
         if self.mannings_n_and_Topo_chbox.isChecked():
-            self.components.append("Manning's n and Topo")
-
+            self.components.append("Manning's n and Topography")
         if self.tailings_chbox.isChecked():
             self.components.append("Tailings")
-
         if self.outrc_chbox.isChecked():
-            self.components.append("Surface Water Rating Tables")
+            self.components.append("OUTrc")
+
+        self.accept()
 
     def unselect_all(self):
         self.check_components(self.select_all_chbox.isChecked())
 
     def check_components(self, select=True):
-        if self.channels_chbox.isEnabled():
-            self.channels_chbox.setChecked(select)
-        if self.reduction_factors_chbox.isEnabled():
-            self.reduction_factors_chbox.setChecked(select)
-        if self.streets_chbox.isEnabled():
-            self.streets_chbox.setChecked(select)
-        if self.outflow_elements_chbox.isEnabled():
-            self.outflow_elements_chbox.setChecked(select)
-        if self.inflow_elements_chbox.isEnabled():
-            self.inflow_elements_chbox.setChecked(select)
-        if self.levees_chbox.isEnabled():
-            self.levees_chbox.setChecked(select)
-        if self.multiple_channels_chbox.isEnabled():
-            self.multiple_channels_chbox.setChecked(select)
-        if self.breach_chbox.isEnabled():
-            self.breach_chbox.setChecked(select)
-        if self.gutters_chbox.isEnabled():
-            self.gutters_chbox.setChecked(select)
-        if self.infiltration_chbox.isEnabled():
-            self.infiltration_chbox.setChecked(select)
-        if self.floodplain_xs_chbox.isEnabled():
-            self.floodplain_xs_chbox.setChecked(select)
-        if self.mud_and_sed_chbox.isEnabled():
-            self.mud_and_sed_chbox.setChecked(select)
-        if self.evaporation_chbox.isEnabled():
-            self.evaporation_chbox.setChecked(select)
-        if self.hydr_struct_chbox.isEnabled():
-            self.hydr_struct_chbox.setChecked(select)
-        if self.mudflo_chbox.isEnabled():
-            self.mudflo_chbox.setChecked(select)
-        if self.rain_chbox.isEnabled():
-            self.rain_chbox.setChecked(select)
-        if self.storm_drain_chbox.isEnabled():
-            self.storm_drain_chbox.setChecked(select)
-        if self.spatial_shallow_n_chbox.isEnabled():
-            self.spatial_shallow_n_chbox.setChecked(select)
-        if self.spatial_tolerance_chbox.isEnabled():
-            self.spatial_tolerance_chbox.setChecked(select)
-        if self.spatial_froude_chbox.isEnabled():
-            self.spatial_froude_chbox.setChecked(select)
-        if self.spatial_steep_slopen_chbox.isEnabled():
-            self.spatial_steep_slopen_chbox.setChecked(select)
-        if self.spatial_lid_volume_chbox.isEnabled():
-            self.spatial_lid_volume_chbox.setChecked(select)
-        if self.mannings_n_and_Topo_chbox.isEnabled():
-            self.mannings_n_and_Topo_chbox.setChecked(select)
+        for chb in [
+            self.channels_chbox, self.reduction_factors_chbox, self.streets_chbox,
+            self.outflow_elements_chbox, self.inflow_elements_chbox, self.levees_chbox,
+            self.multiple_channels_chbox, self.breach_chbox, self.gutters_chbox,
+            self.infiltration_chbox, self.floodplain_xs_chbox, self.mud_and_sed_chbox,
+            self.evaporation_chbox, self.hydr_struct_chbox, self.mudflo_chbox,
+            self.rain_chbox, self.storm_drain_chbox, self.spatial_shallow_n_chbox,
+            self.spatial_tolerance_chbox, self.spatial_froude_chbox,
+            self.spatial_steep_slopen_chbox, self.spatial_lid_volume_chbox,
+            self.mannings_n_and_Topo_chbox,
+        ]:
+            if chb.isEnabled():
+                chb.setChecked(select)
