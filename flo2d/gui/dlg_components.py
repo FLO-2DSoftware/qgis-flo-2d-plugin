@@ -19,6 +19,7 @@ from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("components")
 
+
 class ComponentsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, in_or_out):
         qtBaseClass.__init__(self)
@@ -32,7 +33,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
-        # self.current_lyr = None
+        self.current_lyr = None
         self.components = []
         self.export_overrides = {}
         self.in_or_out = in_or_out
@@ -251,31 +252,52 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.gutils.execute(sql).fetchall()}
 
-            asterisk_rules = [
-                ("ICHANNEL", "chan", self.channels_chbox),
-                ("IEVAP", "evapor", self.evaporation_chbox),
-                ("IHYDRSTRUCT", "struct", self.hydr_struct_chbox),
-                ("IMULTC", ("mult_cells", "simple_mult_cells"), self.multiple_channels_chbox),
-                ("INFIL", "infil", self.infiltration_chbox),
-                ("IRAIN", "rain", self.rain_chbox),
-                ("IWRFS", "blocked_cells", self.reduction_factors_chbox),
-                ("LEVEE", "levee_data", self.levees_chbox),
-                ("MSTREET", "streets", self.streets_chbox),
-                ("SWMM", "swmmflo", self.storm_drain_chbox),
-            ]
-            for cont_key, tables, chb in asterisk_rules:
-                tables = (tables,) if isinstance(tables, str) else tables
-                if options[cont_key] == "0" and any(not self.gutils.is_table_empty(t) for t in tables):
-                    chb.setText("*" + chb.text() + "*")
-                    show_note = True
+            if options["ICHANNEL"] == "0" and not self.gutils.is_table_empty("chan"):
+                self.channels_chbox.setText("*" + self.channels_chbox.text() + "*")
+                show_note = True
 
-            mud_off = options.get("MUD", "0") not in ("1", "2")
-            sed_off = options.get("ISED", "0") != "1"
-            mud_has = not self.gutils.is_table_empty("mud")
-            sed_has = not self.gutils.is_table_empty("sed")
+            if options["IEVAP"] == "0" and not self.gutils.is_table_empty("evapor"):
+                self.evaporation_chbox.setText("*" + self.evaporation_chbox.text() + "*")
+                show_note = True
 
-            if mud_off and sed_off and (mud_has or sed_has):
+            if options["IHYDRSTRUCT"] == "0" and not self.gutils.is_table_empty("struct"):
+                self.hydr_struct_chbox.setText("*" + self.hydr_struct_chbox.text() + "*")
+                show_note = True
+
+            if options["IMULTC"] == "0" and not (
+                self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells")
+            ):
+                self.multiple_channels_chbox.setText("*" + self.multiple_channels_chbox.text() + "*")
+                show_note = True
+
+            if options["INFIL"] == "0" and not self.gutils.is_table_empty("infil"):
+                self.infiltration_chbox.setText("*" + self.infiltration_chbox.text() + "*")
+                show_note = True
+
+            if options["IRAIN"] == "0" and not self.gutils.is_table_empty("rain"):
+                self.rain_chbox.setText("*" + self.rain_chbox.text() + "*")
+                show_note = True
+
+            if (options["ISED"] == "0" and not self.gutils.is_table_empty("sed")) and (
+                options["MUD"] == "0" and not self.gutils.is_table_empty("mud")
+            ):
                 self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
+                show_note = True
+
+            if options["IWRFS"] == "0" and not self.gutils.is_table_empty("blocked_cells"):
+                self.reduction_factors_chbox.setText("*" + self.reduction_factors_chbox.text() + "*")
+                show_note = True
+
+            if options["LEVEE"] == "0" and not self.gutils.is_table_empty("levee_data"):
+                self.levees_chbox.setText("*" + self.levees_chbox.text() + "*")
+                show_note = True
+
+            if options["MSTREET"] == "0" and not self.gutils.is_table_empty("streets"):
+                self.streets_chbox.setText("*" + self.streets_chbox.text() + "*")
+                show_note = True
+
+            if options["SWMM"] == "0" and not self.gutils.is_table_empty("swmmflo"):
+                self.storm_drain_chbox.setText("*" + self.storm_drain_chbox.text() + "*")
                 show_note = True
 
             self.components_note_lbl.setVisible(show_note)

@@ -7650,7 +7650,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         # Get storm drain external inflow ts name
         time_series_name = self.gutils.execute(f"""SELECT time_series_name FROM swmm_inflows WHERE node_name = '{node_name}'""").fetchone()
-        if not time_series_name:
+        if not time_series_name or time_series_name[0] in ("", None):
             return False
         else:
             time_series_name = time_series_name[0]
