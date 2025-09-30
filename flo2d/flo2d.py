@@ -1892,7 +1892,7 @@ class Flo2D(object):
                     if "Evaporation" not in dlg_components.components:
                         import_calls.remove("import_evapor")
 
-                    if "Hydraulic  Structures" not in dlg_components.components:
+                    if "Hydraulic Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
                         import_calls.remove("import_hystruc_bridge_xs")
 
@@ -2609,7 +2609,7 @@ class Flo2D(object):
                     # if "Surface Water Rating Tables" not in dlg_components.components:
                     #     import_calls.remove("import_outrc")
 
-                    if "Hydraulic  Structures" not in dlg_components.components:
+                    if "Hydraulic Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
                         import_calls.remove("import_hystruc_bridge_xs")
 
@@ -2958,112 +2958,107 @@ class Flo2D(object):
                 dlg_components.data_rb.setVisible(True)
                 dlg_components.hdf5_rb.setVisible(True)
 
-                # True hdf5, False data
                 user_preference = s.value("FLO-2D/quickRun")
                 if user_preference == "hdf5":
                     dlg_components.hdf5_rb.setChecked(True)
                     dlg_components.data_rb.setChecked(False)
-                elif user_preference  == "data":
+                elif user_preference == "data":
                     dlg_components.hdf5_rb.setChecked(False)
                     dlg_components.data_rb.setChecked(True)
                 else:
                     dlg_components.hdf5_rb.setChecked(True)
                     dlg_components.data_rb.setChecked(False)
 
-            # Check the presence of fplain cadpts neighbors dat files
-            files = [
-                "FPLAIN.DAT",
-                "CADPTS.DAT",
-                "NEIGHBORS.DAT"
-            ]
+            # enable “remove files” checkbox if any of these exist
+            files = ["FPLAIN.DAT", "CADPTS.DAT", "NEIGHBORS.DAT"]
             for file in files:
-                file_path = os.path.join(outdir, file)
-                if os.path.exists(file_path):
+                if os.path.exists(os.path.join(outdir, file)):
                     dlg_components.remove_files_chbox.setEnabled(True)
                     break
 
             QApplication.restoreOverrideCursor()
             ok = dlg_components.exec_()
-            if ok:
+            if not ok:
+                return
 
-                if not export_type:
-                    if dlg_components.hdf5_rb.isChecked():
-                        export_type = "hdf5"
-                        s.setValue("FLO-2D/quickRun", "hdf5")
-                    if dlg_components.data_rb.isChecked():
-                        export_type = "data"
-                        s.setValue("FLO-2D/quickRun", "data")
+            # NOW read the user’s override decisions
+            overrides = getattr(dlg_components, "export_overrides", {}) or {}
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                if export_type == "data":
+            # derive export_type from the radios if not passed in
+            if not export_type:
+                if dlg_components.hdf5_rb.isChecked():
+                    export_type = "hdf5"
+                    s.setValue("FLO-2D/quickRun", "hdf5")
+                if dlg_components.data_rb.isChecked():
+                    export_type = "data"
+                    s.setValue("FLO-2D/quickRun", "data")
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-                    if dlg_components.remove_files_chbox.isChecked():
-                        for file in files:
-                            file_path = os.path.join(outdir, file)
-                            if os.path.exists(file_path):
-                                os.remove(file_path)
+            if export_type == "data":
 
-                    export_message = "Files exported to\n" + outdir + "\n\n"
-                    self.f2g = Flo2dGeoPackage(self.con, self.iface)
+                if dlg_components.remove_files_chbox.isChecked():
+                    for file in files:
+                        p = os.path.join(outdir, file)
+                        if os.path.exists(p):
+                            os.remove(p)
 
-                    if self.gutils.is_table_empty("raincell_data"):
-                        export_calls.remove("export_raincell")
+                export_message = "Files exported to\n" + outdir + "\n\n"
+                self.f2g = Flo2dGeoPackage(self.con, self.iface)
 
-                    if self.gutils.is_table_empty("raincellraw"):
-                        export_calls.remove("export_raincellraw")
+                if self.gutils.is_table_empty("raincell_data"):
+                    export_calls.remove("export_raincell")
+                if self.gutils.is_table_empty("raincellraw"):
+                    export_calls.remove("export_raincellraw")
 
-                    self.export_flo2d_files(outdir, export_calls, dlg_components)
+                self.export_flo2d_files(outdir, export_calls, dlg_components, overrides)
 
-                    if "export_tailings" in export_calls:
-                        MUD = self.gutils.get_cont_par("MUD")
-                        concentration_sql = """SELECT 
-                                            CASE WHEN COUNT(*) > 0 THEN True
-                                                 ELSE False
-                                            END AS result
-                                            FROM 
-                                                tailing_cells
-                                            WHERE 
-                                                concentration <> 0 OR concentration IS NULL;"""
-                        cv = self.gutils.execute(concentration_sql).fetchone()[0]
-                        # TAILINGS.DAT and TAILINGS_CV.DAT
-                        if MUD == '1':
-                            # Export TAILINGS_CV.DAT
-                            if cv == 1:
-                                new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
-                                self.files_used = new_files_used
-                        # TAILINGS_STACK_DEPTH.DAT
-                        elif MUD == '2':
-                            new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+                if "export_tailings" in export_calls:
+                    MUD = self.gutils.get_cont_par("MUD")
+                    concentration_sql = """SELECT 
+                                        CASE WHEN COUNT(*) > 0 THEN True
+                                                ELSE False
+                                        END AS result
+                                        FROM 
+                                            tailing_cells
+                                        WHERE 
+                                            concentration <> 0 OR concentration IS NULL;"""
+                    cv = self.gutils.execute(concentration_sql).fetchone()[0]
+                    if MUD == '1':
+                        if cv == 1:
+                            new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
                             self.files_used = new_files_used
+                    elif MUD == '2':
+                        new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+                        self.files_used = new_files_used
 
-                    # Delete .DAT files the model will try to use if existing:
-                    if "export_mult" in export_calls:
-                        if self.gutils.is_table_empty("simple_mult_cells"):
-                            new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
-                            self.files_used = new_files_used
-                            if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
-                                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                                if self.uc.question(
-                                        "There are no simple multiple channel cells in the project but\n"
-                                        + "there is a SIMPLE_MULT.DAT file in the directory.\n"
-                                        + "If the file is not deleted it will be used by the model.\n\n"
-                                        + "Delete SIMPLE_MULT.DAT?"
-                                ):
-                                    os.remove(outdir + r"\SIMPLE_MULT.DAT")
-                                QApplication.restoreOverrideCursor()
-                        if self.gutils.is_table_empty("mult_cells"):
-                            new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
-                            self.files_used = new_files_used
-                            if os.path.isfile(outdir + r"\MULT.DAT"):
-                                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                                if self.uc.question(
-                                        "There are no multiple channel cells in the project but\n"
-                                        + "there is a MULT.DAT file in the directory.\n"
-                                        + "If the file is not deleted it will be used by the model.\n\n"
-                                        + "Delete MULT.DAT?"
-                                ):
-                                    os.remove(outdir + r"\MULT.DAT")
-                                QApplication.restoreOverrideCursor()
+                # Delete .DAT files the model will try to use if existing:
+                if "export_mult" in export_calls:
+                    if self.gutils.is_table_empty("simple_mult_cells"):
+                        new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
+                        self.files_used = new_files_used
+                        if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                            QApplication.setOverrideCursor(Qt.ArrowCursor)
+                            if self.uc.question(
+                                    "There are no simple multiple channel cells in the project but\n"
+                                    + "there is a SIMPLE_MULT.DAT file in the directory.\n"
+                                    + "If the file is not deleted it will be used by the model.\n\n"
+                                    + "Delete SIMPLE_MULT.DAT?"
+                            ):
+                                os.remove(outdir + r"\SIMPLE_MULT.DAT")
+                            QApplication.restoreOverrideCursor()
+                    if self.gutils.is_table_empty("mult_cells"):
+                        new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
+                        self.files_used = new_files_used
+                        if os.path.isfile(outdir + r"\MULT.DAT"):
+                            QApplication.setOverrideCursor(Qt.ArrowCursor)
+                            if self.uc.question(
+                                    "There are no multiple channel cells in the project but\n"
+                                    + "there is a MULT.DAT file in the directory.\n"
+                                    + "If the file is not deleted it will be used by the model.\n\n"
+                                    + "Delete MULT.DAT?"
+                            ):
+                                os.remove(outdir + r"\MULT.DAT")
+                            QApplication.restoreOverrideCursor()
 
                 if export_type == "hdf5":
                     output_hdf5 = os.path.join(outdir, "Input.hdf5")
@@ -3077,7 +3072,7 @@ class Flo2D(object):
                     self.f2g.set_parser(output_hdf5, get_cell_size=False)
                     remove = ("export_bridge_coeff_data", "export_wstime", "export_wsurf")
                     export_calls_filtered = [item for item in export_calls if item not in remove]
-                    self.export_flo2d_files(output_hdf5, export_calls_filtered, dlg_components)
+                    self.export_flo2d_files(output_hdf5, export_calls_filtered, dlg_components, overrides)
 
             else:
                 return
@@ -3118,26 +3113,33 @@ class Flo2D(object):
                     self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
                     self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
-    def export_flo2d_files(self, outdir, export_calls, dlg_components):
+    def _apply_switch_with_override(self, key, selected, overrides):
+        if not selected:
+            self.gutils.set_cont_par(key, 0)
+            return (False, False)
+        if overrides.get(key) == "export_only":
+            self.gutils.set_cont_par(key, 0)
+            return (False, True)
+        self.gutils.set_cont_par(key, 1)
+        return (True, False)
 
-        if "Channels" not in dlg_components.components:
-            self.gutils.set_cont_par("ICHANNEL", 0)
+    def export_flo2d_files(self, outdir, export_calls, dlg_components, overrides):
+
+        selected = ("Channels" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("ICHANNEL", selected, overrides)
+        if not selected:
             export_calls.remove("export_chan")
             export_calls.remove("export_xsec")
-        else:
-            self.gutils.set_cont_par("ICHANNEL", 1)
 
-        if "Reduction Factors" not in dlg_components.components:
-            self.gutils.set_cont_par("IWRFS", 0)
+        selected = ("Reduction Factors" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("IWRFS", selected, overrides)
+        if not selected:
             export_calls.remove("export_arf")
-        else:
-            self.gutils.set_cont_par("IWRFS", 1)
 
-        if "Streets" not in dlg_components.components:
-            self.gutils.set_cont_par("MSTREET", 0)
+        selected = ("Streets" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("MSTREET", selected, overrides)
+        if not selected:
             export_calls.remove("export_street")
-        else:
-            self.gutils.set_cont_par("MSTREET", 1)
 
         if "Outflow Elements" not in dlg_components.components:
             export_calls.remove("export_outflow")
@@ -3151,17 +3153,15 @@ class Flo2D(object):
         if "Surface Water Rating Tables" not in dlg_components.components:
             export_calls.remove("export_outrc")
 
-        if "Levees" not in dlg_components.components:
-            self.gutils.set_cont_par("LEVEE", 0)
+        selected = ("Levees" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("LEVEE", selected, overrides)
+        if not selected:
             export_calls.remove("export_levee")
-        else:
-            self.gutils.set_cont_par("LEVEE", 1)
 
-        if "Multiple Channels" not in dlg_components.components:
-            self.gutils.set_cont_par("IMULTC", 0)
+        selected = ("Multiple Channels" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("IMULTC", selected, overrides)
+        if not selected:
             export_calls.remove("export_mult")
-        else:
-            self.gutils.set_cont_par("IMULTC", 1)
 
         if "Breach" not in dlg_components.components:
             export_calls.remove("export_breach")
@@ -3169,67 +3169,100 @@ class Flo2D(object):
         if "Gutters" not in dlg_components.components:
             export_calls.remove("export_gutter")
 
-        if "Infiltration" not in dlg_components.components:
-            self.gutils.set_cont_par("INFIL", 0)
+        selected = ("Infiltration" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("INFIL", selected, overrides)
+        if not selected:
             export_calls.remove("export_infil")
-        else:
-            self.gutils.set_cont_par("INFIL", 1)
 
         if "Floodplain Cross Sections" not in dlg_components.components:
             export_calls.remove("export_fpxsec")
 
+        # Mudflow & Sediment Transport (pair: MUD, ISED)
         if "Mudflow and Sediment Transport" not in dlg_components.components:
+            # Not selected: drop export and turn both off
             self.gutils.set_cont_par("MUD", 0)
             self.gutils.set_cont_par("ISED", 0)
-            export_calls.remove("export_sed")
+            if "export_sed" in export_calls:
+                export_calls.remove("export_sed")
+        else:
+            # Enforce the dialog decision recorded per switch (keys: "MUD", "ISED")
+            mud_dec = overrides.get("MUD")
+            sed_dec = overrides.get("ISED")
 
-        if "Evaporation" not in dlg_components.components:
-            self.gutils.set_cont_par("IEVAP", 0)
+            # Case: Export but keep OFF  -> force both OFF
+            if mud_dec == "export_only" or sed_dec == "export_only":
+                self.gutils.set_cont_par("MUD", 0)
+                self.gutils.set_cont_par("ISED", 0)
+            # Case: Switch ON and Export -> ensure at least one switch turns ON
+            elif mud_dec == "on_and_export" or sed_dec == "on_and_export":
+                # If both are OFF, pick a safe default: turn ISED ON (1).
+                mud_now = self.gutils.get_cont_par("MUD")
+                sed_now = self.gutils.get_cont_par("ISED")
+                if str(mud_now) not in ("1", "2") and str(sed_now) != "1":
+                    self.gutils.set_cont_par("ISED", 1)
+
+            # After applying on/off per self.export_overrides[...] for all keys:
+            mud_mode = overrides.get("_MUD_MODE")  # overrides is dlg.export_overrides
+            if mud_mode == "two_phase":
+                self.gutils.set_cont_par("MUD", 2)
+                self.gutils.set_cont_par("ISED", 0)
+            elif mud_mode == "mud":
+                self.gutils.set_cont_par("MUD", 1)
+                self.gutils.set_cont_par("ISED", 0)
+            elif mud_mode == "sed":
+                self.gutils.set_cont_par("MUD", 0)
+                self.gutils.set_cont_par("ISED", 1)
+            # (If mud_mode is "none" or missing, keep whatever the generic on/off logic set)
+
+        selected = ("Evaporation" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("IEVAP", selected, overrides)
+        if not selected:
             export_calls.remove("export_evapor")
-        else:
-            self.gutils.set_cont_par("IEVAP", 1)
 
-        if "Hydraulic  Structures" not in dlg_components.components:
-            self.gutils.set_cont_par("IHYDRSTRUCT", 0)
-            export_calls.remove("export_hystruc")
-            export_calls.remove("export_bridge_xsec")
-            if "export_bridge_coeff_data" in export_calls:
-                export_calls.remove("export_bridge_coeff_data")
+        selected = ("Hydraulic Structures" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("IHYDRSTRUCT", selected, overrides)
+
+        if not selected:
+            # Not selected at all: remove exports
+            if "export_hystruc" in export_calls: export_calls.remove("export_hystruc")
+            if "export_bridge_xsec" in export_calls: export_calls.remove("export_bridge_xsec")
+            if "export_bridge_coeff_data" in export_calls: export_calls.remove("export_bridge_coeff_data")
         else:
-            self.gutils.set_cont_par("IHYDRSTRUCT", 1)
+            # Selected: keep export calls, but the CONT switch state came from the helper.
             xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
             if not xsecs:
-                export_calls.remove("export_bridge_xsec")
-                if "export_bridge_coeff_data" in export_calls:
-                    export_calls.remove("export_bridge_coeff_data")
+                if "export_bridge_xsec" in export_calls: export_calls.remove("export_bridge_xsec")
+                if "export_bridge_coeff_data" in export_calls: export_calls.remove("export_bridge_coeff_data")
 
-        if "Rain" not in dlg_components.components:
-            self.gutils.set_cont_par("IRAIN", 0)
-            export_calls.remove("export_rain")
-            if "export_raincell" in export_calls:
-                export_calls.remove("export_raincell")
-            if "export_raincellraw" in export_calls:
-                export_calls.remove("export_raincellraw")
+        selected = ("Rain" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("IRAIN", selected, overrides)
+
+        if not selected:
+            if "export_rain" in export_calls: export_calls.remove("export_rain")
+            if "export_raincell" in export_calls: export_calls.remove("export_raincell")
+            if "export_raincellraw" in export_calls: export_calls.remove("export_raincellraw")
         else:
+            # Keep export calls but respect UI toggles for the two realtime sub-exports
             if not self.f2d_widget.rain_editor.realtime_rainfall_grp.isChecked():
-                if "export_raincell" in export_calls:
-                    export_calls.remove("export_raincell")
+                if "export_raincell" in export_calls: export_calls.remove("export_raincell")
             if not self.f2d_widget.rain_editor.realtime_rainfall_raw_grp.isChecked():
-                if "export_raincellraw" in export_calls:
-                    export_calls.remove("export_raincellraw")
-            self.gutils.set_cont_par("IRAIN", 1)
+                if "export_raincellraw" in export_calls: export_calls.remove("export_raincellraw")
+            # Do NOT set IRAIN here; the helper already set it per override.
 
-        if "Storm Drain" not in dlg_components.components:
-            self.gutils.set_cont_par("SWMM", 0)
-            export_calls.remove("export_swmmflo")
-            export_calls.remove("export_swmmflort")
-            export_calls.remove("export_swmmoutf")
-            export_calls.remove("export_swmmflodropbox")
-            export_calls.remove("export_sdclogging")
-            if "export_swmminp" in export_calls:
-                export_calls.remove("export_swmminp")
-        else:
-            self.gutils.set_cont_par("SWMM", 1)
+        selected = ("Storm Drain" in dlg_components.components)
+        enabled, force_off = self._apply_switch_with_override("SWMM", selected, overrides)
+
+        swmm_exports = [
+            "export_swmminp",
+            "export_swmmflo",
+            "export_swmmflort",
+            "export_swmmoutf",
+            "export_swmmflodropbox",
+        ]
+        if not selected:
+            for c in swmm_exports:
+                if c in export_calls:
+                    export_calls.remove(c)
 
         if "Spatial Shallow-n" not in dlg_components.components:
             export_calls.remove("export_shallowNSpatial")
@@ -3250,6 +3283,13 @@ class Flo2D(object):
             export_calls.remove("export_lid_volume")
 
         self.call_IO_methods(export_calls, True, outdir)
+
+        try:
+            for key, decision in (overrides or {}).items():
+                if decision == "export_only":
+                    self.gutils.set_cont_par(key, 0)
+        except Exception:
+            pass
 
     @connection_required
     def import_from_gpkg(self):
