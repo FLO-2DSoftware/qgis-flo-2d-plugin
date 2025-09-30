@@ -327,12 +327,14 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                                    default_when_no_switch=True)
             self._pre_check_decision(self.gutters_chbox, has("gutter_cells"), None, default_when_no_switch=True)
             self._pre_check_decision(self.floodplain_xs_chbox, has("fpxsec"), None, default_when_no_switch=True)
-            self._pre_check_decision(self.spatial_shallow_n_chbox, has("spatialshallow") and has("spatialshallow_cells"),
+
+            self._pre_check_decision(self.spatial_shallow_n_chbox, has("spatialshallow_cells"),
                                    None, default_when_no_switch=True)
-            self._pre_check_decision(self.spatial_tolerance_chbox, has("tolspatial"), None, default_when_no_switch=True)
-            self._pre_check_decision(self.spatial_froude_chbox, has("fpfroude"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.spatial_tolerance_chbox, has("tolspatial_cells"), None, default_when_no_switch=True)
+            self._pre_check_decision(self.spatial_froude_chbox, has("fpfroude_cells"), None, default_when_no_switch=True)
             self._pre_check_decision(self.spatial_steep_slopen_chbox, has("steep_slope_n_cells"), None,
                                    default_when_no_switch=True)
+
             self._pre_check_decision(self.spatial_lid_volume_chbox, has("lid_volume_cells"), None,
                                    default_when_no_switch=True)
             self._pre_check_decision(self.mannings_n_and_Topo_chbox, has("grid"), None, default_when_no_switch=True)
