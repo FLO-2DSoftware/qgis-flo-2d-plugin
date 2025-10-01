@@ -59,52 +59,62 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             chb.setChecked(bool(switch_on))
 
     def _ask_export_decision(self, title, body):
-        m = QMessageBox(self)
-        m.setIcon(QMessageBox.Question)
-        m.setWindowTitle(title)
-        m.setText(body)
-        btn_on = QPushButton("Switch ON and Export")
-        btn_keep_off = QPushButton("Export but Keep OFF")
-        btn_cancel = QPushButton("Cancel")
-        m.addButton(btn_on, QMessageBox.AcceptRole)
-        m.addButton(btn_keep_off, QMessageBox.DestructiveRole)
-        m.addButton(btn_cancel, QMessageBox.RejectRole)
-        m.setDefaultButton(btn_keep_off)
-        clicked = m.exec_()
-        b = m.clickedButton()
-        if b is btn_on:
-            return "on_and_export"
-        elif b is btn_keep_off:
-            return "export_only"
-        return "cancel"
+        # QApplication.restoreOverrideCursor()
+        # try:
+            m = QMessageBox(self)
+            m.setIcon(QMessageBox.Question)
+            m.setWindowTitle(title)
+            m.setText(body)
+            btn_on = QPushButton("Switch ON and Export")
+            btn_keep_off = QPushButton("Export but Keep OFF")
+            btn_cancel = QPushButton("Cancel")
+            m.addButton(btn_on, QMessageBox.AcceptRole)
+            m.addButton(btn_keep_off, QMessageBox.DestructiveRole)
+            m.addButton(btn_cancel, QMessageBox.RejectRole)
+            m.setDefaultButton(btn_keep_off)
+            clicked = m.exec_()
+            b = m.clickedButton()
+            if b is btn_on:
+                return "on_and_export"
+            elif b is btn_keep_off:
+                return "export_only"
+            return "cancel"
+        # finally:
+            # Reinstate Wait cursor for the rest of the processing
+            # QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def _ask_mudsed_decision(self):
-        m = QMessageBox(self)
-        m.setIcon(QMessageBox.Question)
-        m.setWindowTitle("Component switch is OFF")
-        m.setText(
-            f"The CONT.DAT switch for <b>Mud/Debris/Sediment</b> is currently <b>OFF</b>."
-            "<br><br>Which physical process do you want to enable?"
-        )
-        btn_mud = QPushButton("Mud/Debris")
-        btn_sed = QPushButton("Sediment Transport")
-        btn_two = QPushButton("Two phase")
-        btn_cancel = QPushButton("None (Cancel)")
-        m.addButton(btn_mud, QMessageBox.AcceptRole)
-        m.addButton(btn_sed, QMessageBox.AcceptRole)
-        m.addButton(btn_two, QMessageBox.AcceptRole)
-        m.addButton(btn_cancel, QMessageBox.RejectRole)
-        m.setDefaultButton(btn_mud)
+        # QApplication.restoreOverrideCursor()
+        # try:
+            m = QMessageBox(self)
+            m.setIcon(QMessageBox.Question)
+            m.setWindowTitle("Component switch is OFF")
+            m.setText(
+                f"The CONT.DAT switch for <b>Mud/Debris/Sediment</b> is currently <b>OFF</b>."
+                "<br><br>Which physical process do you want to enable?"
+            )
+            btn_mud = QPushButton("Mud/Debris")
+            btn_sed = QPushButton("Sediment Transport")
+            btn_two = QPushButton("Two phase")
+            btn_cancel = QPushButton("None (Cancel)")
+            m.addButton(btn_mud, QMessageBox.AcceptRole)
+            m.addButton(btn_sed, QMessageBox.AcceptRole)
+            m.addButton(btn_two, QMessageBox.AcceptRole)
+            m.addButton(btn_cancel, QMessageBox.RejectRole)
+            m.setDefaultButton(btn_mud)
 
-        m.exec_()
-        b = m.clickedButton()
-        if b is btn_mud:
-            return "mud"
-        if b is btn_sed:
-            return "sed"
-        if b is btn_two:
-            return "two_phase"
-        return "cancel"
+            m.exec_()
+            b = m.clickedButton()
+            if b is btn_mud:
+                return "mud"
+            if b is btn_sed:
+                return "sed"
+            if b is btn_two:
+                return "two_phase"
+            return "cancel"
+        # finally:
+            # Reinstate Wait cursor for the rest of the processing
+            # QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def populate_components_dialog(self):
         s = QSettings()
@@ -471,57 +481,81 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.components.append("Multiple Channels")
 
         if self.mud_and_sed_chbox.isChecked():
+            # Data presence
             mud_has = self._has("mud")
             sed_has = self._has("sed")
             has_any = mud_has or sed_has
 
-            sql = "SELECT name, value FROM cont;"
-            options = {o: (v if v is not None else "0") for o, v in self.gutils.execute(sql).fetchall()}
-            keys = self._SWITCH_KEYS["Mudflow and Sediment Transport"]
+            keys = self._SWITCH_KEYS["Mudflow and Sediment Transport"]  # ("MUD", "ISED")
 
+            # Read current switch states
+            MUD = options.get("MUD", "0")
+            ISED = options.get("ISED", "0")
+            mud_on = MUD in ("1", "2")          # 1 = Mud/Debris, 2 = Two-phase
+            sed_on = ISED == "1"
+            both_off = (not mud_on) and (not sed_on)
+
+            # No data: nothing to ask; just include component (no overrides)
             if not has_any:
                 for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
                     self.export_overrides.pop(k, None)
                 self.components.append("Mudflow and Sediment Transport")
+
             else:
-                mud_on = options.get("MUD", "0") in ("1", "2")
-                sed_on = options.get("ISED", "0") == "1"
-                both_off = (not mud_on) and (not sed_on)
-
+                # If *both* switches are OFF, show the first window (export decision)
                 if both_off:
-                    choice = self._ask_mudsed_decision()
-                    if choice == "cancel":
-                        for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
-                            self.export_overrides.pop(k, None)
-                    else:
-                        for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
-                            self.export_overrides.pop(k, None)
+                    title = "Component switch is OFF"
+                    body = (
+                        "The CONT.DAT switch for <b>Mud/Debris/Sediment</b> is currently <b>OFF</b>."
+                        "<br><br>How would you like to proceed?"
+                    )
+                    decision = self._ask_export_decision(title, body)
 
-                        if choice == "mud":
+                    if decision == "cancel":
+                        for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                            self.export_overrides.pop(k, None)
+                        # Do not add component
+                    elif decision == "export_only":
+                        # Export only -> do NOT ask for physical process
+                        self.export_overrides["MUD"] = "export_only"
+                        self.export_overrides["ISED"] = "export_only"
+                        self.export_overrides["_MUD_MODE"] = "none"
+                        self.components.append("Mudflow and Sediment Transport")
+                    else:
+                        # decision == "on_and_export": NOW ask which physical process to enable
+                        choice = self._ask_mudsed_decision()
+                        if choice == "cancel":
+                            for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                                self.export_overrides.pop(k, None)
+                            # Do not add component
+                        elif choice == "mud":
                             self.export_overrides["MUD"] = "on_and_export"
                             self.export_overrides["ISED"] = "export_only"
                             self.export_overrides["_MUD_MODE"] = "mud"
+                            self.components.append("Mudflow and Sediment Transport")
                         elif choice == "sed":
                             self.export_overrides["ISED"] = "on_and_export"
                             self.export_overrides["MUD"] = "export_only"
                             self.export_overrides["_MUD_MODE"] = "sed"
+                            self.components.append("Mudflow and Sediment Transport")
                         elif choice == "two_phase":
-                            self.export_overrides["MUD"] = "on_and_export"
+                            self.export_overrides["MUD"] = "on_and_export"   # 2-phase is encoded in MUD==2 downstream
                             self.export_overrides["ISED"] = "export_only"
                             self.export_overrides["_MUD_MODE"] = "two_phase"
+                            self.components.append("Mudflow and Sediment Transport")
 
-                        self.components.append("Mudflow and Sediment Transport")
                 else:
-                    for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
-                        self.export_overrides[k] = "on_and_export"
-
-                    self.export_overrides["_MUD_MODE"] = (
-                        "two_phase" if options.get("MUD") == "2"
-                        else "mud" if options.get("MUD") == "1"
-                        else "sed" if options.get("ISED") == "1"
-                        else "none"
-                    )
+                    # At least one is already ON -> do not show either dialog; mirror current state
+                    if mud_on:
+                        self.export_overrides["MUD"] = "on_and_export"
+                        self.export_overrides["ISED"] = "export_only"
+                        self.export_overrides["_MUD_MODE"] = "two_phase" if MUD == "2" else "mud"
+                    else:
+                        self.export_overrides["ISED"] = "on_and_export"
+                        self.export_overrides["MUD"] = "export_only"
+                        self.export_overrides["_MUD_MODE"] = "sed"
                     self.components.append("Mudflow and Sediment Transport")
+
 
         if self.outflow_elements_chbox.isChecked():
             self.components.append("Outflow Elements")

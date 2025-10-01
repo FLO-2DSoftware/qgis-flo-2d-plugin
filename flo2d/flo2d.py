@@ -3118,7 +3118,7 @@ class Flo2D(object):
             self.gutils.set_cont_par(key, 0)
             return (False, False)
         if overrides.get(key) == "export_only":
-            self.gutils.set_cont_par(key, 0)
+            self.gutils.set_cont_par(key, 1)
             return (False, True)
         self.gutils.set_cont_par(key, 1)
         return (True, False)
@@ -3126,10 +3126,10 @@ class Flo2D(object):
     def export_flo2d_files(self, outdir, export_calls, dlg_components, overrides):
 
         selected = ("Channels" in dlg_components.components)
-        enabled, force_off = self._apply_switch_with_override("ICHANNEL", selected, overrides)
         if not selected:
             export_calls.remove("export_chan")
             export_calls.remove("export_xsec")
+        enabled, force_off = self._apply_switch_with_override("ICHANNEL", selected, overrides)
 
         selected = ("Reduction Factors" in dlg_components.components)
         enabled, force_off = self._apply_switch_with_override("IWRFS", selected, overrides)
@@ -3191,8 +3191,19 @@ class Flo2D(object):
 
             # Case: Export but keep OFF  -> force both OFF
             if mud_dec == "export_only" or sed_dec == "export_only":
-                self.gutils.set_cont_par("MUD", 0)
-                self.gutils.set_cont_par("ISED", 0)
+                # Temporarily enable the minimal path so export_sed writes SED.DAT.
+                # Prefer ISED=1 (Sediment) if sed data exists, else fall back to Mud=1.
+                has_sed = not self.gutils.is_table_empty("sed")
+                has_mud = not self.gutils.is_table_empty("mud")
+
+                if has_sed:
+                    self.gutils.set_cont_par("MUD", 0)
+                    self.gutils.set_cont_par("ISED", 1)
+                elif has_mud:
+                    self.gutils.set_cont_par("MUD", 1)  # minimal Mud/Debris
+                    self.gutils.set_cont_par("ISED", 0)
+                # (Post-export, the generic reset loop will force both back to 0.)
+
             # Case: Switch ON and Export -> ensure at least one switch turns ON
             elif mud_dec == "on_and_export" or sed_dec == "on_and_export":
                 # If both are OFF, pick a safe default: turn ISED ON (1).
