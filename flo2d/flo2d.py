@@ -3060,24 +3060,105 @@ class Flo2D(object):
                                 os.remove(outdir + r"\MULT.DAT")
                             QApplication.restoreOverrideCursor()
 
-                if export_type == "hdf5":
-                    output_hdf5 = os.path.join(outdir, "Input.hdf5")
-                    if is_file_locked(output_hdf5):
-                        QApplication.restoreOverrideCursor()
-                        self.uc.bar_error("The file Input.hdf5 is currently open or locked by another process!")
-                        self.uc.log_info("The file Input.hdf5 is currently open or locked by another process!")
-                        return
-                    export_message = "Datasets exported to\n" + output_hdf5 + "\n\n"
+            # --- DATA vs HDF5 should be sibling branches ---
+            if export_type == "data":
+
+                if dlg_components.remove_files_chbox.isChecked():
+                    for file in files:
+                        p = os.path.join(outdir, file)
+                        if os.path.exists(p):
+                            os.remove(p)
+
+                export_message = "Files exported to\n" + outdir + "\n\n"
+                self.f2g = Flo2dGeoPackage(self.con, self.iface)
+
+                # Guard .remove() calls (avoid ValueError if not present)
+                if self.gutils.is_table_empty("raincell_data") and "export_raincell" in export_calls:
+                    export_calls.remove("export_raincell")
+                if self.gutils.is_table_empty("raincellraw") and "export_raincellraw" in export_calls:
+                    export_calls.remove("export_raincellraw")
+
+                self.export_flo2d_files(outdir, export_calls, dlg_components, overrides)
+
+                # Tailings post-fixup for files_used
+                if "export_tailings" in export_calls:
+                    MUD = self.gutils.get_cont_par("MUD")
+                    concentration_sql = """
+                        SELECT CASE WHEN COUNT(*) > 0 THEN True ELSE False END AS result
+                        FROM tailing_cells
+                        WHERE concentration <> 0 OR concentration IS NULL;
+                    """
+                    cv = self.gutils.execute(concentration_sql).fetchone()[0]
+                    if MUD == "1":
+                        if cv == 1:
+                            self.files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
+                    elif MUD == "2":
+                        self.files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+
+                # Delete stale .DATs if no data exists
+                if "export_mult" in export_calls:
+                    if self.gutils.is_table_empty("simple_mult_cells"):
+                        self.files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
+                        sm_path = os.path.join(outdir, "SIMPLE_MULT.DAT")
+                        if os.path.isfile(sm_path):
+                            # Temporarily drop the wait cursor while asking the user
+                            QApplication.restoreOverrideCursor()
+                            if self.uc.question(
+                                    "There are no simple multiple channel cells in the project but\n"
+                                    "there is a SIMPLE_MULT.DAT file in the directory.\n"
+                                    "If the file is not deleted it will be used by the model.\n\n"
+                                    "Delete SIMPLE_MULT.DAT?"
+                            ):
+                                os.remove(sm_path)
+                            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                    if self.gutils.is_table_empty("mult_cells"):
+                        # safer replace (previous string assumed \nMULT.DAT\n)
+                        self.files_used = self.files_used.replace("MULT.DAT\n", "")
+                        mult_path = os.path.join(outdir, "MULT.DAT")
+                        if os.path.isfile(mult_path):
+                            QApplication.restoreOverrideCursor()
+                            if self.uc.question(
+                                    "There are no multiple channel cells in the project but\n"
+                                    "there is a MULT.DAT file in the directory.\n"
+                                    "If the file is not deleted it will be used by the model.\n\n"
+                                    "Delete MULT.DAT?"
+                            ):
+                                os.remove(mult_path)
+                            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            elif export_type == "hdf5":
+                output_hdf5 = os.path.join(outdir, "Input.hdf5")
+
+                # Check lock before heavy work
+                if is_file_locked(output_hdf5):
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_error("The file Input.hdf5 is currently open or locked by another process!")
+                    self.uc.log_info("The file Input.hdf5 is currently open or locked by another process!")
+                    return
+
+                export_message = "Datasets exported to\n" + output_hdf5 + "\n\n"
+
+                # Heavy work: set Wait cursor and guarantee restore
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                try:
                     self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
                     self.f2g.set_parser(output_hdf5, get_cell_size=False)
-                    remove = ("export_bridge_coeff_data", "export_wstime", "export_wsurf")
-                    export_calls_filtered = [item for item in export_calls if item not in remove]
+
+                    # Not used by HDF5
+                    remove = {"export_bridge_coeff_data", "export_wstime", "export_wsurf"}
+                    export_calls_filtered = [c for c in export_calls if c not in remove]
+
                     self.export_flo2d_files(output_hdf5, export_calls_filtered, dlg_components, overrides)
+                finally:
+                    QApplication.restoreOverrideCursor()
 
             else:
                 return
 
-            if self.files_used != "":
+            # Common post-export UI
+            if self.files_used:
+                # Ensure we’re not showing the dialog under a wait cursor
                 QApplication.restoreOverrideCursor()
                 info = export_message + self.files_used
                 self.uc.show_info(info)
@@ -3086,6 +3167,7 @@ class Flo2D(object):
             self.uc.bar_info("FLO-2D model exported to " + outdir, dur=3)
             self.uc.log_info("FLO-2D model exported to " + outdir)
 
+            # Final safety restore (harmless if already restored)
             QApplication.restoreOverrideCursor()
 
             if quick_run:
