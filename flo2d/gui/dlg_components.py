@@ -669,7 +669,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.components.append("Tailings")
 
         if self.outrc_chbox.isChecked():
-            self.components.append("OUTrc")
+            self.components.append("Surface Water Rating Tables")
 
         self.accept() # Accept to return both `self.components` and `self.export_overrides` to the caller.
 
