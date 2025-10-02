@@ -523,7 +523,7 @@ class Flo2D(object):
         # )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/gri]d_info_tool.svg"),
+            os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
             text=self.tr("FLO-2D Grid Info Tool"),
             callback=lambda: self.activate_grid_info_tool(),
             parent=self.iface.mainWindow(),
@@ -2969,10 +2969,15 @@ class Flo2D(object):
                     dlg_components.hdf5_rb.setChecked(True)
                     dlg_components.data_rb.setChecked(False)
 
-            # enable “remove files” checkbox if any of these exist
-            files = ["FPLAIN.DAT", "CADPTS.DAT", "NEIGHBORS.DAT"]
+            # Check the presence of fplain cadpts neighbors dat files
+            files = [
+                "FPLAIN.DAT",
+                "CADPTS.DAT",
+                "NEIGHBORS.DAT"
+            ]
             for file in files:
-                if os.path.exists(os.path.join(outdir, file)):
+                file_path = os.path.join(outdir, file)
+                if os.path.exists(file_path):
                     dlg_components.remove_files_chbox.setEnabled(True)
                     break
 
@@ -2992,6 +2997,7 @@ class Flo2D(object):
                 if dlg_components.data_rb.isChecked():
                     export_type = "data"
                     s.setValue("FLO-2D/quickRun", "data")
+
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
             if export_type == "data":
