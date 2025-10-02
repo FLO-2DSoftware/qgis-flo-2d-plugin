@@ -486,21 +486,33 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
 
     def _guard_switch(self, checkbox, ok_predicate, warn_msg: str):
+        """
+        If user tries to check 'checkbox' but 'ok_predicate()' is False,
+        show a warning and revert the check.
+        """
+        # Prevent enabling a switch if required data is missing.
+        # Warn the user and immediately reset the checkbox to unchecked.
         if checkbox.isChecked() and not ok_predicate():
             self.uc.bar_warn(warn_msg)
             self.uc.log_info(warn_msg)
             checkbox.setChecked(False)
 
     def _has(self, table_name: str) -> bool:
+        # Return True if the given database table exists and is not empty.
         return not self.gutils.is_table_empty(table_name)
 
     def _any(self, *tables: str) -> bool:
+        # Return True if at least one of the given tables is non-empty.
         return any(self._has(t) for t in tables)
 
     def _all(self, *tables: str) -> bool:
+        # Return True only if all of the given tables are non-empty.
         return all(self._has(t) for t in tables)
 
     def _wire_switch_guards(self):
+        # Map each checkbox (model switch) to its validation condition and warning message.
+        # If the user enables a switch but the required dataset(s) are missing,
+        # the action is blocked and a warning is displayed.
         mapping = [
             (self.ICHANNEL, lambda: self._has("chan"),
              "No channels data configured!"),
@@ -533,6 +545,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
              "No storm drain data configured!"),
         ]
 
+        # Attach guard logic to each checkbox's click signal.
+        # Uses default arguments in the lambda to bind the right checkbox, predicate, and message.
         for cb, pred, msg in mapping:
             if cb is not None:  # in case some switches are not present in this dialog
                 cb.clicked.connect(lambda _=None, c=cb, p=pred, m=msg: self._guard_switch(c, p, m))
