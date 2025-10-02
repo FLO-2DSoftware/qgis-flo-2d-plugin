@@ -364,6 +364,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     self._pre_check_decision(self.multiple_channels_chbox, False, False)
                 else:
                     if self.gutils.is_table_empty("mult"):
+                        # There are mult or simple channels but 'mult' (globals) is empty: set globals:
                         self.gutils.fill_empty_mult_globals()
                     self._pre_check_decision(self.multiple_channels_chbox, True, True)
             else:
@@ -663,7 +664,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.components.append("LID Volume")
 
         if self.mannings_n_and_Topo_chbox.isChecked():
-            self.components.append("Manning's n and Topography")
+            self.components.append("Manning's n and Topo")
 
         if self.tailings_chbox.isChecked():
             self.components.append("Tailings")
