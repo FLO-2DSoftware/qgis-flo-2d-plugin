@@ -11,7 +11,7 @@
 import os
 
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QPushButton # QMessageBox and QPushButton for interactive dialogs
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -35,6 +35,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.current_lyr = None
         self.components = []
+        self.export_overrides = {} # Holds user decisions for each component's switch state during export
         self.in_or_out = in_or_out
 
         self.components_buttonBox.accepted.connect(self.select_components)
@@ -45,6 +46,93 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.populate_components_dialog()
 
         QApplication.restoreOverrideCursor()
+
+    def _pre_check_decision(self, chb, has_data, switch_on=None, *, default_when_no_switch=True):
+        """
+        Configure a checkbox's state based on data availability and switch settings:
+            - If no data exists (has_data=False): disable the checkbox and uncheck it.
+            - If data exists: enable the checkbox.
+            - If an explicit switch_on value is given: check/uncheck according to it.
+            - If no switch_on is provided: fall back to default_when_no_switch.
+        """
+        if not has_data:
+            chb.setEnabled(False)
+            chb.setChecked(False)
+            return
+        chb.setEnabled(True)
+        if switch_on is None:
+            chb.setChecked(bool(default_when_no_switch))
+        else:
+            chb.setChecked(bool(switch_on))
+
+    def _ask_export_decision(self, title, body):
+        """
+        Show a dialog asking how to handle a component whose CONT.DAT switch is OFF.
+
+        Options presented:
+          - "Switch ON and Export" → return "on_and_export"
+          - "Export but Keep OFF" → return "export_only"
+          - "Cancel" → return "cancel"
+
+        Used in select_components() to decide whether to toggle a switch
+        or just export the file while leaving the switch OFF.
+        """
+        m = QMessageBox(self)
+        m.setIcon(QMessageBox.Question)
+        m.setWindowTitle(title)
+        m.setText(body)
+        btn_on = QPushButton("Switch ON and Export")
+        btn_keep_off = QPushButton("Export but Keep OFF")
+        btn_cancel = QPushButton("Cancel")
+        m.addButton(btn_on, QMessageBox.AcceptRole)
+        m.addButton(btn_keep_off, QMessageBox.DestructiveRole)
+        m.addButton(btn_cancel, QMessageBox.RejectRole)
+        m.setDefaultButton(btn_keep_off)
+        clicked = m.exec_()
+        b = m.clickedButton()
+        if b is btn_on:
+            return "on_and_export"
+        elif b is btn_keep_off:
+            return "export_only"
+        return "cancel"
+
+    def _ask_mudsed_decision(self):
+        """
+        Show a dialog when Mud/Debris/Sediment switches are OFF,
+        asking which physical process to enable.
+        Options:
+          - "Mud/Debris" → return "mud"
+          - "Sediment Transport" → return "sed"
+          - "Two phase" → return "two_phase"
+          - "None (Cancel)" → return "cancel"
+        Called after the user chooses "Switch ON and Export" for
+        the Mud/Sediment component, to specify which mode to activate.
+        """
+        m = QMessageBox(self)
+        m.setIcon(QMessageBox.Question)
+        m.setWindowTitle("Component switch is OFF")
+        m.setText(
+            f"The CONT.DAT switch for <b>Mud/Debris/Sediment</b> is currently <b>OFF</b>."
+            "<br><br>Which physical process do you want to enable?"
+        )
+        btn_mud = QPushButton("Mud/Debris")
+        btn_sed = QPushButton("Sediment Transport")
+        btn_two = QPushButton("Two phase")
+        btn_cancel = QPushButton("None (Cancel)")
+        m.addButton(btn_mud, QMessageBox.AcceptRole)
+        m.addButton(btn_sed, QMessageBox.AcceptRole)
+        m.addButton(btn_two, QMessageBox.AcceptRole)
+        m.addButton(btn_cancel, QMessageBox.RejectRole)
+        m.setDefaultButton(btn_mud)
+        m.exec_()
+        b = m.clickedButton()
+        if b is btn_mud:
+            return "mud"
+        if b is btn_sed:
+            return "sed"
+        if b is btn_two:
+            return "two_phase"
+        return "cancel"
 
     def populate_components_dialog(self):
         s = QSettings()
@@ -243,179 +331,322 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
             self.components_note_lbl.setVisible(show_note)
 
-            if not self.gutils.is_table_empty("chan"):
-                self.channels_chbox.setChecked(True)
-                self.channels_chbox.setEnabled(True)
+            # -- Checkbox pre-check/enable logic -----
+            # `has(t)` → True when table `t` has rows;
+            # `opt(k)` → string value of CONT switch `k`.
+            # We use `_pre_check_decision(chb, has_data, switch_on)` to:
+                # Disable & uncheck when no data exists.
+                # Otherwise enable and set checked state from the CONT switch (or a default for items without a switch).
+            has = lambda t: not self.gutils.is_table_empty(t)   # data presence probe  :contentReference[oaicite:0]{index=0}
+            opt = lambda k: options.get(k, "")                  # read CONT.DAT switch  :contentReference[oaicite:1]{index=1}
 
-            if not self.gutils.is_table_empty("blocked_cells"):
-                self.reduction_factors_chbox.setChecked(True)
-                self.reduction_factors_chbox.setEnabled(True)
+            # Standard components driven directly by a single CONT switch:
+            self._pre_check_decision(self.channels_chbox, has("chan"), opt("ICHANNEL") == "1")
+            self._pre_check_decision(self.evaporation_chbox, has("evapor"), opt("IEVAP") == "1")
+            self._pre_check_decision(self.infiltration_chbox, has("infil"), opt("INFIL") == "1")
+            self._pre_check_decision(self.hydr_struct_chbox, has("struct"), opt("IHYDRSTRUCT") == "1")
+            self._pre_check_decision(self.rain_chbox, has("rain"), opt("IRAIN") == "1")
+            self._pre_check_decision(self.reduction_factors_chbox, has("blocked_cells"), opt("IWRFS") == "1")
+            self._pre_check_decision(self.levees_chbox, has("levee_data"), opt("LEVEE") == "1")
+            self._pre_check_decision(self.streets_chbox, has("streets"), opt("MSTREET") == "1")
+            self._pre_check_decision(self.storm_drain_chbox, has("swmmflo"), opt("SWMM") == "1")
 
-            if not self.gutils.is_table_empty("streets"):
-                self.streets_chbox.setChecked(True)
-                self.streets_chbox.setEnabled(True)
+            # Mud/Sed combined: checkbox is considered "on" if either MUD (1 or 2) or ISED is on.
+            mudsed_has = has("mud") or has("sed")
+            mudsed_on = (opt("ISED") == "1") or (opt("MUD") in ("1", "2"))
+            self._pre_check_decision(self.mud_and_sed_chbox, mudsed_has, mudsed_on)
 
-            if not self.gutils.is_table_empty("outflow_cells"):
-                self.outflow_elements_chbox.setChecked(True)
-                self.outflow_elements_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("inflow") or not self.gutils.is_table_empty("reservoirs") or not self.gutils.is_table_empty("tailing_reservoirs"):
-                self.inflow_elements_chbox.setChecked(True)
-                self.inflow_elements_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("levee_data"):
-                self.levees_chbox.setChecked(True)
-                self.levees_chbox.setEnabled(True)
-
-            # Multiple channels:
-            if options["IMULTC"] == "1":
-                if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info(
-                        "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
-                    )
-                    self.gutils.set_cont_par("IMULTC", 0)
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                else:  # There are Mult or simple channels cells:
+            # Multiple channels needs extra guards: if switch is ON but no mult data, force switch OFF in CONT and uncheck.
+            mult_has = has("mult_cells") or has("simple_mult_cells")
+            if opt("IMULTC") == "1":
+                if not mult_has:
+                    self.gutils.set_cont_par("IMULTC", 0)                                # repair inconsistent state
+                    self._pre_check_decision(self.multiple_channels_chbox, False, False)
+                else:
                     if self.gutils.is_table_empty("mult"):
                         # There are mult or simple channels but 'mult' (globals) is empty: set globals:
                         self.gutils.fill_empty_mult_globals()
-                    self.multiple_channels_chbox.setChecked(True)
-                    self.multiple_channels_chbox.setEnabled(True)
+                    self._pre_check_decision(self.multiple_channels_chbox, True, True)
+            else:
+                self._pre_check_decision(self.multiple_channels_chbox, mult_has, False)
 
-            if not self.gutils.is_table_empty("breach"):
-                qry = "SELECT ilevfail FROM levee_general"
-                row = self.gutils.execute(qry).fetchone()
-                if row[0] == 2:
-                    self.breach_chbox.setChecked(True)
+            # Breach checkbox: enabled/checked only when levee failure mode (ilevfail) == 2 and breach data exists.
+            if has("breach"):
+                row = self.gutils.execute("SELECT ilevfail FROM levee_general").fetchone()
+                if row and row[0] == 2:
                     self.breach_chbox.setEnabled(True)
+                    self.breach_chbox.setChecked(True)
                 else:
-                    self.breach_chbox.setChecked(False)
                     self.breach_chbox.setEnabled(False)
+                    self.breach_chbox.setChecked(False)
+            else:
+                self.breach_chbox.setEnabled(False)
+                self.breach_chbox.setChecked(False)
 
-            if not self.gutils.is_table_empty("gutter_cells"):
-                self.gutters_chbox.setChecked(True)
-                self.gutters_chbox.setEnabled(True)
+            # Items with NO CONT.DAT switch
+            self._pre_check_decision(self.outflow_elements_chbox,
+                has("outflow_cells"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("infil"):
-                self.infiltration_chbox.setChecked(True)
-                self.infiltration_chbox.setEnabled(True)
+            self._pre_check_decision(self.inflow_elements_chbox,
+                has("inflow") or has("reservoirs") or has("tailing_reservoirs"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("fpxsec"):
-                self.floodplain_xs_chbox.setChecked(True)
-                self.floodplain_xs_chbox.setEnabled(True)
+            self._pre_check_decision(self.gutters_chbox,
+                has("gutter_cells"), None, default_when_no_switch=True)
 
-            # Mud and Sediment Transport:
-            ISED = self.gutils.get_cont_par("ISED")
-            MUD = self.gutils.get_cont_par("MUD")
-            if ISED == "1" or MUD in ["1", "2"]:
-                if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
-                    self.mud_and_sed_chbox.setChecked(True)
-                    self.mud_and_sed_chbox.setEnabled(True)
+            self._pre_check_decision(self.floodplain_xs_chbox,
+                has("fpxsec"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("evapor"):
-                self.evaporation_chbox.setChecked(True)
-                self.evaporation_chbox.setEnabled(True)
+            self._pre_check_decision(self.spatial_shallow_n_chbox,
+                has("spatialshallow_cells"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("struct"):
-                self.hydr_struct_chbox.setChecked(True)
-                self.hydr_struct_chbox.setEnabled(True)
+            self._pre_check_decision(self.spatial_tolerance_chbox,
+                has("tolspatial_cells"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("rain"):
-                self.rain_chbox.setChecked(True)
-                self.rain_chbox.setEnabled(True)
+            self._pre_check_decision(self.spatial_froude_chbox,
+                has("fpfroude_cells"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("swmmflo"):
-                self.storm_drain_chbox.setChecked(True)
-                self.storm_drain_chbox.setEnabled(True)
+            self._pre_check_decision(self.spatial_steep_slopen_chbox,
+                has("steep_slope_n_cells"), None, default_when_no_switch=True)
 
-            if  not self.gutils.is_table_empty("spatialshallow_cells"):
-                self.spatial_shallow_n_chbox.setChecked(True)
-                self.spatial_shallow_n_chbox.setEnabled(True)
+            self._pre_check_decision(self.spatial_lid_volume_chbox,
+                has("lid_volume_cells"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("tolspatial_cells"):
-                self.spatial_tolerance_chbox.setChecked(True)
-                self.spatial_tolerance_chbox.setEnabled(True)
+            self._pre_check_decision(self.mannings_n_and_Topo_chbox,
+                has("grid"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("fpfroude_cells"):
-                self.spatial_froude_chbox.setChecked(True)
-                self.spatial_froude_chbox.setEnabled(True)
+            self._pre_check_decision(self.tailings_chbox,
+                has("tailing_cells"), None, default_when_no_switch=True)
 
-            if not self.gutils.is_table_empty("steep_slope_n_cells"):
-                self.spatial_steep_slopen_chbox.setChecked(True)
-                self.spatial_steep_slopen_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("lid_volume_cells"):
-                self.spatial_lid_volume_chbox.setChecked(True)
-                self.spatial_lid_volume_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("grid"):
-                self.mannings_n_and_Topo_chbox.setChecked(True)
-                self.mannings_n_and_Topo_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("tailing_cells"):
-                self.tailings_chbox.setChecked(True)
-                self.tailings_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("outrc"):
-                self.outrc_chbox.setChecked(True)
-                self.outrc_chbox.setEnabled(True)
+            self._pre_check_decision(self.outrc_chbox,
+                has("outrc"), None, default_when_no_switch=True)
 
         else:
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
 
+    # Map UI component labels → CONT.DAT switch key(s).
+    # Use a tuple when a single UI component controls multiple switches
+    _SWITCH_KEYS = {
+        "Channels": "ICHANNEL",
+        "Evaporation": "IEVAP",
+        "Infiltration": "INFIL",
+        "Hydraulic Structures": "IHYDRSTRUCT",
+        "Rain": "IRAIN",
+        "Reduction Factors": "IWRFS",
+        "Levees": "LEVEE",
+        "Streets": "MSTREET",
+        "Storm Drain": "SWMM",
+        "Multiple Channels": "IMULTC",
+        "Mudflow and Sediment Transport": ("MUD", "ISED"),
+    }
+
+    def _has(self, table_name):
+        """
+        Convenience helper: return True if the given table contains any rows.
+        Used to enable/disable and pre-check component checkboxes based on data presence.
+        """
+        return not self.gutils.is_table_empty(table_name)
+
     def select_components(self):
+        """
+        Build the export plan:
+          1) Reset selections and per-switch decisions.
+          2) Read CONT.DAT switches into `options`.
+          3) For each checked component:
+             - Verify data exists (`_has(...)`).
+             - If its CONT switch(es) are OFF, ask the user what to do via `_ask_export_decision`.
+             - Record the decision per switch in `self.export_overrides`:
+                 • "on_and_export" → turn switch ON (handled downstream) and export
+                 • "export_only"   → leave switch OFF and still export files
+                 • "cancel"        → skip the component
+             - Append the component label to `self.components` if proceeding.
+          4) Special case: Mud/Sediment combines two switches (MUD, ISED).
+             - If both OFF and data exists, show a second dialog `_ask_mudsed_decision`
+               to choose the physical process (mud, sediment, or two-phase).
+          5) Accept the dialog to return selections to the caller.
+        """
+        # Fresh start
+        self.components = []
+        self.export_overrides = {} # per-switch decisions for current run
+
+        # Load current CONT.DAT switches into a dict of strings
+        sql = "SELECT name, value FROM cont;"
+        options = {o: (v if v is not None else "0") for o, v in self.gutils.execute(sql).fetchall()}
+
+        # Helper: is a specific CONT switch currently ON?
+        def switch_is_on(k):
+            return options.get(k, "0") == "1"
+
+        # Core helper for most components:
+            # If no data → clear any pending overrides and allow continue (no prompt).
+            # If any linked switch is OFF → prompt user and store their decision.
+            # If all linked switches are ON → mark "on_and_export" automatically.
+        def guard_and_record(comp_label, *, data_has, switch_keys):
+            if not data_has:
+                for k in ((switch_keys,) if isinstance(switch_keys, str) else switch_keys):
+                    self.export_overrides.pop(k, None)
+                return True
+
+            keys = (switch_keys,) if isinstance(switch_keys, str) else tuple(switch_keys)
+
+            any_off = any(not switch_is_on(k) for k in keys)
+
+            if any_off:
+                title = "Component switch is OFF"
+                body = (
+                    f"The CONT.DAT switch for <b>{comp_label}</b> is currently <b>OFF</b>."
+                    "<br><br>How would you like to proceed?"
+                )
+                decision = self._ask_export_decision(title, body)
+
+                if decision == "cancel":
+                    for k in keys:
+                        self.export_overrides.pop(k, None)
+                    return False
+
+                for k in keys:
+                    self.export_overrides[k] = decision
+                return True
+            for k in keys:
+                self.export_overrides[k] = "on_and_export"
+            return True
+
+        # Per-component checks using guard_and_record
         if self.channels_chbox.isChecked():
-            self.components.append("Channels")
+            chan_has = self._has("chan") or self._has("xsec")
+            if guard_and_record("Channels", data_has=chan_has, switch_keys=self._SWITCH_KEYS["Channels"]):
+                self.components.append("Channels")
+
+        if self.evaporation_chbox.isChecked():
+            if guard_and_record("Evaporation", data_has=self._has("evapor"), switch_keys=self._SWITCH_KEYS["Evaporation"]):
+                self.components.append("Evaporation")
+
+        if self.hydr_struct_chbox.isChecked():
+            if guard_and_record("Hydraulic Structures", data_has=self._has("struct"),
+                                switch_keys=self._SWITCH_KEYS["Hydraulic Structures"]):
+                self.components.append("Hydraulic Structures")
+
+        if self.infiltration_chbox.isChecked():
+            if guard_and_record("Infiltration", data_has=self._has("infil"), switch_keys=self._SWITCH_KEYS["Infiltration"]):
+                self.components.append("Infiltration")
+
+        if self.rain_chbox.isChecked():
+            if guard_and_record("Rain", data_has=self._has("rain"), switch_keys=self._SWITCH_KEYS["Rain"]):
+                self.components.append("Rain")
 
         if self.reduction_factors_chbox.isChecked():
-            self.components.append("Reduction Factors")
+            if guard_and_record("Reduction Factors", data_has=self._has("blocked_cells"),
+                                switch_keys=self._SWITCH_KEYS["Reduction Factors"]):
+                self.components.append("Reduction Factors")
+
+        if self.levees_chbox.isChecked():
+            levee_has = self._has("levee_data") or self._has("levee") or self._has("levee_lines")
+            if guard_and_record("Levees", data_has=levee_has, switch_keys=self._SWITCH_KEYS["Levees"]):
+                self.components.append("Levees")
 
         if self.streets_chbox.isChecked():
-            self.components.append("Streets")
+            if guard_and_record("Streets", data_has=self._has("streets"), switch_keys=self._SWITCH_KEYS["Streets"]):
+                self.components.append("Streets")
 
+        if self.storm_drain_chbox.isChecked():
+            sd_has = self._has("swmmflo") or self._has("swmmoutf")
+            if guard_and_record("Storm Drain", data_has=sd_has, switch_keys=self._SWITCH_KEYS["Storm Drain"]):
+                self.components.append("Storm Drain")
+
+        if self.multiple_channels_chbox.isChecked():
+            mult_has = self._has("mult_cells") or self._has("simple_mult_cells")
+            if guard_and_record("Multiple Channels", data_has=mult_has, switch_keys=self._SWITCH_KEYS["Multiple Channels"]):
+                self.components.append("Multiple Channels")
+
+        if self.mud_and_sed_chbox.isChecked():
+            # Data presence
+            mud_has = self._has("mud")
+            sed_has = self._has("sed")
+            has_any = mud_has or sed_has
+
+            keys = self._SWITCH_KEYS["Mudflow and Sediment Transport"]  # ("MUD", "ISED")
+
+            # Read current switch states
+            MUD = options.get("MUD", "0")
+            ISED = options.get("ISED", "0")
+            mud_on = MUD in ("1", "2")          # 1 = Mud/Debris, 2 = Two-phase
+            sed_on = ISED == "1"
+            both_off = (not mud_on) and (not sed_on)
+
+            # No data: nothing to ask; just include component (no overrides)
+            if not has_any:
+                for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                    self.export_overrides.pop(k, None)
+                self.components.append("Mudflow and Sediment Transport")
+
+            else:
+                # If *both* switches are OFF, show the first window (export decision)
+                if both_off:
+                    title = "Component switch is OFF"
+                    body = (
+                        "The CONT.DAT switch for <b>Mud/Debris/Sediment</b> is currently <b>OFF</b>."
+                        "<br><br>How would you like to proceed?"
+                    )
+                    decision = self._ask_export_decision(title, body)
+
+                    if decision == "cancel":
+                        for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                            self.export_overrides.pop(k, None)
+                        # Do not add component
+                    elif decision == "export_only":
+                        # Export only -> do NOT ask for physical process
+                        self.export_overrides["MUD"] = "export_only"
+                        self.export_overrides["ISED"] = "export_only"
+                        self.export_overrides["_MUD_MODE"] = "none"
+                        self.components.append("Mudflow and Sediment Transport")
+                    else:
+                        # decision == "on_and_export": NOW ask which physical process to enable
+                        choice = self._ask_mudsed_decision()
+                        if choice == "cancel":
+                            for k in (keys if isinstance(keys, (list, tuple)) else (keys,)):
+                                self.export_overrides.pop(k, None)
+                            # Do not add component
+                        elif choice == "mud":
+                            self.export_overrides["MUD"] = "on_and_export"
+                            self.export_overrides["ISED"] = "export_only"
+                            self.export_overrides["_MUD_MODE"] = "mud"
+                            self.components.append("Mudflow and Sediment Transport")
+                        elif choice == "sed":
+                            self.export_overrides["ISED"] = "on_and_export"
+                            self.export_overrides["MUD"] = "export_only"
+                            self.export_overrides["_MUD_MODE"] = "sed"
+                            self.components.append("Mudflow and Sediment Transport")
+                        elif choice == "two_phase":
+                            self.export_overrides["MUD"] = "on_and_export"   # 2-phase is encoded in MUD==2 downstream
+                            self.export_overrides["ISED"] = "export_only"
+                            self.export_overrides["_MUD_MODE"] = "two_phase"
+                            self.components.append("Mudflow and Sediment Transport")
+
+                else:
+                    # At least one is already ON -> do not show either dialog; mirror current state
+                    if mud_on:
+                        self.export_overrides["MUD"] = "on_and_export"
+                        self.export_overrides["ISED"] = "export_only"
+                        self.export_overrides["_MUD_MODE"] = "two_phase" if MUD == "2" else "mud"
+                    else:
+                        self.export_overrides["ISED"] = "on_and_export"
+                        self.export_overrides["MUD"] = "export_only"
+                        self.export_overrides["_MUD_MODE"] = "sed"
+                    self.components.append("Mudflow and Sediment Transport")
+
+
+        # Append non-switch items
         if self.outflow_elements_chbox.isChecked():
             self.components.append("Outflow Elements")
 
         if self.inflow_elements_chbox.isChecked():
             self.components.append("Inflow Elements")
 
-        if self.levees_chbox.isChecked():
-            self.components.append("Levees")
-
-        if self.multiple_channels_chbox.isChecked():
-            self.components.append("Multiple Channels")
-
-        if self.breach_chbox.isChecked():
-            self.components.append("Breach")
-
         if self.gutters_chbox.isChecked():
             self.components.append("Gutters")
 
-        if self.infiltration_chbox.isChecked():
-            self.components.append("Infiltration")
-
         if self.floodplain_xs_chbox.isChecked():
             self.components.append("Floodplain Cross Sections")
-
-        if self.mud_and_sed_chbox.isChecked():
-            self.components.append("Mudflow and Sediment Transport")
-
-        if self.evaporation_chbox.isChecked():
-            self.components.append("Evaporation")
-
-        if self.hydr_struct_chbox.isChecked():
-            self.components.append("Hydraulic  Structures")
-
-        if self.mudflo_chbox.isChecked():
-            self.components.append("MODFLO-2D")
-
-        if self.rain_chbox.isChecked():
-            self.components.append("Rain")
-
-        if self.storm_drain_chbox.isChecked():
-            self.components.append("Storm Drain")
 
         if self.spatial_shallow_n_chbox.isChecked():
             self.components.append("Spatial Shallow-n")
@@ -440,6 +671,8 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         if self.outrc_chbox.isChecked():
             self.components.append("Surface Water Rating Tables")
+
+        self.accept() # Accept to return both `self.components` and `self.export_overrides` to the caller.
 
     def unselect_all(self):
         self.check_components(self.select_all_chbox.isChecked())
