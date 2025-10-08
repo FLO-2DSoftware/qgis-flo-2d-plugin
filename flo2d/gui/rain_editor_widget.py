@@ -565,6 +565,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.d1.append(m_fdata(self.rain_data_model, i, 0))
             self.d2.append(m_fdata(self.rain_data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        self.plot.auto_range()
 
     def raster_rain(self):
         if self.gutils.is_table_empty("user_model_boundary"):
