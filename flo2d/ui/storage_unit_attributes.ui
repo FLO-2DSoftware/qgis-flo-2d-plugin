@@ -23,9 +23,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-109</y>
-        <width>390</width>
-        <height>754</height>
+        <y>0</y>
+        <width>401</width>
+        <height>670</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
@@ -399,6 +399,9 @@
              <widget class="QDoubleSpinBox" name="invert_elev">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Invert El.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="minimum">
+               <double>-100000.000000000000000</double>
               </property>
               <property name="maximum">
                <double>100000.000000000000000</double>

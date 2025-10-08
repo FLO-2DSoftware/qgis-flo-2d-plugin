@@ -3676,10 +3676,16 @@ class Flo2D(object):
         Show the selected sd inlet/junctions attributes
         """
         if self.f2d_inlets_junctions_dock:
-            self.iface.removeDockWidget(self.f2d_inlets_junctions_dock)
-            self.f2d_inlets_junctions_dock.close()
-            self.f2d_inlets_junctions_dock.deleteLater()
-            self.f2d_inlets_junctions_dock = None
+            try:
+                # Remove from QGIS interface if still valid
+                self.iface.removeDockWidget(self.f2d_inlets_junctions_dock)
+                self.f2d_inlets_junctions_dock.close()
+                self.f2d_inlets_junctions_dock.deleteLater()
+            except RuntimeError:
+                # If the C++ object was already deleted by QGIS, just ignore
+                pass
+            finally:
+                self.f2d_inlets_junctions_dock = None
 
         name = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Inlet/Junction: " + str(name[0]))
