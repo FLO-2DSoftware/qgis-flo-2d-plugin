@@ -937,7 +937,8 @@
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAINBUILDING&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IRAINBUILDING = 1 indicates that rainfall on an ARF = 1 grid element will be contributed to the surface water runoff for that element.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0,1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Building Rain</string>
+            <string>Building
+Rain</string>
            </property>
           </widget>
          </item>

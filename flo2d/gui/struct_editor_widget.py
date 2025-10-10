@@ -893,7 +893,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                                            col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
                     else:
                         self.plot.add_item(f"{key} - Inflow ({self.system_units[units][2]})", [value['Time'], value['Inflow']],
-                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0], hide=True)
+                                           col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
                     self.plot.add_item(f"{key} - Outflow ({self.system_units[units][2]})", [value['Time'], value['Outflow']],
                                        col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
 
