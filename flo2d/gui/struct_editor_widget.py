@@ -741,6 +741,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.d1.append(m_fdata(self.data_model, i, 0))
             self.d2.append(m_fdata(self.data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        self.plot.auto_range()
 
     def save_data(self):
         data = []
