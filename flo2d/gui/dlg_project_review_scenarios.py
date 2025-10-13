@@ -596,18 +596,19 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             QgsApplication.processEvents()
             if scenario:
                 SWMMOUTFIN = scenario + r"/SWMMOUTFIN.OUT"
-                swmmoutfin_data = self.get_SWMMOUTFIN(SWMMOUTFIN)
-                if os.path.exists(hdf5_file):
-                    read_type = "a"
-                else:
-                    read_type = "w"
-                with h5py.File(hdf5_file, read_type) as hdf:
-                    group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/SWMMOUTFIN")
-                    for key, values in swmmoutfin_data.items():
-                        group.create_dataset(key,
-                                             data=values,
-                                             compression="gzip",
-                                             compression_opts=9)
+                if os.path.exists(SWMMOUTFIN):
+                    swmmoutfin_data = self.get_SWMMOUTFIN(SWMMOUTFIN)
+                    if os.path.exists(hdf5_file):
+                        read_type = "a"
+                    else:
+                        read_type = "w"
+                    with h5py.File(hdf5_file, read_type) as hdf:
+                        group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/SWMMOUTFIN")
+                        for key, values in swmmoutfin_data.items():
+                            group.create_dataset(key,
+                                                 data=values,
+                                                 compression="gzip",
+                                                 compression_opts=9)
         progDialog.close()
 
     def process_swmmrpt(self, scenarios, hdf5_file):
