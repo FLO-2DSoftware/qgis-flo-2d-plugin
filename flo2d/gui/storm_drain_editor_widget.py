@@ -4673,7 +4673,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 headers = ["Time (hours)"]
 
                 try:
-                    # RPT_dict = {}
+                # RPT_dict = {}
                     with h5py.File(processed_results_file, 'r') as hdf:
 
                         # Read the node data for the first Scenario
@@ -4706,8 +4706,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                                 link_data = [list(map(float, row)) for row in link_data]
                                 # Combine time series with node data
-                                for i, row in enumerate(link_data):
-                                    row.insert(0, hours_lst[i])
+                                for hour, row in zip(hours_lst, link_data):
+                                    row.insert(0, hour)
                                     ScenariostimeSeries.append(row)
 
                                 # RPT_dict[f'Scenario {j}'] = ScenariostimeSeries
@@ -4724,12 +4724,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     depthRPT.append(item[3] if not item[3] is None else float("NaN"))
                                     percent_fullRPT.append(item[4] if not item[4] is None else float("NaN"))
 
-                                if j == 1:
-                                    self.plot.add_item(f"S{j} - Flow ({self.system_units[units][2]})", [timeRPT, flowRPT],
-                                                       col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0])
-                                else:
-                                    self.plot.add_item(f"S{j} - Flow ({self.system_units[units][2]})", [timeRPT, flowRPT],
-                                                       col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0], hide=True)
+                                self.plot.add_item(f"S{j} - Flow ({self.system_units[units][2]})", [timeRPT, flowRPT],
+                                                   col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[0])
                                 self.plot.add_item(f"S{j} - Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT],
                                                    col=SCENARIO_COLOURS[j-1], sty=SCENARIO_STYLES[1], hide=True)
                                 self.plot.add_item(f"S{j} - Depth ({self.system_units[units][0]})", [timeRPT, depthRPT],
