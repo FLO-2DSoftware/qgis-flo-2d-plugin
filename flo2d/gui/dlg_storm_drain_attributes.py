@@ -1376,7 +1376,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         if pump_curves:
             for pump_curve in pump_curves:
                 self.pump_curve.addItem(pump_curve[0])
-            self.pump_curve.addItem('Ideal')
+            self.pump_curve.addItem('*')
             self.pump_curve.setCurrentIndex(-1)
 
         self.pump_name.editingFinished.connect(self.save_pumps)
@@ -1424,7 +1424,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         self.pump_inlet.setText(attributes[1])
         self.pump_outlet.setText(attributes[2])
         if not attributes[3] or attributes[3] == '*':
-            self.pump_curve.setCurrentText('Ideal')
+            self.pump_curve.setCurrentText('*')
         else:
             self.pump_curve.setCurrentText(attributes[3])
         self.pump_init_status.setCurrentText(attributes[4])

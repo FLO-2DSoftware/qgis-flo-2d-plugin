@@ -1307,7 +1307,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                 for feat in line_lyr.getFeatures():
                     geom = feat.geometry()
-                    if geom is None:
+                    self.uc.log_info(str(geom))
+                    if geom is None or geom.isEmpty():
                         return
 
                     # Get line start and end points

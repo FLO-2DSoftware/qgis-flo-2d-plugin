@@ -5403,6 +5403,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                     time_series_name = ?;"""
 
             time_series_data_data = swmminp_dict.get('TIMESERIES', [])
+            self.uc.log_info(str(time_series_data_data))
             if len(time_series_data_data) > 0:
                 updated_time_series = 0
                 added_time_series = 0
@@ -5439,10 +5440,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 added_time_series += 1
                                 self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
 
-                        name = time_series[0]
-                        date = time_series[1]
-                        tme = time_series[2]
-                        value = float_or_zero(time_series[3])
+                        if len(time_series) == 4:
+                            name = time_series[0]
+                            date = time_series[1]
+                            tme = time_series[2]
+                            value = float_or_zero(time_series[3])
+                        else:
+                            name = time_series[0]
+                            date = ""
+                            tme = time_series[1]
+                            value = float_or_zero(time_series[2])
 
                         if name in existing_time_series:
                             self.gutils.execute(replace_times_from_data_sql, (date, tme, value, name))
@@ -12948,7 +12955,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 row[0],
                                 "?" if row[1] is None or row[1] == "" else row[1],
                                 "?" if row[2] is None or row[2] == "" else row[2],
-                                "*" if row[3] is None else row[3],
+                                "*" if row[3] in [None,""] else row[3],
                                 "OFF" if row[4] is None else row[4],
                                 0 if row[5] is None else row[5],
                                 0 if row[6] is None else row[6],
