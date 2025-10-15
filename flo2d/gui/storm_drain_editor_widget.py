@@ -791,6 +791,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # if sd_type in ["I", "i", "J"]:
 
             outf_flo = this_user_outlet_node["swmm_allow_discharge"]
+            if outf_flo in ["1", "2"] and grid_fid is None:
+                msg = f"The outfall type for {name} is set to {outf_flo}, but it's outside the grid. It will be set to 0."
+                self.uc.bar_warn(msg)
+                self.uc.log_info(msg)
+                outf_flo = 0
             row = [grid_fid, grid_fid, name, outf_flo]
             outlets.append(row)
 
