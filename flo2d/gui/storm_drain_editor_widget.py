@@ -708,142 +708,161 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         update_rt = "UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;"
         delete_rt = "DELETE FROM swmmflort WHERE fid = ?;"
 
-        # try:
-        if self.gutils.is_table_empty("user_swmm_inlets_junctions") or self.gutils.is_table_empty("user_swmm_outlets"):
-            self.uc.log_info(
-                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outfalls" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            self.uc.show_warn(
-                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outfalls" is empty!'
-            )
-            return False
-
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        inlets = []
-        outlets = []
-        rt_inserts = []
-        rt_updates = []
-        rt_deletes = []
-
-        user_inlets_junctions = self.user_swmm_inlets_junctions_lyr.getFeatures()
-        for this_user_inlet_node in user_inlets_junctions:
-
-            geom = this_user_inlet_node.geometry()
-            if geom is None:
-                QApplication.restoreOverrideCursor()
+        try:
+            if self.gutils.is_table_empty("user_swmm_inlets_junctions") or self.gutils.is_table_empty("user_swmm_outlets"):
                 self.uc.log_info(
-                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
-                    + "Inlet geometry missing.\n\n"
-                    + "Please check user Storm Drain Inlets/Junctions layer."
+                    'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outfalls" is empty!\n\n'
+                    + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
                 )
-                self.uc.show_critical(
-                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
-                    + "Inlet geometry missing.\n\n"
-                    + "Please check user Storm Drain Inlets/Junctions layer."
+                self.uc.show_warn(
+                    'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outfalls" is empty!'
                 )
                 return False
 
-            point = geom.asPoint()
-            grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-            name = this_user_inlet_node["name"]
-            # rt_fid = this_user_node["rt_fid"]
-            # rt_name = this_user_node["rt_name"]
-            sd_type = this_user_inlet_node["name"]
-
-            if sd_type[0].lower() == "i":
-                # Insert inlet:
-                row = [grid_fid, "D", grid_fid, name, name] + [this_user_inlet_node[col] for col in self.inlet_columns]
-                row = [0 if v == NULL else v for v in row]
-                inlets.append(row)
-
-            # elif sd_type == "O":
-            #     outf_flo = this_user_node["swmm_allow_discharge"]
-            #     row = [grid_fid, grid_fid, name, outf_flo]
-            #     outlets.append(row)
-            # else:
-            #     raise ValueError
-
-        user_outlets = self.user_swmm_outlets_lyr.getFeatures()
-        for this_user_outlet_node in user_outlets:
-
-            geom = this_user_outlet_node.geometry()
-            if geom is None:
-                QApplication.restoreOverrideCursor()
-                self.uc.log_info(
-                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
-                    + "Outfall geometry missing.\n\n"
-                    + "Please check user Storm Drain Outfalls layer."
+            # Check for two inlets sharing the same grid on user_swmm_inlets_junctions and user_swmm_outlets.
+            duplicated_features = self.gutils.execute(
+                """
+                    SELECT grid
+                    FROM (
+                        SELECT grid FROM user_swmm_inlets_junctions WHERE grid <> -9999
+                        UNION ALL
+                        SELECT grid FROM user_swmm_outlets          WHERE grid <> -9999
+                    )
+                    GROUP BY grid
+                    HAVING COUNT(*) >= 2
+                    ORDER BY grid;
+                """
+            ).fetchall()
+            if duplicated_features:
+                grids = [str(item[0]) for item in duplicated_features]
+                grids_str = " ".join(grids)
+                self.uc.bar_error("Some grid elements have more than one inlet or outfall! Check log messages for more information.")
+                msg = (
+                    "The following grid elements have more than one inlet or outfall:\n\n"
+                    + grids_str
+                    + "\n\nPlease correct the grid assignment on the user Storm Drain Inlets/Junctions and Storm Drain Outfalls layers."
                 )
-                self.uc.show_critical(
-                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
-                    + "Outfall geometry missing.\n\n"
-                    + "Please check user Storm Drain Outfalls layer."
-                )
-                return False
-
-            point = geom.asPoint()
-            grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-            name = this_user_outlet_node["name"]
-            # rt_fid = this_user_node["rt_fid"]
-            # rt_name = this_user_node["rt_name"]
-            # if sd_type in ["I", "i", "J"]:
-
-            outf_flo = this_user_outlet_node["swmm_allow_discharge"]
-            if outf_flo in ["1", "2"] and grid_fid is None:
-                msg = f"The outfall type for {name} is set to {outf_flo}, but it's outside the grid. It will be set to 0."
-                self.uc.bar_warn(msg)
                 self.uc.log_info(msg)
-                outf_flo = 0
-            row = [grid_fid, grid_fid, name, outf_flo]
-            outlets.append(row)
+                return False
 
-        msg1, msg2 = "", ""
-        # if inlets or outlets or rt_updates:
-        cur = self.con.cursor()
-        if inlets:
-            self.gutils.clear_tables("swmmflo")
-            cur.executemany(insert_inlet, inlets)
-        else:
-            msg1 = "No inlets were schematized!\n"
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        if outlets:
-            self.gutils.clear_tables("swmmoutf")
-            cur.executemany(insert_outlet, outlets)
-        else:
-            msg2 = "No outlets were schematized!\n"
+            inlets = []
+            outlets = []
+            rt_inserts = []
+            rt_updates = []
+            rt_deletes = []
 
-        self.con.commit()
-        self.repaint_schema()
+            user_inlets_junctions = self.user_swmm_inlets_junctions_lyr.getFeatures()
+            for this_user_inlet_node in user_inlets_junctions:
 
-        QApplication.restoreOverrideCursor()
-        msg = msg1 + msg2
-        if msg != "":
-            self.uc.show_info(
-                "WARNING 040121.1911: Schematizing Inlets and Outfalls Storm Drains result:\n\n"
-                + msg
-            )
+                geom = this_user_inlet_node.geometry()
+                if geom is None:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.log_info(
+                        "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                        + "Inlet geometry missing.\n\n"
+                        + "Please check user Storm Drain Inlets/Junctions layer."
+                    )
+                    self.uc.show_critical(
+                        "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                        + "Inlet geometry missing.\n\n"
+                        + "Please check user Storm Drain Inlets/Junctions layer."
+                    )
+                    return False
 
-        if msg1 == "" or msg2 == "":
-            return True
-        else:
+                point = geom.asPoint()
+                grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                name = this_user_inlet_node["name"]
+                # rt_fid = this_user_node["rt_fid"]
+                # rt_name = this_user_node["rt_name"]
+                sd_type = this_user_inlet_node["name"]
+
+                if sd_type[0].lower() == "i":
+                    # Insert inlet:
+                    row = [grid_fid, "D", grid_fid, name, name] + [this_user_inlet_node[col] for col in self.inlet_columns]
+                    row = [0 if v == NULL else v for v in row]
+                    inlets.append(row)
+
+                # elif sd_type == "O":
+                #     outf_flo = this_user_node["swmm_allow_discharge"]
+                #     row = [grid_fid, grid_fid, name, outf_flo]
+                #     outlets.append(row)
+                # else:
+                #     raise ValueError
+
+            user_outlets = self.user_swmm_outlets_lyr.getFeatures()
+            for this_user_outlet_node in user_outlets:
+
+                geom = this_user_outlet_node.geometry()
+                if geom is None:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.log_info(
+                        "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                        + "Outfall geometry missing.\n\n"
+                        + "Please check user Storm Drain Outfalls layer."
+                    )
+                    self.uc.show_critical(
+                        "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                        + "Outfall geometry missing.\n\n"
+                        + "Please check user Storm Drain Outfalls layer."
+                    )
+                    return False
+
+                point = geom.asPoint()
+                grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                name = this_user_outlet_node["name"]
+                # rt_fid = this_user_node["rt_fid"]
+                # rt_name = this_user_node["rt_name"]
+                # if sd_type in ["I", "i", "J"]:
+
+                outf_flo = this_user_outlet_node["swmm_allow_discharge"]
+                if outf_flo in ["1", "2"] and grid_fid is None:
+                    msg = f"The outfall type for {name} is set to {outf_flo}, but it's outside the grid. It will be set to 0."
+                    self.uc.bar_warn(msg)
+                    self.uc.log_info(msg)
+                    outf_flo = 0
+                row = [grid_fid, grid_fid, name, outf_flo]
+                outlets.append(row)
+
+            msg1, msg2 = "", ""
+            # if inlets or outlets or rt_updates:
+            cur = self.con.cursor()
+            if inlets:
+                self.gutils.clear_tables("swmmflo")
+                cur.executemany(insert_inlet, inlets)
+            else:
+                msg1 = "No inlets were schematized!\n"
+
+            if outlets:
+                self.gutils.clear_tables("swmmoutf")
+                cur.executemany(insert_outlet, outlets)
+            else:
+                msg2 = "No outlets were schematized!\n"
+
+            self.con.commit()
+            self.repaint_schema()
+
+            QApplication.restoreOverrideCursor()
+            msg = msg1 + msg2
+            if msg != "":
+                self.uc.show_info(
+                    "WARNING 040121.1911: Schematizing Inlets and Outfalls Storm Drains result:\n\n"
+                    + msg
+                )
+
+            if msg1 == "" or msg2 == "":
+                return True
+            else:
+                return False
+
+
+        except Exception as e:
+            self.uc.log_info(f"Error while schematizing Inlets, Outfalls or Rating Tables!\n\n{e}")
+            self.uc.bar_error("Error while schematizing Inlets, Outfalls or Rating Tables!")
             return False
-
-        # else:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_info("ERROR 040121.1912: Schematizing Inlets and Outfalls Storm Drains failed!")
-        #     return False
-
-        # except Exception as e:
-        #     self.uc.log_info(traceback.format_exc())
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error(
-        #         "ERROR 301118..0541: Schematizing Inlets, Outfalls or Rating Tables failed!."
-        #         + "\n__________________________________________________",
-        #         e,
-        #     )
-        #     return False
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def schematize_conduits(self):
         try:
