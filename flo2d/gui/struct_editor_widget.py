@@ -256,8 +256,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         Function to schematize the Hydraulic Structures
         """
         if not self.gutils.execute("SELECT * FROM user_struct;").fetchone():
-            self.uc.bar_info("WARNING 040220.0728: there are no user structures to schematize!")
-            self.uc.log_info("WARNING 040220.0728: there are no user structures to schematize!")
+            self.uc.bar_warn("There are no user structures to schematize!")
+            self.uc.log_info("There are no user structures to schematize!")
             return
 
         qry = "SELECT * FROM struct WHERE geom IS NOT NULL;"
@@ -294,25 +294,38 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                         );"""
             self.gutils.execute(upd_stormdrains_qry)
 
-            qry = "SELECT fid, inflonod, outflonod FROM struct;"
+            qry = "SELECT fid, inflonod, outflonod, icurvtable FROM struct;"
             structs = self.gutils.execute(qry).fetchall()
 
+            # Validate all structs first
+            batch_updates = []
             for struct in structs:
-                fid, inflo, outflo = struct
+                fid, inflo, outflo, icurvtable = struct
+
+                if icurvtable == 2:  # Culvert equation
+                    culvert_equation_data = self.gutils.execute(
+                        "SELECT typec, typeen, culvertn, ke, cubase FROM culvert_equations WHERE struct_fid = ?;",
+                        (fid,)
+                    ).fetchone()
+                    if not culvert_equation_data or all((v is None or v == 0) for v in culvert_equation_data):
+                        self.uc.bar_error(
+                            f"Schematizing Hydraulic Structures failed! Missing data for Culvert Equation on structure with fid {fid}."
+                        )
+                        self.uc.log_info(
+                            f"Schematizing Hydraulic Structures failed! Missing data for Culvert Equation on structure with fid {fid}."
+                        )
+                        return  # Abort all updates
+
                 geom = self.gutils.build_linestring([inflo, outflo])
-                upd_geom_qry = """UPDATE struct SET geom = ? WHERE fid = ?;"""
-                self.gutils.execute(
-                    upd_geom_qry,
-                    (
-                        geom,
-                        fid,
-                    ),
-                )
+                batch_updates.append((geom, fid))
+
+            # If validation passed, perform batch update
+            upd_geom_qry = "UPDATE struct SET geom = ? WHERE fid = ?;"
+            self.gutils.execute_many(upd_geom_qry, batch_updates)
 
             self.lyrs.lyrs_to_repaint = [self.lyrs.data["struct"]["qlyr"]]
             self.lyrs.repaint_layers()
 
-            QApplication.restoreOverrideCursor()
             if structs:
 
                 # Set Structures on the Control Parameters
@@ -339,6 +352,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.bar_error("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
             self.uc.log_info("WARNING 151203.0646: Error during Hydraulic Structures schematization!.")
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def check_structures(self):
         """
