@@ -148,7 +148,10 @@ class InfiltrationCalculator(object):
     def setup_scs_raster(self, raster_lyr, algorithm, nodatavalue, fillnodata, multithread):
         self.raster_lyr = raster_lyr
         self.algorithm = algorithm
-        self.nodatavalue = nodatavalue
+        if nodatavalue in [None, ""]:
+            self.nodatavalue = self.gutils.execute("SELECT scsnall FROM infil").fetchone()[0]
+        else:
+            self.nodatavalue = nodatavalue
         self.fillnodata = fillnodata
         self.multithread = multithread
 
@@ -455,7 +458,7 @@ class InfiltrationCalculator(object):
             "-te {}".format(" ".join([str(c) for c in self.output_bounds])),
             '-te_srs "{}"'.format(self.out_srs),
             # "-ovr {}".format(self.ovrCbo.itemData(self.ovrCbo.currentIndex())),
-            "-dstnodata {}".format(self.src_nodata),
+            "-dstnodata {}".format(self.nodatavalue),
             "-r {}".format(self.algorithm),
             "-co COMPRESS=LZW",
             "-wo OPTIMIZE_SIZE=TRUE",
@@ -489,10 +492,9 @@ class InfiltrationCalculator(object):
 
         grid_params = {}
         for cn, gid in sampler:
-            try:
-                grid_params[gid] = {"scsn": int(round(cn, 0))}
-            except ValueError as e:
-                raise ValueError("Calculation failed for grid cell with fid: {}".format(gid))
+            if cn is None:
+                cn = self.gutils.execute("SELECT scsnall FROM infil").fetchone()[0]
+            grid_params[gid] = {"scsn": int(round(cn, 0))}
 
         os.remove(temp_file_path)
 
