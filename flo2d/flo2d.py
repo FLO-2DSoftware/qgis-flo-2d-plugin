@@ -3391,6 +3391,7 @@ class Flo2D(object):
         dlg = ImportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
         if not ok:
+            self.schematic2user(True)
             return
         else:
             pass
