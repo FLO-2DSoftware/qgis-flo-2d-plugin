@@ -619,16 +619,15 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             cur.executemany(qry, values)
             self.con.commit()
             self.gutils.enable_geom_triggers()
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Calculating SCS Curve Number parameters finished!")
+            self.uc.bar_info("Calculating SCS Curve Number parameters finished!")
+            self.uc.log_info("Calculating SCS Curve Number parameters finished!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            QApplication.restoreOverrideCursor()
             self.uc.show_warn(
                 "WARNING 060319.1724: Calculating SCS Curve Number parameters failed! Please check data in your input layers."
             )
-
         finally:
+            QApplication.restoreOverrideCursor()
             self.gutils.enable_geom_triggers()
 
 
