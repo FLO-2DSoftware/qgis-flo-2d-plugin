@@ -407,7 +407,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.lyrs.zoom_to_all()
         self.uc.log_info("Import of Multiple Domains finished successfully")
         self.uc.bar_info("Import of Multiple Domains finished successfully")
-        self.close_dlg()
 
     def import_subdomains_mannings_n_topo_dat(self, subdomain, common_coords, subdomain_n):
         """
