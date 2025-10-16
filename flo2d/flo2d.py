@@ -3390,7 +3390,6 @@ class Flo2D(object):
         """
         dlg = ImportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
-        self.uc.log_info(str(ok))
         if ok:
             dlg.import_global_domain()
             self.schematic2user(True)
@@ -4520,10 +4519,9 @@ class Flo2D(object):
         self.uc.bar_info("Converting Schematic Layers to User Layers finished!")
         self.uc.log_info("Converting Schematic Layers to User Layers finished for:\n\n" + msg)
 
-        # if 6 in methods_numbers:  # Storm Drains:
-        #     self.uc.show_info(
-        #         "To complete the Storm Drain functionality, select 'Import from .INP' from the 'FLO-2D' toolbar."
-        #     )
+        self.lyrs.refresh_layers()
+        self.lyrs.zoom_to_all()
+
 
     @connection_required
     def user2schematic(self):

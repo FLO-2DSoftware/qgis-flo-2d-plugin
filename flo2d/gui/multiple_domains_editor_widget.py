@@ -501,6 +501,23 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         import pandas as pd
         from collections import defaultdict
 
+        def h5_coord_reader(h5_path, dset="/Input/Grid/COORDINATES", chunksize=10000):
+            """
+            Yield pandas DataFrames with columns ['x','y'] from HDF5 in chunks.
+            Keeps the rest of the code unchanged.
+            """
+            import h5py
+            with h5py.File(h5_path, "r") as hdf:
+                coords = hdf[dset]  # expected shape (N, 2)
+                n = coords.shape[0]
+                for start in range(0, n, chunksize):
+                    end = min(start + chunksize, n)
+                    chunk = coords[start:end]  # (m, 2)
+                    # Build a DataFrame that looks like your CSV chunks
+                    yield pd.DataFrame(
+                        {"x": chunk[:, 0].astype(float), "y": chunk[:, 1].astype(float)}
+                    )
+
         coords_count = defaultdict(int)  # Dictionary to count occurrences of each coordinate
 
         for path in project_paths:
@@ -508,7 +525,11 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                 # Read the file in chunks to manage memory usage
                 chunksize = 10000  # Adjust based on your memory availability
 
-                if os.path.isfile(os.path.join(path, "TOPO.DAT")):
+                if os.path.isfile(os.path.join(path, "Input.hdf5")):
+                    reader = h5_coord_reader(os.path.join(path, "Input.hdf5"),
+                                             dset="/Input/Grid/COORDINATES",
+                                             chunksize=chunksize)
+                elif os.path.isfile(os.path.join(path, "TOPO.DAT")):
                     reader = pd.read_csv(os.path.join(path, "TOPO.DAT"),
                                          delim_whitespace=True,
                                          header=None,
@@ -522,9 +543,9 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                                          chunksize=chunksize)
                 else:
                     self.uc.bar_error(
-                        "No TOPO.DAT or CADPTS.DAT found in the project directory.")
+                        "No Input.hdf5, TOPO.DAT or CADPTS.DAT found in the project directory.")
                     self.uc.log_info(
-                        "No TOPO.DAT or CADPTS.DAT found in the project directory.")
+                        "No Input.hdf5, TOPO.DAT or CADPTS.DAT found in the project directory.")
                     return
 
                 seen_in_this_file = set()
