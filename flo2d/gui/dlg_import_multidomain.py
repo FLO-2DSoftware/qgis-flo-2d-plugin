@@ -100,15 +100,11 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             button.clicked.connect(lambda _, le=line_edit, i=index: self.select_subdomain_folder(le, i))
 
         # Connect cancel, add, remove, and OK buttons
-        self.cancel_btn.clicked.connect(self.close_dlg)
         self.add_subdomain_btn.clicked.connect(self.add_subdomain)
         self.remove_subdomain_btn.clicked.connect(self.remove_subdomain)
 
         # Manage domain connectivity
         self.connect_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
-
-        # Trigger global domain import
-        self.ok_btn.clicked.connect(self.import_global_domain)
 
     def add_subdomain(self):
         """
@@ -362,12 +358,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         self.uc.log_info(f"Subdomain {domain_n} data saved to geopackage.")
         self.uc.bar_info(f"Subdomain {domain_n} data saved to geopackage.")
-
-    def close_dlg(self):
-        """
-        Closes the dialog.
-        """
-        self.close()
 
     def import_global_domain(self):
         """

@@ -3390,11 +3390,12 @@ class Flo2D(object):
         """
         dlg = ImportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
-        if not ok:
+        self.uc.log_info(str(ok))
+        if ok:
+            dlg.import_global_domain()
             self.schematic2user(True)
-            return
         else:
-            pass
+            dlg.close()
 
     @connection_required
     def export_multidomains(self):
