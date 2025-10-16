@@ -3,6 +3,8 @@ import os.path
 import time
 from itertools import combinations
 
+import h5py
+import numpy as np
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog
 from qgis.PyQt.QtCore import NULL
@@ -218,6 +220,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         domain_le.setText(domain_dir)
 
         files = os.listdir(domain_dir)
+        hdf_file = any(f.startswith("Input.hdf5") for f in files)
         multdomain_dat = any(f.startswith("MULTIDOMAIN.DAT") for f in files)
         cadpts_ds = any(f.startswith("CADPTS_DS") for f in files)
 
@@ -228,15 +231,61 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 VALUES ('{subdomain_name}', '{domain_dir}');"""
         self.gutils.execute(qry)
 
-        # Project has MULTIDOMAIN.DAT
-        if multdomain_dat:
-            # Add a line to the method
-            qry_method = f"""INSERT INTO mult_domains_con (subdomain_name) VALUES ('{subdomain_name}');"""
-            self.gutils.execute(qry_method)
+        # Add a line to the method
+        qry_method = f"""INSERT INTO mult_domains_con (subdomain_name) VALUES ('{subdomain_name}');"""
+        self.gutils.execute(qry_method)
 
-            # Get the recent added fid
-            qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
-            method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
+        # Get the recent added fid
+        qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
+        method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
+
+        # Project has MULTIDOMAIN.DAT
+        if hdf_file:
+
+            n_subdomains = []
+
+            hdf5_file = os.path.join(domain_dir, "Input.hdf5")
+
+            # Read the HDF5 dataset
+            with h5py.File(hdf5_file, "r") as hdf:
+                try:
+                    arr = hdf["/Input/Multiple Domains/MULTIDOMAIN"][()]  # shape (N, 3), ints
+                    if arr.ndim != 2 or arr.shape[1] < 1:
+                        raise ValueError("MULTIDOMAIN must be a 2D array with at least 1 column")
+                    cs = np.asarray(arr[:, 0])  # connected_subdomain column as 1D
+                except:
+                    cs = None
+
+            # Mirror the ASCII logic: every time subdomain id changes, that is a new block
+            if cs is not None and cs.size > 0:
+                i = 1
+                prev = None
+                for sub in cs:
+                    if prev is None:
+                        n_subdomains.append(i)
+                        i += 1
+                        prev = sub
+                    elif sub != prev:
+                        n_subdomains.append(i)
+                        i += 1
+                        prev = sub
+
+                for idx in n_subdomains:
+                    qry_method = f"""
+                        UPDATE mult_domains_con 
+                        SET mult_domains_{idx} = 1
+                        WHERE fid = {method_fid};
+                    """
+                    self.gutils.execute(qry_method)
+
+            qry = f"""
+                UPDATE mult_domains_methods 
+                SET fid_method = {method_fid}
+                WHERE subdomain_name = '{subdomain_name}';
+            """
+            self.gutils.execute(qry)
+
+        elif multdomain_dat:
 
             n_subdomains = []
 
@@ -284,14 +333,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # CADPTS_DS and Ups-Dows-Connectivity_D always have the same size
             n_connected_subdomains = len(cadpts_files)
 
-            # Add a line to the method
-            qry_method = f"""INSERT INTO mult_domains_con (subdomain_name) VALUES ('{subdomain_name}');"""
-            self.gutils.execute(qry_method)
-
-            # Get the recent added fid
-            qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
-            method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
-
             for i in range(1, n_connected_subdomains + 1):
                 qry_method = f"""
                                    UPDATE mult_domains_con 
@@ -310,13 +351,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         # No connection file
         else:
-            # Add a line to the method
-            qry_method = f"""INSERT INTO mult_domains_con (subdomain_name) VALUES ('{subdomain_name}');"""
-            self.gutils.execute(qry_method)
-
-            # Get the recent added fid
-            qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
-            method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
 
             # Insert into mult_domains_methods
             qry = f"""
