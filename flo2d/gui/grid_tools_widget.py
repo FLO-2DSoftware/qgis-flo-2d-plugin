@@ -228,7 +228,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
             ini_time = time.time()
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
 
             upper_left_coords_override = None
@@ -338,7 +337,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if grid_lyr:
                 grid_lyr.triggerRepaint()
             self.uc.clear_bar_messages()
-            QApplication.restoreOverrideCursor()
 
             n_cells = number_of_elements(self.gutils, grid_lyr)
             cell_size = self.gutils.get_cont_par("CELLSIZE")
@@ -347,8 +345,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             fin_time = time.time()
             duration = time_taken(ini_time, fin_time)
 
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info(
+            grid_summary = (
                 "Grid created.\n\nCell size:  "
                 + cell_size
                 + units
@@ -358,15 +355,16 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 + duration
                 + ")"
             )
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(grid_summary)
+            self.uc.show_info(grid_summary)
 
         except Exception as e:
-            self.uc.log_info(traceback.format_exc())
+            msg = "Creating grid aborted! Please check Computational Domain layer, cell size, and optional parameters."
+            self.uc.log_info(msg)
+            self.uc.bar_error(msg)
+        finally:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error(
-                "WARNING 060319.1709: Creating grid aborted!\n\n"
-                + "Please check Computational Domain layer and cell size.",
-                e,
-            )
 
     def raster_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):
