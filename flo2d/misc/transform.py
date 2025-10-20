@@ -148,12 +148,20 @@ def xy(transform, rows, cols, offset="center"):
 
     single_col = False
     single_row = False
-    if not isinstance(cols, collections.Iterable):
-        cols = [cols]
-        single_col = True
-    if not isinstance(rows, collections.Iterable):
-        rows = [rows]
-        single_row = True
+    try:
+        if not isinstance(cols, collections.Iterable):
+            cols = [cols]
+            single_col = True
+        if not isinstance(rows, collections.Iterable):
+            rows = [rows]
+            single_row = True
+    except:
+        if not isinstance(cols, collections.abc.Iterable):
+            cols = [cols]
+            single_col = True
+        if not isinstance(rows, collections.abc.Iterable):
+            rows = [rows]
+            single_row = True
 
     if offset == "center":
         coff, roff = (0.5, 0.5)
@@ -213,12 +221,20 @@ def rowcol(transform, xs, ys, op=math.floor, precision=None):
 
     single_x = False
     single_y = False
-    if not isinstance(xs, collections.Iterable):
-        xs = [xs]
-        single_x = True
-    if not isinstance(ys, collections.Iterable):
-        ys = [ys]
-        single_y = True
+    try:
+        if not isinstance(xs, collections.Iterable):
+            xs = [xs]
+            single_x = True
+        if not isinstance(ys, collections.Iterable):
+            ys = [ys]
+            single_y = True
+    except:
+        if not isinstance(xs, collections.abc.Iterable):
+            xs = [xs]
+            single_x = True
+        if not isinstance(ys, collections.abc.Iterable):
+            ys = [ys]
+            single_y = True
 
     if precision is None:
         eps = 0.0
