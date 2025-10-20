@@ -9,10 +9,12 @@ from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog
 from qgis.PyQt.QtCore import NULL
 
+from .dlg_components import ComponentsDialog
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
 from .multiple_domains_editor_widget import MultipleDomainsEditorWidget
 from .ui_utils import load_ui
 from ..flo2d_ie.flo2d_parser import ParseDAT
+from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -41,6 +43,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
 
         # Initialize attributes
+        self.f2g = None
         self.iface = iface
         self.con = con
         self.lyrs = lyrs
@@ -381,6 +384,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             if subdomain_path:
                 start_time = time.time()
                 self.import_subdomains_mannings_n_topo(subdomain_path, common_coords, current_progress)
+                self.import_md(subdomain_path)
                 time_elapsed = self.calculate_time_elapsed(start_time)
                 self.uc.log_info(f"Time Elapsed to import Subdomain {current_progress}: {time_elapsed}")
 
@@ -695,4 +699,189 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             self.uc.log_info("Failed to import global domain data. Please check the input files!\n" + str(e))
         finally:
             QApplication.restoreOverrideCursor()
+
+    def import_md(self, subdomain_path):
+        """Function to import multiple domains into one global domain"""
+
+        hdf5_file = f"{subdomain_path}/Input.hdf5"
+
+        if os.path.isfile(hdf5_file):
+            self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        else:
+            self.f2g = Flo2dGeoPackage(self.con, self.iface)
+
+        import_calls = [
+            "import_cont_toler",
+            "import_inflow",
+            "import_tailings",
+            # "import_outrc",  Add back when the OUTRC process is completed
+            "import_outflow",
+            "import_rain",
+            "import_raincell",
+            "import_raincellraw",
+            "import_evapor",
+            "import_infil",
+            "import_chan",
+            "import_xsec",
+            "import_hystruc",
+            "import_hystruc_bridge_xs",
+            "import_street",
+            "import_arf",
+            "import_mult",
+            "import_sed",
+            "import_levee",
+            "import_fpxsec",
+            "import_breach",
+            "import_gutter",
+            "import_fpfroude",
+            "import_steep_slopen",
+            "import_lid_volume",
+            "import_shallowNSpatial",
+            "import_swmminp",
+            "import_swmmflo",
+            "import_swmmflort",
+            "import_swmmoutf",
+            "import_swmmflodropbox",
+            "import_sdclogging",
+            "import_tolspatial",
+            "import_wsurf",
+            "import_wstime",
+        ]
+
+        # empty = self.f2g.is_table_empty("grid")
+        # # check if a grid exists in the grid table
+        # if not empty:
+        #     q = "There is a grid already defined in GeoPackage. Overwrite it?"
+        #     if self.uc.question(q):
+        #         pass
+        #     else:
+        #         self.uc.bar_info("Import cancelled!", dur=3)
+        #         self.uc.log_info("Import cancelled!")
+        #         return
+        #
+        # # Check if TOLER.DAT exist:
+        # if not os.path.isfile(subdomain_path + r"\TOLER.DAT") or os.path.getsize(subdomain_path + r"\TOLER.DAT") == 0:
+        #     self.uc.bar_error("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+        #     self.uc.log_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+        #     self.gutils.enable_geom_triggers()
+        #     return
+
+        self.f2g.clear_gpkg_tables(md=True)
+
+        if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
+            self.call_IO_methods_dat(import_calls, True)
+        elif self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
+            self.call_IO_methods_hdf5(import_calls, True)
+
+    def call_IO_methods_hdf5(self, calls, debug, *args):
+
+        self.uc.log_info("Entrou hdf5")
+        # self.f2g.parser.write_mode = "w"
+        #
+        # progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
+        # progDialog.setModal(True)
+        # progDialog.setValue(0)
+        # progDialog.show()
+        # i = 0
+        #
+        # for call in calls:
+        #
+        #     i += 1
+        #     progDialog.setValue(i)
+        #     progDialog.setLabelText(call)
+        #     QApplication.processEvents()
+        #
+        #     method = getattr(self.f2g, call)
+        #     try:
+        #         method(*args)
+        #         self.f2g.parser.write_mode = "a"
+        #     except Exception as e:
+        #         if debug is True:
+        #             self.uc.log_info(traceback.format_exc())
+        #         else:
+        #             raise
+        #
+        # self.f2g.parser.write_mode = "w"
+        # self.files_used = self.f2g.parser.list_input_subfolders()
+
+    def call_IO_methods_dat(self, calls, debug, *args):
+
+        self.files_used = ""
+        self.files_not_used = ""
+
+        # progDialog = QProgressDialog("Exporting to DATA...", None, 0, len(calls))
+        # progDialog.setModal(True)
+        # progDialog.setValue(0)
+        # progDialog.show()
+        # i = 0
+        #
+        # # QApplication.setOverrideCursor(Qt.WaitCursor)
+        for call in calls:
+
+            # i += 1
+            # progDialog.setValue(i)
+            # progDialog.setLabelText(call)
+            # QApplication.processEvents()
+
+            # if call == "import_hystruc_bridge_xs":
+            #     dat = "BRIDGE_XSEC.DAT"
+            # elif call == "import_swmminp":
+            #     dat = "SWMM.INP"
+            # elif call == 'import_steep_slopen':
+            #     dat = "STEEP_SLOPEN.DAT"
+            # elif call == 'import_lid_volume':
+            #     dat = "LID_VOLUME.DAT"
+            # elif call == 'import_shallowNSpatial':
+            #     dat = "SHALLOWN_SPATIAL.DAT"
+            # elif call == "import_tailings":
+            #     if self.f2g.parser.dat_files["TAILINGS.DAT"] is not None:
+            #         dat = "TAILINGS.DAT"
+            #     if self.f2g.parser.dat_files["TAILINGS_CV.DAT"] is not None:
+            #         dat = "TAILINGS_CV.DAT"
+            #     if self.f2g.parser.dat_files["TAILINGS_STACK_DEPTH.DAT"] is not None:
+            #         dat = "TAILINGS_STACK_DEPTH.DAT"
+            # else:
+            #     dat = call.split("_")[-1].upper() + ".DAT"
+            # if call.startswith("import"):
+            #     if self.f2g.parser.dat_files[dat] is None:
+            #         if dat == "MULT.DAT":
+            #             if self.f2g.parser.dat_files["SIMPLE_MULT.DAT"] is None:
+            #                 self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
+            #                 self.files_not_used += dat + "\n"
+            #                 continue
+            #             else:
+            #                 self.files_used += "SIMPLE_MULT.DAT\n"
+            #                 pass
+            #         else:
+            #             self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
+            #             if dat not in ["WSURF.DAT", "WSTIME.DAT"]:
+            #                 self.files_not_used += dat + "\n"
+            #             continue
+            #     else:
+            #         if dat == "MULT.DAT":
+            #             self.files_used += dat + " and/or SIMPLE_MULT.DAT" + "\n"
+            #             pass
+            #         # elif os.path.getsize(os.path.join(last_dir, dat)) > 0:
+            #         #     self.files_used += dat + "\n"
+            #         #     if dat == "CHAN.DAT":
+            #         #         self.files_used += "CHANBANK.DAT" + "\n"
+            #         #     pass
+            #         else:
+            #             self.files_not_used += dat + "\n"
+            #             continue
+
+            # try:
+            start_time = time.time()
+
+            method = getattr(self.f2g, call)
+
+            self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
+
+            # except Exception as e:
+            #     if debug is True:
+            #         self.uc.log_info(traceback.format_exc())
+            #     else:
+            #         raise
+
+        # QApplication.restoreOverrideCursor()
 
