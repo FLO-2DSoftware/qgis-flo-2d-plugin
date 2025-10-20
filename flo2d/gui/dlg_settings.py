@@ -301,13 +301,24 @@ class SettingsDialog(qtBaseClass, uiDialog):
             auth, crsid = self.crs.authid().split(":")
             self.proj_lab.setText(self.crs.description())
 
-            map_units = QgsUnitTypes.toString(self.crs.mapUnits())
+            map_units = QgsUnitTypes.toString(self.crs.mapUnits()).lower()
 
-            if "meters" in map_units:
+            metric_keywords = {
+                "meter", "meters", "metre", "metres", "metro", "metros",  # EN, ES, PT
+                "mètre", "mètres",  # FR
+                "metro", "metri"  # IT
+            }
+            imperial_keywords = {
+                "foot", "feet", "pie", "pies", "pé", "pés",  # EN, ES, PT
+                "pied", "pieds",  # FR
+                "piede", "piedi"  # IT
+            }
+
+            if any(k in map_units for k in metric_keywords):
                 self.si_units = True
                 mu = "Metric (International System)"
                 break  # Exit loop if valid CRS with meters is selected
-            elif "feet" in map_units:
+            elif any(k in map_units for k in imperial_keywords):
                 self.si_units = False
                 mu = "English (Imperial System)"
                 break  # Exit loop if valid CRS with feet is selected
@@ -535,11 +546,22 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.gutils.set_cont_par(name, value)
         self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
-        map_units = QgsUnitTypes.toString(self.crs.mapUnits())
+        map_units = QgsUnitTypes.toString(self.crs.mapUnits()).lower()
 
-        if "meters" in map_units:
+        metric_keywords = {
+            "meter", "meters", "metre", "metres", "metro", "metros",  # EN, ES, PT
+            "mètre", "mètres",  # FR
+            "metro", "metri"  # IT
+        }
+        imperial_keywords = {
+            "foot", "feet", "pie", "pies", "pé", "pés",  # EN, ES, PT
+            "pied", "pieds",  # FR
+            "piede", "piedi"  # IT
+        }
+
+        if any(k in map_units for k in metric_keywords):
             metric = 1
-        elif "feet" in map_units:
+        elif any(k in map_units for k in imperial_keywords):
             self.si_units = False
             metric = 0
         else:
