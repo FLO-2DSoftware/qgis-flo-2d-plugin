@@ -386,7 +386,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
         self.polulate_values_JJ()
 
-        self._wire_switch_guards()
+        self.wire_switch_guards()
 
     def set_spinbox_JJ(self, key, spin):
         values = self.PARAMS[key]
@@ -484,34 +484,11 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             self.uc.log_info("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.IDEBRV.setChecked(False)
 
-    def _guard_switch(self, cb, ok, msg):
+    def wire_switch_guards(self):
         """
-        Prevents enabling a checkbox (switch) if prerequisite data is missing.
-        If the predicate 'ok()' fails, a warning is shown and the checkbox is reset.
+        Connect each model switch (checkbox) to a guard that checks required data
+        before allowing the switch to stay ON. Uses a small lambda to capture variables.
         """
-        if cb.isChecked() and not ok():
-            self.uc.bar_warn(msg)  # Show warning in status bar
-            self.uc.log_info(msg)  # Log message for debugging
-            cb.setChecked(False)  # Immediately revert the switch to OFF
-
-    def _has(self, table_name: str) -> bool:
-        """Return True if the given database table exists and is not empty."""
-        return not self.gutils.is_table_empty(table_name)
-
-    def _any(self, *tables: str) -> bool:
-        """Return True if at least one of the given tables is non-empty."""
-        return any(self._has(t) for t in tables)
-
-    def _all(self, *tables: str) -> bool:
-        """Return True only if all of the given tables are non-empty."""
-        return all(self._has(t) for t in tables)
-
-    def _wire_switch_guards(self):
-        """
-        Connects each model switch (checkbox) to its validation rule.
-        Each rule defines which database table(s) must exist before the switch can be enabled.
-        """
-        # Dictionary mapping each switch to its required table(s) and corresponding warning message
         guards = {
             self.ICHANNEL: ("chan", "No channels data configured!"),
             self.IMULTC: (["mult_cells", "simple_mult_cells"], "No multiple channels data configured!"),
@@ -525,15 +502,25 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             self.SWMM: ("swmmflo", "No storm drain data configured!"),
         }
 
-        # For each checkbox, build its guard logic and connect it to the 'clicked' signal.
-        for cb, (tbls, msg) in guards.items():
-            if cb:  # Some switches may not exist in this dialog
-                # Choose whether to check one or multiple tables dynamically.
-                ok = (lambda t=tbls: self._any(*t)) if isinstance(tbls, list) else (lambda t=tbls: self._has(t))
+        for cb, (tables, msg) in guards.items():
+            if not cb:
+                continue
+            cb.clicked.connect(lambda _, c=cb, t=tables, m=msg: self.switch_guard_action(_, c, t, m))
 
-                # Connect checkbox click to the guard function.
-                # Default arguments in the lambda ensure each loop iteration binds its own values.
-                cb.clicked.connect(lambda _=None, c=cb, o=ok, m=msg: self._guard_switch(c, o, m))
+    def switch_guard_action(self, _, cb, tables, msg):
+
+        if not cb.isChecked():
+            return
+
+        if isinstance(tables, (list, tuple)):
+            ok = any(not self.gutils.is_table_empty(t) for t in tables)
+        else:
+            ok = not self.gutils.is_table_empty(tables)
+
+        if not ok:
+            self.uc.bar_warn(msg)
+            self.uc.log_info(msg)
+            cb.setChecked(False)
 
     def save_parameters_JJ(self):
         try:
