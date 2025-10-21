@@ -386,6 +386,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
         self.polulate_values_JJ()
 
+        self.wire_switch_guards()
+
     def set_spinbox_JJ(self, key, spin):
         values = self.PARAMS[key]
         spin.setDecimals(values["dec"])
@@ -481,6 +483,44 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             self.uc.bar_warn("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.uc.log_info("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.IDEBRV.setChecked(False)
+
+    def wire_switch_guards(self):
+        """
+        Connect each model switch (checkbox) to a guard that checks required data
+        before allowing the switch to stay ON. Uses a small lambda to capture variables.
+        """
+        guards = {
+            self.ICHANNEL: ("chan", "No channels data configured!"),
+            self.IMULTC: (["mult_cells", "simple_mult_cells"], "No multiple channels data configured!"),
+            self.MSTREET: ("streets", "No streets data configured!"),
+            self.IEVAP: ("evapor", "No evaporation data configured!"),
+            self.IHYDRSTRUCT: ("struct", "No hydraulic structures data configured!"),
+            self.IRAIN: ("rain", "No rainfall data configured!"),
+            self.INFIL: ("infil", "No infiltration data configured!"),
+            self.IWRFS: ("blocked_cells", "No ARF data configured!"),
+            self.LEVEE: ("levee_data", "No levees data configured!"),
+            self.SWMM: ("swmmflo", "No storm drain data configured!"),
+        }
+
+        for cb, (tables, msg) in guards.items():
+            if not cb:
+                continue
+            cb.clicked.connect(lambda _, c=cb, t=tables, m=msg: self.switch_guard_action(_, c, t, m))
+
+    def switch_guard_action(self, _, cb, tables, msg):
+
+        if not cb.isChecked():
+            return
+
+        if isinstance(tables, (list, tuple)):
+            ok = any(not self.gutils.is_table_empty(t) for t in tables)
+        else:
+            ok = not self.gutils.is_table_empty(tables)
+
+        if not ok:
+            self.uc.bar_warn(msg)
+            self.uc.log_info(msg)
+            cb.setChecked(False)
 
     def save_parameters_JJ(self):
         try:
