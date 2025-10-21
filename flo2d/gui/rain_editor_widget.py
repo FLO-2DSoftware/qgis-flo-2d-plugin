@@ -222,7 +222,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     # 2. Read header for raincell table
                     header = netcdf_proc.parse_header()  # [interval_time, num_intervals, start_timestamp]
                     time_step = float(header[0])
-                    irinters = int(header[1]) - 1
+                    irinters = int(header[1])
 
                     # 3. Clear previous data
                     self.gutils.clear_tables("raincell", "raincell_data")
@@ -231,22 +231,50 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     self.gutils.execute(head_qry, header)
 
                     # 5. Insert data
-                    time_interval = 0
                     pd = QProgressDialog("Importing ERA5 Rainfall...", None, 0, irinters)
                     pd.setModal(True)
                     pd.setValue(0)
                     pd.show()
 
-                    for timestep_data in netcdf_proc.sample_all():
-                        pd.setValue(int(time_interval))
+                    prev_acc_by_fid = {}
+                    time_interval = 0.0
+                    chunk_size = 10000
+                    EPS = 1e-9
+
+                    for step_idx, timestep_data in enumerate(netcdf_proc.sample_all()):  # list of (acc_m, fid)
+                        pd.setValue(step_idx)
                         QApplication.processEvents()
 
-                        for rainfall, fid in timestep_data:
-                            data_qry += [(time_interval, fid, round(rainfall,4))]
+                        for acc_val, fid in timestep_data:
+                            if acc_val is None:
+                                continue
+
+                            acc = float(acc_val)  # accumulated since start of forecast
+                            prev = prev_acc_by_fid.get(fid)
+
+                            if prev is None:
+                                # First time we see this fid in the file. First hour acts as its own increment.
+                                inc = 0
+                            else:
+                                diff = acc - prev
+                                if diff < -EPS:
+                                    # Accumulation reset at new forecast cycle. Use current acc directly.
+                                    inc = acc
+                                else:
+                                    # Normal case. Clip tiny negatives to zero.
+                                    inc = diff if diff >= 0.0 else 0.0
+
+                            prev_acc_by_fid[fid] = acc
+                            data_qry += [(time_interval, fid, round(inc, 4))]
+
+                            if len(data_qry) >= chunk_size:
+                                self.gutils.batch_execute(data_qry)
+                                data_qry = data_qry[:2]
 
                         time_interval += time_step
 
-                    self.gutils.batch_execute(data_qry)
+                    if data_qry:
+                        self.gutils.batch_execute(data_qry)
 
                     self.uc.bar_info("ERA5 Realtime Rainfall imported successfully!")
                     self.uc.log_info("ERA5 Realtime Rainfall imported successfully!")
