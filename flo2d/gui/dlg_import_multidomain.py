@@ -569,6 +569,9 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 self.uc.bar_warn("Failed to import grid data. Please check the input files!")
                 self.uc.log_info("Failed to import grid data. Please check the input files!")
 
+            # Update CELLSIZE
+            self.gutils.set_cont_par("CELLSIZE", int(cell_size))
+
             # Batch processing for better performance
             batch_size = self.chunksize  # Set batch size from existing chunksize variable
 
@@ -709,43 +712,46 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
         else:
             self.f2g = Flo2dGeoPackage(self.con, self.iface)
+            fname = subdomain_path + "/CONT.DAT"
+            if not self.f2g.set_parser(fname):
+                return
 
         import_calls = [
             "import_cont_toler",
-            "import_inflow",
-            "import_tailings",
+            # "import_inflow",
+            # "import_tailings",
             # "import_outrc",  Add back when the OUTRC process is completed
-            "import_outflow",
-            "import_rain",
-            "import_raincell",
-            "import_raincellraw",
-            "import_evapor",
-            "import_infil",
-            "import_chan",
-            "import_xsec",
-            "import_hystruc",
-            "import_hystruc_bridge_xs",
-            "import_street",
-            "import_arf",
-            "import_mult",
-            "import_sed",
-            "import_levee",
-            "import_fpxsec",
-            "import_breach",
-            "import_gutter",
-            "import_fpfroude",
-            "import_steep_slopen",
-            "import_lid_volume",
-            "import_shallowNSpatial",
-            "import_swmminp",
-            "import_swmmflo",
-            "import_swmmflort",
-            "import_swmmoutf",
-            "import_swmmflodropbox",
-            "import_sdclogging",
-            "import_tolspatial",
-            "import_wsurf",
-            "import_wstime",
+            # "import_outflow",
+            # "import_rain",
+            # "import_raincell",
+            # "import_raincellraw",
+            # "import_evapor",
+            # "import_infil",
+            # "import_chan",
+            # "import_xsec",
+            # "import_hystruc",
+            # "import_hystruc_bridge_xs",
+            # "import_street",
+            # "import_arf",
+            # "import_mult",
+            # "import_sed",
+            # "import_levee",
+            # "import_fpxsec",
+            # "import_breach",
+            # "import_gutter",
+            # "import_fpfroude",
+            # "import_steep_slopen",
+            # "import_lid_volume",
+            # "import_shallowNSpatial",
+            # "import_swmminp",
+            # "import_swmmflo",
+            # "import_swmmflort",
+            # "import_swmmoutf",
+            # "import_swmmflodropbox",
+            # "import_sdclogging",
+            # "import_tolspatial",
+            # "import_wsurf",
+            # "import_wstime",
         ]
 
         # empty = self.f2g.is_table_empty("grid")
@@ -874,6 +880,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             start_time = time.time()
 
             method = getattr(self.f2g, call)
+            if method(*args):
+                self.uc.log_info('Entrou!')
 
             self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
 

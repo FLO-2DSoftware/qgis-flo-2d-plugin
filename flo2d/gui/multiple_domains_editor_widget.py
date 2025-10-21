@@ -95,8 +95,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                     cur_idx = i
             self.md_name_cbo.setCurrentIndex(cur_idx)
 
-        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-        self.cellsize_le.setText(str(cell_size))
+        # cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+        # self.cellsize_le.setText(str(cell_size))
 
         self.uncheck_md_btns()
 
@@ -531,13 +531,13 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                                              chunksize=chunksize)
                 elif os.path.isfile(os.path.join(path, "TOPO.DAT")):
                     reader = pd.read_csv(os.path.join(path, "TOPO.DAT"),
-                                         delim_whitespace=True,
+                                         sep=r'\s+',
                                          header=None,
                                          names=['x', 'y', 'elevation'],
                                          chunksize=chunksize)
                 elif os.path.isfile(os.path.join(path, "CADPTS.DAT")):
                     reader = pd.read_csv(os.path.join(path, "CADPTS.DAT"),
-                                         delim_whitespace=True,
+                                         sep=r'\s+',
                                          header=None,
                                          names=['id', 'x', 'y'],
                                          chunksize=chunksize)

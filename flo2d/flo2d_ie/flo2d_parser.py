@@ -458,11 +458,10 @@ class ParseDAT(object):
     @staticmethod
     def pandas_single_parser(file1, chunksize=10000):
         """Parse one large text file line-by-line using pandas in chunks."""
-        f_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
-
-        for chunk in f_iter:
-            for row in chunk.itertuples(index=False, name=None):
-                yield list(row)
+        with pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize) as f_iter:
+            for chunk in f_iter:
+                for row in chunk.itertuples(index=False, name=None):
+                    yield list(row)
 
     @staticmethod
     def double_parser(file1, file2):
@@ -475,17 +474,13 @@ class ParseDAT(object):
     @staticmethod
     def pandas_double_parser(file1, file2, chunksize=10000):
         """Parse two large text files line-by-line using pandas in chunks."""
-        # Open both files in chunks
-        f1_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
-        f2_iter = pd.read_csv(file2, sep=r'\s+', header=None, chunksize=chunksize)
+        with pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize) as f1_iter, \
+                pd.read_csv(file2, sep=r'\s+', header=None, chunksize=chunksize) as f2_iter:
 
-        # Iterate over chunks simultaneously
-        for chunk1, chunk2 in zip(f1_iter, f2_iter):
-            # Concatenate the dataframes horizontally
-            combined = pd.concat([chunk1, chunk2], axis=1)
-            # Convert each row to a list and yield
-            for row in combined.itertuples(index=False, name=None):
-                yield list(row)
+            for chunk1, chunk2 in zip(f1_iter, f2_iter):
+                combined = pd.concat([chunk1, chunk2], axis=1)
+                for row in combined.itertuples(index=False, name=None):
+                    yield list(row)
 
     @staticmethod
     def swmminp_parser(swmminp_file):
