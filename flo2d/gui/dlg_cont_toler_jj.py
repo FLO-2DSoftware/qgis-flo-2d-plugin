@@ -507,8 +507,36 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 continue
             cb.clicked.connect(lambda _, c=cb, t=tables, m=msg: self.switch_guard_action(_, c, t, m))
 
+        # mud/sed guard
+        if hasattr(self, "ISED"):
+            self.ISED.currentIndexChanged.connect(
+                lambda ised_mode_index: self.switch_guard_action(ised_mode_index, "ISED", None, None)
+            )
+
     def switch_guard_action(self, _, cb, tables, msg):
 
+        # Handle mud/sed case
+        if cb == "ISED":
+            ised_mode_index = _
+            # 0 = Mud/Debris, 1 = Sediment Transport, 2 = None, 3 = Two Phase
+            mud_empty = self.gutils.is_table_empty("mud")
+            sed_empty = self.gutils.is_table_empty("sed")
+
+            if ised_mode_index == 0 and mud_empty:
+                self.uc.bar_warn("No mudflow data configured!")
+                self.uc.log_info("No mudflow data configured!")
+                self.ISED.setCurrentIndex(2)
+            elif ised_mode_index == 1 and sed_empty:
+                self.uc.bar_warn("No sediment data configured!")
+                self.uc.log_info("No sediment data configured!")
+                self.ISED.setCurrentIndex(2)
+            elif ised_mode_index == 3 and (mud_empty or sed_empty):
+                self.uc.bar_warn("No mud/sediment data configured for two-phase flow!")
+                self.uc.log_info("No mud/sediment data configured for two-phase flow!")
+                self.ISED.setCurrentIndex(2)
+            return
+
+        # Handle the rest of components
         if not cb.isChecked():
             return
 
