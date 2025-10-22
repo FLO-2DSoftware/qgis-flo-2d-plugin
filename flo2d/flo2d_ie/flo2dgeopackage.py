@@ -150,6 +150,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "mult",
             "mult_areas",
             "mult_cells",
+            "mult_domains",
+            "mult_domains_con",
+            "mult_domains_methods",
             "noexchange_chan_cells",
             "outflow",
             "outflow_cells",
@@ -170,6 +173,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "rbank",
             "reservoirs",
             "repl_rat_curves",
+            "schema_md_cells",
             "sed_group_areas",
             "sed_group_cells",
             "sed_groups",
@@ -207,6 +211,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "user_left_bank",
             "user_levee_lines",
             "user_lid_volume_areas",
+            "user_md_connect_lines",
             "user_model_boundary",
             "user_noexchange_chan_areas",
             "user_reservoirs",
@@ -225,17 +230,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ]
 
         for table in tables:
-            if md and table in ["grid"]:
+            if md and table in ["grid", "schema_md_cells", "mult_domains_con", "mult_domains_methods"]:
                 continue
             self.clear_tables(table)
 
-    def import_cont_toler(self):
+    def import_cont_toler(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_cont_toler_dat()
+            return self.import_cont_toler_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_cont_toler_hdf5()
 
-    def import_cont_toler_dat(self):
+    def import_cont_toler_dat(self, grid_to_domain):
         sql = ["""INSERT OR REPLACE INTO cont (name, value, note) VALUES""", 3]
         mann = self.get_cont_par("MANNING")
         if not mann:
@@ -1609,13 +1614,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("Error while importing RAINCELL data from HDF5!")
             return False
 
-    def import_infil(self):
+    def import_infil(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_infil_dat()
+            return self.import_infil_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_infil_hdf5()
 
-    def import_infil_dat(self):
+    def import_infil_dat(self, grid_to_domain):
+
         infil_params = [
             "infmethod",
             "abstr",
@@ -1635,23 +1641,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "decaya",
             "fhortonia"
         ]
+
+        self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_cells_green_grid ON infil_cells_green(grid_fid);")
+        self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_cells_scs_grid ON infil_cells_scs(grid_fid);")
+        self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_cells_horton_grid ON infil_cells_horton(grid_fid);")
+        self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_chan_grid ON infil_chan_elems(grid_fid);")
+
         infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 17]
         infil_seg_sql = [
             """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
             4,
         ]
         infil_green_sql = [
-            """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
+            """INSERT OR IGNORE INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
                                                              abstrinf, rtimpf, soil_depth) VALUES""",
             7,
         ]
-        infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
+        infil_scs_sql = ["""INSERT OR IGNORE INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
         infil_horton_sql = [
-            """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
+            """INSERT OR IGNORE INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
             4,
         ]
         infil_chan_sql = [
-            """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
+            """INSERT OR IGNORE INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
             2,
         ]
 
@@ -1662,14 +1674,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "C": infil_chan_sql,
         }
 
-        self.clear_tables(
-            "infil",
-            "infil_chan_seg",
-            "infil_cells_green",
-            "infil_cells_scs",
-            "infil_cells_horton",
-            "infil_chan_elems",
-        )
         data = self.parser.parse_infil()
 
         infil_sql += [tuple([data[k.upper()] if k.upper() in data else None for k in infil_params])]
@@ -1677,22 +1681,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for i, row in enumerate(data["R"], 1):
             infil_seg_sql += [(i,) + tuple(row)]
 
-        for k in sqls:
-            if len(data[k]) > 0:
-                for i, row in enumerate(data[k], 1):
-                    gid = row[0]
-                    sqls[k] += [(gid,) + tuple(row[1:])]
+        try:
+            if not grid_to_domain:
+                self.clear_tables(
+                    "infil",
+                    "infil_chan_seg",
+                    "infil_cells_green",
+                    "infil_cells_scs",
+                    "infil_cells_horton",
+                    "infil_chan_elems",
+                )
+                for k in sqls:
+                    rows_k = data.get(k, [])
+                    if not rows_k:
+                        continue
+                    for row in rows_k:
+                        gid = row[0]
+                        sqls[k] += [(gid,) + tuple(row[1:])]
             else:
-                pass
+                for k in sqls:
+                    rows_k = data.get(k, [])
+                    if not rows_k:
+                        continue
+                    for row in rows_k:
+                        domain_grid = int(row[0])
+                        global_grid = grid_to_domain[domain_grid]
+                        sqls[k] += [(global_grid,) + tuple(row[1:])]
 
-        self.batch_execute(
-            infil_sql,
-            infil_seg_sql,
-            infil_green_sql,
-            infil_scs_sql,
-            infil_horton_sql,
-            infil_chan_sql,
-        )
+            self.batch_execute(
+                infil_sql,
+                infil_seg_sql,
+                infil_green_sql,
+                infil_scs_sql,
+                infil_horton_sql,
+                infil_chan_sql,
+            )
+
+        except Exception as e:
+            self.uc.log_info("Error while importing infiltration data!")
+            self.uc.bar_error("Error while importing infiltration data!")
 
     def import_infil_hdf5(self):
         # Access the infiltration group
@@ -8947,7 +8974,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
             else:
                 green_sql = f"""SELECT 
-                                    md.domain_cell, 
+                                    DISTINCT(md.domain_cell), 
                                     hydc, 
                                     soils, 
                                     dtheta, 
@@ -8959,20 +8986,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 JOIN 
                                     schema_md_cells md ON ga.grid_fid = md.grid_fid
                                 WHERE 
-                                    md.domain_fid = {subdomain}"""
+                                    md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell"""
 
                 scs_sql = f"""SELECT 
-                                    md.domain_cell, 
+                                    DISTINCT(md.domain_cell), 
                                     scsn 
                                 FROM 
                                     infil_cells_scs AS scs
                                 JOIN 
                                     schema_md_cells md ON scs.grid_fid = md.grid_fid
                                 WHERE 
-                                    md.domain_fid = {subdomain}"""
+                                    md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell"""
 
                 horton_sql = f"""SELECT 
-                                    md.domain_cell, 
+                                    DISTINCT(md.domain_cell),  
                                     fhorti, 
                                     fhortf, 
                                     deca 
@@ -8981,17 +9010,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 JOIN 
                                     schema_md_cells md ON ht.grid_fid = md.grid_fid
                                 WHERE 
-                                    md.domain_fid = {subdomain}"""
+                                    md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell"""
 
                 chan_sql = f"""SELECT 
-                                md.domain_cell, 
+                                DISTINCT(md.domain_cell), 
                                 hydconch 
                               FROM 
                                 infil_chan_elems AS ch
                               JOIN 
                                 schema_md_cells md ON ch.grid_fid = md.grid_fid
                               WHERE 
-                                md.domain_fid = {subdomain}"""
+                                md.domain_fid = {subdomain}
+                              ORDER BY md.domain_cell"""
 
             line1 = "{0}"
             line2 = "\n" + "  {}" * 6

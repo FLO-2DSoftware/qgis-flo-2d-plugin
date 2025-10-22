@@ -380,16 +380,25 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         md_editor = MultipleDomainsEditorWidget(self.iface, self.lyrs)
         common_coords = md_editor.find_common_coordinates(subdomains_paths)
 
-        for current_progress, subdomain_path in enumerate(subdomains_paths, start=1):
+        for subdomain, subdomain_path in enumerate(subdomains_paths, start=1):
             if subdomain_path:
-                start_time = time.time()
-                self.import_subdomains_mannings_n_topo(subdomain_path, common_coords, current_progress)
-                self.import_md(subdomain_path)
-                time_elapsed = self.calculate_time_elapsed(start_time)
-                self.uc.log_info(f"Time Elapsed to import Subdomain {current_progress}: {time_elapsed}")
+                hdf5_file = f"{subdomain_path}/Input.hdf5"
+                if os.path.isfile(hdf5_file):
+                    self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                else:
+                    self.f2g = Flo2dGeoPackage(self.con, self.iface)
+                    fname = subdomain_path + "/CONT.DAT"
+                    if not self.f2g.set_parser(fname):
+                        return
 
-                progress_dialog.setLabelText(f"Importing Subdomain {current_progress + 1}...")
-                progress_dialog.setValue(current_progress + 1)
+                start_time = time.time()
+                self.import_subdomains_mannings_n_topo(subdomain_path, common_coords, subdomain)
+                self.import_md(subdomain)
+                time_elapsed = self.calculate_time_elapsed(start_time)
+                self.uc.log_info(f"Time Elapsed to import Subdomain {subdomain}: {time_elapsed}")
+
+                progress_dialog.setLabelText(f"Importing Subdomain {subdomain + 1}...")
+                progress_dialog.setValue(subdomain + 1)
 
         progress_dialog.close()
         self.finalize_import()
@@ -703,18 +712,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def import_md(self, subdomain_path):
+    def import_md(self, subdomain):
         """Function to import multiple domains into one global domain"""
-
-        hdf5_file = f"{subdomain_path}/Input.hdf5"
-
-        if os.path.isfile(hdf5_file):
-            self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
-        else:
-            self.f2g = Flo2dGeoPackage(self.con, self.iface)
-            fname = subdomain_path + "/CONT.DAT"
-            if not self.f2g.set_parser(fname):
-                return
 
         import_calls = [
             "import_cont_toler",
@@ -726,7 +725,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_raincell",
             # "import_raincellraw",
             # "import_evapor",
-            # "import_infil",
+            "import_infil",
             # "import_chan",
             # "import_xsec",
             # "import_hystruc",
@@ -772,12 +771,21 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         #     self.gutils.enable_geom_triggers()
         #     return
 
-        self.f2g.clear_gpkg_tables(md=True)
+        map_qry = """
+            SELECT DISTINCT(domain_cell), grid_fid
+            FROM schema_md_cells
+            WHERE domain_fid = ?
+			ORDER BY domain_cell
+        """
+        mapped_rows = self.gutils.execute(map_qry, (subdomain,)).fetchall()
+        grid_to_domain = {int(domain_grid): int(global_grid) for (domain_grid, global_grid) in mapped_rows}
+        if subdomain in [2,"2"]:
+            self.uc.log_info(str(grid_to_domain))
 
         if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
-            self.call_IO_methods_dat(import_calls, True)
+            self.call_IO_methods_dat(import_calls, True, grid_to_domain)
         elif self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
-            self.call_IO_methods_hdf5(import_calls, True)
+            self.call_IO_methods_hdf5(import_calls, True, grid_to_domain)
 
     def call_IO_methods_hdf5(self, calls, debug, *args):
 
