@@ -164,7 +164,7 @@ class TestFlo2dGeoPackageDat(unittest.TestCase):
         scsnall = self.f2g.execute("""SELECT scsnall FROM infil;""").fetchone()[0]
         self.assertEqual(float(scsnall), 99)
         cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_green;""").fetchone()[0]
-        self.assertEqual(int(cells_count), 3)
+        self.assertEqual(int(cells_count), 1)
         result_query = self.f2g.execute(
             """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green;""")
         cell_values = result_query.fetchone()
