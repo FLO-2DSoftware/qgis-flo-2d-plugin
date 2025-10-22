@@ -244,15 +244,18 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.components_note_lbl.setVisible(show_note)
 
             if not self.gutils.is_table_empty("chan"):
-                self.channels_chbox.setChecked(True)
+                # self.channels_chbox.setChecked(True)
+                self.channels_chbox.setChecked(options["ICHANNEL"] != "0")
                 self.channels_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("blocked_cells"):
-                self.reduction_factors_chbox.setChecked(True)
+                # self.reduction_factors_chbox.setChecked(True)
+                self.reduction_factors_chbox.setChecked(options["IWRFS"] != "0")
                 self.reduction_factors_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("streets"):
-                self.streets_chbox.setChecked(True)
+                # self.streets_chbox.setChecked(True)
+                self.streets_chbox.setChecked(options["MSTREET"] != "0")
                 self.streets_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("outflow_cells"):
@@ -264,7 +267,8 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.inflow_elements_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("levee_data"):
-                self.levees_chbox.setChecked(True)
+                # self.levees_chbox.setChecked(True)
+                self.levees_chbox.setChecked(options["LEVEE"] != "0")
                 self.levees_chbox.setEnabled(True)
 
             # Multiple channels:
@@ -280,7 +284,8 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     if self.gutils.is_table_empty("mult"):
                         # There are mult or simple channels but 'mult' (globals) is empty: set globals:
                         self.gutils.fill_empty_mult_globals()
-                    self.multiple_channels_chbox.setChecked(True)
+                    # self.multiple_channels_chbox.setChecked(True)
+                    self.multiple_channels_chbox.setChecked(options["IMULTC"] != "0")
                     self.multiple_channels_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("breach"):
@@ -298,7 +303,8 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.gutters_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("infil"):
-                self.infiltration_chbox.setChecked(True)
+                # self.infiltration_chbox.setChecked(True)
+                self.infiltration_chbox.setChecked(options["INFIL"] != "0")
                 self.infiltration_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("fpxsec"):
@@ -308,25 +314,38 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             # Mud and Sediment Transport:
             ISED = self.gutils.get_cont_par("ISED")
             MUD = self.gutils.get_cont_par("MUD")
+            mud_has_data = not self.gutils.is_table_empty("mud") # True if the mud table has records (data present)
+            sed_has_data = not self.gutils.is_table_empty("sed") # True if the sediment table has records (data present)
             if ISED == "1" or MUD in ["1", "2"]:
-                if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
+                # if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
+                # When CONT switches are ON, precheck and enable
+                if mud_has_data or sed_has_data:
                     self.mud_and_sed_chbox.setChecked(True)
+                    self.mud_and_sed_chbox.setEnabled(True)
+            else:
+                # When CONT switches are OFF and data exists, enable but not prechecked
+                if mud_has_data or sed_has_data:
+                    self.mud_and_sed_chbox.setChecked(False)
                     self.mud_and_sed_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("evapor"):
-                self.evaporation_chbox.setChecked(True)
+                # self.evaporation_chbox.setChecked(True)
+                self.evaporation_chbox.setChecked(options["IEVAP"] != "0")
                 self.evaporation_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("struct"):
-                self.hydr_struct_chbox.setChecked(True)
+                # self.hydr_struct_chbox.setChecked(True)
+                self.hydr_struct_chbox.setChecked(options["IHYDRSTRUCT"] != "0")
                 self.hydr_struct_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("rain"):
-                self.rain_chbox.setChecked(True)
+                # self.rain_chbox.setChecked(True)
+                self.rain_chbox.setChecked(options["IRAIN"] != "0")
                 self.rain_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("swmmflo"):
-                self.storm_drain_chbox.setChecked(True)
+                # self.storm_drain_chbox.setChecked(True)
+                self.storm_drain_chbox.setChecked(options["SWMM"] != "0")
                 self.storm_drain_chbox.setEnabled(True)
 
             if  not self.gutils.is_table_empty("spatialshallow_cells"):
