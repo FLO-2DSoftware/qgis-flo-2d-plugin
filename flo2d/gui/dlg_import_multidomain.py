@@ -6,7 +6,7 @@ from itertools import combinations
 import h5py
 import numpy as np
 from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog
+from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox
 from qgis.PyQt.QtCore import NULL
 
 from .dlg_components import ComponentsDialog
@@ -370,15 +370,37 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         subdomains_paths = self.fetch_subdomain_paths()
         total_subdomains = sum(1 for path in subdomains_paths if path)
 
+        md_editor = MultipleDomainsEditorWidget(self.iface, self.lyrs)
+        common_coords = md_editor.find_common_coordinates(subdomains_paths)
+
+        self.import_global_grid(total_subdomains, subdomains_paths, common_coords)
+
+        msg = (
+            "Would you like to reassign grid element fids?\n\n"
+            "Click Yes to reassign grid element fids.\n"
+            "    Yes will run an extra process that reassigns your grid fids to match the original global domain.\n\n"
+            "Click No to continue without reassigning grid fids.\n"
+            "    No is faster, but the grid fids will not match your original global domain."
+        )
+        QApplication.restoreOverrideCursor()
+        answer = self.uc.customized_question("FLO-2D", msg)
+        if answer == QMessageBox.Yes:
+            pass
+
+        # self.import_md(subdomain)
+
+    def import_global_grid(self, total_subdomains, subdomains_paths, common_coords):
+        """
+        Function to import the global grid without reassigning grid fids
+
+        :return:
+        """
         progress_dialog = QProgressDialog(f"Importing Subdomain 1...", None, 1, total_subdomains + 1)
-        progress_dialog.setWindowTitle("FLO-2D Import")
+        progress_dialog.setWindowTitle("FLO-2D Multiple Domains Import")
         progress_dialog.setModal(True)
         progress_dialog.forceShow()
         progress_dialog.setValue(1)
         QApplication.processEvents()
-
-        md_editor = MultipleDomainsEditorWidget(self.iface, self.lyrs)
-        common_coords = md_editor.find_common_coordinates(subdomains_paths)
 
         for subdomain, subdomain_path in enumerate(subdomains_paths, start=1):
             if subdomain_path:
@@ -393,15 +415,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                 start_time = time.time()
                 self.import_subdomains_mannings_n_topo(subdomain_path, common_coords, subdomain)
-                self.import_md(subdomain)
                 time_elapsed = self.calculate_time_elapsed(start_time)
                 self.uc.log_info(f"Time Elapsed to import Subdomain {subdomain}: {time_elapsed}")
-
                 progress_dialog.setLabelText(f"Importing Subdomain {subdomain + 1}...")
                 progress_dialog.setValue(subdomain + 1)
 
         progress_dialog.close()
-        self.finalize_import()
 
     def fetch_subdomain_paths(self):
         """Fetch and return all subdomain paths from the UI."""
@@ -433,8 +452,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            cell_size = None
-
             # Step 1: Clear tables if this is the first subdomain
             if subdomain_n == 1:
                 self.gutils.clear_tables("grid")
@@ -443,140 +460,10 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 fid = self.gutils.execute("SELECT MAX(fid) FROM grid;").fetchone()[0] or 0
                 fid += 1  # Ensures unique fid values
 
+            data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used = self.get_subdomain_data(subdomain)
+
             sql_grid = []
             sql_schema = []
-
-            hdf5_file = f"{subdomain}/Input.hdf5"
-            hdf5_coor = "/Input/Grid/COORDINATES"
-            hdf5_elev = "/Input/Grid/ELEVATION"
-            hdf5_mann = "/Input/Grid/MANNING"
-            topo_dat = f"{subdomain}/TOPO.DAT"
-            mannings_dat = f"{subdomain}/MANNINGS_N.DAT"
-            cadpts_dat = f"{subdomain}/CADPTS.DAT"
-            fplain_dat = f"{subdomain}/FPLAIN.DAT"
-
-            data = None
-            man = None
-            coords = None
-            elev = None
-
-            hdf5_used = None
-            f1_used = None
-            f2_used = None
-
-            # Check for hdf5 first
-            if os.path.isfile(hdf5_file):
-                hdf5_used = "Input.hdf5"
-
-                data = []
-
-                with h5py.File(hdf5_file, "r") as hdf:
-                    coor = hdf[hdf5_coor]
-                    elev = hdf[hdf5_elev]
-                    mann = hdf[hdf5_mann]
-
-                    n = coor.shape[0]
-
-                    elev_is_1d = elev.ndim == 1
-                    for i in range(n):
-                        x, y = coor[i]
-                        m = float(mann[i]) if mann.ndim == 1 else float(mann[i][0])
-                        elev_values = [float(elev[i])] if elev_is_1d else list(map(float, elev[i]))
-                        data.append([i + 1, m, float(x), float(y)] + elev_values)
-
-                man = slice(1, 2)
-                coords = slice(2, 4)
-                elev = slice(4, None)
-
-                # Calculate the cell_size for this Input.hdf5
-                if not cell_size:
-                    points = [row[coords] for row in data[:10]]
-
-                    cell_size = min(
-                        math.hypot(p1[0] - p2[0], p1[1] - p2[1])
-                        for p1, p2 in combinations(points, 2)
-                    )
-
-            # Check for TOPO and MANNINGS_N
-            elif os.path.isfile(topo_dat) and os.path.isfile(mannings_dat):
-
-                # Read and parse TOPO & MANNINGS_N data efficiently
-                data = self.parser.pandas_double_parser(mannings_dat, topo_dat)
-
-                man = slice(1, 2)
-                coords = slice(2, 4)
-                elev = slice(4, None)
-
-                f1_used = "TOPO.DAT"
-                f2_used = "MANNINGS_N.DAT"
-
-                # Calculate the cell_size for this topo.dat
-                if not cell_size:
-                    data_points = []
-                    with open(topo_dat, "r") as file:
-                        for _ in range(10):  # Read only the first 10 lines
-                            line = file.readline()
-                            parts = line.split()
-                            if len(parts) == 3:  # Ensure the line contains three elements
-                                x, y, _ = parts
-                                data_points.append((float(x), float(y)))
-
-                    cell_size = min(
-                        math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) for p1, p2 in combinations(data_points, 2))
-
-            # Import TOPO and MANNINGS from CADPTS and FPLAIN
-            elif os.path.isfile(cadpts_dat) and os.path.isfile(fplain_dat):
-
-                # Read and parse CADPTS data efficiently
-                data = self.parser.double_parser(fplain_dat, cadpts_dat)
-
-                man = slice(5, 6)
-                elev = slice(6, 7)
-                coords = slice(8, None)
-
-                f1_used = "CADPTS.DAT"
-                f2_used = "FPLAIN.DAT"
-
-                # Calculate the cell_size for this cadpts
-                if not cell_size:
-                    data_points = []
-                    with open(cadpts_dat, "r") as file:
-                        for _ in range(10):  # Read only the first 10 lines
-                            line = file.readline()
-                            parts = line.split()
-                            if len(parts) == 3:  # Ensure the line contains three elements
-                                index, x, y = parts
-                                data_points.append((float(x), float(y)))
-
-                    cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
-
-            # Import grid from CADPTS and set default mannings and topo
-            elif os.path.isfile(cadpts_dat):
-
-                # Read and parse CADPTS data efficiently
-                data = self.parser.pandas_single_parser(cadpts_dat)
-
-                coords = slice(1, None)
-
-                f1_used = "CADPTS.DAT"
-                f2_used = "default mannings and elevation"
-
-                # Calculate the cell_size for this cadpts
-                if not cell_size:
-                    data_points = []
-                    with open(cadpts_dat, "r") as file:
-                        for _ in range(10):  # Read only the first 10 lines
-                            line = file.readline()
-                            parts = line.split()
-                            if len(parts) == 3:  # Ensure the line contains three elements
-                                index, x, y = parts
-                                data_points.append((float(x), float(y)))
-
-                    cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
-
-            else:
-                self.uc.bar_warn("Failed to import grid data. Please check the input files!")
-                self.uc.log_info("Failed to import grid data. Please check the input files!")
 
             # Update CELLSIZE
             self.gutils.set_cont_par("CELLSIZE", int(cell_size))
@@ -711,6 +598,141 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             self.uc.log_info("Failed to import global domain data. Please check the input files!\n" + str(e))
         finally:
             QApplication.restoreOverrideCursor()
+
+    def get_subdomain_data(self, subdomain):
+        """Function to get the subdomain data"""
+        hdf5_file = f"{subdomain}/Input.hdf5"
+        hdf5_coor = "/Input/Grid/COORDINATES"
+        hdf5_elev = "/Input/Grid/ELEVATION"
+        hdf5_mann = "/Input/Grid/MANNING"
+        topo_dat = f"{subdomain}/TOPO.DAT"
+        mannings_dat = f"{subdomain}/MANNINGS_N.DAT"
+        cadpts_dat = f"{subdomain}/CADPTS.DAT"
+        fplain_dat = f"{subdomain}/FPLAIN.DAT"
+
+        data = None
+        cell_size = None
+        man = None
+        coords = None
+        elev = None
+
+        hdf5_used = None
+        f1_used = None
+        f2_used = None
+
+        # Check for hdf5 first
+        if os.path.isfile(hdf5_file):
+            hdf5_used = "Input.hdf5"
+
+            data = []
+
+            with h5py.File(hdf5_file, "r") as hdf:
+                coor = hdf[hdf5_coor]
+                elev = hdf[hdf5_elev]
+                mann = hdf[hdf5_mann]
+
+                n = coor.shape[0]
+
+                elev_is_1d = elev.ndim == 1
+                for i in range(n):
+                    x, y = coor[i]
+                    m = float(mann[i]) if mann.ndim == 1 else float(mann[i][0])
+                    elev_values = [float(elev[i])] if elev_is_1d else list(map(float, elev[i]))
+                    data.append([i + 1, m, float(x), float(y)] + elev_values)
+
+            man = slice(1, 2)
+            coords = slice(2, 4)
+            elev = slice(4, None)
+
+            # Calculate the cell_size for this Input.hdf5
+            points = [row[coords] for row in data[:10]]
+
+            cell_size = min(
+                math.hypot(p1[0] - p2[0], p1[1] - p2[1])
+                for p1, p2 in combinations(points, 2)
+            )
+
+        # Check for TOPO and MANNINGS_N
+        elif os.path.isfile(topo_dat) and os.path.isfile(mannings_dat):
+
+            # Read and parse TOPO & MANNINGS_N data efficiently
+            data = self.parser.pandas_double_parser(mannings_dat, topo_dat)
+
+            man = slice(1, 2)
+            coords = slice(2, 4)
+            elev = slice(4, None)
+
+            f1_used = "TOPO.DAT"
+            f2_used = "MANNINGS_N.DAT"
+
+            # Calculate the cell_size for this topo.dat
+            data_points = []
+            with open(topo_dat, "r") as file:
+                for _ in range(10):  # Read only the first 10 lines
+                    line = file.readline()
+                    parts = line.split()
+                    if len(parts) == 3:  # Ensure the line contains three elements
+                        x, y, _ = parts
+                        data_points.append((float(x), float(y)))
+
+            cell_size = min(
+                math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) for p1, p2 in combinations(data_points, 2))
+
+        # Import TOPO and MANNINGS from CADPTS and FPLAIN
+        elif os.path.isfile(cadpts_dat) and os.path.isfile(fplain_dat):
+
+            # Read and parse CADPTS data efficiently
+            data = self.parser.double_parser(fplain_dat, cadpts_dat)
+
+            man = slice(5, 6)
+            elev = slice(6, 7)
+            coords = slice(8, None)
+
+            f1_used = "CADPTS.DAT"
+            f2_used = "FPLAIN.DAT"
+
+            # Calculate the cell_size for this cadpts
+            data_points = []
+            with open(cadpts_dat, "r") as file:
+                for _ in range(10):  # Read only the first 10 lines
+                    line = file.readline()
+                    parts = line.split()
+                    if len(parts) == 3:  # Ensure the line contains three elements
+                        index, x, y = parts
+                        data_points.append((float(x), float(y)))
+
+            cell_size = min(
+                math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) for p1, p2 in combinations(data_points, 2))
+
+        # Import grid from CADPTS and set default mannings and topo
+        elif os.path.isfile(cadpts_dat):
+
+            # Read and parse CADPTS data efficiently
+            data = self.parser.pandas_single_parser(cadpts_dat)
+
+            coords = slice(1, None)
+
+            f1_used = "CADPTS.DAT"
+            f2_used = "default mannings and elevation"
+
+            # Calculate the cell_size for this cadpts
+            data_points = []
+            with open(cadpts_dat, "r") as file:
+                for _ in range(10):  # Read only the first 10 lines
+                    line = file.readline()
+                    parts = line.split()
+                    if len(parts) == 3:  # Ensure the line contains three elements
+                        index, x, y = parts
+                        data_points.append((float(x), float(y)))
+
+            cell_size = min(
+                math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) for p1, p2 in combinations(data_points, 2))
+
+        else:
+            self.uc.bar_warn("Failed to import grid data. Please check the input files!")
+            self.uc.log_info("Failed to import grid data. Please check the input files!")
+
+        return data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used
 
     def import_md(self, subdomain):
         """Function to import multiple domains into one global domain"""
