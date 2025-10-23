@@ -2796,7 +2796,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     centroid = cells[gid]
                     cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
 
-
             self.batch_execute(cont_sql, cells_sql)
 
         except Exception as e:

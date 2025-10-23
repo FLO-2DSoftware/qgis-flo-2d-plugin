@@ -545,8 +545,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 batch
             )
 
-        progress_dialog.close()
-
         # Schema links in one SQL
         self.gutils.execute("""
             INSERT OR IGNORE INTO schema_md_cells(grid_fid, domain_fid, domain_cell)
@@ -571,6 +569,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.gutils.execute("DROP TABLE IF EXISTS stage_schema_md;")
         self.gutils.execute("DROP TABLE IF EXISTS grid_fid_map;")
 
+        progress_dialog.close()
+
     def fetch_subdomain_paths(self):
         """Fetch and return all subdomain paths from the UI."""
         return [getattr(self, f'sub{i}_le').text() for i in range(1, MAX_SUBDOMAINS + 1)]
@@ -584,8 +584,9 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def finalize_import(self):
         """Finalize the import process by refreshing the UI and showing success messages."""
-        grid_layer = self.lyrs.data["grid"]["qlyr"]
-        grid_layer.triggerRepaint()
+        self.gutils.path = self.gutils.get_gpkg_path()
+        self.lyrs.load_all_layers(self.gutils)
+        self.lyrs.zoom_to_all()
         self.uc.log_info("Import of Multiple Domains finished successfully")
         self.uc.bar_info("Import of Multiple Domains finished successfully")
 
@@ -892,7 +893,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                 time_elapsed = self.calculate_time_elapsed(start_time)
                 self.uc.log_info(f"Time Elapsed to import Subdomain {subdomain}: {time_elapsed}")
-
         progress_dialog.close()
 
     def call_IO_methods_hdf5(self, calls, debug, *args):
