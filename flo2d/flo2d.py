@@ -1063,7 +1063,8 @@ class Flo2D(object):
                 self.uc.log_info("Project successfully loaded!")
 
         finally:
-            self.f2d_widget.setup_project_folder()
+            if self.f2d_widget:
+                self.f2d_widget.setup_project_folder()
             QApplication.restoreOverrideCursor()
 
     def flo_save_project(self):
