@@ -2742,31 +2742,60 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_warn("Importing HDF5 street data failed!")
             self.uc.log_info("Importing HDF5 street data failed!")
 
-    def import_arf(self):
+    def import_arf(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_arf_dat()
+            return self.import_arf_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_arf_hdf5()
 
-    def import_arf_dat(self):
+    def import_arf_dat(self, grid_to_domain):
         try:
+
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
+
             cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
             cells_sql = [
-                """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
                                                        wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
                 12,
             ]
 
-            self.clear_tables("blocked_cells")
-            head, data = self.parser.parse_arf()
-            cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-            gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
-            cells = self.grid_centroids(gids, buffers=True)
+            if not grid_to_domain:
+                self.clear_tables("blocked_cells")
+                head, data = self.parser.parse_arf()
+                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+                gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
+                cells = self.grid_centroids(gids, buffers=True)
 
-            for i, row in enumerate(chain(data["T"], data["PB"]), 1):
-                gid = str(abs(int(row[0])))
-                centroid = cells[gid]
-                cells_sql += [(centroid, i) + tuple(row)]
+                for i, row in enumerate(chain(data["T"], data["PB"]), 1):
+                    gid = str(abs(int(row[0])))
+                    centroid = cells[gid]
+                    cells_sql += [(centroid, i) + tuple(row)]
+            else:
+                area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
+                if area_fid and area_fid[0]:
+                    area_fid = area_fid[0] + 1
+                else:
+                    area_fid = 1
+                head, data = self.parser.parse_arf()
+                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+                gids = (str(grid_to_domain[abs(int(x[0]))]) for x in chain(data["T"], data["PB"]))
+                cells = self.grid_centroids(gids, buffers=True)
+                for i, row in enumerate(chain(data["T"], data["PB"]), start=area_fid):
+                    gid = str(grid_to_domain[abs(int(row[0]))])
+                    arf = row[1]
+                    wrf1 = row[2]
+                    wrf2 = row[3]
+                    wrf3 = row[4]
+                    wrf4 = row[5]
+                    wrf5 = row[6]
+                    wrf6 = row[7]
+                    wrf7 = row[8]
+                    wrf8 = row[9]
+                    centroid = cells[gid]
+                    cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
+
 
             self.batch_execute(cont_sql, cells_sql)
 

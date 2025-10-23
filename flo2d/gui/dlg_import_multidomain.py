@@ -731,7 +731,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_hystruc",
             # "import_hystruc_bridge_xs",
             # "import_street",
-            # "import_arf",
+            "import_arf",
             # "import_mult",
             # "import_sed",
             # "import_levee",
@@ -779,8 +779,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
         mapped_rows = self.gutils.execute(map_qry, (subdomain,)).fetchall()
         grid_to_domain = {int(domain_grid): int(global_grid) for (domain_grid, global_grid) in mapped_rows}
-        if subdomain in [2,"2"]:
-            self.uc.log_info(str(grid_to_domain))
 
         if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
             self.call_IO_methods_dat(import_calls, True, grid_to_domain)
