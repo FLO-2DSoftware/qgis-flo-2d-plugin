@@ -559,6 +559,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                     coords_count[coord] += 1
 
         # Filter coordinates that appear in at least two different files and convert them to "x y" format at the end
-        common_coords = [f"{coord[0]} {coord[1]}" for coord, count in coords_count.items() if count >= 2]
+        common_coords = {(float(coord[0]), float(coord[1]))
+                         for coord, count in coords_count.items() if count >= 2}
 
         return common_coords

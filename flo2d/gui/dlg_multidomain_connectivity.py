@@ -344,8 +344,10 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                             j = 2 + (i - 1) * 4
                             for subdomain, connections in multidomain_data.items():
                                 for up_domain_cell, up_domain_coords in connections:
+                                    # self.uc.log_info("1 " + str((md_fid, up_domain_cell, subdomain, up_domain_coords)))
+                                    # self.uc.log_info("2 " + str((subdomain, "", "", up_domain_coords)))
                                     bulk_insert_data.append((md_fid, up_domain_cell, subdomain, up_domain_coords))
-                                    bulk_insert_data.append((subdomain, "", "", up_domain_coords))
+                                    # bulk_insert_data.append((subdomain, "", "", up_domain_coords))
                                 j +=  4
 
                             used_multidomain_file = True

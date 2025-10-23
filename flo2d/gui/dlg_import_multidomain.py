@@ -375,19 +375,63 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         self.import_global_grid(total_subdomains, subdomains_paths, common_coords)
 
-        msg = (
-            "Would you like to reassign grid element fids?\n\n"
-            "Click Yes to reassign grid element fids.\n"
-            "    Yes will run an extra process that reassigns your grid fids to match the original global domain.\n\n"
-            "Click No to continue without reassigning grid fids.\n"
-            "    No is faster, but the grid fids will not match your original global domain."
-        )
-        QApplication.restoreOverrideCursor()
-        answer = self.uc.customized_question("FLO-2D", msg)
-        if answer == QMessageBox.Yes:
-            pass
+        self.import_components(total_subdomains, subdomains_paths)
 
-        # self.import_md(subdomain)
+        self.finalize_import()
+
+
+    def create_support_tables(self):
+        """
+        Function to create tables that will be used as support during the import process
+        :return:
+        """
+
+        # Drop prior tables and any stale registrations
+        for t in ("stage_cells", "stage_schema_md"):
+            self.gutils.execute("DELETE FROM gpkg_contents WHERE table_name = ?;", (t,))
+            self.gutils.execute(f"DROP TABLE IF EXISTS {t};")
+
+        # Create fresh tables
+        self.gutils.execute("""
+                CREATE TABLE stage_cells (
+                    x REAL NOT NULL,
+                    y REAL NOT NULL,
+                    n_value REAL,
+                    elevation REAL,
+                    PRIMARY KEY(x, y)
+                );
+            """)
+        self.gutils.execute("""
+                CREATE TABLE stage_schema_md (
+                    domain_fid  INTEGER NOT NULL,
+                    domain_cell INTEGER NOT NULL,
+                    x REAL NOT NULL,
+                    y REAL NOT NULL
+                );
+            """)
+
+        # Register both as aspatial so QGIS exposes them
+        # identifier uses the same name for clarity in the Browser and Layer properties
+        now_sql = "strftime('%Y-%m-%dT%H:%M:%fZ','now')"
+        self.gutils.execute(f"""
+                INSERT INTO gpkg_contents (
+                    table_name, data_type, identifier, description, last_change,
+                    min_x, min_y, max_x, max_y, srs_id
+                )
+                VALUES ('stage_cells', 'aspatial', 'stage_cells', '',
+                        {now_sql}, NULL, NULL, NULL, NULL, NULL);
+            """)
+        self.gutils.execute(f"""
+                INSERT INTO gpkg_contents (
+                    table_name, data_type, identifier, description, last_change,
+                    min_x, min_y, max_x, max_y, srs_id
+                )
+                VALUES ('stage_schema_md', 'aspatial', 'stage_schema_md', '',
+                        {now_sql}, NULL, NULL, NULL, NULL, NULL);
+            """)
+
+        # Helpful index for the join during finalize
+        self.gutils.execute("CREATE INDEX IF NOT EXISTS idx_stage_schema_xy ON stage_schema_md(x, y);")\
 
     def import_global_grid(self, total_subdomains, subdomains_paths, common_coords):
         """
@@ -395,6 +439,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         :return:
         """
+        cell_size = None
+
         progress_dialog = QProgressDialog(f"Importing Subdomain 1...", None, 1, total_subdomains + 1)
         progress_dialog.setWindowTitle("FLO-2D Multiple Domains Import")
         progress_dialog.setModal(True)
@@ -402,6 +448,10 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         progress_dialog.setValue(1)
         QApplication.processEvents()
 
+        # Create support tables to avoid filling the grid fid
+        self.create_support_tables()
+
+        # import the subdomains one by one
         for subdomain, subdomain_path in enumerate(subdomains_paths, start=1):
             if subdomain_path:
                 hdf5_file = f"{subdomain_path}/Input.hdf5"
@@ -414,13 +464,112 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         return
 
                 start_time = time.time()
-                self.import_subdomains_mannings_n_topo(subdomain_path, common_coords, subdomain)
+                cell_size = self.import_subdomains_mannings_n_topo(subdomain_path, subdomain, common_coords)
                 time_elapsed = self.calculate_time_elapsed(start_time)
                 self.uc.log_info(f"Time Elapsed to import Subdomain {subdomain}: {time_elapsed}")
                 progress_dialog.setLabelText(f"Importing Subdomain {subdomain + 1}...")
                 progress_dialog.setValue(subdomain + 1)
 
         progress_dialog.close()
+
+        # Get the min x and min y
+        row = self.gutils.execute("""
+            SELECT MIN(x), MAX(y)
+            FROM stage_cells
+            LIMIT 1;
+        """).fetchone()
+        if not row or row[0] is None or row[1] is None:
+            self.uc.bar_warn("Global domain boundary is not defined properly.")
+            self.uc.log_info("Global domain boundary is not defined properly.")
+            return
+        else:
+            min_x, max_y = float(row[0]), float(row[1])
+            self.reassing_grid_fids(min_x, max_y, cell_size)
+
+    def reassing_grid_fids(self, xmin, ymax, cell_size):
+        """
+        Function to reassing the grids fid to match the original global domain
+        """
+        # Build the fid map as a regular table
+        self.gutils.execute("DROP TABLE IF EXISTS grid_fid_map;")
+        self.gutils.execute("""
+            CREATE TABLE grid_fid_map AS
+            WITH params AS (
+              SELECT CAST(:xmin AS REAL) AS xmin,
+                     CAST(:ymax AS REAL) AS ymax,
+                     CAST(:cs   AS REAL) AS cs
+            ),
+            idx AS (
+              SELECT
+                c.x, c.y, c.n_value, c.elevation,
+                CAST(FLOOR((c.x - (SELECT xmin FROM params)) / (SELECT cs FROM params)) AS INTEGER) AS col_idx,
+                CAST(FLOOR(((SELECT ymax FROM params) - c.y) / (SELECT cs FROM params)) AS INTEGER) AS row_idx
+              FROM stage_cells c
+            )
+            SELECT
+              ROW_NUMBER() OVER (ORDER BY col_idx, row_idx) AS fid,
+              x, y, n_value, elevation
+            FROM idx;
+        """, {"xmin": float(xmin), "ymax": float(ymax), "cs": float(cell_size)})
+
+        # Clear targets
+        self.gutils.clear_tables("grid")
+
+        # Fast path A: build polygon in Python batches using your existing builder
+        # This avoids relying on Spatialite functions and matches your current storage.
+        B = self.chunksize or 50000
+        cur = self.gutils.execute("SELECT fid, x, y, n_value, elevation FROM grid_fid_map ORDER BY fid;")
+        total = self.gutils.execute("SELECT COUNT(*) FROM grid_fid_map;").fetchone()[0]
+        progress_dialog = QProgressDialog(f"Reassigning grid fids...", None, 0, total)
+        progress_dialog.setWindowTitle("FLO-2D Multiple Domains Import")
+        progress_dialog.setModal(True)
+        progress_dialog.forceShow()
+        progress_dialog.setValue(0)
+        QApplication.processEvents()
+
+        batch = []
+        for i, (fid, x, y, nval, elev) in enumerate(cur, start=1):
+            poly_wkt = self.gutils.build_square(f"{x} {y}", float(cell_size))
+            batch.append((int(fid), float(nval), float(elev), poly_wkt))
+            progress_dialog.setValue(i)
+            if len(batch) >= B:
+                self.gutils.execute_many(
+                    "INSERT INTO grid(fid, n_value, elevation, geom) VALUES(?, ?, ?, ?);",
+                    batch
+                )
+                batch.clear()
+
+        if batch:
+            self.gutils.execute_many(
+                "INSERT INTO grid(fid, n_value, elevation, geom) VALUES(?, ?, ?, ?);",
+                batch
+            )
+
+        progress_dialog.close()
+
+        # Schema links in one SQL
+        self.gutils.execute("""
+            INSERT OR IGNORE INTO schema_md_cells(grid_fid, domain_fid, domain_cell)
+            SELECT m.fid, s.domain_fid, s.domain_cell
+            FROM stage_schema_md s
+            JOIN grid_fid_map m ON m.x = s.x AND m.y = s.y;
+        """)
+
+        shared_grids = self.gutils.execute("""SELECT fid, ST_AsText(geom) FROM schema_md_cells WHERE grid_fid IS NULL;""").fetchall()
+        update_grids = []
+        for sg in shared_grids:
+            geom_wkt = sg[1]
+            x_str, y_str = geom_wkt.strip("POINT()").split()
+            x, y = float(x_str), float(y_str)
+            grid = self.gutils.grid_on_point(x, y)
+            update_grids.append((grid, sg[0]))
+
+        self.gutils.execute_many("""UPDATE schema_md_cells SET grid_fid = ? WHERE fid = ?;""", update_grids)
+
+        # Drop staging and map tables to keep the GeoPackage clean
+        self.gutils.execute("DROP TABLE IF EXISTS stage_cells;")
+        self.gutils.execute("DROP TABLE IF EXISTS stage_schema_md;")
+        self.gutils.execute("DROP TABLE IF EXISTS grid_fid_map;")
 
     def fetch_subdomain_paths(self):
         """Fetch and return all subdomain paths from the UI."""
@@ -440,7 +589,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.uc.log_info("Import of Multiple Domains finished successfully")
         self.uc.bar_info("Import of Multiple Domains finished successfully")
 
-    def import_subdomains_mannings_n_topo(self, subdomain, common_coords, subdomain_n):
+    def import_subdomains_mannings_n_topo(self, subdomain_path, subdomain, common_coords):
         """
         Imports subdomain-specific Manning's N and TOPO data.
 
@@ -449,155 +598,64 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         them, and saving/updating them in the project database or corresponding tables.
         """
 
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+        # try:
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            # Step 1: Clear tables if this is the first subdomain
-            if subdomain_n == 1:
-                self.gutils.clear_tables("grid")
-                fid = 1
+        data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used = self.get_subdomain_data(subdomain_path)
+        default_n = float(self.gutils.get_cont_par("MANNING"))
+        batch_cells, batch_schema = [], []
+
+        # Update CELLSIZE
+        self.gutils.set_cont_par("CELLSIZE", int(cell_size))
+
+        # Batch processing for better performance
+        batch_size = self.chunksize  # Set batch size from existing chunksize variable
+
+        for i, row in enumerate(data, start=1):
+
+            x, y = map(float, row[coords])
+
+            if man and elev:
+                n_val = float(row[man][0] if isinstance(row[man], (list, tuple)) else row[man])
+                z_val = float(row[elev][0] if isinstance(row[elev], (list, tuple)) else row[elev])
             else:
-                fid = self.gutils.execute("SELECT MAX(fid) FROM grid;").fetchone()[0] or 0
-                fid += 1  # Ensures unique fid values
+                n_val, z_val = default_n, -9999.0
 
-            data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used = self.get_subdomain_data(subdomain)
-
-            sql_grid = []
-            sql_schema = []
-
-            # Update CELLSIZE
-            self.gutils.set_cont_par("CELLSIZE", int(cell_size))
-
-            # Batch processing for better performance
-            batch_size = self.chunksize  # Set batch size from existing chunksize variable
-
-            for i, row in enumerate(data, start=1):
-
-                geom = " ".join(list(map(str, row[coords])))
-
-                # Check if the geometry is in the common coords between all subdomains
-                if geom in common_coords:
-
-                    # Check if it is not constructed on the GRID table
-                    g = self.gutils.build_square(geom, cell_size)
-                    check_grid_qry = f"""SELECT fid FROM grid WHERE geom = ?;"""
-                    check_grid = self.gutils.execute(check_grid_qry, (g,)).fetchall()
-
-                    # It does not exist
-                    if not check_grid:
-                        if man and elev:
-                            sql_grid.append((fid, *row[man], *row[elev], g))
-                        else:
-                            mannings = self.gutils.get_cont_par("MANNING")
-                            elevation = -9999
-                            sql_grid.append((fid, mannings, elevation, g))
-
-                        # Check if it is not constructed on the SCHEMA_MD_CELLS table
-                        check_con_qry = f"""SELECT fid, domain_cell FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})');"""
-                        check_con = self.gutils.execute(check_con_qry).fetchall()
-
-                        # It exists - Update
-                        if check_con:
-                            self.gutils.execute(f"""UPDATE
-                                                        schema_md_cells
-                                                    SET
-                                                        grid_fid = {fid},
-                                                        domain_cell = {i}
-                                                    WHERE
-                                                        geom = ST_GeomFromText('POINT({geom})')
-                                                    AND
-                                                        domain_fid = {subdomain_n};""")
-                            sql_schema.append((fid, subdomain_n, i))
-                        # It does not exist - Create
-                        else:
-                            sql_schema.append((fid, subdomain_n, i))
-
-                        fid += 1
-
-                    # It exists
-                    else:
-
-                        # Check if it is not constructed on the SCHEMA_MD_CELLS table
-                        check_con_qry = f"""SELECT fid, domain_cell FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})');"""
-                        check_con = self.gutils.execute(check_con_qry).fetchall()
-
-                        # It exists - Update
-                        if check_con:
-                            self.gutils.execute(f"""UPDATE
-                                                       schema_md_cells
-                                                   SET
-                                                       grid_fid = {check_grid[0][0]},
-                                                       domain_cell = {i}
-                                                   WHERE
-                                                       geom = ST_GeomFromText('POINT({geom})')
-                                                   AND
-                                                       domain_fid = {subdomain_n};""")
-                            sql_schema.append((check_grid[0][0], subdomain_n, i))
-                        else:
-                            sql_schema.append((check_grid[0][0], subdomain_n, i))
-
-                # If the grid is not on the grid table, construct the grid and add to schema_md_cells
-                else:
-                    g = self.gutils.build_square(geom, cell_size)
-                    if man and elev:
-                        sql_grid.append((fid, *row[man], *row[elev], g))
-                    else:
-                        mannings = self.gutils.get_cont_par("MANNING")
-                        elevation = -9999
-                        sql_grid.append((fid, mannings, elevation, g))
-
-                    sql_schema.append((fid, subdomain_n, i))
-
-                    fid += 1
-
-                # Execute in batches for better efficiency
-                if len(sql_grid) >= batch_size:
-                    self.gutils.execute_many(
-                        "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
-                        sql_grid
-                    )
-                    sql_grid.clear()
-
-                if len(sql_schema) >= batch_size:
-                    self.gutils.execute_many(
-                        f"""
-                           INSERT INTO schema_md_cells 
-                           (grid_fid, domain_fid, domain_cell) 
-                           VALUES (?, ?, ?);
-                        """,
-                        sql_schema
-                    )
-                    sql_schema.clear()
-
-            # Insert remaining data if any
-            if sql_grid:
-                self.gutils.execute_many(
-                    "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
-                    sql_grid
-                )
-
-            if sql_schema:
-                self.gutils.execute_many(
-                    f"""
-                       INSERT INTO schema_md_cells 
-                       (grid_fid, domain_fid, domain_cell) 
-                       VALUES (?, ?, ?);
-                    """,
-                    sql_schema
-                )
-
-            if hdf5_used:
-                self.uc.bar_info(f"Subdomain {subdomain_n} grid created from {hdf5_used}!")
-                self.uc.log_info(f"Subdomain {subdomain_n} grid created from {hdf5_used}!")
+            if (x, y) in common_coords:
+                # Insert only once thanks to PK(x,y); duplicates from other subdomains are ignored
+                batch_cells.append((x, y, n_val, z_val))
             else:
-                self.uc.bar_info(f"Subdomain {subdomain_n} grid created from {f1_used} and {f2_used}!")
-                self.uc.log_info(f"Subdomain {subdomain_n} grid created from {f1_used} and {f2_used}!")
+                # Unique to this subdomain – insert
+                batch_cells.append((x, y, n_val, z_val))
 
-        except Exception as e:
-            self.uc.bar_error("Failed to import global domain. Please check the input files!\n" + str(e))
-            self.uc.log_info("Failed to import global domain data. Please check the input files!\n" + str(e))
-        finally:
-            QApplication.restoreOverrideCursor()
+            batch_schema.append((int(subdomain), int(i), x, y))
+
+            if len(batch_cells) >= batch_size:
+                self.gutils.execute_many(
+                    "INSERT OR IGNORE INTO stage_cells(x, y, n_value, elevation) VALUES(?, ?, ?, ?);",
+                    batch_cells
+                )
+                batch_cells.clear()
+
+            if len(batch_schema) >= batch_size:
+                self.gutils.execute_many(
+                    "INSERT INTO stage_schema_md(domain_fid, domain_cell, x, y) VALUES(?, ?, ?, ?);",
+                    batch_schema
+                )
+                batch_schema.clear()
+
+        if batch_cells:
+            self.gutils.execute_many(
+                "INSERT OR IGNORE INTO stage_cells(x, y, n_value, elevation) VALUES(?, ?, ?, ?);",
+                batch_cells
+            )
+        if batch_schema:
+            self.gutils.execute_many(
+                "INSERT INTO stage_schema_md(domain_fid, domain_cell, x, y) VALUES(?, ?, ?, ?);",
+                batch_schema
+            )
+
+        return int(cell_size)
 
     def get_subdomain_data(self, subdomain):
         """Function to get the subdomain data"""
@@ -734,7 +792,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         return data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used
 
-    def import_md(self, subdomain):
+    def import_components(self, total_subdomains, subdomains_paths):
         """Function to import multiple domains into one global domain"""
 
         import_calls = [
@@ -793,19 +851,49 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         #     self.gutils.enable_geom_triggers()
         #     return
 
-        map_qry = """
-            SELECT DISTINCT(domain_cell), grid_fid
-            FROM schema_md_cells
-            WHERE domain_fid = ?
-			ORDER BY domain_cell
-        """
-        mapped_rows = self.gutils.execute(map_qry, (subdomain,)).fetchall()
-        grid_to_domain = {int(domain_grid): int(global_grid) for (domain_grid, global_grid) in mapped_rows}
+        progress_dialog = QProgressDialog(f"Importing components for Subdomain 1...", None, 0, total_subdomains + 1)
+        progress_dialog.setWindowTitle("FLO-2D Multiple Domains Import")
+        progress_dialog.setModal(True)
+        progress_dialog.forceShow()
+        progress_dialog.setValue(1)
+        QApplication.processEvents()
 
-        if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
-            self.call_IO_methods_dat(import_calls, True, grid_to_domain)
-        elif self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
-            self.call_IO_methods_hdf5(import_calls, True, grid_to_domain)
+        # import the subdomains components one by one
+        for subdomain, subdomain_path in enumerate(subdomains_paths, start=1):
+            if subdomain_path:
+
+                progress_dialog.setLabelText(f"Importing components for Subdomain {subdomain + 1}...")
+                progress_dialog.setValue(subdomain + 1)
+
+                hdf5_file = f"{subdomain_path}/Input.hdf5"
+                if os.path.isfile(hdf5_file):
+                    self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                else:
+                    self.f2g = Flo2dGeoPackage(self.con, self.iface)
+                    fname = subdomain_path + "/CONT.DAT"
+                    if not self.f2g.set_parser(fname):
+                        return
+
+                start_time = time.time()
+
+                map_qry = """
+                            SELECT DISTINCT(domain_cell), grid_fid
+                            FROM schema_md_cells
+                            WHERE domain_fid = ?
+                			ORDER BY domain_cell
+                        """
+                mapped_rows = self.gutils.execute(map_qry, (subdomain,)).fetchall()
+                grid_to_domain = {int(domain_grid): int(global_grid) for (domain_grid, global_grid) in mapped_rows}
+
+                if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
+                    self.call_IO_methods_dat(import_calls, True, grid_to_domain)
+                elif self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
+                    self.call_IO_methods_hdf5(import_calls, True, grid_to_domain)
+
+                time_elapsed = self.calculate_time_elapsed(start_time)
+                self.uc.log_info(f"Time Elapsed to import Subdomain {subdomain}: {time_elapsed}")
+
+        progress_dialog.close()
 
     def call_IO_methods_hdf5(self, calls, debug, *args):
 
