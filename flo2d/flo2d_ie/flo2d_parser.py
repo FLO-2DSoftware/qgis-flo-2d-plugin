@@ -884,6 +884,8 @@ class ParseDAT(object):
 
     def parse_hystruct(self):
         hystruct = self.dat_files["HYSTRUC.DAT"]
+        if not hystruct:
+            return None
         par = self.single_parser(hystruct)
         data = []
         chars = {"S": 10, "C": 6, "R": 6, "T": 4, "F": 7, "D": 3, "B": 15}

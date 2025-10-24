@@ -812,7 +812,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_infil",
             # "import_chan",
             # "import_xsec",
-            # "import_hystruc",
+            "import_hystruc",
             # "import_hystruc_bridge_xs",
             # "import_street",
             "import_arf",

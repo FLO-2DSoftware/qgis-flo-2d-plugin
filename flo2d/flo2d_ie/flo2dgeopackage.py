@@ -2281,13 +2281,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if xsec_sql:
                 self.batch_execute(xsec_sql)
 
-    def import_hystruc(self):
+    def import_hystruc(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_hystruc_dat()
+            return self.import_hystruc_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_hystruc_hdf5()
 
-    def import_hystruc_dat(self):
+    def import_hystruc_dat(self, grid_to_domain):
         try:
             hystruc_params = [
                 "geom",
@@ -2340,37 +2340,66 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "B": bridge_sql,
             }
 
-            n_cells = next(self.execute("SELECT COUNT(*) FROM grid;"))[0]
             data = self.parser.parse_hystruct()
+            if not data:
+                return None
+
             nodes = slice(3, 5)
             cells_outside = ""
-            for i, hs in enumerate(data, 1):
-                params = hs[:-1]  # Line 'S' (first line of next structure)
 
-                cell_1 = int(params[nodes][0])
-                cell_2 = int(params[nodes][1])
-                if cell_1 > n_cells or cell_1 < 0 or cell_2 > n_cells or cell_2 < 0:
-                    cells_outside += " (" + str(cell_1) + ", " + str(cell_2) + ")\n"
-                    continue
-                elems = hs[-1]  # Lines 'C', 'R', 'I', 'F', 'D' and/or 'B'(rest of lines of next structure)
-                if "B" in elems:
-                    elems = {"B": [elems.get("B")[0] + elems.get("B")[1]]}
-                geom = self.build_linestring(params[nodes])
-                typ = list(elems.keys())[0] if len(elems) == 1 else "C"
-                hystruc_sql += [(geom, typ) + tuple(params)]
-                for char in list(elems.keys()):
-                    for row in elems[char]:
-                        sqls[char] += [(i,) + tuple(row)]
+            if not grid_to_domain:
 
-            self.clear_tables(
-                "struct",
-                "rat_curves",
-                "repl_rat_curves",
-                "rat_table",
-                "culvert_equations",
-                "storm_drains",
-                "bridge_variables",
-            )
+                self.clear_tables(
+                    "struct",
+                    "rat_curves",
+                    "repl_rat_curves",
+                    "rat_table",
+                    "culvert_equations",
+                    "storm_drains",
+                    "bridge_variables",
+                )
+
+                for i, hs in enumerate(data, 1):
+                    params = hs[:-1]  # Line 'S' (first line of next structure)
+                    n_cells = next(self.execute("SELECT COUNT(*) FROM grid;"))[0]
+                    cell_1 = int(params[nodes][0])
+                    cell_2 = int(params[nodes][1])
+                    if cell_1 > n_cells or cell_1 < 0 or cell_2 > n_cells or cell_2 < 0:
+                        cells_outside += " (" + str(cell_1) + ", " + str(cell_2) + ")\n"
+                        continue
+                    elems = hs[-1]  # Lines 'C', 'R', 'I', 'F', 'D' and/or 'B'(rest of lines of next structure)
+                    if "B" in elems:
+                        elems = {"B": [elems.get("B")[0] + elems.get("B")[1]]}
+                    geom = self.build_linestring(params[nodes])
+                    typ = list(elems.keys())[0] if len(elems) == 1 else "C"
+                    hystruc_sql += [(geom, typ) + tuple(params)]
+                    for char in list(elems.keys()):
+                        for row in elems[char]:
+                            sqls[char] += [(i,) + tuple(row)]
+            else:
+                struct_fid = self.execute("SELECT MAX(fid) FROM struct;").fetchone()
+                if struct_fid and struct_fid[0]:
+                    struct_fid = struct_fid[0] + 1
+                else:
+                    struct_fid = 1
+                for i, hs in enumerate(data, start=struct_fid):
+                    params = hs[:-1]  # Line 'S' (first line of next structure)
+                    cell_1 = grid_to_domain.get(int(params[nodes][0]))
+                    cell_2 = grid_to_domain.get(int(params[nodes][1]))
+                    params_list = list(params)
+                    params_list[nodes.start] = cell_1
+                    params_list[nodes.start + 1] = cell_2
+                    params = tuple(params_list)
+                    elems = hs[-1]  # Lines 'C', 'R', 'I', 'F', 'D' and/or 'B'(rest of lines of next structure)
+                    if "B" in elems:
+                        elems = {"B": [elems.get("B")[0] + elems.get("B")[1]]}
+                    geom = self.build_linestring((cell_1, cell_2))
+                    typ = list(elems.keys())[0] if len(elems) == 1 else "C"
+                    hystruc_sql += [(geom, typ) + tuple(params)]
+                    for char in list(elems.keys()):
+                        for row in elems[char]:
+                            sqls[char] += [(i,) + tuple(row)]
+
             self.batch_execute(
                 hystruc_sql,
                 ratc_sql,
