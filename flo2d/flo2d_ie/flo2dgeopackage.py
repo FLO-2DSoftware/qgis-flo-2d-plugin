@@ -3973,24 +3973,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing STEEP_SLOPEN data from HDF5 failed!", e)
             self.uc.log_info("ERROR: Importing STEEP_SLOPEN data from HDF5 failed!")
 
-    def import_lid_volume(self):
+    def import_lid_volume(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_lid_volume_dat()
+            return self.import_lid_volume_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_lid_volume_hdf5()
 
-    def import_lid_volume_dat(self):
+    def import_lid_volume_dat(self,grid_to_domain):
         try:
-
             cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
-
-            self.clear_tables("lid_volume_cells")
-
             data = self.parser.parse_lid_volume()
+            if not data:
+                return
 
-            for i, row in enumerate(data, 1):
-                gid, volume = row
-                cells_sql += [(gid, volume)]
+            if not grid_to_domain:
+                self.clear_tables("lid_volume_cells")
+                for i, row in enumerate(data, 1):
+                    gid, volume = row
+                    cells_sql += [(gid, volume)]
+            else:
+                for i, row in enumerate(data, 1):
+                    domain_gid, volume = row
+                    global_fid = grid_to_domain.get(int(domain_gid))
+                    cells_sql += [(global_fid, volume)]
 
             self.batch_execute(cells_sql)
 

@@ -1086,6 +1086,8 @@ class ParseDAT(object):
 
     def parse_lid_volume(self):
         lid_volume = self.dat_files["LID_VOLUME.DAT"]
+        if not lid_volume:
+            return None
         par = self.single_parser(lid_volume)
         data = [row for row in par]
         return data
