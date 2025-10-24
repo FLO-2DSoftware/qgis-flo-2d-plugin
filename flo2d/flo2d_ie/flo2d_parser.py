@@ -1070,12 +1070,16 @@ class ParseDAT(object):
 
     def parse_fpfroude(self):
         fpfroude = self.dat_files["FPFROUDE.DAT"]
+        if not fpfroude:
+            return None
         par = self.single_parser(fpfroude)
         data = [row[1:] for row in par]
         return data
 
     def parse_steep_slopen(self):
         steep_slopen = self.dat_files["STEEP_SLOPEN.DAT"]
+        if not steep_slopen:
+            return None
         par = self.single_parser(steep_slopen)
         data = [row for row in par]
         return data

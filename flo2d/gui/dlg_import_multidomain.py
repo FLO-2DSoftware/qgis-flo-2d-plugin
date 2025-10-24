@@ -820,7 +820,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_breach",
             # "import_gutter",
             "import_fpfroude",
-            # "import_steep_slopen",
+            "import_steep_slopen",
             # "import_lid_volume",
             # "import_shallowNSpatial",
             # "import_swmminp",
