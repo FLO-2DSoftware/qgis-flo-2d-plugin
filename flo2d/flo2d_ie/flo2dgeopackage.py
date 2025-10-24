@@ -2749,61 +2749,63 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.import_arf_hdf5()
 
     def import_arf_dat(self, grid_to_domain):
-        try:
+        # try:
 
-            self.gutils.execute(
-                "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
+        self.gutils.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
 
-            cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
-            cells_sql = [
-                """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
-                                                       wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
-                12,
-            ]
+        cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+        cells_sql = [
+            """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                                                   wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
+            12,
+        ]
 
-            if not grid_to_domain:
-                self.clear_tables("blocked_cells")
-                head, data = self.parser.parse_arf()
-                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-                gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
-                cells = self.grid_centroids(gids, buffers=True)
+        head, data = self.parser.parse_arf()
+        if not head or not data:
+            return
 
-                for i, row in enumerate(chain(data["T"], data["PB"]), 1):
-                    gid = str(abs(int(row[0])))
-                    centroid = cells[gid]
-                    cells_sql += [(centroid, i) + tuple(row)]
+        if not grid_to_domain:
+            self.clear_tables("blocked_cells")
+            cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+            gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
+            cells = self.grid_centroids(gids, buffers=True)
+
+            for i, row in enumerate(chain(data["T"], data["PB"]), 1):
+                gid = str(abs(int(row[0])))
+                centroid = cells[gid]
+                cells_sql += [(centroid, i) + tuple(row)]
+        else:
+            area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
+            if area_fid and area_fid[0]:
+                area_fid = area_fid[0] + 1
             else:
-                area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
-                if area_fid and area_fid[0]:
-                    area_fid = area_fid[0] + 1
-                else:
-                    area_fid = 1
-                head, data = self.parser.parse_arf()
-                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-                gids = (str(grid_to_domain[abs(int(x[0]))]) for x in chain(data["T"], data["PB"]))
-                cells = self.grid_centroids(gids, buffers=True)
-                for i, row in enumerate(chain(data["T"], data["PB"]), start=area_fid):
-                    gid = str(grid_to_domain[abs(int(row[0]))])
-                    arf = row[1]
-                    wrf1 = row[2]
-                    wrf2 = row[3]
-                    wrf3 = row[4]
-                    wrf4 = row[5]
-                    wrf5 = row[6]
-                    wrf6 = row[7]
-                    wrf7 = row[8]
-                    wrf8 = row[9]
-                    centroid = cells[gid]
-                    cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
+                area_fid = 1
+            cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+            gids = (str(grid_to_domain[abs(int(x[0]))]) for x in chain(data["T"], data["PB"]))
+            cells = self.grid_centroids(gids, buffers=True)
+            for i, row in enumerate(chain(data["T"], data["PB"]), start=area_fid):
+                gid = str(grid_to_domain[abs(int(row[0]))])
+                arf = row[1]
+                wrf1 = row[2]
+                wrf2 = row[3]
+                wrf3 = row[4]
+                wrf4 = row[5]
+                wrf5 = row[6]
+                wrf6 = row[7]
+                wrf7 = row[8]
+                wrf8 = row[9]
+                centroid = cells[gid]
+                cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
 
-            self.batch_execute(cont_sql, cells_sql)
+        self.batch_execute(cont_sql, cells_sql)
 
-        except Exception as e:
-            self.uc.show_error(
-                "ERROR 050420.1720.0701: couldn't import ARF.DAT file!"
-                + "\n__________________________________________________",
-                e,
-            )
+        # except Exception as e:
+        #     self.uc.show_error(
+        #         "ERROR 050420.1720.0701: couldn't import ARF.DAT file!"
+        #         + "\n__________________________________________________",
+        #         e,
+        #     )
 
     def import_arf_hdf5(self):
         try:

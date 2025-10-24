@@ -940,6 +940,8 @@ class ParseDAT(object):
 
     def parse_arf(self):
         arf = self.dat_files["ARF.DAT"]
+        if not arf:
+            return None, None
         par = self.single_parser(arf)
         head = []
         data = defaultdict(list)
