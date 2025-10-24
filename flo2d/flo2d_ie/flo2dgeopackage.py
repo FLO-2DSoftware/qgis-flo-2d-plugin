@@ -3461,13 +3461,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.log_info("Error while importing Mudflow and Sediment Transport from hdf5 file!")
         #     QApplication.setOverrideCursor(Qt.WaitCursor)
 
-    def import_levee(self):
+    def import_levee(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_levee_dat()
+            return self.import_levee_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_levee_hdf5()
 
-    def import_levee_dat(self):
+    def import_levee_dat(self, grid_to_domain):
         lgeneral_sql = [
             """INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES""",
             4,
@@ -3486,23 +3486,41 @@ class Flo2dGeoPackage(GeoPackageUtils):
             3,
         ]
 
-        self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
         head, data = self.parser.parse_levee()
-
+        if not head or not data:
+            return None
         lgeneral_sql += [tuple(head)]
 
-        for gid, directions in data["L"]:
-            for row in directions:
-                ldir, levcrest = row
-                geom = self.build_levee(gid, ldir, self.cell_size)
-                ldata_sql += [(geom, gid, ldir, levcrest)]
+        if not grid_to_domain:
+            self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
+            for gid, directions in data["L"]:
+                for row in directions:
+                    ldir, levcrest = row
+                    geom = self.build_levee(gid, ldir, self.cell_size)
+                    ldata_sql += [(geom, gid, ldir, levcrest)]
 
-        for gid, directions in data["F"]:
-            for row in directions:
-                lfailure_sql += [(gid,) + tuple(row)]
+            for gid, directions in data["F"]:
+                for row in directions:
+                    lfailure_sql += [(gid,) + tuple(row)]
 
-        for row in data["P"]:
-            lfragility_sql += [tuple(row)]
+            for row in data["P"]:
+                lfragility_sql += [tuple(row)]
+        else:
+            for gid, directions in data["L"]:
+                for row in directions:
+                    ldir, levcrest = row
+                    global_gid = grid_to_domain.get(int(gid))
+                    geom = self.build_levee(global_gid, ldir, self.cell_size)
+                    ldata_sql += [(geom, global_gid, ldir, levcrest)]
+
+            for gid, directions in data["F"]:
+                for row in directions:
+                    global_gid = grid_to_domain.get(int(gid))
+                    lfailure_sql += [(global_gid,) + tuple(row)]
+
+            for gid, levfragchar, levfragprob in data["P"]:
+                global_gid = grid_to_domain.get(int(gid))
+                lfragility_sql += [(global_gid, levfragchar, levfragprob)]
 
         self.batch_execute(lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql)
 
@@ -12019,7 +12037,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 levee_data_sql = f"""
                                  SELECT 
-                                    md.domain_cell, 
+                                    DISTINCT(md.domain_cell), 
                                     ld.ldir, 
                                     ld.levcrest 
                                  FROM 
@@ -12034,7 +12052,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 levee_fail_sql = f"""
                                  SELECT 
-                                    md.domain_cell, 
+                                    DISTINCT(md.domain_cell), 
                                     lf.lfaildir, 
                                     lf.failevel,
                                     lf.failtime,
@@ -12054,7 +12072,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 levee_frag_sql = f"""
                                  SELECT 
-                                    md.domain_cell, 
+                                    DISTINCT(md.domain_cell), 
                                     lf.levfragchar, 
                                     lf.levfragprob 
                                  FROM 

@@ -1015,6 +1015,8 @@ class ParseDAT(object):
 
     def parse_levee(self):
         levee = self.dat_files["LEVEE.DAT"]
+        if not levee:
+            return None, None
         par = self.single_parser(levee)
         head = next(par)
         data = defaultdict(list)
