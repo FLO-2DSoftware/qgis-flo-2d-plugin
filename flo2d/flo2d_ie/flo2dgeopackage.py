@@ -6359,7 +6359,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_shallowNSpatial_dat(self, grid_to_domain):
         try:
-            cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid, shallow_n) VALUES""", 3]
+            cells_sql = ["""INSERT OR IGNORE INTO spatialshallow_cells (area_fid, grid_fid, shallow_n) VALUES""", 3]
             data = self.parser.parse_shallowNSpatial()
             if not data:
                 return
@@ -6370,6 +6370,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gid, shallow_n = row
                     cells_sql += [(i, gid, float(shallow_n))]
             else:
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_spatialshallow_cells_grid ON spatialshallow_cells(grid_fid);")
                 for i, row in enumerate(data, 1):
                     domain_gid, shallow_n = row
                     global_gid = grid_to_domain.get(int(domain_gid))
@@ -12578,14 +12579,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cell_sql = """SELECT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
             else:
                 cell_sql = f"""SELECT 
-                                    md.domain_cell, 
+                                    DISTINCT(md.domain_cell), 
                                     ss.shallow_n
                                 FROM 
                                     spatialshallow_cells AS ss
                                 JOIN 
                                     schema_md_cells md ON ss.grid_fid = md.grid_fid
                                 WHERE 
-                                    md.domain_fid = {subdomain};"""
+                                    md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;"""
 
             line1 = "{0} {1}\n"
 
