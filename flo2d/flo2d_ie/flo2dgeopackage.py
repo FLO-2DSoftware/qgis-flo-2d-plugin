@@ -6292,21 +6292,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing SWMMOUTF data from HDF5 failed!", e)
             self.uc.log_info("ERROR: Importing SWMMOUTF data from HDF5 failed!")
 
-    def import_tolspatial(self):
+    def import_tolspatial(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_tolspatial_dat()
+            return self.import_tolspatial_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_tolspatial_hdf5()
 
-    def import_tolspatial_dat(self):
+    def import_tolspatial_dat(self, grid_to_domain):
         try:
             cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid, tol) VALUES""", 3]
-
-            self.clear_tables("tolspatial_cells")
             data = self.parser.parse_tolspatial()
-            for i, row in enumerate(data, 1):
-                gid, tol = row
-                cells_sql += [(i, gid, float(tol))]
+            if not data:
+                return
+
+            if not grid_to_domain:
+                self.clear_tables("tolspatial_cells")
+                for i, row in enumerate(data, 1):
+                    gid, tol = row
+                    cells_sql += [(i, gid, float(tol))]
+            else:
+                for i, row in enumerate(data, 1):
+                    domain_gid, tol = row
+                    global_gid = grid_to_domain.get(int(domain_gid))
+                    cells_sql += [(i, global_gid, float(tol))]
 
             self.batch_execute(cells_sql)
 

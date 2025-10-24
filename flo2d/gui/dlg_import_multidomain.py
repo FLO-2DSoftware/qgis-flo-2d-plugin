@@ -829,7 +829,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_swmmoutf",
             # "import_swmmflodropbox",
             # "import_sdclogging",
-            # "import_tolspatial",
+            "import_tolspatial",
             # "import_wsurf",
             # "import_wstime",
         ]

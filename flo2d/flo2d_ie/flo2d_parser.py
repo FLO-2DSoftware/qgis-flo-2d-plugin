@@ -1163,6 +1163,8 @@ class ParseDAT(object):
 
     def parse_tolspatial(self):
         tolspatial = self.dat_files["TOLSPATIAL.DAT"]
+        if not tolspatial:
+            return None
         par = self.single_parser(tolspatial)
         data = [row for row in par]
         return data
