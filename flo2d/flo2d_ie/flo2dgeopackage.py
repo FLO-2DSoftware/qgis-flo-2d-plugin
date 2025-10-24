@@ -1675,6 +1675,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         }
 
         data = self.parser.parse_infil()
+        if not data:
+            return
 
         infil_sql += [tuple([data[k.upper()] if k.upper() in data else None for k in infil_params])]
 

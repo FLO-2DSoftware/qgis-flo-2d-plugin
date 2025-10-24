@@ -736,6 +736,8 @@ class ParseDAT(object):
 
     def parse_infil(self):
         infil = self.dat_files["INFIL.DAT"]
+        if not infil:
+            return None
         line1 = ["INFMETHOD"]
         line2h = ["FHORTONIA"]
         line2 = ["ABSTR", "SATI", "SATF", "POROS", "SOILD", "INFCHAN"]
