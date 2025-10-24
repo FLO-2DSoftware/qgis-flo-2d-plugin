@@ -3842,21 +3842,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("Error while importing BREACH data from HDF5!", e)
             self.uc.log_info("Error while importing FPXSEC data from HDF5!")
 
-    def import_fpfroude(self):
+    def import_fpfroude(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_fpfroude_dat()
+            return self.import_fpfroude_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_fpfroude_hdf5()
 
-    def import_fpfroude_dat(self):
+    def import_fpfroude_dat(self, grid_to_domain):
         try:
             cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
-
-            self.clear_tables("fpfroude_cells")
             data = self.parser.parse_fpfroude()
-            for i, row in enumerate(data, 1):
-                gid, froudefp = row
-                cells_sql += [(i, gid, float(froudefp))]
+
+            if not grid_to_domain:
+                self.clear_tables("fpfroude_cells")
+                for i, row in enumerate(data, 1):
+                    gid, froudefp = row
+                    cells_sql += [(i, gid, float(froudefp))]
+            else:
+                for i, row in enumerate(data, 1):
+                    domain_gid, froudefp = row
+                    global_fid = grid_to_domain.get(int(domain_gid))
+                    cells_sql += [(i, global_fid, float(froudefp))]
 
             self.batch_execute(cells_sql)
 
