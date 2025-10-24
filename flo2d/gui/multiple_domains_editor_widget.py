@@ -506,7 +506,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             Yield pandas DataFrames with columns ['x','y'] from HDF5 in chunks.
             Keeps the rest of the code unchanged.
             """
-            import h5py
+            try:
+                import h5py
+            except ImportError:
+                return
             with h5py.File(h5_path, "r") as hdf:
                 coords = hdf[dset]  # expected shape (N, 2)
                 n = coords.shape[0]

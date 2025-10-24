@@ -3,7 +3,10 @@ import os.path
 import time
 from itertools import combinations
 
-import h5py
+try:
+    import h5py
+except ImportError:
+    pass
 import numpy as np
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox
