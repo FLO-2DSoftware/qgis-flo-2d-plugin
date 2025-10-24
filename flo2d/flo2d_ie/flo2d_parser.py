@@ -1169,6 +1169,8 @@ class ParseDAT(object):
 
     def parse_shallowNSpatial(self):
         shallowNSpatial = self.dat_files["SHALLOWN_SPATIAL.DAT"]
+        if not shallowNSpatial:
+            return None
         par = self.single_parser(shallowNSpatial)
         data = [row for row in par]
         return data

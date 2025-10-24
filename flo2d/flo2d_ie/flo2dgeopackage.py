@@ -6343,21 +6343,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing TOLSPATIAL from HDF5 failed!", e)
             return False
 
-    def import_shallowNSpatial(self):
+    def import_shallowNSpatial(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_shallowNSpatial_dat()
+            return self.import_shallowNSpatial_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_shallowNSpatial_hdf5()
 
-    def import_shallowNSpatial_dat(self):
+    def import_shallowNSpatial_dat(self, grid_to_domain):
         try:
             cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid, shallow_n) VALUES""", 3]
-
-            self.clear_tables("spatialshallow_cells")
             data = self.parser.parse_shallowNSpatial()
-            for i, row in enumerate(data, 1):
-                gid, shallow_n = row
-                cells_sql += [(i, gid, float(shallow_n))]
+            if not data:
+                return
+
+            if not grid_to_domain:
+                self.clear_tables("spatialshallow_cells")
+                for i, row in enumerate(data, 1):
+                    gid, shallow_n = row
+                    cells_sql += [(i, gid, float(shallow_n))]
+            else:
+                for i, row in enumerate(data, 1):
+                    domain_gid, shallow_n = row
+                    global_gid = grid_to_domain.get(int(domain_gid))
+                    cells_sql += [(i, global_gid, float(shallow_n))]
 
             self.batch_execute(cells_sql)
 

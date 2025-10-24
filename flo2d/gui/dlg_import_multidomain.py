@@ -822,7 +822,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_fpfroude",
             "import_steep_slopen",
             "import_lid_volume",
-            # "import_shallowNSpatial",
+            "import_shallowNSpatial",
             # "import_swmminp",
             # "import_swmmflo",
             # "import_swmmflort",
