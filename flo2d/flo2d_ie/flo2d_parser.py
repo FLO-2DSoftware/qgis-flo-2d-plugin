@@ -1045,6 +1045,8 @@ class ParseDAT(object):
 
     def parse_fpxsec(self):
         fpxsec = self.dat_files["FPXSEC.DAT"]
+        if not fpxsec:
+            return None, None
         par = self.single_parser(fpxsec)
         head = next(par)[-1]
         data = []

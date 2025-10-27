@@ -819,7 +819,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_mult",
             # "import_sed",
             "import_levee",
-            # "import_fpxsec",
+            "import_fpxsec",
             # "import_breach",
             # "import_gutter",
             "import_fpfroude",
