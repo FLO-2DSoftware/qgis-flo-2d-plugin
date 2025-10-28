@@ -579,6 +579,8 @@ class ParseDAT(object):
     def parse_inflow(self, inflow=None):
         if inflow is None:
             inflow = self.dat_files["INFLOW.DAT"]
+            if inflow is None:
+                return None, None, None
         par = self.single_parser(inflow)
         nxt = next(par)
         if not nxt[0] == "R":

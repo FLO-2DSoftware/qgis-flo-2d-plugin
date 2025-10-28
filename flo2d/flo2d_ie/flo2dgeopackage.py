@@ -449,13 +449,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 040521.1154: importing Grid data from HDF5 file!\n", e)
 
-    def import_inflow(self):
+    def import_inflow(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_inflow_dat()
+            return self.import_inflow_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_inflow_hdf5()
 
-    def import_inflow_dat(self):
+    def import_inflow_dat(self, grid_to_domain):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
         inflow_sql = [
             """INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""",
@@ -488,7 +488,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             4,
         ]
 
-        try:
+        # try:
+        if not grid_to_domain:
             self.clear_tables(
                 "inflow",
                 "inflow_cells",
@@ -563,10 +564,95 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.execute(qry)
                 qry = """UPDATE tailing_reservoirs SET user_tal_res_fid = fid, name = 'Tal Reservoir ' ||  cast(fid as text);"""
                 self.execute(qry)
+        else:
 
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
+            head, inf, res = self.parser.parse_inflow()
+            if not head and not inf and not res:
+                return None, None, None
+
+            current_bc_grids_sql = self.execute("SELECT grid_fid FROM inflow_cells;").fetchall()
+            current_bc_grids = []
+            if current_bc_grids_sql:
+                current_bc_grids = [row[0] for row in current_bc_grids_sql]
+
+            if not head == None:
+                cont_sql += [
+                    ("IDEPLT", head["IDEPLT"], self.PARAMETER_DESCRIPTION["IDEPLT"]),
+                    (
+                        "IHOURDAILY",
+                        head["IHOURDAILY"],
+                        self.PARAMETER_DESCRIPTION["IHOURDAILY"],
+                    ),
+                ]
+                inflow_fid = self.execute("SELECT MAX(fid) FROM inflow;").fetchone()
+                if inflow_fid and inflow_fid[0]:
+                    inflow_fid = inflow_fid[0] + 1
+                else:
+                    inflow_fid = 1
+                i = inflow_fid
+                for gid in inf:
+                    row = inf[gid]["row"]
+                    global_gid = grid_to_domain.get(int(gid))
+                    if int(global_gid) in current_bc_grids:
+                        inflow_sql += [(i, row[0], row[1], 'point', i)]
+                        cells_sql += [(i, global_gid)]
+                        if inf[gid]["time_series"]:
+                            ts_sql += [(i, "Time series " + str(i))]
+                            for n in inf[gid]["time_series"]:
+                                tsd_sql += [(i,) + tuple(n[1:])]
+                        i += 1
+
+                self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql)
+                qry = """UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);"""
+                self.execute(qry)
+
+            gids = list(res.keys())
+            global_gids = [grid_to_domain.get(int(gid)) for gid in gids]
+            cells = self.grid_centroids(global_gids)
+            for gid in res:
+                global_gid = grid_to_domain.get(int(gid))
+                if global_gid not in current_bc_grids:
+                    row = res[gid]["row"]
+                    square = self.build_square(cells[global_gid], self.shrink)
+                    centroid = self.single_centroid(global_gid, buffers=True)
+                    # one-phase simulation
+                    if len(row) == 4:
+                        grid = grid_to_domain.get(int(row[1]))
+                        wsel = row[2]
+                        n_value = row[3]
+                        user_value = (wsel, n_value)
+                        schema_value = (grid, wsel, n_value)
+                        schematic_reservoirs_sql += [(*schema_value, square)]
+                        user_reservoirs_sql += [(*user_value, centroid)]
+                    # two-phase simulation
+                    if len(row) == 5:
+                        grid = grid_to_domain.get(int(row[1]))
+                        wsel = row[2]
+                        tail = row[3]
+                        n_value = row[4]
+                        user_value = (wsel, n_value, tail)
+                        schema_value = (grid, wsel, n_value, tail)
+                        schematic_tailings_reservoirs_sql += [(*schema_value, square)]
+                        user_tailing_reservoirs += [(*user_value, centroid)]
+
+            if user_reservoirs_sql and schematic_reservoirs_sql:
+                self.batch_execute(user_reservoirs_sql)
+                self.batch_execute(schematic_reservoirs_sql)
+                qry = """UPDATE user_reservoirs SET name = 'Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
+                qry = """UPDATE reservoirs SET user_res_fid = fid, name = 'Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
+            if user_tailing_reservoirs and schematic_tailings_reservoirs_sql:
+                self.batch_execute(user_tailing_reservoirs)
+                self.batch_execute(schematic_tailings_reservoirs_sql)
+                qry = """UPDATE user_tailing_reservoirs SET name = 'Tal Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
+                qry = """UPDATE tailing_reservoirs SET user_tal_res_fid = fid, name = 'Tal Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
+
+        # except Exception as e:
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
     def import_inflow_hdf5(self):
         try:
@@ -3659,7 +3745,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     # Remove the other fpxsec entries
                     if min_fpxsec_fid != max_fpxsec_fid:
                         self.execute(f"DELETE FROM fpxsec WHERE fid = {max_fpxsec_fid};")
-                    self.uc.log_info(fpxsec_fids)
                     self.execute(
                         f"DELETE FROM fpxsec_cells WHERE fpxsec_fid IN ({','.join(['?'] * len(fpxsec_fids))});",
                         tuple(fpxsec_fids)
@@ -7158,9 +7243,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
         else:
             inflow_cells_sql = f"""
-                                SELECT 
+                                SELECT DISTINCT
                                     ic.inflow_fid, 
-                                    md.domain_cell 
+                                    md.domain_cell
                                 FROM 
                                     inflow_cells AS ic
                                 JOIN
@@ -7395,9 +7480,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
         else:
             inflow_cells_sql = f"""
-                                SELECT 
+                                SELECT DISTINCT
                                     ic.inflow_fid, 
-                                    md.domain_cell 
+                                    md.domain_cell
                                 FROM 
                                     inflow_cells AS ic
                                 JOIN
@@ -7412,9 +7497,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         line_cells_dict = {}
         if has_line_hyd:
             for line_hyd in has_line_hyd:
-                line_cells = self.execute(f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd[0]}';").fetchall()
-                n_cells = len(line_cells)
-                if subdomain:
+                if not subdomain:
+                    line_cells = self.execute(f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd[0]}';").fetchall()
+                else:
                     line_cells = self.execute(
                         f"""SELECT 
                                 md.domain_cell 
@@ -7425,6 +7510,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             WHERE 
                                 ic.inflow_fid = '{line_hyd[0]}' AND md.domain_fid = {subdomain};
                             """).fetchall()
+                n_cells = len(line_cells)
                 for cell in line_cells:
                     line_cells_dict[cell[0]] = n_cells
 
@@ -7435,16 +7521,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
         # Adjust the ideplt grid number to the multi domain cell
         if subdomain:
-            ideplt = self.execute(f"""
-                                    SELECT
-                                        md.domain_cell 
-                                    FROM 
-                                        schema_md_cells AS md
-                                    JOIN 
-                                        grid g ON g.fid = md.grid_fid
-                                    WHERE 
-                                        g.fid = {ideplt[0]} AND md.domain_fid = {subdomain}
-                                    """).fetchone()
+            ideplt = None
 
         ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
 
@@ -7493,7 +7570,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         continue
                 else:
                     pass
-
                 fid, ts_fid, ident, inoutfc = row  # ident is 'F' or 'C'
                 inflow_lines.append(inf_line.format(ident, inoutfc, gid))
                 series = self.execute(ts_data_sql, (ts_fid,))
