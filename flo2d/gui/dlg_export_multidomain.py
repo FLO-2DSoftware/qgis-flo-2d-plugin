@@ -300,7 +300,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # if "Evaporation" not in dlg_components.components:
                 #     export_calls.remove("export_evapor")
 
-                if "Hydraulic  Structures" not in dlg_components.components:
+                if "Hydraulic Structures" not in dlg_components.components:
                     export_calls.remove("export_hystruc")
                     export_calls.remove("export_bridge_xsec")
                     if "export_bridge_coeff_data" in export_calls:
