@@ -281,6 +281,9 @@ class ParseHDF5:
 
         # Read COORDINATES dataset
         coordinates_dataset = self.read("COORDINATES", "Input/Grid")
+        # Return 0 if the dataset or its data is missing
+        if coordinates_dataset is None or getattr(coordinates_dataset, "data", None) is None:
+            return 0
         coordinates = coordinates_dataset.data
 
         # Extract x and y coordinates
