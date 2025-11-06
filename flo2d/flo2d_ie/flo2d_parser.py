@@ -681,6 +681,8 @@ class ParseDAT(object):
 
     def parse_rain(self):
         rain = self.dat_files["RAIN.DAT"]
+        if not rain:
+            return None, None, None
         head = [
             "IRAINREAL",
             "IRAINBUILDING",

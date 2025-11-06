@@ -1375,13 +1375,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: importing OUTFLOW from HDF5 failed!")
             return False
 
-    def import_rain(self):
+    def import_rain(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_rain_dat()
+            return self.import_rain_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_rain_hdf5()
 
-    def import_rain_dat(self):
+    def import_rain_dat(self, grid_to_domain):
         rain_sql = [
             """INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall,
                                          rainabs, irainarf, movingstorm, rainspeed, iraindir) VALUES""",
@@ -1397,37 +1397,59 @@ class Flo2dGeoPackage(GeoPackageUtils):
             3,
         ]
 
-        self.clear_tables(
-            "rain",
-            "rain_arf_cells",
-            "rain_time_series",
-            "rain_time_series_data",
-        )
         options, time_series, rain_arf = self.parser.parse_rain()
-        gids = (x[0] for x in rain_arf)
-        cells = self.grid_centroids(gids)
+        if not options:
+            return
 
-        fid = 1
-        fid_ts = 1
+        if not grid_to_domain:
+            self.clear_tables(
+                "rain",
+                "rain_arf_cells",
+                "rain_time_series",
+                "rain_time_series_data",
+            )
 
-        # If the RAIN.DAT does not contain IRAINDIR and RAINSPEED, add it as a default of 0
-        if len(options.values()) == 6:
-            options["RAINSPEED"] = 0
-            options["IRAINDIR"] = 0
+            fid_ts = 1
 
-        rain_sql += [(fid_ts,) + tuple(options.values())]
-        ts_sql += [(fid_ts,)]
+            # If the RAIN.DAT does not contain IRAINDIR and RAINSPEED, add it as a default of 0
+            if len(options.values()) == 6:
+                options["RAINSPEED"] = 0
+                options["IRAINDIR"] = 0
 
-        for row in time_series:
-            dummy, time, value = row
-            tsd_sql += [(fid_ts, time, value)]
+            rain_sql += [(fid_ts,) + tuple(options.values())]
+            ts_sql += [(fid_ts,)]
 
-        for i, row in enumerate(rain_arf, 1):
-            gid, val = row
-            # rain_arf_sql += [(fid, val, self.build_buffer(cells[gid], self.buffer))]
-            cells_sql += [(i, gid, val)]
+            for row in time_series:
+                dummy, time, value = row
+                tsd_sql += [(fid_ts, time, value)]
 
-        self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)  # rain_arf_sql
+            for i, row in enumerate(rain_arf, 1):
+                gid, val = row
+                cells_sql += [(i, gid, val)]
+        else:
+            # Check if there is any existing data on the rain table, if so, it means that it was already imported
+            options_check = self.execute("SELECT COUNT(*) FROM rain;").fetchone()
+            if options_check and options_check[0] > 0:
+                pass
+            else:
+                fid_ts = 1
+                # If the RAIN.DAT does not contain IRAINDIR and RAINSPEED, add it as a default of 0
+                if len(options.values()) == 6:
+                    options["RAINSPEED"] = 0
+                    options["IRAINDIR"] = 0
+
+                rain_sql += [(fid_ts,) + tuple(options.values())]
+                ts_sql += [(fid_ts,)]
+
+                for row in time_series:
+                    dummy, time, value = row
+                    tsd_sql += [(fid_ts, time, value)]
+
+            for i, row in enumerate(rain_arf, 1):
+                gid, val = row
+                cells_sql += [(i, grid_to_domain.get(int(gid)), val)]
+
+        self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)
         name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast (fid as text) """
         self.execute(name_qry)
 
@@ -8663,15 +8685,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not subdomain:
             rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
         else:
-            rain_cells_sql = f"""SELECT 
+            rain_cells_sql = f"""SELECT DISTINCT
                                     md.domain_cell, 
                                     arf 
                                 FROM 
                                     rain_arf_cells AS ra
                                 JOIN 
                                     schema_md_cells md ON ra.grid_fid = md.grid_fid
-                                 WHERE 
-                                    md.domain_fid = {subdomain};"""
+                                WHERE 
+                                    md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;"""
 
         rain_global = "{0}  {1}   {2}   {3}   {4}   {5}\n"
         tsd_line = "{0}   {1}\n"  # Rainfall Time series distribution
@@ -8756,15 +8779,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
             else:
-                rain_cells_sql = f"""SELECT 
+                rain_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell, 
                                         arf 
                                     FROM 
                                         rain_arf_cells AS ra
                                     JOIN 
                                         schema_md_cells md ON ra.grid_fid = md.grid_fid
-                                     WHERE 
-                                        md.domain_fid = {subdomain};"""
+                                    WHERE 
+                                        md.domain_fid = {subdomain}
+                                    ORDER BY md.domain_cell;"""
 
             rain_line1 = "{0}  {1}\n"
             rain_line2 = "{0}   {1}  {2}  {3}\n"
@@ -12257,7 +12281,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             general = self.execute(levee_gen_sql).fetchone()
             if general is None:
                 # TODO: Need to implement correct export for levee_general, levee_failure and levee_fragility
-                general = (0, 0, None, None)
+                general = (0.0, 0, None, None)
             head = general[:2]
             glob_frag = general[2:]
             levee = os.path.join(outdir, "LEVEE.DAT")

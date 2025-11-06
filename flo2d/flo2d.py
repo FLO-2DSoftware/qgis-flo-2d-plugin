@@ -3122,6 +3122,7 @@ class Flo2D(object):
         ok = dlg.exec_()
         if ok:
             dlg.import_global_domain()
+            self.setup_dock_widgets()
             self.schematic2user(True)
         else:
             dlg.close()
@@ -4251,7 +4252,6 @@ class Flo2D(object):
 
         self.lyrs.refresh_layers()
         self.lyrs.zoom_to_all()
-
 
     @connection_required
     def user2schematic(self):
