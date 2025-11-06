@@ -220,9 +220,20 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.rain_chbox.setText("*" + self.rain_chbox.text() + "*")
                 show_note = True
 
-            if (options["ISED"] == "0" and not self.gutils.is_table_empty("sed")) and (
-                options["MUD"] == "0" and not self.gutils.is_table_empty("mud")
-            ):
+            # Fetch CONT parameters for sediment (ISED) and mud/mudflow (MUD).
+            ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")
+
+            # Check whether the corresponding data tables contain records.
+            sed_has_data = not self.gutils.is_table_empty("sed")
+            mud_has_data = not self.gutils.is_table_empty("mud")
+
+            # If the CONT value is None, "0", or any other non-ON value, treat it as OFF.
+            ised_off = ISED != "1"
+            mud_off = MUD not in ("1", "2")
+
+            # Add asterisks even if only one of the tables has data and the switch is OFF.
+            if (ised_off and sed_has_data) or (mud_off and mud_has_data):
                 self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
                 show_note = True
 
