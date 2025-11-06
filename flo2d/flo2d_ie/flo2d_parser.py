@@ -459,11 +459,10 @@ class ParseDAT(object):
     @staticmethod
     def pandas_single_parser(file1, chunksize=10000):
         """Parse one large text file line-by-line using pandas in chunks."""
-        f_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
-
-        for chunk in f_iter:
-            for row in chunk.itertuples(index=False, name=None):
-                yield list(row)
+        with pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize) as f_iter:
+            for chunk in f_iter:
+                for row in chunk.itertuples(index=False, name=None):
+                    yield list(row)
 
     @staticmethod
     def double_parser(file1, file2):
@@ -476,17 +475,13 @@ class ParseDAT(object):
     @staticmethod
     def pandas_double_parser(file1, file2, chunksize=10000):
         """Parse two large text files line-by-line using pandas in chunks."""
-        # Open both files in chunks
-        f1_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
-        f2_iter = pd.read_csv(file2, sep=r'\s+', header=None, chunksize=chunksize)
+        with pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize) as f1_iter, \
+                pd.read_csv(file2, sep=r'\s+', header=None, chunksize=chunksize) as f2_iter:
 
-        # Iterate over chunks simultaneously
-        for chunk1, chunk2 in zip(f1_iter, f2_iter):
-            # Concatenate the dataframes horizontally
-            combined = pd.concat([chunk1, chunk2], axis=1)
-            # Convert each row to a list and yield
-            for row in combined.itertuples(index=False, name=None):
-                yield list(row)
+            for chunk1, chunk2 in zip(f1_iter, f2_iter):
+                combined = pd.concat([chunk1, chunk2], axis=1)
+                for row in combined.itertuples(index=False, name=None):
+                    yield list(row)
 
     @staticmethod
     def swmminp_parser(swmminp_file):
@@ -585,6 +580,8 @@ class ParseDAT(object):
     def parse_inflow(self, inflow=None):
         if inflow is None:
             inflow = self.dat_files["INFLOW.DAT"]
+            if inflow is None:
+                return None, None, None
         par = self.single_parser(inflow)
         nxt = next(par)
         if not nxt[0] == "R":
@@ -685,6 +682,8 @@ class ParseDAT(object):
 
     def parse_rain(self):
         rain = self.dat_files["RAIN.DAT"]
+        if not rain:
+            return None, None, None
         head = [
             "IRAINREAL",
             "IRAINBUILDING",
@@ -742,6 +741,8 @@ class ParseDAT(object):
 
     def parse_infil(self):
         infil = self.dat_files["INFIL.DAT"]
+        if not infil:
+            return None
         line1 = ["INFMETHOD"]
         line2h = ["FHORTONIA"]
         line2 = ["ABSTR", "SATI", "SATF", "POROS", "SOILD", "INFCHAN"]
@@ -896,6 +897,8 @@ class ParseDAT(object):
 
     def parse_hystruct(self):
         hystruct = self.dat_files["HYSTRUC.DAT"]
+        if not hystruct:
+            return None
         par = self.single_parser(hystruct)
         data = []
         chars = {"S": 10, "C": 6, "R": 6, "T": 4, "F": 7, "D": 3, "B": 15}
@@ -952,6 +955,8 @@ class ParseDAT(object):
 
     def parse_arf(self):
         arf = self.dat_files["ARF.DAT"]
+        if not arf:
+            return None, None
         par = self.single_parser(arf)
         head = []
         data = defaultdict(list)
@@ -1023,6 +1028,8 @@ class ParseDAT(object):
 
     def parse_levee(self):
         levee = self.dat_files["LEVEE.DAT"]
+        if not levee:
+            return None, None
         par = self.single_parser(levee)
         head = next(par)
         data = defaultdict(list)
@@ -1049,6 +1056,8 @@ class ParseDAT(object):
 
     def parse_fpxsec(self):
         fpxsec = self.dat_files["FPXSEC.DAT"]
+        if not fpxsec:
+            return None, None
         par = self.single_parser(fpxsec)
         head = next(par)[-1]
         data = []
@@ -1080,18 +1089,24 @@ class ParseDAT(object):
 
     def parse_fpfroude(self):
         fpfroude = self.dat_files["FPFROUDE.DAT"]
+        if not fpfroude:
+            return None
         par = self.single_parser(fpfroude)
         data = [row[1:] for row in par]
         return data
 
     def parse_steep_slopen(self):
         steep_slopen = self.dat_files["STEEP_SLOPEN.DAT"]
+        if not steep_slopen:
+            return None
         par = self.single_parser(steep_slopen)
         data = [row for row in par]
         return data
 
     def parse_lid_volume(self):
         lid_volume = self.dat_files["LID_VOLUME.DAT"]
+        if not lid_volume:
+            return None
         par = self.single_parser(lid_volume)
         data = [row for row in par]
         return data
@@ -1167,12 +1182,16 @@ class ParseDAT(object):
 
     def parse_tolspatial(self):
         tolspatial = self.dat_files["TOLSPATIAL.DAT"]
+        if not tolspatial:
+            return None
         par = self.single_parser(tolspatial)
         data = [row for row in par]
         return data
 
     def parse_shallowNSpatial(self):
         shallowNSpatial = self.dat_files["SHALLOWN_SPATIAL.DAT"]
+        if not shallowNSpatial:
+            return None
         par = self.single_parser(shallowNSpatial)
         data = [row for row in par]
         return data

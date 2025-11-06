@@ -95,8 +95,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                     cur_idx = i
             self.md_name_cbo.setCurrentIndex(cur_idx)
 
-        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-        self.cellsize_le.setText(str(cell_size))
+        # cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+        # self.cellsize_le.setText(str(cell_size))
 
         self.uncheck_md_btns()
 
@@ -512,7 +512,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             Yield pandas DataFrames with columns ['x','y'] from HDF5 in chunks.
             Keeps the rest of the code unchanged.
             """
-            import h5py
+            try:
+                import h5py
+            except ImportError:
+                return
             with h5py.File(h5_path, "r") as hdf:
                 coords = hdf[dset]  # expected shape (N, 2)
                 n = coords.shape[0]
@@ -537,13 +540,13 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                                              chunksize=chunksize)
                 elif os.path.isfile(os.path.join(path, "TOPO.DAT")):
                     reader = pd.read_csv(os.path.join(path, "TOPO.DAT"),
-                                         delim_whitespace=True,
+                                         sep=r'\s+',
                                          header=None,
                                          names=['x', 'y', 'elevation'],
                                          chunksize=chunksize)
                 elif os.path.isfile(os.path.join(path, "CADPTS.DAT")):
                     reader = pd.read_csv(os.path.join(path, "CADPTS.DAT"),
-                                         delim_whitespace=True,
+                                         sep=r'\s+',
                                          header=None,
                                          names=['id', 'x', 'y'],
                                          chunksize=chunksize)
@@ -565,6 +568,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                     coords_count[coord] += 1
 
         # Filter coordinates that appear in at least two different files and convert them to "x y" format at the end
-        common_coords = [f"{coord[0]} {coord[1]}" for coord, count in coords_count.items() if count >= 2]
+        common_coords = {(float(coord[0]), float(coord[1]))
+                         for coord, count in coords_count.items() if count >= 2}
 
         return common_coords
