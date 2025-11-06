@@ -1678,6 +1678,8 @@ class Flo2D(object):
                 dat = "LID_VOLUME.DAT"
             elif call == 'import_shallowNSpatial':
                 dat = "SHALLOWN_SPATIAL.DAT"
+            elif call == 'import_chan_interior_nodes':
+                dat = "CHAN_INTERIOR_NODES.OUT"
             elif call == "import_tailings":
                 if self.f2g.parser.dat_files["TAILINGS.DAT"] is not None:
                     dat = "TAILINGS.DAT"
@@ -1697,6 +1699,9 @@ class Flo2D(object):
                         else:
                             self.files_used += "SIMPLE_MULT.DAT\n"
                             pass
+                    elif dat == "CHAN_INTERIOR_NODES.OUT":
+                        self.uc.log_info('CHAN_INTERIOR_NODES.OUT not found. Calculating from available Channel data.')
+                        self.files_not_used += dat + "\n"
                     else:
                         self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
                         if dat not in ["WSURF.DAT", "WSTIME.DAT"]:
@@ -1764,6 +1769,7 @@ class Flo2D(object):
             "import_evapor",
             "import_infil",
             "import_chan",
+            "import_chan_interior_nodes",
             "import_xsec",
             "import_hystruc",
             "import_hystruc_bridge_xs",
@@ -1850,6 +1856,7 @@ class Flo2D(object):
                     if "Channels" not in dlg_components.components:
                         import_calls.remove("import_chan")
                         import_calls.remove("import_xsec")
+                        import_calls.remove("import_chan_interior_nodes")
 
                     if "Reduction Factors" not in dlg_components.components:
                         import_calls.remove("import_arf")
@@ -1944,6 +1951,7 @@ class Flo2D(object):
                         "chan_v",
                         "chan_wsel",
                         "chan_elems",
+                        "chan_interior_nodes"
                         "cont",
                         "culvert_equations",
                         "evapor",
@@ -2148,7 +2156,7 @@ class Flo2D(object):
                     if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
                         specific_components.append(2)
 
-                    if "import_chan" in import_calls or "import_xsec" in import_calls:
+                    if "import_chan" in import_calls or "import_xsec" in import_calls or "import_chan_interior_nodes" in import_calls:
                         specific_components.append(3)
 
                     if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
@@ -2197,6 +2205,7 @@ class Flo2D(object):
             # "import_evapor",
             "import_infil",
             "import_chan",
+            "import_chan_interior_nodes",
             "import_xsec",
             "import_hystruc",
             "import_hystruc_bridge_xs",
@@ -2451,7 +2460,7 @@ class Flo2D(object):
         if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
             specific_components.append(2)
 
-        if "import_chan" in import_calls or "import_xsec" in import_calls:
+        if "import_chan" in import_calls or "import_xsec" in import_calls or "chan_interior_nodes" in import_calls:
             specific_components.append(3)
 
         if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
@@ -2510,6 +2519,7 @@ class Flo2D(object):
             "import_evapor",
             "import_infil",
             "import_chan",
+            "import_chan_interior_nodes",
             "import_xsec",
             "import_hystruc",
             "import_hystruc_bridge_xs",
@@ -2564,6 +2574,7 @@ class Flo2D(object):
                     if "Channels" not in dlg_components.components:
                         import_calls.remove("import_chan")
                         import_calls.remove("import_xsec")
+                        import_calls.remove("import_chan_interior_nodes")
 
                     if "Reduction Factors" not in dlg_components.components:
                         import_calls.remove("import_arf")
@@ -2695,7 +2706,7 @@ class Flo2D(object):
                     if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
                         specific_components.append(2)
 
-                    if "import_chan" in import_calls or "import_xsec" in import_calls:
+                    if "import_chan" in import_calls or "import_xsec" in import_calls or "import_chan_interior_nodes" in import_calls:
                         specific_components.append(3)
 
                     if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
@@ -2765,6 +2776,7 @@ class Flo2D(object):
             "EVAPOR.DAT": "import_evapor",
             "INFIL.DAT": "import_infil",
             "CHAN.DAT": "import_chan",
+            "CHAN_INTERIOR_NODES.OUT": "import_chan",
             "XSEC.DAT": "import_xsec",
             "HYSTRUC.DAT": "import_hystruc",
             "BRIDGE_XSEC.DAT": "import_hystruc_bridge_xs",
@@ -2842,7 +2854,7 @@ class Flo2D(object):
                 if "import_inflow" in call_string or "import_outflow" in call_string or "import_tailings" in call_string:
                     specific_components.append(2)
 
-                if "import_chan" in call_string or "import_xsec" in call_string:
+                if "import_chan" in call_string or "import_xsec" in call_string or "import_chan_interior_nodes" in call_string:
                     specific_components.append(3)
 
                 if "import_hystruc" in call_string or "import_hystruc_bridge_xs" in call_string:

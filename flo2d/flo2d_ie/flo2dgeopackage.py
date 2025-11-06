@@ -19,6 +19,7 @@ from qgis._core import QgsFeatureRequest, QgsGeometry
 from qgis.core import QgsWkbTypes
 
 from .rainfall_io import HDFProcessor
+from ..flo2d_tools.schematic_tools import ChannelsSchematizer
 
 try:
     import h5py
@@ -936,6 +937,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 0,
                                 0,
                                 0,
+                                'point',
                                 bc_fid,
                             )
                         ]
@@ -964,6 +966,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         0,
                                         0,
                                         int(ts_id),
+                                        'point',
                                         bc_fid,
                                     )
                                 ]
@@ -988,6 +991,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         0,
                                         0,
                                         0,
+                                        'point',
                                         bc_fid,
                                     )
                                 ]
@@ -1032,6 +1036,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     qh_params_id,
                                     0,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
@@ -1071,6 +1076,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     0,
                                     qh_table_id,
                                     0,
+                                    'point',
                                     bc_fid,
                                 )
                             ]
@@ -2074,6 +2080,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             QApplication.restoreOverrideCursor()
 
+    def import_chan_interior_nodes(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_chan_interior_nodes_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            pass
+
+    def import_chan_interior_nodes_dat(self):
+
+        chan_interior_nodes_sql = [
+            """INSERT INTO chan_interior_nodes (grid_fid) VALUES""",
+            1,
+        ]
+
+        self.clear_tables("chan_interior_nodes")
+
+        # Look first for CHAN_INTERIOR_NODES.OUT file
+        try:
+            chan_interior_nodes = self.parser.parse_chan_interior_nodes()
+            chan_interior_nodes_sql += [(int(item[0]),) for item in chan_interior_nodes]
+            self.batch_execute(chan_interior_nodes_sql)
+        # If the file is not available, calculate from schematized data
+        except:
+            self.gutils.fill_chan_interior_nodes_table()
+
     def import_xsec(self):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_xsec_dat()
@@ -2420,9 +2450,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if value_missing:
                 warnng += "\n\nThere are values missing in BRIDGE_XSEC.DAT"
             if warnng != "":
-                QApplication.restoreOverrideCursor()
                 self.uc.show_info(warnng)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
 
         except Exception:
             QApplication.restoreOverrideCursor()
@@ -7639,25 +7667,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                             JOIN 
                                                 mult_domains_con mdc ON mdc.fid = md.domain_fid
                                             WHERE 
-                                                domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                                                domain_fid = ? 
+                                                    AND 
+                                                down_domain_fid IS NOT NULL 
+                                                    AND 
+                                                down_domain_fid IN ({placeholders})
+                                                    AND
+                                                md.grid_fid NOT IN (SELECT grid_fid FROM chan_interior_nodes)
                                             ORDER BY 
                                                 down_domain_fid, domain_cell;
                                         """
                         outflow_md_cells = self.execute(outflow_md_cells_sql, (subdomain, *fid_subdomains)).fetchall()
+
+                        lbank_grids = self.execute(f"""
+                                            SELECT 
+                                                left_grid_md.domain_cell
+                                            FROM 
+                                                chan_elems as ce
+                                            JOIN
+                                                schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                                            """).fetchall()
+                        if lbank_grids:
+                            lbank_grids = [item for sublist in lbank_grids for item in sublist]
+
                         for cell in outflow_md_cells:
                             gid = cell[0]
-                            subdomain_hydrograph_grid_elements.append(gid)
-                            hydro_out = cell[1]
-                            if hydro_out > 9:
-                                # Check if the hydro_out value is in the mapping
-                                if hydro_out in fid_mapping:
-                                    # Replace the hydro_out value with the mapped value
-                                    hydro_out = fid_mapping[hydro_out]
-                            ident = "O{0}".format(hydro_out)
-                            o.write(o_line.format(ident, gid))
-                            data_written = True
-                            if border is not None and gid in border:
-                                border.remove(gid)
+                            if gid not in lbank_grids:
+                                subdomain_hydrograph_grid_elements.append(gid)
+                                hydro_out = cell[1]
+                                if hydro_out > 9:
+                                    # Check if the hydro_out value is in the mapping
+                                    if hydro_out in fid_mapping:
+                                        # Replace the hydro_out value with the mapped value
+                                        hydro_out = fid_mapping[hydro_out]
+                                ident = "O{0}".format(hydro_out)
+                                o.write(o_line.format(ident, gid))
+                                data_written = True
+                                if border is not None and gid in border:
+                                    border.remove(gid)
+                            else:
+                                o.write(k_line.format(gid))
 
                 # Write O1, O2, ... lines:
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
@@ -7790,29 +7839,53 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         JOIN 
                                             mult_domains_con mdc ON mdc.fid = md.domain_fid
                                         WHERE 
-                                            domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                                            domain_fid = ? 
+                                                AND 
+                                            down_domain_fid IS NOT NULL 
+                                                AND 
+                                            down_domain_fid IN ({placeholders})
+                                                AND
+                                            md.grid_fid NOT IN (SELECT grid_fid FROM chan_interior_nodes)
                                         ORDER BY 
                                             down_domain_fid, domain_cell;
                                         """
                 outflow_md_cells = self.execute(outflow_md_cells_sql,
                                                 (subdomain, *fid_subdomains)).fetchall()
 
+                lbank_grids = self.execute(f"""
+                                            SELECT 
+                                                left_grid_md.domain_cell
+                                            FROM 
+                                                chan_elems as ce
+                                            JOIN
+                                                schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                                            """).fetchall()
+                if lbank_grids:
+                    lbank_grids = [item for sublist in lbank_grids for item in sublist]
+
                 for cell in outflow_md_cells:
                     gid = cell[0]
-                    subdomain_hydrograph_grid_elements.append(gid)
-                    hydro_out = cell[1]
-                    if hydro_out > 9:
-                        # Check if the hydro_out value is in the mapping
-                        if hydro_out in fid_mapping:
-                            # Replace the hydro_out value with the mapped value
-                            hydro_out = fid_mapping[hydro_out]
-                    try:
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                    except:
-                        bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    if gid not in lbank_grids:
+                        subdomain_hydrograph_grid_elements.append(gid)
+                        hydro_out = cell[1]
+                        if hydro_out > 9:
+                            # Check if the hydro_out value is in the mapping
+                            if hydro_out in fid_mapping:
+                                # Replace the hydro_out value with the mapped value
+                                hydro_out = fid_mapping[hydro_out]
+                        try:
+                            bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                                create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                        except:
+                            bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
+                            bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                                create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    else:
+                        try:
+                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                        except:
+                            bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
+                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
                     data_written = True
 
                     # ident = "O{0}".format(hydro_out)
@@ -8735,7 +8808,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             project_dir = os.path.dirname(self.parser.hdf5_filepath)
-            self.uc.log_info(str(project_dir))
 
             raincellraw = os.path.join(project_dir, "RAINCELLRAW.HDF5")
             if os.path.exists(raincellraw):
@@ -9460,6 +9532,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 2, np.int_, eid, rbank))
 
+            # Set down_domain_fid to NULL on connectivity cell on the channel right bank for subdomain
+            if subdomain:
+                self.gutils.execute(
+                    "UPDATE schema_md_cells SET down_domain_fid = NULL WHERE domain_fid = ? AND domain_cell = ?;",
+                    (subdomain, rbank)
+                )
+
         segment_added = []
         for row in self.execute(chan_wsel_sql):
             if row[0] not in segment_added:
@@ -9508,7 +9587,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
         chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
 
         if not subdomain:
             chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
@@ -9521,6 +9599,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
             chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
             chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
+            chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
         else:
             subdomain_fids = self.execute(f"""
                 SELECT 
@@ -9638,6 +9717,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ORDER BY ne.fid;
                 """
 
+            chan_conf_sql = f"""SELECT 
+                                    md.domain_cell  
+                               FROM 
+                                    chan_confluences AS cc
+                               JOIN
+                                    schema_md_cells md ON cc.chan_elem_fid = md.grid_fid
+                               WHERE 
+                                    md.domain_fid = {subdomain}
+                               ORDER BY 
+                                    cc.fid;"""
+
         segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
         chan_r = "R" + "  {}" * 7 + "\n"
         chan_v = "V" + "  {}" * 19 + "\n"
@@ -9669,6 +9759,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(chan, "w") as c, open(bank, "w") as b:
             ISED = self.gutils.get_cont_par("ISED")
 
+            i = 1
             for row in chan_rows:
                 row = [x if x is not None else "0" for x in row]
                 fid = row[0]
@@ -9679,9 +9770,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
                 # A single line for each channel segment. The next lines will be the grid elements of
                 # this channel segment.
-                for elems in self.execute(
-                        chan_elems_sql, (fid,)
-                ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                for elems in self.execute(chan_elems_sql, (fid,)):
+                    # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                     # 'chan_elems' table (the cross sections in the schematic layer),
                     #  that has the 'fid' value indicated (the channel segment id).
                     elems = [
@@ -9700,7 +9790,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     # line (format to write), fcn_idx (?), and xlen_idx (?)
                     res_query = self.execute(sql, (eid,)).fetchone()
                     if res_query is not None:
-                        res = [x if x is not None else "" for x in res_query]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+                        res = [x if x is not None else "" for x in res_query] # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+                        if subdomain:
+                            # Adjust the natural shape
+                            if typ not in ['R', 'V', 'T']:
+                                res[1] = i
+                                i += 1
                         res.insert(
                             fcn_idx, fcn
                         )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
@@ -9709,6 +9804,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
+
+                # Set the geometry to NULL on connectivity cell on the channel right bank for subdomain
+                if subdomain:
+                    self.gutils.execute(
+                        "UPDATE schema_md_cells SET down_domain_fid = NULL WHERE domain_fid = ? AND domain_cell = ?;",
+                        (subdomain, rbank)
+                    )
 
                 if row[5]: # ibaseflow
                     if str(row[5]) != "":
@@ -9753,7 +9855,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to export xsection data to hdf5 file
         """
         try:
-            chan_n_sql = """SELECT DISTINCT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            if not subdomain:
+                chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            else:
+                chan_n_sql = f"""
+                    SELECT 
+                        cn.nxsecnum,
+                        cn.xsecname
+                    FROM 
+                        chan_n AS cn
+                    JOIN
+                        schema_md_cells md ON cn.elem_fid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY cn.nxsecnum;
+                        """
+
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
 
             xsec_line = """{0}  {1}\n"""
@@ -9768,11 +9885,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             channel_group.create_dataset('XSEC_NAME', [])
             channel_group.create_dataset('XSEC_DATA', [])
 
-            for nxecnum, xsecname in chan_n:
-                channel_group.datasets["XSEC_NAME"].data.append(
-                    create_array(xsec_line, 2, np.bytes_, tuple([nxecnum, xsecname])))
-                for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                    channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
+            for i, (nxecnum, xsecname) in enumerate(chan_n, start=1):
+                if not subdomain:
+                    channel_group.datasets["XSEC_NAME"].data.append(
+                        create_array(xsec_line, 2, np.bytes_, tuple([nxecnum, xsecname])))
+                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                        channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
+                else:
+                    channel_group.datasets["XSEC_NAME"].data.append(
+                        create_array(xsec_line, 2, np.bytes_, tuple([i, xsecname])))
+                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                        channel_group.datasets["XSEC_DATA"].data.append([i, xi, yi])
 
             self.parser.write_groups(channel_group)
             return True
@@ -9784,7 +9907,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_xsec_dat(self, outdir, subdomain):
         try:
-            chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+
+            if not subdomain:
+                chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            else:
+                chan_n_sql = f"""
+                    SELECT 
+                        cn.nxsecnum,
+                        cn.xsecname
+                    FROM 
+                        chan_n AS cn
+                    JOIN
+                        schema_md_cells md ON cn.elem_fid = md.grid_fid
+                    WHERE 
+                        md.domain_fid = {subdomain}
+                    ORDER BY cn.nxsecnum;
+                        """
+
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
 
             xsec_line = """X     {0}  {1}\n"""
@@ -9799,10 +9938,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             xsec = os.path.join(outdir, "XSEC.DAT")
             with open(xsec, "w") as x:
-                for nxecnum, xsecname in chan_n:
-                    x.write(xsec_line.format(nxecnum, xsecname))
-                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                        x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
+                    for i, (nxecnum, xsecname) in enumerate(chan_n, start=1):
+                        if not subdomain:
+                            x.write(xsec_line.format(nxecnum, xsecname))
+                            for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                                x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
+                        else:
+                            x.write(xsec_line.format(i, xsecname))
+                            for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                                x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
 
             return True
 
