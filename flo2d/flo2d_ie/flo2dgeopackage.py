@@ -11473,7 +11473,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
             else:
-                tol_cells_sql = f"""SELECT 
+                tol_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell,
                                         tc.tol
                                     FROM 
@@ -11481,7 +11481,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     JOIN 
                                         schema_md_cells md ON tc.grid_fid = md.grid_fid    
                                     WHERE 
-                                        md.domain_fid = {subdomain}"""
+                                        md.domain_fid = {subdomain}
+                                    ORDER BY md.domain_cell"""
 
             line1 = "{0}  {1}\n"
 
