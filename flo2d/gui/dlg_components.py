@@ -407,11 +407,28 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 )
                 # Special dialog for mud_sed component
                 if comp_name == "Mudflow and Sediment Transport":
-                    # Decide which physical process to export and switch ON
-                    # Please note that the "Export ONLY" option was intentionally not included here
-                    btn_mud_on = mb.addButton("Export and Switch ON - Mud/Debris", QMessageBox.YesRole)
-                    btn_sed_on = mb.addButton("Export and Switch ON - Sediment", QMessageBox.YesRole)
-                    btn_two_on = mb.addButton("Export and Switch ON - Two phase", QMessageBox.YesRole)
+                    # Check data presence
+                    mud_has_data = not self.gutils.is_table_empty("mud")
+                    sed_has_data = not self.gutils.is_table_empty("sed")
+                    two_phase_ok = mud_has_data and sed_has_data
+
+                    mb = QMessageBox(self)
+                    mb.setIcon(QMessageBox.Question)
+                    mb.setWindowTitle(f"{comp_name} switch is OFF")
+                    mb.setText(
+                        f"The CONT.DAT switch for <b>{comp_name}</b> is currently <b>OFF</b>."
+                        "<br><br>Choose what to export and turn ON:"
+                    )
+
+                    # Add only valid options
+                    btn_mud_on = btn_sed_on = btn_two_on = None
+                    if mud_has_data:
+                        btn_mud_on = mb.addButton("Export and Switch ON - Mud/Debris", QMessageBox.YesRole)
+                    if sed_has_data:
+                        btn_sed_on = mb.addButton("Export and Switch ON - Sediment", QMessageBox.YesRole)
+                    if two_phase_ok:
+                        btn_two_on = mb.addButton("Export and Switch ON - Two Phase", QMessageBox.YesRole)
+
                     mb.addButton("Cancel", QMessageBox.RejectRole)
                     mb.exec_()
 
@@ -428,6 +445,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     else:
                         self.component_actions[comp_name] = "skipped"
                     return
+
                 else:
                     # Standard two-choice flow for the rest of the components
                     btn_export_only = mb.addButton("Export ONLY", QMessageBox.AcceptRole)
