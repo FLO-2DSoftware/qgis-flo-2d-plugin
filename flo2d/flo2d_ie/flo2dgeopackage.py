@@ -10982,7 +10982,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
             else:
-                tbc_sql = f"""SELECT 
+                tbc_sql = f"""SELECT DISTINCT
                                 md.domain_cell, 
                                 area_fid 
                             FROM 
@@ -10990,9 +10990,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             JOIN 
                                 schema_md_cells md ON bc.grid_fid = md.grid_fid
                             WHERE 
-                                arf = 1 AND md.domain_fid = {subdomain};"""
+                                arf = 1 AND md.domain_fid = {subdomain}
+                            ORDER BY md.domain_cell;"""
 
-                pbc_sql = f"""SELECT 
+                pbc_sql = f"""SELECT DISTINCT
                                 md.domain_cell, 
                                 area_fid,  
                                 arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
@@ -11001,7 +11002,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              JOIN 
                                 schema_md_cells md ON bc.grid_fid = md.grid_fid
                              WHERE 
-                                arf < 1 AND md.domain_fid = {subdomain};"""
+                                arf < 1 AND md.domain_fid = {subdomain}
+                             ORDER BY md.domain_cell;"""
 
             if self.execute(tbc_sql).fetchone() is None and self.execute(pbc_sql).fetchone() is None:
                 self.gutils.set_cont_par("IWRFS", 0)
