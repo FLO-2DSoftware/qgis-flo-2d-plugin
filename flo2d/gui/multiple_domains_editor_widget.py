@@ -299,15 +299,21 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             JOIN user_md_connect_lines ON ST_Intersects(CastAutomagic(grid.geom), CastAutomagic(user_md_connect_lines.geom))
         """).fetchall()
 
+        # Remove connectivity grid inside channels
+        channel_interior_nodes = self.gutils.execute("""SELECT grid_fid FROM chan_interior_nodes;""").fetchall()
+        if channel_interior_nodes:
+            channel_interior_nodes = [item[0] for item in channel_interior_nodes]
+
         # Iterate over selected grid cells and update schema_md_connect_cells
         for grid_fid, down_domain_fid, geom_text in intersected_cells:
-            sql_qry = """
-                UPDATE schema_md_cells 
-                SET down_domain_fid = ?, geom = ST_GeomFromText(?)
-                WHERE grid_fid = ?;
-            """
-            # Execute the query with parameters
-            self.gutils.execute(sql_qry, (down_domain_fid, geom_text, grid_fid))
+            if grid_fid not in channel_interior_nodes:
+                sql_qry = """
+                    UPDATE schema_md_cells 
+                    SET down_domain_fid = ?, geom = ST_GeomFromText(?)
+                    WHERE grid_fid = ?;
+                """
+                # Execute the query with parameters
+                self.gutils.execute(sql_qry, (down_domain_fid, geom_text, grid_fid))
 
     def delete_schema_md(self):
         """

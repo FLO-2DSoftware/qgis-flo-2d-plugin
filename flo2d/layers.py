@@ -2224,14 +2224,15 @@ class Layers(object):
         l = []
         if grp:
             for lyr in grp.findLayers():
-                if lyr.layer().type() == 0 and lyr.layer().geometryType() < 3:
-                    if skip_views and lyr.layer().name() in views_list:
-                        continue
-                    else:
-                        if only_visible and not lyr.isVisible():
+                if lyr.layer():
+                    if lyr.layer().type() == 0 and lyr.layer().geometryType() < 3:
+                        if skip_views and lyr.layer().name() in views_list:
                             continue
                         else:
-                            l.append(lyr.layer())
+                            if only_visible and not lyr.isVisible():
+                                continue
+                            else:
+                                l.append(lyr.layer())
         else:
             pass
         return l

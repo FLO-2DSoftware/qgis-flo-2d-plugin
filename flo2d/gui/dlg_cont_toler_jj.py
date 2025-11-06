@@ -386,6 +386,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
         self.polulate_values_JJ()
 
+        self.wire_switch_guards()
+
     def set_spinbox_JJ(self, key, spin):
         values = self.PARAMS[key]
         spin.setDecimals(values["dec"])
@@ -481,6 +483,72 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             self.uc.bar_warn("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.uc.log_info("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.IDEBRV.setChecked(False)
+
+    def wire_switch_guards(self):
+        """
+        Connect each model switch (checkbox) to a guard that checks required data
+        before allowing the switch to stay ON. Uses a small lambda to capture variables.
+        """
+        guards = {
+            self.ICHANNEL: ("chan", "No channels data configured!"),
+            self.IMULTC: (["mult_cells", "simple_mult_cells"], "No multiple channels data configured!"),
+            self.MSTREET: ("streets", "No streets data configured!"),
+            self.IEVAP: ("evapor", "No evaporation data configured!"),
+            self.IHYDRSTRUCT: ("struct", "No hydraulic structures data configured!"),
+            self.IRAIN: ("rain", "No rainfall data configured!"),
+            self.INFIL: ("infil", "No infiltration data configured!"),
+            self.IWRFS: ("blocked_cells", "No ARF data configured!"),
+            self.LEVEE: ("levee_data", "No levees data configured!"),
+            self.SWMM: ("swmmflo", "No storm drain data configured!"),
+        }
+
+        for cb, (tables, msg) in guards.items():
+            if not cb:
+                continue
+            cb.clicked.connect(lambda _, c=cb, t=tables, m=msg: self.switch_guard_action(_, c, t, m))
+
+        # mud/sed guard
+        if hasattr(self, "ISED"):
+            self.ISED.currentIndexChanged.connect(
+                lambda ised_mode_index: self.switch_guard_action(ised_mode_index, "ISED", None, None)
+            )
+
+    def switch_guard_action(self, _, cb, tables, msg):
+
+        # Handle mud/sed case
+        if cb == "ISED":
+            ised_mode_index = _
+            # 0 = Mud/Debris, 1 = Sediment Transport, 2 = None, 3 = Two Phase
+            mud_empty = self.gutils.is_table_empty("mud")
+            sed_empty = self.gutils.is_table_empty("sed")
+
+            if ised_mode_index == 0 and mud_empty:
+                self.uc.bar_warn("No mudflow data configured!")
+                self.uc.log_info("No mudflow data configured!")
+                self.ISED.setCurrentIndex(2)
+            elif ised_mode_index == 1 and sed_empty:
+                self.uc.bar_warn("No sediment data configured!")
+                self.uc.log_info("No sediment data configured!")
+                self.ISED.setCurrentIndex(2)
+            elif ised_mode_index == 3 and (mud_empty or sed_empty):
+                self.uc.bar_warn("No mud/sediment data configured for two-phase flow!")
+                self.uc.log_info("No mud/sediment data configured for two-phase flow!")
+                self.ISED.setCurrentIndex(2)
+            return
+
+        # Handle the rest of components
+        if not cb.isChecked():
+            return
+
+        if isinstance(tables, (list, tuple)):
+            ok = any(not self.gutils.is_table_empty(t) for t in tables)
+        else:
+            ok = not self.gutils.is_table_empty(tables)
+
+        if not ok:
+            self.uc.bar_warn(msg)
+            self.uc.log_info(msg)
+            cb.setChecked(False)
 
     def save_parameters_JJ(self):
         try:
