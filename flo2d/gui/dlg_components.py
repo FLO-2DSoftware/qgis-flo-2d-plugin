@@ -233,7 +233,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             mud_off = MUD not in ("1", "2")
 
             # Add asterisks even if only one of the tables has data and the switch is OFF.
-            if (ised_off and sed_has_data) or (mud_off and mud_has_data):
+            if (sed_has_data or mud_has_data) and ised_off and mud_off:
                 self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
                 show_note = True
 
