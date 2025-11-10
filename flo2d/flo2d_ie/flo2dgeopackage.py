@@ -77,32 +77,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             self.parser = ParseDAT()
             self.parser.scan_project_dir(fpath)
-            if get_cell_size:
-                self.cell_size = int(round(self.parser.calculate_cellsize()))
-            else:
-                # Fallback hint from CONT.DAT without touching files
-                try:
-                    cell_size_hint = self.gutils.get_cont_par(
-                        "CELLSIZE")  # read previously stored CELLSIZE control parameter from DB
-                except Exception:
-                    cell_size_hint = 0  # on any lookup error, default to zero
-                self.cell_size = int(cell_size_hint or 0)  # coerce None/'' to 0 and store as integer
+            self.cell_size = int(round(self.parser.calculate_cellsize()))
         elif self.parsed_format == self.FORMAT_HDF5:
             self.parser = ParseHDF5()
             self.parser.hdf5_filepath = fpath
-            if get_cell_size:
-                self.cell_size = int(round(self.parser.calculate_cellsize()))
-            else:
-                # Try to source a reasonable default without touching the HDF5
-                try:
-                    cell_size_hint = self.gutils.get_cont_par(
-                        "CELLSIZE")  # read previously stored CELLSIZE control parameter from DB
-                except Exception:
-                    cell_size_hint = 0  # on any lookup error, default to zero
-                self.cell_size = int(cell_size_hint or 0)  # coerce None/'' to 0 and store as integer
+            self.cell_size = int(round(self.parser.calculate_cellsize()))
         else:
             raise NotImplementedError("Unsupported extension type.")
-        # If caller asked not to compute now, skip validation/derivatives
         if not get_cell_size:
             return True
 
