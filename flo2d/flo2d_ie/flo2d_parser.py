@@ -717,6 +717,8 @@ class ParseDAT(object):
 
     def parse_raincell(self):
         rain = self.dat_files["RAINCELL.DAT"]
+        if not rain:
+            return None, None
         par = self.single_parser(rain)
         line1 = next(par)
         head = line1[:2]

@@ -1521,37 +1521,88 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing RAIN data from HDF5 failed!", e)
             return False
 
-    def import_raincell(self):
+    def import_raincell(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_raincell_dat()
+            return self.import_raincell_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_raincell_hdf5()
 
-    def import_raincell_dat(self):
+    def import_raincell_dat(self, grid_to_domain):
         head_sql = [
             """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
             3,
         ]
         data_sql = [
-            """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+            """INSERT OR IGNORE INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
             3,
         ]
 
-        self.clear_tables("raincell", "raincell_data")
-
         header, data = self.parser.parse_raincell()
-        head_sql += [tuple(header)]
+        if not header:
+            return
 
-        time_step = float(header[0])
-        irinters = int(header[1])
-        data_len = len(data)
-        grid_count = data_len // irinters
-        data_gen = (data[i: i + grid_count] for i in range(0, data_len, grid_count))
-        time_interval = 0
-        for data_series in data_gen:
-            for row in data_series:
-                data_sql += [(time_interval,) + tuple(row)]
-            time_interval += time_step
+        if not grid_to_domain:
+            self.clear_tables("raincell", "raincell_data")
+            head_sql += [tuple(header)]
+            time_step = float(header[0])
+            irinters = int(header[1])
+            data_len = len(data)
+            grid_count = data_len // irinters
+            data_gen = (data[i: i + grid_count] for i in range(0, data_len, grid_count))
+            time_interval = 0
+            for data_series in data_gen:
+                for row in data_series:
+                    data_sql += [(time_interval,) + tuple(row)]
+                time_interval += time_step
+
+        else:
+            self.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_raincell_data_unique
+                ON raincell_data(time_interval, rrgrid, iraindum);
+            """)
+            # Check if there is any existing data on the raincell table, if so, it means that it was already imported
+            raincell_check = self.execute("SELECT COUNT(*) FROM raincell;").fetchone()
+            if raincell_check and raincell_check[0] == 0:
+                head_sql += [tuple(header)]
+            time_step = float(header[0])
+            irinters = int(header[1])
+            data_len = len(data)
+            grid_count = data_len // irinters
+            data_gen = (data[i: i + grid_count] for i in range(0, data_len, grid_count))
+            seen = set()
+            time_interval = 0
+            # TODO THIS CODE IS NOT WORKING
+            for data_series in data_gen:
+                j = 1
+                for rrgrid, iraindum in data_series:
+                    rrgrid = int(rrgrid)
+                    # New RAINCELL.DAT format -> if statement to recognize the new format
+                    if rrgrid > j:
+                        for g in range(j, rrgrid):
+                            rrdom = grid_to_domain.get(g)
+                            if rrdom is None:
+                                continue
+                            key = (time_interval, rrdom, 0)
+                            if key not in seen:
+                                seen.add(key)
+                                data_sql += [(time_interval, rrdom, 0)]
+                        j = rrgrid
+
+                    # map grid to domain cell; skip if not mapped
+                    rrdom = grid_to_domain.get(rrgrid)
+                    if rrdom is None:
+                        continue
+
+                    key = (time_interval, rrdom, iraindum)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    data_sql += [(time_interval, rrdom, iraindum)]
+                    j = max(j + 1, rrgrid + 1)
+
+                time_interval += time_step
+
+
         self.batch_execute(head_sql, data_sql)
 
     def import_raincell_hdf5(self):
@@ -9000,7 +9051,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg_box.setIcon(QMessageBox.Information)
 
             # Display the message box and wait for the user to click a button
-            QApplication.restoreOverrideCursor()
+            # QApplication.restoreOverrideCursor()
             msg_box.exec_()
 
             # New RAINCELL.DAT
@@ -9009,9 +9060,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
                     data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    n_cells = number_of_elements(self.gutils, grid_lyr)
                 else:
                     data_sql = f"""
-                    SELECT
+                    SELECT DISTINCT
+                        rd.time_interval,
                         md.domain_cell, 
                         rd.iraindum 
                     FROM 
@@ -9022,12 +9076,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         md.domain_fid = {subdomain}
                     ORDER BY rd.time_interval, md.domain_cell;
                     """
+                    n_cells = self.execute("SELECT COUNT() FROM schema_md_cells WHERE domain_fid = ?", (subdomain,)).fetchone()[0]
                 size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
                 line1 = "{0} {1} {2}\n"
                 line2 = "{0} {1}\n"
-
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                n_cells = number_of_elements(self.gutils, grid_lyr)
 
                 raincell_head = self.execute(head_sql).fetchone()
                 raincell_rows = self.execute(data_sql)
@@ -9043,15 +9095,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     for row in raincell_rows:
                         # Check if it is the last grid element -> Needs to be printed every single interval
-                        if row[0] == n_cells:
-                            if row[1] is None:
-                                r.write(line2.format(row[0], "0"))
+
+                        if int(row[1]) == int(n_cells):
+                            self.uc.log_info("entrou!")
+                            if row[2] is None:
+                                r.write(line2.format(row[1], "0"))
                             else:
-                                r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
-                        elif row[1] is None or row[1] == 0:
+                                r.write(line2.format(row[1], "{0:.4f}".format(float(row[2]))))
+                        elif row[2] is None or row[2] == 0:
                             pass
                         else:
-                            r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
+                            r.write(line2.format(row[1], "{0:.4f}".format(float(row[2]))))
                         progDialog.setValue(i)
                         i += 1
                 return True
@@ -9064,7 +9118,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
                 else:
                     data_sql = f"""
-                    SELECT
+                    SELECT DISTINCT
+                        rd.time_interval,
                         md.domain_cell, 
                         rd.iraindum 
                     FROM 
@@ -9091,12 +9146,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     progDialog.show()
                     i = 0
                     for row in raincell_rows:
-                        if row[1] is None:
-                            r.write(line2.format(row[0], "0"))
+                        if row[2] is None:
+                            r.write(line2.format(row[1], "0"))
                         else:
-                            # r.write(line2.format(*row))
-                            r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
-                            # r.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
+                            r.write(line2.format(row[1], "{0:.4f}".format(float(row[2]))))
                         progDialog.setValue(i)
                         i += 1
 
