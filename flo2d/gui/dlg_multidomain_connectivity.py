@@ -3,8 +3,8 @@ import time
 
 try:
     import h5py
-except ImportError:
-    pass
+except Exception as e:
+    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt.QtCore import NULL
 
