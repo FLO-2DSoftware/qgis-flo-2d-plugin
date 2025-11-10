@@ -95,8 +95,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                     cur_idx = i
             self.md_name_cbo.setCurrentIndex(cur_idx)
 
-        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-        self.cellsize_le.setText(str(cell_size))
+        # cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+        # self.cellsize_le.setText(str(cell_size))
 
         self.uncheck_md_btns()
 
@@ -299,15 +299,21 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             JOIN user_md_connect_lines ON ST_Intersects(CastAutomagic(grid.geom), CastAutomagic(user_md_connect_lines.geom))
         """).fetchall()
 
+        # Remove connectivity grid inside channels
+        channel_interior_nodes = self.gutils.execute("""SELECT grid_fid FROM chan_interior_nodes;""").fetchall()
+        if channel_interior_nodes:
+            channel_interior_nodes = [item[0] for item in channel_interior_nodes]
+
         # Iterate over selected grid cells and update schema_md_connect_cells
         for grid_fid, down_domain_fid, geom_text in intersected_cells:
-            sql_qry = """
-                UPDATE schema_md_cells 
-                SET down_domain_fid = ?, geom = ST_GeomFromText(?)
-                WHERE grid_fid = ?;
-            """
-            # Execute the query with parameters
-            self.gutils.execute(sql_qry, (down_domain_fid, geom_text, grid_fid))
+            if grid_fid not in channel_interior_nodes:
+                sql_qry = """
+                    UPDATE schema_md_cells 
+                    SET down_domain_fid = ?, geom = ST_GeomFromText(?)
+                    WHERE grid_fid = ?;
+                """
+                # Execute the query with parameters
+                self.gutils.execute(sql_qry, (down_domain_fid, geom_text, grid_fid))
 
     def delete_schema_md(self):
         """
@@ -506,7 +512,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             Yield pandas DataFrames with columns ['x','y'] from HDF5 in chunks.
             Keeps the rest of the code unchanged.
             """
-            import h5py
+            try:
+                import h5py
+            except ImportError:
+                return
             with h5py.File(h5_path, "r") as hdf:
                 coords = hdf[dset]  # expected shape (N, 2)
                 n = coords.shape[0]
@@ -531,13 +540,13 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                                              chunksize=chunksize)
                 elif os.path.isfile(os.path.join(path, "TOPO.DAT")):
                     reader = pd.read_csv(os.path.join(path, "TOPO.DAT"),
-                                         delim_whitespace=True,
+                                         sep=r'\s+',
                                          header=None,
                                          names=['x', 'y', 'elevation'],
                                          chunksize=chunksize)
                 elif os.path.isfile(os.path.join(path, "CADPTS.DAT")):
                     reader = pd.read_csv(os.path.join(path, "CADPTS.DAT"),
-                                         delim_whitespace=True,
+                                         sep=r'\s+',
                                          header=None,
                                          names=['id', 'x', 'y'],
                                          chunksize=chunksize)
@@ -559,6 +568,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                     coords_count[coord] += 1
 
         # Filter coordinates that appear in at least two different files and convert them to "x y" format at the end
-        common_coords = [f"{coord[0]} {coord[1]}" for coord, count in coords_count.items() if count >= 2]
+        common_coords = {(float(coord[0]), float(coord[1]))
+                         for coord, count in coords_count.items() if count >= 2}
 
         return common_coords

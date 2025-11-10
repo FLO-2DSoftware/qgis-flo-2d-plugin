@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import math
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -1507,6 +1507,9 @@ class ChannelsSchematizer(GeoPackageUtils):
 
         # Saving schematized and interpolated cross sections
         sqls = []
+        ordered = []
+        lbankgrids = []
+        rbankgrids = []
         prev_node_pos = QgsPointXY()  # direction of the previous node used to give direction of xs with no right bank
         for i in range(len(cross_section_definitions)):
             (
@@ -1526,6 +1529,10 @@ class ChannelsSchematizer(GeoPackageUtils):
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
                 continue
+
+            lbankgrids.append(lbankgrid)
+            rbankgrids.append(rbankgrid)
+
             if lbankgrid == rbankgrid:
                 rbankgrid = 0
 
@@ -1576,6 +1583,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                     vals,
                 )
             )
+
         cursor = self.con.cursor()
         for qry, vals in sqls:
             try:

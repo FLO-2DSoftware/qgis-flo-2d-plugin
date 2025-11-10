@@ -11,6 +11,11 @@ import os
 
 import numpy as np
 
+try:
+    import h5py
+except ImportError:
+    pass
+
 from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsPointXY
 
 from ..flo2d_tools.grid_tools import rasters2centroids
@@ -230,20 +235,10 @@ class TIFProcessor(object):
 class HDFProcessor(object):
     def __init__(self, hdf_path, iface):
         self.uc = UserCommunication(iface, "FLO-2D")
-
-        try:
-            import h5py
-        except ImportError:
-            msg = "The h5py Python package is required to read HDF5 files. Please, install it and try again."
-            self.uc.bar_error(msg)
-            self.uc.log_info(msg)
-            raise ImportError(msg)
-
         self.iface = iface
         self.con = None
         self.gutils = None
         self.hdf_path = hdf_path
-
 
     def export_rainfall_to_binary_hdf5(self, header, qry_data, qry_size, qry_timeinterval, subdomain):
 

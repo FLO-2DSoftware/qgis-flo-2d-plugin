@@ -1379,3 +1379,95 @@ class GeoPackageUtils(object):
         GROUP BY c.fid;
         """
         self.execute(qry)
+
+    def fill_chan_interior_nodes_table(self):
+        """
+        Function to fill the chan_interior_nodes table
+        """
+        self.execute("DELETE FROM chan_interior_nodes")
+
+        rbanks = self.execute("SELECT COUNT(*) FROM rbank").fetchone()[0]
+        if rbanks == 0:
+            self.create_schematized_rbank_lines_from_xs_tips()
+
+        # Get first/last XS per segment
+        fl = self.execute("""
+                SELECT seg_fid, MIN(id) AS xs_first, MAX(id) AS xs_last
+                FROM chan_elems
+                GROUP BY seg_fid
+            """).fetchall()
+
+        def parse_linestring_wkt(wkt_str):
+            """
+            Parse WKT LINESTRING into list of (x, y).
+            Works for both LINESTRING(x y, ...) and MULTILINESTRING((...)).
+            """
+            if not wkt_str:
+                return []
+            inside = wkt_str.split("(")[-1].split(")")[0]
+            coords = [tuple(map(float, pt.strip().split())) for pt in inside.split(",")]
+            return coords
+
+        def make_polygon_from_lines(lbank_wkt, rbank_wkt, xs1_wkt, xs2_wkt):
+            """
+            Construct a closed polygon WKT from left/right banks and 2 cross sections.
+            """
+            l_coords = parse_linestring_wkt(lbank_wkt)
+            r_coords = parse_linestring_wkt(rbank_wkt)
+            xs1_coords = parse_linestring_wkt(xs1_wkt)
+            xs2_coords = parse_linestring_wkt(xs2_wkt)
+
+            if not l_coords or not r_coords or not xs1_coords or not xs2_coords:
+                return None
+
+            # Path: xs1 start → left bank → xs2 start
+            poly_coords = [xs1_coords[0]] + l_coords + [xs2_coords[0]]
+
+            # Back: xs2 end → reversed right bank → xs1 end
+            poly_coords += [xs2_coords[-1]] + list(reversed(r_coords)) + [xs1_coords[-1]]
+
+            # Ensure closure
+            if poly_coords[0] != poly_coords[-1]:
+                poly_coords.append(poly_coords[0])
+
+            coords_str = ", ".join([f"{x} {y}" for x, y in poly_coords])
+            return f"POLYGON(({coords_str}))"
+
+        for i, (seg_fid, xs_first, xs_last) in enumerate(fl):
+
+            # Get four lines as WKT
+            row = self.execute("""
+                    SELECT
+                        ST_AsText(GeomFromGPB(c.geom)) AS lbank_wkt,
+                        ST_AsText(GeomFromGPB(r.geom)) AS rbank_wkt,
+                        ST_AsText(GeomFromGPB(x1.geom)) AS xs1_wkt,
+                        ST_AsText(GeomFromGPB(x2.geom)) AS xs2_wkt
+                    FROM chan c
+                    LEFT JOIN rbank r ON r.chan_seg_fid = c.fid
+                    JOIN chan_elems x1 ON x1.id = ?
+                    JOIN chan_elems x2 ON x2.id = ?
+                    WHERE c.fid = ?;
+                """, (xs_first, xs_last, seg_fid)).fetchone()
+
+            if not row:
+                continue
+
+            lbank_wkt, rbank_wkt, xs1_wkt, xs2_wkt = row
+
+            poly_wkt = make_polygon_from_lines(lbank_wkt, rbank_wkt, xs1_wkt, xs2_wkt)
+
+            if not poly_wkt:
+                continue
+
+            # Insert interior grids (GeomFromText converts back into geometry)
+            self.execute("""
+                INSERT INTO chan_interior_nodes (grid_fid)
+                SELECT g.fid
+                FROM grid g
+                WHERE (
+                        ST_Area(ST_Intersection(CastAutomagic(g.geom), GeomFromText(:poly)))
+                        / ST_Area(CastAutomagic(g.geom))
+                      ) >= 0.8
+                  AND NOT ST_Intersects(ST_Centroid(CastAutomagic(g.geom)), GeomFromText(:lbank))
+                  AND NOT ST_Intersects(ST_Centroid(CastAutomagic(g.geom)), GeomFromText(:rbank));
+            """, {"poly": poly_wkt, "lbank": lbank_wkt, "rbank": rbank_wkt})
