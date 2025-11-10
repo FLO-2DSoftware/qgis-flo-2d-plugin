@@ -5,8 +5,8 @@ from itertools import combinations
 
 try:
     import h5py
-except ImportError:
-    pass
+except Exception as e:
+    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
 import numpy as np
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox
