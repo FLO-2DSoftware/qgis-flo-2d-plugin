@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QApplication
 
 try:
     import h5py
-except ImportError:
-    pass
+except Exception as e:
+    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
 import numpy as np
 
 SCENARIO_COLOURS = [
