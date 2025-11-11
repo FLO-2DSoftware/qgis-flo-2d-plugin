@@ -3326,13 +3326,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )
                 self.uc.log_info("Error while importing SIMPLE_MULT data from hdf5 file!")
 
-    def import_sed(self):
+    def import_sed(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_sed_dat()
+            return self.import_sed_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_sed_hdf5()
 
-    def import_sed_dat(self):
+    def import_sed_dat(self, grid_to_domain):
         sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
         sed_c_sql = [
             """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt,
@@ -3349,17 +3349,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             3,
         ]
         areas_d_sql = ["""INSERT INTO mud_areas (geom, debrisv) VALUES""", 2]
-        cells_d_sql = ["""INSERT INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
+        cells_d_sql = ["""INSERT OR IGNORE INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
         areas_g_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
-        cells_g_sql = ["""INSERT INTO sed_group_cells (area_fid, grid_fid) VALUES""", 2]
+        cells_g_sql = ["""INSERT OR IGNORE INTO sed_group_cells (area_fid, grid_fid) VALUES""", 2]
         areas_r_sql = ["""INSERT INTO sed_rigid_areas (geom) VALUES""", 1]
-        cells_r_sql = ["""INSERT INTO sed_rigid_cells (area_fid, grid_fid) VALUES""", 2]
+        cells_r_sql = ["""INSERT OR IGNORE INTO sed_rigid_cells (area_fid, grid_fid) VALUES""", 2]
         areas_s_sql = [
             """INSERT INTO sed_supply_areas (geom, dist_fid, isedcfp, ased, bsed) VALUES""",
             5,
         ]
         cells_s_sql = [
-            """INSERT INTO sed_supply_cells (area_fid, grid_fid) VALUES""",
+            """INSERT OR IGNORE INTO sed_supply_cells (area_fid, grid_fid) VALUES""",
             2,
         ]
         sed_n_sql = ["""INSERT INTO sed_supply_frac (fid) VALUES""", 1]
@@ -3388,27 +3388,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
         }  # Create a new empty dictionary
         error = ""
 
-        self.clear_tables(
-            "mud",
-            "mud_areas",
-            "mud_cells",
-            "sed",
-            "sed_groups",
-            "sed_group_areas",
-            "sed_group_cells",
-            "sed_group_frac",
-            "sed_group_frac_data",
-            "sed_rigid_areas",
-            "sed_rigid_cells",
-            "sed_supply_areas",
-            "sed_supply_cells",
-            "sed_supply_frac",
-            "sed_supply_frac_data",
-        )
+        data = self.parser.parse_sed()
+        if not data:
+            return None
 
-        try:
+        # try:
+        if not grid_to_domain:
+            self.clear_tables(
+                "mud",
+                "mud_areas",
+                "mud_cells",
+                "sed",
+                "sed_groups",
+                "sed_group_areas",
+                "sed_group_cells",
+                "sed_group_frac",
+                "sed_group_frac_data",
+                "sed_rigid_areas",
+                "sed_rigid_cells",
+                "sed_supply_areas",
+                "sed_supply_cells",
+                "sed_supply_frac",
+                "sed_supply_frac_data",
+            )
+
             n_cells = self.gutils.execute("SELECT COUNT(fid) FROM grid;").fetchone()[0]
-            data = self.parser.parse_sed()
             for key, value in data.items():
                 # If value satisfies the condition, then store it in new_dict
                 if key == "S":
@@ -3458,63 +3462,150 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for ii, nrow in enumerate(nrows, 1):
                     sed_n_sql += [(ii,)]
                     data_n_sql += [(i,) + tuple(nrow)]
-            triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
-            self.batch_execute(
-                sed_m_sql,
-                areas_d_sql,
-                cells_d_sql,
-                sed_c_sql,
-                sgf_sql,
-                sed_z_sql,
-                areas_g_sql,
-                cells_g_sql,
-                sed_p_sql,
-                areas_r_sql,
-                # cells_r_sql,
-                areas_s_sql,
-                cells_s_sql,
-                sed_n_sql,
-                data_n_sql,
-            )
+            # triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
+        else:
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_mud_cells_grid ON mud_cells(grid_fid);")
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_sed_group_cells_grid ON sed_group_cells(grid_fid);")
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_sed_rigid_cells_grid ON sed_rigid_cells(grid_fid);")
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_sed_supply_cells_grid ON sed_supply_cells(grid_fid);")
+            n_cells = max(grid_to_domain.keys())
+            for key, value in data.items():
+                # If value satisfies the condition, then store it in new_dict
+                if key == "S":
+                    for v in value:
+                        if int(v[0]) <= n_cells:
+                            new_dict["S"].append(v)
+                        else:
+                            error += str(grid_to_domain.get(int(v[0]))) + "\n"
+                else:
+                    for v in value:
+                        new_dict[key].append(v)
 
-            if self.is_table_empty("mud_cells"):
-                self.set_cont_par("IDEBRV", 0)
+            data = new_dict
+            gids = (grid_to_domain.get(int(x[0])) for x in chain(data["D"], data["G"], data["R"], data["S"]))
+            cells = self.grid_centroids(gids)
 
-            if data["M"] == [] and data["C"] == []:
-                self.set_cont_par("MUD", 0)
-                self.set_cont_par("ISED", 0)
+            for row in data["M"]:
+                sed_m_sql += [tuple(row)]
 
-            elif data["M"] == [] and data["C"] != []:
-                self.set_cont_par("MUD", 0)
-                self.set_cont_par("ISED", 1)
+            options_check = self.execute("SELECT COUNT(*) FROM sed;").fetchone()
+            if not (options_check and options_check[0] > 0):
+                for row in data["C"]:
+                    row[-1] = 0  # set ISEDISPLAY to 0
+                    erow = ["10.0"]
+                    if data["E"]:
+                        erow = data["E"][0]
+                    if erow:
+                        row += erow
+                    else:
+                        row.append(None)
+                    sed_c_sql += [tuple(row)]
 
-            elif data["M"] != [] and data["C"] == []:
-                self.set_cont_par("MUD", 1)
-                self.set_cont_par("ISED", 0)
+            sgf_fid = self.execute("SELECT MAX(fid) FROM sed_group_frac;").fetchone()
+            if not(sgf_fid and sgf_fid[0]):
+                for i, row in enumerate(data["Z"], start=1):
+                    sgf_sql += [(i,)]
+                    sed_z_sql += [(i,) + tuple(row[:-1])]
+                    for prow in row[-1]:
+                        sed_p_sql += [(i,) + tuple(prow)]
 
-            elif data["M"] != [] and data["C"] != []:
-                self.set_cont_par("MUD", 2)
-                self.set_cont_par("ISED", 0)
+            d_fid = self.execute("SELECT MAX(fid) FROM mud_areas;").fetchone()
+            d_fid = d_fid[0] + 1 if d_fid and d_fid[0] else 1
+            g_fid = self.execute("SELECT MAX(fid) FROM sed_group_areas;").fetchone()
+            g_fid = g_fid[0] + 1 if g_fid and g_fid[0] else 1
+            r_fid = self.execute("SELECT MAX(fid) FROM sed_rigid_areas;").fetchone()
+            r_fid = r_fid[0] + 1 if r_fid and r_fid[0] else 1
+            fid_map = {"D": d_fid, "G": g_fid, "R": r_fid}
+            for char, asql, csql in parts:
+                start_fid = fid_map[char]
+                for i, row in enumerate(data[char], start=start_fid):
+                    gid = grid_to_domain.get(int(row[0]))
+                    vals = row[1:]
+                    geom = self.build_square(cells[gid], self.shrink)
+                    asql += [(geom,) + tuple(vals)]
+                    csql += [(i, gid)]
 
-            # Also triggers the creation of rigid cells (rigid_cells table):
-            # self.batch_execute(areas_r_sql)
-            if error != "":
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info(
-                    "WARNING 190523.0432: some cells are outside the domain in file SED.DAT.\n"
-                    + "They were omitted:\n\n"
-                    + error,
-                )
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+            ssa_fid = self.execute("SELECT MAX(fid) FROM sed_supply_areas;").fetchone()
+            if ssa_fid and ssa_fid[0]:
+                ssa_fid = ssa_fid[0] + 1
+            else:
+                ssa_fid = 1
+            for i, row in enumerate(data["S"], start=ssa_fid):
+                gid = grid_to_domain.get(int(row[0]))
+                vals = row[1:-1]
+                nrows = row[-1]
+                geom = self.build_square(cells[gid], self.shrink)
+                areas_s_sql += [(geom, i) + tuple(vals)]
+                cells_s_sql += [(i, gid)]
+                ssf_fid = self.execute("SELECT MAX(fid) FROM sed_supply_frac;").fetchone()
+                if ssf_fid and ssf_fid[0]:
+                    ssf_fid = ssf_fid[0] + 1
+                else:
+                    ssf_fid = 1
+                for ii, nrow in enumerate(nrows, start=ssf_fid):
+                    sed_n_sql += [(ii,)]
+                    data_n_sql += [(i,) + tuple(nrow)]
 
-        except Exception as e:
+        self.batch_execute(
+            sed_m_sql,
+            areas_d_sql,
+            cells_d_sql,
+            sed_c_sql,
+            sgf_sql,
+            sed_z_sql,
+            areas_g_sql,
+            cells_g_sql,
+            sed_p_sql,
+            areas_r_sql,
+            # cells_r_sql,
+            areas_s_sql,
+            cells_s_sql,
+            sed_n_sql,
+            data_n_sql,
+        )
+
+        if self.is_table_empty("mud_cells"):
+            self.set_cont_par("IDEBRV", 0)
+
+        if data["M"] == [] and data["C"] == []:
+            self.set_cont_par("MUD", 0)
+            self.set_cont_par("ISED", 0)
+
+        elif data["M"] == [] and data["C"] != []:
+            self.set_cont_par("MUD", 0)
+            self.set_cont_par("ISED", 1)
+
+        elif data["M"] != [] and data["C"] == []:
+            self.set_cont_par("MUD", 1)
+            self.set_cont_par("ISED", 0)
+
+        elif data["M"] != [] and data["C"] != []:
+            self.set_cont_par("MUD", 2)
+            self.set_cont_par("ISED", 0)
+
+        # Also triggers the creation of rigid cells (rigid_cells table):
+        # self.batch_execute(areas_r_sql)
+        if error != "":
             QApplication.restoreOverrideCursor()
-            self.uc.show_error(
-                "ERROR 180523.0453: couldn't import SED.DAT file!"
-                + "\n__________________________________________________",
-                e,
+            self.uc.show_info(
+                "WARNING 190523.0432: some cells are outside the domain in file SED.DAT.\n"
+                + "They were omitted:\n\n"
+                + error,
             )
             QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error(
+        #         "ERROR 180523.0453: couldn't import SED.DAT file!"
+        #         + "\n__________________________________________________",
+        #         e,
+        #     )
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_sed_hdf5(self):
         # try:

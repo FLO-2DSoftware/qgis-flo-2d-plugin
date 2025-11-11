@@ -999,6 +999,8 @@ class ParseDAT(object):
 
     def parse_sed(self):
         sed = self.dat_files["SED.DAT"]
+        if not sed:
+            return None
         par = self.single_parser(sed)
         data = defaultdict(list)
         vals = slice(1, None)
