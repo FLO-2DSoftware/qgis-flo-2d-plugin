@@ -220,23 +220,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.rain_chbox.setText("*" + self.rain_chbox.text() + "*")
                 show_note = True
 
-            # Fetch CONT parameters for sediment (ISED) and mud/mudflow (MUD).
-            ISED = self.gutils.get_cont_par("ISED")
-            MUD = self.gutils.get_cont_par("MUD")
-
-            # Check whether the corresponding data tables contain records.
-            sed_has_data = not self.gutils.is_table_empty("sed")
-            mud_has_data = not self.gutils.is_table_empty("mud")
-
-            # If the CONT value is None, "0", or any other non-ON value, treat it as OFF.
-            ised_off = ISED != "1"
-            mud_off = MUD not in ("1", "2")
-
-            # Add asterisks even if only one of the tables has data and the switch is OFF.
-            if (sed_has_data or mud_has_data) and ised_off and mud_off:
-                self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
-                show_note = True
-
             if options["IWRFS"] == "0" and not self.gutils.is_table_empty("blocked_cells"):
                 self.reduction_factors_chbox.setText("*" + self.reduction_factors_chbox.text() + "*")
                 show_note = True
@@ -312,18 +295,26 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             # Mud and Sediment Transport:
             ISED = self.gutils.get_cont_par("ISED")
             MUD = self.gutils.get_cont_par("MUD")
-            mud_has_data = not self.gutils.is_table_empty("mud") # True if the mud table has records (data present)
-            sed_has_data = not self.gutils.is_table_empty("sed") # True if the sediment table has records (data present)
-            if ISED == "1" or MUD in ["1", "2"]:
-                # When CONT switches are ON, precheck and enable
-                if mud_has_data or sed_has_data:
-                    self.mud_and_sed_chbox.setChecked(True)
-                    self.mud_and_sed_chbox.setEnabled(True)
+
+            ised_off = (ISED is None) or (str(ISED) != "1")
+            mud_off = (MUD is None) or (str(MUD) not in ("1", "2"))
+
+            # If BOTH are effectively OFF (set to None)
+            if ised_off and mud_off:
+                self.mud_and_sed_chbox.setChecked(False)
+                self.mud_and_sed_chbox.setEnabled(False)
             else:
-                # When CONT switches are OFF and data exists, enable but not prechecked
+                # At least one mode is ON (Mud/debris, Sediment, or Two phase).
+                # Enable the checkbox if there is any mud/sed data in the project.
+                mud_has_data = not self.gutils.is_table_empty("mud")
+                sed_has_data = not self.gutils.is_table_empty("sed")
                 if mud_has_data or sed_has_data:
-                    self.mud_and_sed_chbox.setChecked(False)
                     self.mud_and_sed_chbox.setEnabled(True)
+                    self.mud_and_sed_chbox.setChecked(True)  # checked since a mode is ON
+                else:
+                    # No data: leave it unchecked; you can also choose to keep it disabled if you prefer.
+                    self.mud_and_sed_chbox.setChecked(False)
+                    self.mud_and_sed_chbox.setEnabled(False)
 
             if not self.gutils.is_table_empty("evapor"):
                 self.evaporation_chbox.setChecked(options["IEVAP"] != "0")
@@ -416,53 +407,12 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     f"The CONT.DAT switch for <b>{comp_name}</b> is currently <b>OFF</b>."
                     "<br><br>How would you like to proceed?"
                 )
-                # Special dialog for mud_sed component
-                if comp_name == "Mudflow and Sediment Transport":
-                    # Check data presence
-                    mud_has_data = not self.gutils.is_table_empty("mud")
-                    sed_has_data = not self.gutils.is_table_empty("sed")
-                    two_phase_ok = mud_has_data and sed_has_data
 
-                    mb = QMessageBox(self)
-                    mb.setIcon(QMessageBox.Question)
-                    mb.setWindowTitle(f"{comp_name} switch is OFF")
-                    mb.setText(
-                        f"The CONT.DAT switch for <b>{comp_name}</b> is currently <b>OFF</b>."
-                        "<br><br>Choose what to export and turn ON:"
-                    )
-
-                    # Add only valid options
-                    btn_mud_on = btn_sed_on = btn_two_on = None
-                    if mud_has_data:
-                        btn_mud_on = mb.addButton("Export and Switch ON - Mud/Debris", QMessageBox.YesRole)
-                    if sed_has_data:
-                        btn_sed_on = mb.addButton("Export and Switch ON - Sediment", QMessageBox.YesRole)
-                    if two_phase_ok:
-                        btn_two_on = mb.addButton("Export and Switch ON - Two Phase", QMessageBox.YesRole)
-
-                    mb.addButton("Cancel", QMessageBox.RejectRole)
-                    mb.exec_()
-
-                    b = mb.clickedButton()
-                    if b is btn_mud_on:
-                        self.components.append(comp_name)
-                        self.component_actions[comp_name] = "export_and_turn_on:mud"
-                    elif b is btn_sed_on:
-                        self.components.append(comp_name)
-                        self.component_actions[comp_name] = "export_and_turn_on:sed"
-                    elif b is btn_two_on:
-                        self.components.append(comp_name)
-                        self.component_actions[comp_name] = "export_and_turn_on:two_phase"
-                    else:
-                        self.component_actions[comp_name] = "skipped"
-                    return
-
-                else:
-                    # Standard two-choice flow for the rest of the components
-                    btn_export_only = mb.addButton("Export ONLY", QMessageBox.AcceptRole)
-                    btn_export_and_on = mb.addButton("Export and Switch ON", QMessageBox.YesRole)
-                    mb.addButton("Cancel", QMessageBox.RejectRole)
-                    mb.exec_()
+                # Standard two-choice flow for the rest of the components
+                btn_export_only = mb.addButton("Export ONLY", QMessageBox.AcceptRole)
+                btn_export_and_on = mb.addButton("Export and Switch ON", QMessageBox.YesRole)
+                mb.addButton("Cancel", QMessageBox.RejectRole)
+                mb.exec_()
 
                 clicked = mb.clickedButton()
                 if clicked is btn_export_only:
@@ -489,7 +439,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         handle_component("Reduction Factors", self.reduction_factors_chbox, "blocked_cells", "IWRFS")
         handle_component("Storm Drain", self.storm_drain_chbox, "swmmflo", "SWMM")
         handle_component("Multiple Channel", self.multiple_channels_chbox, ("mult_cells", "simple_mult_cells"), "IMULTC")
-        handle_component("Mudflow and Sediment Transport", self.mud_and_sed_chbox, ("mud", "sed"), ("MUD", "ISED"))
+
+        if self.mud_and_sed_chbox.isChecked():
+            self.components.append("Mudflow and Sediment Transport")
 
         if self.outflow_elements_chbox.isChecked():
             self.components.append("Outflow Elements")
