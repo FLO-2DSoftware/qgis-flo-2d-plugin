@@ -6432,13 +6432,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmmflo(self):
+    def import_swmmflo(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmflo_dat()
+            return self.import_swmmflo_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmflo_hdf5()
 
-    def import_swmmflo_dat(self):
+    def import_swmmflo_dat(self, grid_to_domain):
 
         swmmflo_sql = [
             """INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
