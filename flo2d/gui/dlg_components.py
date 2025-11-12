@@ -382,25 +382,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         ("Multiple Channel", "multiple_channels_chbox", ("mult_cells", "simple_mult_cells"), "IMULTC"),
     ]
 
-    # (Name, checkbox_attr)
-    simple_checks = [
-        ("Mudflow and Sediment Transport", "mud_and_sed_chbox"),
-        ("Outflow Elements", "outflow_elements_chbox"),
-        ("Inflow Elements", "inflow_elements_chbox"),
-        ("Breach", "breach_chbox"),
-        ("Gutters", "gutters_chbox"),
-        ("Floodplain Cross Sections", "floodplain_xs_chbox"),
-        ("MODFLO-2D", "mudflo_chbox"),
-        ("Spatial Shallow-n", "spatial_shallow_n_chbox"),
-        ("Spatial Tolerance", "spatial_tolerance_chbox"),
-        ("Spatial Froude", "spatial_froude_chbox"),
-        ("Spatial Steep Slope-n", "spatial_steep_slopen_chbox"),
-        ("LID Volume", "spatial_lid_volume_chbox"),
-        ("Manning's n and Topo", "mannings_n_and_Topo_chbox"),
-        ("Tailings", "tailings_chbox"),
-        ("Surface Water Rating Tables", "outrc_chbox"),
-    ]
-
     def select_components(self):
         # reset each time in case dialog instance is reused
         self.components = []
@@ -455,12 +436,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 # already ON, or no data, or importing
                 self.components.append(comp_name)
                 self.component_actions[comp_name] = "normal"
-
-        # “append if checked” components
-        for comp_name, chbox_attr in self.simple_checks:
-            checkbox = getattr(self, chbox_attr)
-            if checkbox.isChecked():
-                self.components.append(comp_name)
 
         if self.mud_and_sed_chbox.isChecked():
             self.components.append("Mudflow and Sediment Transport")
