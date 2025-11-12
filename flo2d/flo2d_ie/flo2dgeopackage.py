@@ -6196,7 +6196,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                     time_series_name = ?;"""
 
             time_series_data_data = swmminp_dict.get('TIMESERIES', [])
-            self.uc.log_info(str(time_series_data_data))
             if len(time_series_data_data) > 0:
                 updated_time_series = 0
                 added_time_series = 0
@@ -6446,29 +6445,57 @@ class Flo2dGeoPackage(GeoPackageUtils):
             12,
         ]
 
-        self.clear_tables("swmmflo")
         data = self.parser.parse_swmmflo()
-        gids = (x[1] for x in data)
-        cells = self.grid_centroids(gids, buffers=True)
-        for row in data:
-            gid = row[1]
-            geom = cells[gid]
-            row.append(row[8])
-            # Update the user_swmm_inlets_junctions if existing
-            if not self.is_table_empty('user_swmm_inlets_junctions'):
-                update_qry = (f"""UPDATE user_swmm_inlets_junctions
-                                SET
-                                intype = '{row[3]}',
-                                swmm_length = '{row[4]}',
-                                swmm_width = '{row[5]}',
-                                swmm_height = '{row[6]}',
-                                swmm_coeff = '{row[7]}',
-                                curbheight = '{row[9]}',
-                                swmm_feature = '{row[10]}'
-                                WHERE name = '{row[2]}' AND grid = '{row[1]}';""")
-                self.execute(update_qry)
+        if not data:
+            return
 
-            swmmflo_sql += [(geom,) + tuple(row)]
+        if not grid_to_domain:
+            self.clear_tables("swmmflo")
+            gids = (x[1] for x in data)
+            cells = self.grid_centroids(gids, buffers=True)
+            for row in data:
+                gid = row[1]
+                geom = cells[gid]
+                row.append(row[8])
+                # Update the user_swmm_inlets_junctions if existing
+                if not self.is_table_empty('user_swmm_inlets_junctions'):
+                    update_qry = (f"""UPDATE user_swmm_inlets_junctions
+                                    SET
+                                    intype = '{row[3]}',
+                                    swmm_length = '{row[4]}',
+                                    swmm_width = '{row[5]}',
+                                    swmm_height = '{row[6]}',
+                                    swmm_coeff = '{row[7]}',
+                                    curbheight = '{row[9]}',
+                                    swmm_feature = '{row[10]}'
+                                    WHERE name = '{row[2]}' AND grid = '{row[1]}';""")
+                    self.execute(update_qry)
+
+                swmmflo_sql += [(geom,) + tuple(row)]
+
+        else:
+            gids = (grid_to_domain.get(int(x[1])) for x in data)
+            cells = self.grid_centroids(gids, buffers=True)
+            for row in data:
+                gid = grid_to_domain.get(int(row[1]))
+                row[1] = gid
+                geom = cells[gid]
+                row.append(row[8])
+                # Update the user_swmm_inlets_junctions if existing
+                if not self.is_table_empty('user_swmm_inlets_junctions'):
+                    update_qry = (f"""UPDATE user_swmm_inlets_junctions
+                                    SET
+                                    intype = '{row[3]}',
+                                    swmm_length = '{row[4]}',
+                                    swmm_width = '{row[5]}',
+                                    swmm_height = '{row[6]}',
+                                    swmm_coeff = '{row[7]}',
+                                    curbheight = '{row[9]}',
+                                    swmm_feature = '{row[10]}'
+                                    WHERE name = '{row[2]}' AND grid = '{gid}';""")
+                    self.execute(update_qry)
+
+                swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)
 

@@ -1138,6 +1138,8 @@ class ParseDAT(object):
 
     def parse_swmmflo(self):
         swmmflo = self.dat_files["SWMMFLO.DAT"]
+        if not swmmflo:
+            return None
         par = self.single_parser(swmmflo)
         data = [row for row in par]
         return data
