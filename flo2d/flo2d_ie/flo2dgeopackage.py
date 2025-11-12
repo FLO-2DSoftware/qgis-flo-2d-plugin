@@ -6627,13 +6627,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("Importing SDCLOGGING data from HDF5 failed!", e)
             self.uc.log_info("Importing SDCLOGGING data from HDF5 failed!")
 
-    def import_swmmflort(self):
+    def import_swmmflort(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmflort_dat()
+            return self.import_swmmflort_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmflort_hdf5()
 
-    def import_swmmflort_dat(self):
+    def import_swmmflort_dat(self, grid_to_domain):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
 
@@ -6641,68 +6641,111 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         """
         try:
-            # swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
 
             swmmflort_rows = []
             rt_data_rows = []
             culvert_rows = []
 
             data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
-            for i, row in enumerate(data, 1):
-                if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
-                    gid, params = row[1:]
-                    name = "RatingTable{}".format(i)
-                elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
-                    gid, inlet_name, params = row[1:]
-                    name = inlet_name
-                elif row[0] == "S":
-                    try:
-                        gid, inlet_name, cdiameter, params = row[1:]
-                    except ValueError as e:
-                        raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
-                        continue
+            if not data:
+                return None
 
-                if row[0] == "D":  # Rating Table
-                    swmmflort_rows.append((gid, name))
+            if not grid_to_domain:
+                self.clear_tables("swmmflort")
+                self.clear_tables("swmmflort_data")
+                self.clear_tables("swmmflo_culvert")
+                for i, row in enumerate(data, 1):
+                    if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
+                        gid, params = row[1:]
+                        name = "RatingTable{}".format(i)
+                    elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
+                        gid, inlet_name, params = row[1:]
+                        name = inlet_name
+                    elif row[0] == "S":
+                        try:
+                            gid, inlet_name, cdiameter, params = row[1:]
+                        except ValueError as e:
+                            raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
+                            continue
 
-                    for j in range(1, len(params)):
-                        rt_data_rows.append(((i,) + tuple(params[j])))
+                    if row[0] == "D":  # Rating Table
+                        swmmflort_rows.append((gid, name))
 
-                elif row[0] == "S":  # Culvert Eq.
-                    if gid in (None, "", 'None'):
-                        pass
-                    elif int(gid) < 1:
-                        pass
-                    else:
-                        culvert_rows.append(
-                            (
-                                gid,
-                                inlet_name,
-                                cdiameter,
-                                row[4][0][0],
-                                row[4][0][1],
-                                row[4][0][2],
-                                row[4][0][3],
+                        for j in range(1, len(params)):
+                            rt_data_rows.append(((i,) + tuple(params[j])))
+
+                    elif row[0] == "S":  # Culvert Eq.
+                        if gid in (None, "", 'None'):
+                            pass
+                        elif int(gid) < 1:
+                            pass
+                        else:
+                            culvert_rows.append(
+                                (
+                                    gid,
+                                    inlet_name,
+                                    cdiameter,
+                                    row[4][0][0],
+                                    row[4][0][1],
+                                    row[4][0][2],
+                                    row[4][0][3],
+                                )
                             )
-                        )
+            else:
+                for i, row in enumerate(data, 1):
+                    if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
+                        gid, params = row[1:]
+                        gid = grid_to_domain.get(int(gid))
+                        name = "RatingTable{}".format(i)
+                    elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
+                        gid, inlet_name, params = row[1:]
+                        gid = grid_to_domain.get(int(gid))
+                        name = inlet_name
+                    elif row[0] == "S":
+                        try:
+                            gid, inlet_name, cdiameter, params = row[1:]
+                            gid = grid_to_domain.get(int(gid))
+                        except ValueError as e:
+                            raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
+                            continue
+
+                    if row[0] == "D":  # Rating Table
+                        swmmflort_rows.append((gid, name))
+
+                        for j in range(1, len(params)):
+                            rt_data_rows.append(((i,) + tuple(params[j])))
+
+                    elif row[0] == "S":  # Culvert Eq.
+                        if gid in (None, "", 'None'):
+                            pass
+                        elif int(gid) < 1:
+                            pass
+                        else:
+                            culvert_rows.append(
+                                (
+                                    gid,
+                                    inlet_name,
+                                    cdiameter,
+                                    row[4][0][0],
+                                    row[4][0][1],
+                                    row[4][0][2],
+                                    row[4][0][3],
+                                )
+                            )
 
             if swmmflort_rows:
-                self.clear_tables("swmmflort")
                 self.con.executemany(
                     "INSERT INTO swmmflort (grid_fid, name) VALUES (?,?);",
                     swmmflort_rows,
                 )
-                # self.batch_execute(swmmflort_sql)
 
             if rt_data_rows:
-                self.clear_tables("swmmflort_data")
                 self.con.executemany(
                     "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);",
                     rt_data_rows,
                 )
 
             if culvert_rows:
-                self.clear_tables("swmmflo_culvert")
                 qry = """INSERT INTO swmmflo_culvert 
                         (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) 
                         VALUES (?, ?, ?, ?, ?, ?, ?);"""
