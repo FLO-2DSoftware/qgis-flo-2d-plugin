@@ -368,31 +368,60 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
 
+    # (Name, checkbox_attr, table_name_or_tuple, cont_key_or_tuple)
+    COMPONENT_SPECS = [
+        ("Channels", "channels_chbox", "chan", "ICHANNEL"),
+        ("Evaporation", "evaporation_chbox", "evapor", "IEVAP"),
+        ("Hydraulic Structures", "hydr_struct_chbox", "struct", "IHYDRSTRUCT"),
+        ("Infiltration", "infiltration_chbox", "infil", "INFIL"),
+        ("Rain", "rain_chbox", "rain", "IRAIN"),
+        ("Levees", "levees_chbox", "levee_data", "LEVEE"),
+        ("Streets", "streets_chbox", "streets", "MSTREET"),
+        ("Reduction Factors", "reduction_factors_chbox", "blocked_cells", "IWRFS"),
+        ("Storm Drain", "storm_drain_chbox", "swmmflo", "SWMM"),
+        ("Multiple Channel", "multiple_channels_chbox", ("mult_cells", "simple_mult_cells"), "IMULTC"),
+    ]
+
+    # (Name, checkbox_attr)
+    SIMPLE_CHECKS = [
+        ("Mudflow and Sediment Transport", "mud_and_sed_chbox"),
+        ("Outflow Elements", "outflow_elements_chbox"),
+        ("Inflow Elements", "inflow_elements_chbox"),
+        ("Breach", "breach_chbox"),
+        ("Gutters", "gutters_chbox"),
+        ("Floodplain Cross Sections", "floodplain_xs_chbox"),
+        ("MODFLO-2D", "mudflo_chbox"),
+        ("Spatial Shallow-n", "spatial_shallow_n_chbox"),
+        ("Spatial Tolerance", "spatial_tolerance_chbox"),
+        ("Spatial Froude", "spatial_froude_chbox"),
+        ("Spatial Steep Slope-n", "spatial_steep_slopen_chbox"),
+        ("LID Volume", "spatial_lid_volume_chbox"),
+        ("Manning's n and Topo", "mannings_n_and_Topo_chbox"),
+        ("Tailings", "tailings_chbox"),
+        ("Surface Water Rating Tables", "outrc_chbox"),
+    ]
+
     def select_components(self):
         # reset each time in case dialog instance is reused
         self.components = []
         self.component_actions = {}
 
-        # Create a local helper to help create the dialog when deciding on how to
-        # handle the export of a component that was not precheck.
-        def handle_component(comp_name, checkbox, table_name, cont_key):
-            """
-            Generic handler for components; supports one/many data tables and one/many CONT switches.
-            Records choices in:
-                self.components (list[str])
-                self.component_actions (dict[str, status])
-            """
-            if not checkbox.isChecked(): # If the checkbox is not checked, skip that component
-                self.component_actions[comp_name] = "skipped"
-                return
+        # CONT/DATA-governed components
+        for comp_name, chbox_attr, table_name, cont_key in self.COMPONENT_SPECS:
+            checkbox = getattr(self, chbox_attr)
 
-            # Data presence: allow tuple/list of tables
+            # skip if not checked
+            if not checkbox.isChecked():
+                self.component_actions[comp_name] = "skipped"
+                continue
+
+            # has_data: accept one or many tables
             if isinstance(table_name, (list, tuple, set)):
                 has_data = any(not self.gutils.is_table_empty(t) for t in table_name)
             else:
                 has_data = not self.gutils.is_table_empty(table_name)
 
-            # CONT state: allow tuple/list of keys
+            # CONT state: accept one or many keys
             if isinstance(cont_key, (list, tuple, set)):
                 is_on = any(str(self.gutils.get_cont_par(k)) != "0" for k in cont_key)
             else:
@@ -408,7 +437,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     "<br><br>How would you like to proceed?"
                 )
 
-                # Standard two-choice flow for the rest of the components
                 btn_export_only = mb.addButton("Export ONLY", QMessageBox.AcceptRole)
                 btn_export_and_on = mb.addButton("Export and Switch ON", QMessageBox.YesRole)
                 mb.addButton("Cancel", QMessageBox.RejectRole)
@@ -424,21 +452,15 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 else:
                     self.component_actions[comp_name] = "skipped"
             else:
-                # If already ON, no data, or importing, mark as normal
+                # already ON, or no data, or importing
                 self.components.append(comp_name)
                 self.component_actions[comp_name] = "normal"
 
-        # Apply the helper to each component
-        handle_component("Channels", self.channels_chbox, "chan", "ICHANNEL")
-        handle_component("Evaporation", self.evaporation_chbox, "evapor", "IEVAP")
-        handle_component("Hydraulic Structures", self.hydr_struct_chbox, "struct", "IHYDRSTRUCT")
-        handle_component("Infiltration", self.infiltration_chbox, "infil", "INFIL")
-        handle_component("Rain", self.rain_chbox, "rain", "IRAIN")
-        handle_component("Levees", self.levees_chbox, "levee_data", "LEVEE")
-        handle_component("Streets", self.streets_chbox, "streets", "MSTREET")
-        handle_component("Reduction Factors", self.reduction_factors_chbox, "blocked_cells", "IWRFS")
-        handle_component("Storm Drain", self.storm_drain_chbox, "swmmflo", "SWMM")
-        handle_component("Multiple Channel", self.multiple_channels_chbox, ("mult_cells", "simple_mult_cells"), "IMULTC")
+        # “append if checked” components
+        for comp_name, chbox_attr in self.SIMPLE_CHECKS:
+            checkbox = getattr(self, chbox_attr)
+            if checkbox.isChecked():
+                self.components.append(comp_name)
 
         if self.mud_and_sed_chbox.isChecked():
             self.components.append("Mudflow and Sediment Transport")
