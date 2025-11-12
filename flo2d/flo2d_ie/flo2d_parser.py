@@ -797,6 +797,8 @@ class ParseDAT(object):
 
     def parse_chan(self):
         chan = self.dat_files["CHAN.DAT"]
+        if not chan:
+            return None, None, None, None
         bank = self.dat_files["CHANBANK.DAT"]
         xsec = self.dat_files["XSEC.DAT"]
         par = self.single_parser(chan)  # Iterator to deliver lines of CHAN.DAT one by one.
@@ -886,6 +888,8 @@ class ParseDAT(object):
 
     def parse_xsec(self):
         xsec = self.dat_files["XSEC.DAT"]
+        if not xsec:
+            return None
         par = self.single_parser(xsec)
         key = ()
         data = OrderedDict()

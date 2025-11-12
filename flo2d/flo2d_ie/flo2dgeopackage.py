@@ -2103,38 +2103,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
-    def import_chan(self):
+    def import_chan(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_chan_dat()
+            return self.import_chan_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_chan_hdf5()
 
-    def import_chan_dat(self):
-
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+    def import_chan_dat(self, grid_to_domain):
 
         chan_sql = [
             """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn, ibaseflow) VALUES""",
             6,
         ]
         chan_elems_sql = [
-            """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
+            """INSERT OR IGNORE INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
             8,
         ]
         chan_r_sql = [
-            """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+            """INSERT OR IGNORE INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
             5,
         ]
         chan_v_sql = [
-            """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+            """INSERT OR IGNORE INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
                                                  excdep, a11, a22, b11, b22, c11, c22) VALUES""",
             17,
         ]
         chan_t_sql = [
-            """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+            """INSERT OR IGNORE INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
             7,
         ]
-        chan_n_sql = ["""INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""", 3]
+        chan_n_sql = ["""INSERT OR IGNORE INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""", 3]
         chan_wsel_sql = [
             """INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES""",
             4,
@@ -2156,61 +2154,142 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "N": [chan_n_sql, 2, 3],
         }
 
+        segments, wsel, confluence, noexchange = self.parser.parse_chan()
+        if not segments:
+            return
+
         try:
-            self.clear_tables(
-                "chan",
-                "chan_elems",
-                "chan_r",
-                "chan_v",
-                "chan_t",
-                "chan_n",
-                "chan_confluences",
-                "user_noexchange_chan_areas",
-                "noexchange_chan_cells",
-                "chan_wsel",
-            )
+            if not grid_to_domain:
+                self.clear_tables(
+                    "chan",
+                    "chan_elems",
+                    "chan_r",
+                    "chan_v",
+                    "chan_t",
+                    "chan_n",
+                    "chan_confluences",
+                    "user_noexchange_chan_areas",
+                    "noexchange_chan_cells",
+                    "chan_wsel",
+                )
 
-            segments, wsel, confluence, noexchange = self.parser.parse_chan()
-            for i, seg in enumerate(segments, 1):
-                bLine = "0.0"
-                if seg[-1][0] == "B":
-                    bLine = seg[-1][1] 
-                    seg.pop()  
-                    
-                xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
-                gids = []
-                for ii, row in enumerate(xs, 1):  # Adds counter ii to iterable.
-                    char = row[0]  # " R", "V", "T", or "N"
-                    gid = row[1]  # Grid element number (no matter what 'char' is).
-                    rbank = row[-1]
-                    geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else self.build_linestring([gid, gid])
-                    sql, fcn_idx, xlen_idx = sqls[char]
-                    xlen = row.pop(xlen_idx)
-                    fcn = row.pop(fcn_idx)
-                    params = row[1:-1]
-                    gids.append(gid)
-                    chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
-                    sql += [tuple(params)]
-                options = seg[:-1]
-                geom = self.build_linestring(gids)
-                chan_sql += [(geom,) + tuple(options + [bLine])]
-                
+                for i, seg in enumerate(segments, 1):
+                    bLine = "0.0"
+                    if seg[-1][0] == "B":
+                        bLine = seg[-1][1]
+                        seg.pop()
 
-            for row in wsel:
-                chan_wsel_sql += [tuple(row)]
+                    xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
+                    gids = []
+                    for ii, row in enumerate(xs, 1):  # Adds counter ii to iterable.
+                        char = row[0]  # " R", "V", "T", or "N"
+                        gid = row[1]  # Grid element number (no matter what 'char' is).
+                        rbank = row[-1]
+                        geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else self.build_linestring([gid, gid])
+                        sql, fcn_idx, xlen_idx = sqls[char]
+                        xlen = row.pop(xlen_idx)
+                        fcn = row.pop(fcn_idx)
+                        params = row[1:-1]
+                        gids.append(gid)
+                        chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
+                        sql += [tuple(params)]
+                    options = seg[:-1]
+                    geom = self.build_linestring(gids)
+                    chan_sql += [(geom,) + tuple(options + [bLine])]
 
-            for i, row in enumerate(confluence, 1):
-                gid1, gid2 = row[1], row[2]
-                cells = self.grid_centroids([gid1, gid2], buffers=True)
+                for row in wsel:
+                    chan_wsel_sql += [tuple(row)]
 
-                geom1, geom2 = cells[gid1], cells[gid2]
-                chan_conf_sql += [(geom1, i, 0, gid1)]
-                chan_conf_sql += [(geom2, i, 1, gid2)]
-            for i, row in enumerate(noexchange, 1):
-                gid = row[-1]
-                geom = self.grid_centroids([gid])[gid]
-                chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
-                elems_e_sql += [(i, gid)]
+                for i, row in enumerate(confluence, 1):
+                    gid1, gid2 = row[1], row[2]
+                    cells = self.grid_centroids([gid1, gid2], buffers=True)
+
+                    geom1, geom2 = cells[gid1], cells[gid2]
+                    chan_conf_sql += [(geom1, i, 0, gid1)]
+                    chan_conf_sql += [(geom2, i, 1, gid2)]
+                for i, row in enumerate(noexchange, 1):
+                    gid = row[-1]
+                    geom = self.grid_centroids([gid])[gid]
+                    chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
+                    elems_e_sql += [(i, gid)]
+            else:
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_elems_fid ON chan_elems(fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_r_elem_fid ON chan_r(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_v_elem_fid ON chan_v(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_t_elem_fid ON chan_t(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_n_elem_fid ON chan_n(elem_fid);")
+
+                chan_fid = self.execute("SELECT MAX(fid) FROM chan;").fetchone()
+                if chan_fid and chan_fid[0]:
+                    chan_fid = chan_fid[0] + 1
+                else:
+                    chan_fid = 1
+
+                nxsecnum = self.execute(f"SELECT MAX(nxsecnum) FROM chan_n;").fetchone()
+                if nxsecnum and nxsecnum[0]:
+                    nxsecnum = nxsecnum[0] + 1
+                else:
+                    nxsecnum = 1
+
+                for i, seg in enumerate(segments, start=chan_fid):
+                    bLine = "0.0"
+                    if seg[-1][0] == "B":
+                        bLine = seg[-1][1]
+                        seg.pop()
+
+                    xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
+                    gids = []
+                    for ii, row in enumerate(xs, 1):  # Adds counter ii to iterable.
+                        char = row[0]  # " R", "V", "T", or "N"
+                        gid = grid_to_domain.get(int(row[1]))  # Grid element number (no matter what 'char' is).
+                        rbank = grid_to_domain.get(int(row[-1]))
+                        geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else self.build_linestring([gid, gid])
+                        sql, fcn_idx, xlen_idx = sqls[char]
+                        xlen = row.pop(xlen_idx)
+                        fcn = row.pop(fcn_idx)
+                        params = row[1:-1]
+                        params = list(params)
+                        params[0] = gid
+                        if char == "N": # adjust the nxsecnum for channels crossing domains
+                            params[1] = nxsecnum
+                            # Check if the current gid is in the chan_n table, if so, skip increasing nxsecnum
+                            if self.execute("SELECT COUNT(*) FROM chan_n WHERE elem_fid = ?;", (gid,)).fetchone()[0] == 0:
+                                nxsecnum += 1
+                        gids.append(gid)
+                        chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
+                        sql += [tuple(params)]
+                    options = seg[:-1]
+                    geom = self.build_linestring(gids)
+                    chan_sql += [(geom,) + tuple(options + [bLine])]
+
+                for row in wsel:
+                    chan_wsel_sql += [tuple(row)]
+
+                # Confluences
+                con_fid = self.execute("SELECT MAX(fid) FROM chan_confluences;").fetchone()
+                if con_fid and con_fid[0]:
+                    con_fid = con_fid[0] + 1
+                else:
+                    con_fid = 1
+                for i, row in enumerate(confluence, start=con_fid):
+                    gid1, gid2 = grid_to_domain.get(int(row[1])), grid_to_domain.get(int(row[2]))
+                    cells = self.grid_centroids([gid1, gid2], buffers=True)
+
+                    geom1, geom2 = cells[gid1], cells[gid2]
+                    chan_conf_sql += [(geom1, i, 0, gid1)]
+                    chan_conf_sql += [(geom2, i, 1, gid2)]
+
+                # No-Exchange cells
+                noe_fid = self.execute("SELECT MAX(fid) FROM noexchange_chan_cells;").fetchone()
+                if noe_fid and noe_fid[0]:
+                    noe_fid = noe_fid[0] + 1
+                else:
+                    noe_fid = 1
+                for i, row in enumerate(noexchange, start=noe_fid):
+                    gid = grid_to_domain.get(int(row[-1]))
+                    geom = self.grid_centroids([gid])[gid]
+                    chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
+                    elems_e_sql += [(i, gid)]
 
             self.batch_execute(
                 chan_sql,
@@ -2226,10 +2305,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
             self.execute(qry)
-            QApplication.restoreOverrideCursor()
 
         except Exception:
-            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
@@ -2489,21 +2566,58 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except:
             self.gutils.fill_chan_interior_nodes_table()
 
-    def import_xsec(self):
+    def import_xsec(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_xsec_dat()
+            return self.import_xsec_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_xsec_hdf5()
 
-    def import_xsec_dat(self):
+    def import_xsec_dat(self, grid_to_domain):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
-        self.clear_tables("xsec_n_data")
         data = self.parser.parse_xsec()
-        for key in list(data.keys()):
-            xsec_no, xsec_name = key
-            nodes = data[key]
-            for row in nodes:
-                xsec_sql += [(xsec_no,) + tuple(row)]
+        if not data:
+            return
+        if not grid_to_domain:
+            self.clear_tables("xsec_n_data")
+            for key in list(data.keys()):
+                xsec_no, xsec_name = key
+                nodes = data[key]
+                for row in nodes:
+                    xsec_sql += [(xsec_no,) + tuple(row)]
+        # This code is for multiple domains, to check if a xs was already added in shared subdomains
+        else:
+
+            chan_elems_fid = self.execute("SELECT MAX(chan_n_nxsecnum) FROM xsec_n_data;").fetchone()
+            if chan_elems_fid and chan_elems_fid[0]:
+                chan_elems_fid = chan_elems_fid[0] + 1
+                previous_fid = chan_elems_fid - 1
+            else:
+                chan_elems_fid = 1
+                previous_fid = 1
+
+            i = chan_elems_fid
+            for key in list(data.keys()):
+                _, xsec_name = key
+                nodes = data[key]
+                # Check if the cross section is identical, if so skip. If not, add new cross section number.
+                if (i - 1) == previous_fid:
+                    xs_data = self.execute("SELECT xi, yi from xsec_n_data WHERE chan_n_nxsecnum = ?;",
+                                           (i-1,)).fetchall()
+                    # Compare with data, if identical, skip
+                    if xs_data:
+                        # Round both to 2 decimal places before comparison
+                        xs_rounded = [(round(x, 2), round(y, 2)) for x, y in xs_data]
+                        new_rounded = [(round(float(x), 2), round(float(y), 2)) for x, y in nodes]
+
+                        # Compare lists directly
+                        if xs_rounded == new_rounded:
+                            # Identical cross section up to 2 decimal places
+                            continue
+
+                for row in nodes:
+                    xsec_sql += [(i,) + tuple(row)]
+
+                i += 1
 
         self.batch_execute(xsec_sql)
 
@@ -10282,7 +10396,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             placeholders = ",".join(str(fid) for fid in fid_list)
             chan_sql = f"""SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid IN ({placeholders}) ORDER BY fid;"""
             chan_elems_sql = f"""
-                SELECT
+                SELECT DISTINCT
                     left_grid_md.domain_cell AS left_grid,
                     right_grid_md.domain_cell AS right_grid,
                     ce.fcn,
@@ -10425,17 +10539,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ISED = self.gutils.get_cont_par("ISED")
 
             i = 1
+            previous_domain_chan_elems = None # Used for channels in between subdomains
             for row in chan_rows:
                 row = [x if x is not None else "0" for x in row]
                 fid = row[0]
                 if ISED == "0":
                     row[4] = ""
+
+                chan_elems = self.execute(chan_elems_sql, (fid,)).fetchall()
+                n_elems = len(chan_elems)
+                if n_elems == 1: # This if statement is for channels in between subdomains
+                    previous_domain_chan_elems = chan_elems[0]
+                    continue
                 c.write(
                     segment.format(*row[1:5])
                 )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
                 # A single line for each channel segment. The next lines will be the grid elements of
                 # this channel segment.
-                for elems in self.execute(chan_elems_sql, (fid,)):
+
+                if previous_domain_chan_elems:
+                    chan_elems.insert(0, previous_domain_chan_elems)
+
+                for elems in chan_elems:
                     # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                     # 'chan_elems' table (the cross sections in the schematic layer),
                     #  that has the 'fid' value indicated (the channel segment id).
@@ -10469,6 +10594,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
+
+                previous_domain_chan_elems = None
 
                 # Set the geometry to NULL on connectivity cell on the channel right bank for subdomain
                 if subdomain:

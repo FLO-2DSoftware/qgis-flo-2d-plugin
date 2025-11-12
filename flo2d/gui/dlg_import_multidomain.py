@@ -810,8 +810,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_raincellraw",
             # "import_evapor",
             "import_infil",
-            # "import_chan",
-            # "import_xsec",
+            "import_chan",
+            "import_xsec",
             "import_hystruc",
             # "import_hystruc_bridge_xs",
             # "import_street",
@@ -1000,7 +1000,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
             method = getattr(self.f2g, call)
             if method(*args):
-                self.uc.log_info('Entrou!')
+                pass
 
             self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
 
