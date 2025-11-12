@@ -2962,31 +2962,10 @@ class Flo2D(object):
         if "Floodplain Cross Sections" not in dlg_components.components:
             export_calls.remove("export_fpxsec")
 
-        ms_action = getattr(dlg_components, "component_actions", {}).get("Mudflow and Sediment Transport")
-        if ("Mudflow and Sediment Transport" not in dlg_components.components) or (ms_action in ("cancel", "skipped")):
-            # Keep switches OFF and don't export
+        if "Mudflow and Sediment Transport" not in dlg_components.components:
             self.gutils.set_cont_par("MUD", 0)
             self.gutils.set_cont_par("ISED", 0)
-            if "export_sed" in export_calls:
-                export_calls.remove("export_sed")
-        elif (ms_action is None) or (ms_action == "normal"):
-            # Leave existing CONT settings as-is; do not force-change switches
-            pass
-        else:
-            # Only parse mode if it's a string containing a colon
-            mode = ms_action.split(":", 1)[1] if (isinstance(ms_action, str) and (":" in ms_action)) else None
-            if mode == "mud":
-                self.gutils.set_cont_par("MUD", 1)
-                self.gutils.set_cont_par("ISED", 0)
-            elif mode == "sed":
-                self.gutils.set_cont_par("MUD", 0)
-                self.gutils.set_cont_par("ISED", 1)
-            elif mode == "two_phase":
-                self.gutils.set_cont_par("MUD", 2)
-                self.gutils.set_cont_par("ISED", 0)
-            else:
-                # If unknown string is encountered, leave switches unchanged
-                pass
+            export_calls.remove("export_sed")
 
         evaporation_action = dlg_components.component_actions.get("Evaporation")
         if ("Evaporation" not in dlg_components.components) or (evaporation_action == "cancel"):
