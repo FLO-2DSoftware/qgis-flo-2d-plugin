@@ -369,7 +369,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
 
     # (Name, checkbox_attr, table_name_or_tuple, cont_key_or_tuple)
-    COMPONENT_SPECS = [
+    component_specs = [
         ("Channels", "channels_chbox", "chan", "ICHANNEL"),
         ("Evaporation", "evaporation_chbox", "evapor", "IEVAP"),
         ("Hydraulic Structures", "hydr_struct_chbox", "struct", "IHYDRSTRUCT"),
@@ -383,7 +383,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
     ]
 
     # (Name, checkbox_attr)
-    SIMPLE_CHECKS = [
+    simple_checks = [
         ("Mudflow and Sediment Transport", "mud_and_sed_chbox"),
         ("Outflow Elements", "outflow_elements_chbox"),
         ("Inflow Elements", "inflow_elements_chbox"),
@@ -407,7 +407,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.component_actions = {}
 
         # CONT/DATA-governed components
-        for comp_name, chbox_attr, table_name, cont_key in self.COMPONENT_SPECS:
+        for comp_name, chbox_attr, table_name, cont_key in self.component_specs:
             checkbox = getattr(self, chbox_attr)
 
             # skip if not checked
@@ -457,7 +457,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.component_actions[comp_name] = "normal"
 
         # “append if checked” components
-        for comp_name, chbox_attr in self.SIMPLE_CHECKS:
+        for comp_name, chbox_attr in self.simple_checks:
             checkbox = getattr(self, chbox_attr)
             if checkbox.isChecked():
                 self.components.append(comp_name)
