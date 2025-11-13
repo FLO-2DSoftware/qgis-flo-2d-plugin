@@ -1176,6 +1176,8 @@ class ParseDAT(object):
 
     def parse_swmmoutf(self):
         swmmoutf = self.dat_files["SWMMOUTF.DAT"]
+        if not swmmoutf:
+            return None
         par = self.single_parser(swmmoutf)
         data = [row for row in par]
         return data

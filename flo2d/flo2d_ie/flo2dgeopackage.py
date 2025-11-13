@@ -6828,45 +6828,76 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!.\n", e)
         #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!")
 
-    def import_swmmoutf(self):
+    def import_swmmoutf(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmoutf_dat()
+            return self.import_swmmoutf_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmoutf_hdf5()
 
-    def import_swmmoutf_dat(self):
+    def import_swmmoutf_dat(self, grid_to_domain):
         swmmoutf_sql = [
             """INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""",
             4,
         ]
 
-        self.clear_tables("swmmoutf")
         data = self.parser.parse_swmmoutf()
-        gids = []
-        # Outfall outside the grid -> Don't look for the grid centroid
-        for x in data:
-            if x[1] != '-9999':
-                gids.append(x[1])
-        cells = self.grid_centroids(gids, buffers=True)
-        have_outside = False
-        for row in data:
-            outfall_name = row[0]
-            gid = row[1]
-            allow_q = row[2]
-            # Update the swmm_allow_discharge on the user_swmm_outlets
-            self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
-            # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
-            if gid == '-9999':
-                have_outside = True
-                geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
-                if geom_qry:
-                    geom = geom_qry[0]
-                else:  # When there is no SWMM.INP
-                    self.uc.log_info(f"{outfall_name} outside the grid!")
-                    continue
-            else:
-                geom = cells[gid]
-            swmmoutf_sql += [(geom,) + tuple(row)]
+        if not data:
+            return
+
+        if not grid_to_domain:
+            self.clear_tables("swmmoutf")
+            gids = []
+            # Outfall outside the grid -> Don't look for the grid centroid
+            for x in data:
+                if x[1] != '-9999':
+                    gids.append(x[1])
+            cells = self.grid_centroids(gids, buffers=True)
+            have_outside = False
+            for row in data:
+                outfall_name = row[0]
+                gid = row[1]
+                allow_q = row[2]
+                # Update the swmm_allow_discharge on the user_swmm_outlets
+                self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
+                # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
+                if gid == '-9999':
+                    have_outside = True
+                    geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
+                    if geom_qry:
+                        geom = geom_qry[0]
+                    else:  # When there is no SWMM.INP
+                        self.uc.log_info(f"{outfall_name} outside the grid!")
+                        continue
+                else:
+                    geom = cells[gid]
+                swmmoutf_sql += [(geom,) + tuple(row)]
+        else:
+            gids = []
+            # Outfall outside the grid -> Don't look for the grid centroid
+            for x in data:
+                if x[1] != '-9999':
+                    gids.append(grid_to_domain.get(int(x[1])))
+            cells = self.grid_centroids(gids, buffers=True)
+            have_outside = False
+            for row in data:
+                outfall_name = row[0]
+                gid = grid_to_domain.get(int(row[1]))
+                row[1] = gid
+                allow_q = row[2]
+                # Update the swmm_allow_discharge on the user_swmm_outlets
+                self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
+                # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
+                if gid == '-9999':
+                    have_outside = True
+                    geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
+                    if geom_qry:
+                        geom = geom_qry[0]
+                    else:  # When there is no SWMM.INP
+                        self.uc.log_info(f"{outfall_name} outside the grid!")
+                        continue
+                else:
+                    geom = cells[gid]
+                swmmoutf_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmoutf_sql)
 
