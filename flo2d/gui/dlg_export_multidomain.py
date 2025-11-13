@@ -5,8 +5,8 @@ import traceback
 
 try:
     import h5py
-except Exception as e:
-    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
+except ImportError:
+    pass
 
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog

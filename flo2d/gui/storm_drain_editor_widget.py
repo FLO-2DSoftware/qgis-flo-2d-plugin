@@ -18,8 +18,8 @@ from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES
 
 try:
     import h5py
-except Exception as e:
-    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
+except ImportError:
+    pass
 
 from PyQt5.QtWidgets import QStyledItemDelegate, QGraphicsRectItem
 from qgis._core import QgsFeatureRequest, QgsDistanceArea

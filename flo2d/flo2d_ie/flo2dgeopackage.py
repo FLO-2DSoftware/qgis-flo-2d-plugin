@@ -23,8 +23,9 @@ from ..flo2d_tools.schematic_tools import ChannelsSchematizer
 
 try:
     import h5py
-except Exception as e:
-    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
+except ImportError:
+    pass
+
 import numpy as np
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QMessageBox

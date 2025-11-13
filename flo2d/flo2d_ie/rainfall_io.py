@@ -13,8 +13,8 @@ import numpy as np
 
 try:
     import h5py
-except Exception as e:
-    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
+except ImportError:
+    pass
 
 from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsPointXY
 
@@ -23,10 +23,6 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QProgressDialog
 
-try:
-    import h5py
-except Exception as e:
-    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
 
 class ASCProcessor(object):
     def __init__(self, vlayer, asc_dir, iface):

@@ -24,8 +24,8 @@ from ..utils import Msge
 
 try:
     import h5py
-except Exception as e:
-    raise ImportError("h5py could not be imported in the QGIS Python environment") from e
+except ImportError:
+    pass
 
 class HDF5Group:
     def __init__(self, name: str):
