@@ -13650,13 +13650,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         WHERE 
                             usij.sd_type IN ('I', 'i', 'J')
                             AND (
-                                (md.domain_fid = {subdomain}
-								OR usij.grid + 0 = 0)
-                                AND EXISTS (
-                                    SELECT 1
-                                    FROM mult_domains AS mdm
-                                    WHERE mdm.fid = {subdomain}
-                                      AND ST_Intersects(CastAutomagic(usij.geom), CastAutomagic(mdm.geom))
+                                (md.domain_fid = {subdomain} OR usij.grid + 0 = 0)
+                                AND (
+                                    -- If there are no rows for this subdomain, skip the spatial filter
+                                    (SELECT COUNT(*) FROM mult_domains mdm_any WHERE mdm_any.fid = {subdomain}) = 0
+                                    OR
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM mult_domains mdm_hit
+                                        WHERE mdm_hit.fid = {subdomain}
+                                          AND ST_Intersects(CastAutomagic(usij.geom), CastAutomagic(mdm_hit.geom))
+                                    )
                                 )
                             )
                         ORDER BY 
@@ -13712,15 +13716,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         LEFT JOIN
                             schema_md_cells md ON uso.grid = md.grid_fid
                         WHERE 
-                            (
-                                md.domain_fid = {subdomain} 
-                                OR uso.grid + 0 = 0
-                            )
-                            AND EXISTS (
-                                SELECT 1
-                                FROM mult_domains AS mdm
-                                WHERE mdm.fid = {subdomain}
-                                  AND ST_Intersects(CastAutomagic(uso.geom), CastAutomagic(mdm.geom))
+							(
+                                (md.domain_fid = {subdomain} OR uso.grid + 0 = 0)
+                                AND (
+                                    -- If there are no rows for this subdomain, skip the spatial filter
+                                    (SELECT COUNT(*) FROM mult_domains mdm_any WHERE mdm_any.fid = {subdomain}) = 0
+                                    OR
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM mult_domains mdm_hit
+                                        WHERE mdm_hit.fid = {subdomain}
+                                          AND ST_Intersects(CastAutomagic(uso.geom), CastAutomagic(mdm_hit.geom))
+                                    )
+                                )
                             )
                         ORDER BY 
                             uso.name;"""
@@ -13811,15 +13819,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         JOIN
                             schema_md_cells md ON ussu.grid = md.grid_fid
                         WHERE 
-                            (
-                                md.domain_fid = {subdomain} 
-                                OR ussu.grid + 0 = 0
-                            )
-                            AND EXISTS (
-                                SELECT 1
-                                FROM mult_domains AS mdm
-                                WHERE mdm.fid = {subdomain}
-                                  AND ST_Intersects(CastAutomagic(ussu.geom), CastAutomagic(mdm.geom))
+							(
+                                (md.domain_fid = {subdomain} OR ussu.grid + 0 = 0)
+                                AND (
+                                    -- If there are no rows for this subdomain, skip the spatial filter
+                                    (SELECT COUNT(*) FROM mult_domains mdm_any WHERE mdm_any.fid = {subdomain}) = 0
+                                    OR
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM mult_domains mdm_hit
+                                        WHERE mdm_hit.fid = {subdomain}
+                                          AND ST_Intersects(CastAutomagic(ussu.geom), CastAutomagic(mdm_hit.geom))
+                                    )
+                                )
                             )
                         ORDER BY ussu.name;"""
 
@@ -14390,7 +14402,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if line != "":
                             swmm_inp_file.write("\n" + line)
                 else:
-                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n\n")
 
                 # INP INFLOWS ###################################################
                 try:
@@ -14456,7 +14468,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         placeholders = ','.join(['?'] * len(links_names))
                         SD_pump_curves_sql = f"""
-                        SELECT 
+                        SELECT DISTINCT
                             spcd.pump_curve_name, 
                             spcd.pump_curve_type, 
                             spcd.x_value, 
@@ -14480,7 +14492,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         placeholders = ','.join(['?'] * len(nodes_names))
                         SD_tidal_curves_data_sql = f"""
-                        SELECT 
+                        SELECT DISTINCT
                             stcd.tidal_curve_name, 
                             stcd.hour, 
                             stcd.stage
@@ -14502,7 +14514,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         placeholders = ','.join(['?'] * len(nodes_names))
                         SD_other_curves_sql = f"""
-                        SELECT 
+                        SELECT DISTINCT
                             soc.name, 
                             soc.type, 
                             soc.x_value, 
@@ -14875,6 +14887,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         vertices_sql = self.execute("""
                             SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name 
                             FROM user_swmm_conduits
+                            ORDER BY conduit_name
                         """).fetchall()
                     else:
                         placeholders = ','.join(['?'] * len(nodes_names))
@@ -14882,6 +14895,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name
                             FROM user_swmm_conduits
                             WHERE conduit_inlet IN ({placeholders}) AND conduit_outlet IN ({placeholders})
+                            ORDER BY conduit_name
                         """, nodes_names + nodes_names).fetchall()
 
                     for row in vertices_sql:
