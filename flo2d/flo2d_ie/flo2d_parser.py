@@ -1146,12 +1146,16 @@ class ParseDAT(object):
 
     def parse_swmmflodropbox(self):
         swmmflodropbox = self.dat_files["SWMMFLODROPBOX.DAT"]
+        if not swmmflodropbox:
+            return None
         par = self.single_parser(swmmflodropbox)
         data = [row for row in par]
         return data
     
     def parse_sdclogging(self):
         sdclogging = self.dat_files["SDCLOGGING.DAT"]
+        if not sdclogging:
+            return None
         par = self.single_parser(sdclogging)
         data = [row for row in par]
         return data

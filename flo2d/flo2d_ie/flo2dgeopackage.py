@@ -6538,17 +6538,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing SWMMFLO data from HDF5 failed!", e)
             self.uc.log_info("ERROR: Importing SWMMFLO data from HDF5 failed!")
 
-    def import_swmmflodropbox(self):
+    def import_swmmflodropbox(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmflodropbox_dat()
+            return self.import_swmmflodropbox_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmflodropbox_hdf5()
 
-    def import_swmmflodropbox_dat(self):
+    def import_swmmflodropbox_dat(self, grid_to_domain):
         """
         Function to import the SWMMFLODROPBOX.DAT
         """
         data = self.parser.parse_swmmflodropbox()
+        if not data:
+            return
+
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
+            return
+
         for row in data:
             name = row[0]
             area = row[2]
@@ -6580,17 +6586,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("Importing SWMMFLODROPBOX data from HDF5 failed!", e)
             self.uc.log_info("Importing SWMMFLODROPBOX data from HDF5 failed!")
 
-    def import_sdclogging(self):
+    def import_sdclogging(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_sdclogging_dat()
+            return self.import_sdclogging_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_sdclogging_hdf5()
 
-    def import_sdclogging_dat(self):
+    def import_sdclogging_dat(self, grid_to_domain):
         """
         Function to import the SDCLOGGING.DAT
         """
         data = self.parser.parse_sdclogging()
+        if not data:
+            return
+
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
+            return
+
         for row in data:
             name = row[2]
             clog_fact = row[3]
