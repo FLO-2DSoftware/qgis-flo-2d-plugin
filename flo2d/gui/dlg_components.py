@@ -11,7 +11,7 @@
 import os
 
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication, QMessageBox
+from qgis.PyQt.QtWidgets import QApplication
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -410,32 +410,19 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
             # Only prompt in EXPORT mode, when there is data but the switch(es) are OFF
             if self.in_or_out == "out" and has_data and not is_on:
-                mb = QMessageBox(self)
-                mb.setIcon(QMessageBox.Question)
-                mb.setWindowTitle(f"{comp_name} switch is OFF")
-                mb.setText(
-                    f"The CONT.DAT switch for <b>{comp_name}</b> is currently <b>OFF</b>."
-                    "<br><br>How would you like to proceed?"
-                )
+                decision = self.uc.ask_component_export_action(comp_name)
 
-                btn_export_only = mb.addButton("Export ONLY", QMessageBox.AcceptRole)
-                btn_export_and_on = mb.addButton("Export and Switch ON", QMessageBox.YesRole)
-                mb.addButton("Cancel", QMessageBox.RejectRole)
-                mb.exec_()
-
-                clicked = mb.clickedButton()
-                if clicked is btn_export_only:
+                if decision in ("export_only", "export_and_turn_on"):
                     self.components.append(comp_name)
-                    self.component_actions[comp_name] = "export_only"
-                elif clicked is btn_export_and_on:
-                    self.components.append(comp_name)
-                    self.component_actions[comp_name] = "export_and_turn_on"
+                    self.component_actions[comp_name] = decision
                 else:
+                    # User cancelled or chose to skip
                     self.component_actions[comp_name] = "skipped"
             else:
                 # already ON, or no data, or importing
                 self.components.append(comp_name)
                 self.component_actions[comp_name] = "normal"
+
 
         if self.mud_and_sed_chbox.isChecked():
             self.components.append("Mudflow and Sediment Transport")
