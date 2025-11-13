@@ -2108,6 +2108,8 @@ class Flo2D(object):
         ok = self.f2g.set_parser(input_hdf5)
         if not ok:
             # stop immediately — do NOT continue importing
+            self.uc.log_info("Import Failed! Not possible to set the parser. Check your Input.hdf5 file.")
+            self.uc.bar_error("Import Failed! Not possible to set the parser. Check your Input.hdf5 file.")
             self.gutils.enable_geom_triggers()
             return
 
