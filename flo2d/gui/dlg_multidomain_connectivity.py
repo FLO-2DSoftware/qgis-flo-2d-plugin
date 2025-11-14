@@ -1,10 +1,7 @@
 import os
 import time
 
-try:
-    import h5py
-except ImportError:
-    pass
+from ..deps import safe_h5py as h5py
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt.QtCore import NULL
 

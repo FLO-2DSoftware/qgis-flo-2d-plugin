@@ -2,10 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication
 
-try:
-    import h5py
-except ImportError:
-    pass
+from ..deps import safe_h5py as h5py
 import numpy as np
 
 SCENARIO_COLOURS = [

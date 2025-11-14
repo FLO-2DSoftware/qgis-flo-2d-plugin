@@ -453,7 +453,7 @@ def xyz_to_raster_gds_average(csv_file, extents, shape, srs, open_dashboard, pro
     print_line("XYZ-to-Raster-Average\n")
 
     try:
-        import dask
+        from ..deps import safe_dask as dask
         import subprocess
     except ImportError:
         message = "The dask library is not found in your python environment. This external library is required to " \
@@ -489,7 +489,7 @@ def xyz_to_raster_gds_average(csv_file, extents, shape, srs, open_dashboard, pro
                 subprocess.check_call(
                     [qgis_python_path, "-m", "pip", "install", "--user", "dask"]
                 )
-                import dask
+                from ..deps import safe_dask as dask
                 import subprocess
 
             except ImportError as e:

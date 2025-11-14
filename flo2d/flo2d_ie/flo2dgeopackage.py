@@ -21,10 +21,7 @@ from qgis.core import QgsWkbTypes
 from .rainfall_io import HDFProcessor
 from ..flo2d_tools.schematic_tools import ChannelsSchematizer
 
-try:
-    import h5py
-except ImportError:
-    pass
+from ..deps import safe_h5py as h5py
 import numpy as np
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QMessageBox

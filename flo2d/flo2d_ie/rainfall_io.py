@@ -11,10 +11,7 @@ import os
 
 import numpy as np
 
-try:
-    import h5py
-except ImportError:
-    pass
+from ..deps import safe_h5py as h5py
 
 from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsPointXY
 

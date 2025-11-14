@@ -14,10 +14,7 @@ import traceback
 
 from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES, timdep_dataframe_from_hdf5_scenarios
 
-try:
-    import h5py
-except ImportError:
-    pass
+from ..deps import safe_h5py as h5py
 
 import numpy as np
 from PyQt5.QtCore import QUrl

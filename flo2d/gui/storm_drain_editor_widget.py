@@ -16,10 +16,7 @@ from pathlib import Path
 
 from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES
 
-try:
-    import h5py
-except ImportError:
-    pass
+from ..deps import safe_h5py as h5py
 
 from PyQt5.QtWidgets import QStyledItemDelegate, QGraphicsRectItem
 from qgis._core import QgsFeatureRequest, QgsDistanceArea

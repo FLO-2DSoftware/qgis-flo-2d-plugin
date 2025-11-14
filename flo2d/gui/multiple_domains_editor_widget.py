@@ -9,6 +9,7 @@ from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui, center_canvas
+from ..deps import safe_h5py as h5py
 
 uiDialog, qtBaseClass = load_ui("multiple_domains_editor")
 
@@ -512,10 +513,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             Yield pandas DataFrames with columns ['x','y'] from HDF5 in chunks.
             Keeps the rest of the code unchanged.
             """
-            try:
-                import h5py
-            except ImportError:
-                return
+
             with h5py.File(h5_path, "r") as hdf:
                 coords = hdf[dset]  # expected shape (N, 2)
                 n = coords.shape[0]
