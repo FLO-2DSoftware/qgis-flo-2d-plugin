@@ -2826,7 +2826,20 @@ class Flo2D(object):
                         return
                     export_message = "Datasets exported to\n" + output_hdf5 + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
-                    self.f2g.set_parser(output_hdf5, get_cell_size=False)
+                    # Check whether the parser could be created
+                    ok = self.f2g.set_parser(output_hdf5, get_cell_size=False)
+                    if not ok:
+                        # set_parser() already showed a detailed massage
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_error(
+                            "HDF5 export failed! Could not initialize the HDF5 writer.\n\n"
+                            "Please install the 'h5py' package in the QGIS Python "
+                            "environment and try again."
+                        )
+                        self.uc.log_info("HDF5 export aborted: Could not initialize HDF5 parser/writer.")
+                        return
+
+
                     remove = ("export_bridge_coeff_data", "export_wstime", "export_wsurf")
                     export_calls_filtered = [item for item in export_calls if item not in remove]
                     self.export_flo2d_files(output_hdf5, export_calls_filtered, dlg_components)
