@@ -220,47 +220,6 @@ class UserCommunication(object):
         else:
             print(text)
 
-    def ask_component_export_action(self, comp_name):
-        """
-        Ask user how to proceed when a FLO-2D component has data but its CONT.DAT
-        switch is OFF.
-
-        Returns one of:
-            - "export_only"
-            - "export_and_turn_on"
-            - "skipped"
-        """
-        if self.iface is None:
-            # Headless / non-GUI mode: default to export_only
-            print(
-                f"The CONT.DAT switch for {comp_name} is OFF but data exists; "
-                f"defaulting to 'export_only' (no GUI available)."
-            )
-            return "export_only"
-
-        parent = self.iface.mainWindow()
-        mb = QMessageBox(parent)
-        mb.setIcon(QMessageBox.Question)
-        mb.setWindowTitle(f"{comp_name} switch is OFF")
-        mb.setText(
-            f"The CONT.DAT switch for <b>{comp_name}</b> is currently <b>OFF</b>."
-            "<br><br>How would you like to proceed?"
-        )
-
-        btn_export_only = mb.addButton("Export ONLY", QMessageBox.AcceptRole)
-        btn_export_and_on = mb.addButton("Export and Switch ON", QMessageBox.YesRole)
-        mb.addButton("Cancel", QMessageBox.RejectRole)
-        mb.exec_()
-
-        clicked = mb.clickedButton()
-        if clicked is btn_export_only:
-            return "export_only"
-        elif clicked is btn_export_and_on:
-            return "export_and_turn_on"
-        else:
-            return "skipped"
-
-
     def progress_bar(self, msg, minimum=0, maximum=0, init_value=0):
         pmb = self.iface.messageBar().createMessage(msg)
 
