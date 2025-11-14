@@ -4,7 +4,7 @@ import sys, os, importlib
 abi = f"cp{sys.version_info.major}{sys.version_info.minor}"
 deps_dir = os.path.dirname(__file__)
 h5py_dir = os.path.join(deps_dir, f"h5py_{abi}")   # e.g. deps/h5py_cp312 or deps/h5py_cp310
-dll_dir  = os.path.join(h5py_dir, "h5py", ".libs") # Windows vendored DLLs; on Linux, .so may live directly under h5py/
+dll_dir  = os.path.join(h5py_dir, "h5py") # Windows vendored DLLs; on Linux, .so may live directly under h5py/
 
 def _purge():
     for k in list(sys.modules.keys()):
