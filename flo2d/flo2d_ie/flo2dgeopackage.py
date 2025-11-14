@@ -103,13 +103,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # Cell-size validation with format-specific messages
         if self.cell_size == 0:
             if self.parsed_format == self.FORMAT_DAT:
-                self.uc.show_info(
-                    "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist and or is empty?"
-                )
+                self.uc.show_info("ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist and or is empty?")
+                self.uc.log_info("ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist and or is empty?")
             elif self.parsed_format == self.FORMAT_HDF5:
-                self.uc.show_info(
-                    "ERROR 060319.1604: Cell size is 0 - something went wrong!\nIs 'Input/Grid/COORDINATES' present and populated?"
-                )
+                self.uc.show_info("ERROR 060319.1604: Cell size is 0 - something went wrong!\nIs 'Input/Grid/COORDINATES' present and populated?")
+                self.uc.log_info("ERROR 060319.1604: Cell size is 0 - something went wrong!\nIs 'Input/Grid/COORDINATES' present and populated?")
             return False
         else:
             pass
