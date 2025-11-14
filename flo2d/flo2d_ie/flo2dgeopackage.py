@@ -24,7 +24,7 @@ from ..flo2d_tools.schematic_tools import ChannelsSchematizer
 try:
     import h5py
 except ImportError:
-    pass
+    h5py = None
 
 import numpy as np
 from PyQt5.QtCore import QSettings
@@ -80,6 +80,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.parser.scan_project_dir(fpath)
             self.cell_size = int(round(self.parser.calculate_cellsize()))
         elif self.parsed_format == self.FORMAT_HDF5:
+            if h5py is None:
+                QMessageBox.critical(
+                    self.iface.mainWindow(),
+                    "FLO-2D HDF5 I/O",
+                    (
+                        "The Python package 'h5py' is required for FLO-2D HDF5 import/export,\n"
+                        "but it is not available in the current QGIS Python environment.\n\n"
+                        "Please install 'h5py' in the same Python environment that QGIS uses,\n"
+                        "restart QGIS, and try again."
+                    ),
+                )
+                return False
             self.parser = ParseHDF5()
             self.parser.hdf5_filepath = fpath
             self.cell_size = int(round(self.parser.calculate_cellsize()))
@@ -9165,6 +9177,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
 
     def export_raincell_hdf5(self, subdomain):
+        # h5py is required for HDF5 export: Specific for raincell export
+        if h5py is None:
+            QMessageBox.critical(
+                self.iface.mainWindow(),   # parent QWidget
+                "FLO-2D HDF5 Export",      # title
+                (
+                    "The Python package 'h5py' is required to export RAINCELL.HDF5,\n"
+                    "but it is not available in the current QGIS Python environment.\n\n"
+                    "Please install 'h5py' in the same Python environment that QGIS uses,\n"
+                    "restart QGIS, and try again."
+                ),
+            )
+            self.uc.log_info("RAINCELL.HDF5 export failed: h5py is not installed.")
+            return False
         try:
             if self.is_table_empty("raincell_data"):
                 return False
@@ -9307,7 +9333,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_raincellraw_hdf5(self, subdomain):
-
+        # h5py is required for HDF5 export: Specific for raincellraw export
+        if h5py is None:
+            QMessageBox.critical(
+                self.iface.mainWindow(),
+                "FLO-2D HDF5 Export",
+                (
+                    "The Python package 'h5py' is required to export RAINCELLRAW.HDF5,\n"
+                    "but it is not available in the current QGIS Python environment.\n\n"
+                    "Please install 'h5py' in the same Python environment that QGIS uses,\n"
+                    "restart QGIS, and try again."
+                ),
+            )
+            self.uc.log_info("RAINCELLRAW.HDF5 export aborted: h5py not installed.")
+            return False
         try:
             if self.is_table_empty("raincellraw") or self.is_table_empty("flo2d_raincell"):
                 return False
