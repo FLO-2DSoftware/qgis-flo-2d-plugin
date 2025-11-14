@@ -24,7 +24,7 @@ from ..flo2d_tools.schematic_tools import ChannelsSchematizer
 try:
     import h5py
 except ImportError:
-    h5py = None
+    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
 
 import numpy as np
 from PyQt5.QtCore import QSettings

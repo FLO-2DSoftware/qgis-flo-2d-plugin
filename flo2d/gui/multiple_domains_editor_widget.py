@@ -515,7 +515,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             try:
                 import h5py
             except ImportError:
-                return
+                h5py = None  # Define h5py as None when not installed to avoid NameError and allow custom error handling
             with h5py.File(h5_path, "r") as hdf:
                 coords = hdf[dset]  # expected shape (N, 2)
                 n = coords.shape[0]

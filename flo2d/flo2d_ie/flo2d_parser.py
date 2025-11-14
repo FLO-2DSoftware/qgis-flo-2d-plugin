@@ -25,7 +25,7 @@ from ..utils import Msge
 try:
     import h5py
 except ImportError:
-    h5py = None
+    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
 
 class HDF5Group:
     def __init__(self, name: str):
