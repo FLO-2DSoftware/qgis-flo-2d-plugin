@@ -416,9 +416,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     "<br><br>How would you like to proceed?"
                 )
                 user_choice = self.uc.dialog_with_2_customized_buttons(title, msg, "Export ONLY","Export and Switch ON",)
-                if user_choice == QMessageBox.Yes:
+                if user_choice == QMessageBox.Yes: # Export Only
                     decision = "export_only"
-                elif user_choice == QMessageBox.No:
+                elif user_choice == QMessageBox.No: # Export and Switch On
                     decision = "export_and_turn_on"
                 else:
                     decision = "skipped" # Close / Cancel
