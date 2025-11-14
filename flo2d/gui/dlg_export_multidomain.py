@@ -6,7 +6,7 @@ import traceback
 try:
     import h5py
 except ImportError:
-    pass
+    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
 
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog
@@ -300,7 +300,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # if "Evaporation" not in dlg_components.components:
                 #     export_calls.remove("export_evapor")
 
-                if "Hydraulic  Structures" not in dlg_components.components:
+                if "Hydraulic Structures" not in dlg_components.components:
                     export_calls.remove("export_hystruc")
                     export_calls.remove("export_bridge_xsec")
                     if "export_bridge_coeff_data" in export_calls:

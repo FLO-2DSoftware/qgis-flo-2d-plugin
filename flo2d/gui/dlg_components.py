@@ -11,7 +11,7 @@
 import os
 
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtWidgets import QApplication, QMessageBox
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -35,6 +35,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.current_lyr = None
         self.components = []
+        self.component_actions = {} # Stores each component's export decision/status (e.g., "export_only", "export_and_turn_on", or "skipped")
         self.in_or_out = in_or_out
 
         self.components_buttonBox.accepted.connect(self.select_components)
@@ -219,12 +220,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.rain_chbox.setText("*" + self.rain_chbox.text() + "*")
                 show_note = True
 
-            if (options["ISED"] == "0" and not self.gutils.is_table_empty("sed")) and (
-                options["MUD"] == "0" and not self.gutils.is_table_empty("mud")
-            ):
-                self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
-                show_note = True
-
             if options["IWRFS"] == "0" and not self.gutils.is_table_empty("blocked_cells"):
                 self.reduction_factors_chbox.setText("*" + self.reduction_factors_chbox.text() + "*")
                 show_note = True
@@ -244,17 +239,14 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.components_note_lbl.setVisible(show_note)
 
             if not self.gutils.is_table_empty("chan"):
-                # self.channels_chbox.setChecked(True)
                 self.channels_chbox.setChecked(options["ICHANNEL"] != "0")
                 self.channels_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("blocked_cells"):
-                # self.reduction_factors_chbox.setChecked(True)
                 self.reduction_factors_chbox.setChecked(options["IWRFS"] != "0")
                 self.reduction_factors_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("streets"):
-                # self.streets_chbox.setChecked(True)
                 self.streets_chbox.setChecked(options["MSTREET"] != "0")
                 self.streets_chbox.setEnabled(True)
 
@@ -267,26 +259,16 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.inflow_elements_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("levee_data"):
-                # self.levees_chbox.setChecked(True)
                 self.levees_chbox.setChecked(options["LEVEE"] != "0")
                 self.levees_chbox.setEnabled(True)
 
-            # Multiple channels:
-            if options["IMULTC"] == "1":
-                if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info(
-                        "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
-                    )
-                    self.gutils.set_cont_par("IMULTC", 0)
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                else:  # There are Mult or simple channels cells:
-                    if self.gutils.is_table_empty("mult"):
-                        # There are mult or simple channels but 'mult' (globals) is empty: set globals:
-                        self.gutils.fill_empty_mult_globals()
-                    # self.multiple_channels_chbox.setChecked(True)
-                    self.multiple_channels_chbox.setChecked(options["IMULTC"] != "0")
-                    self.multiple_channels_chbox.setEnabled(True)
+            if (not self.gutils.is_table_empty("mult_cells")) or (not self.gutils.is_table_empty("simple_mult_cells")):
+                # If there are mult/simple_mult cells but 'mult' (globals) is empty, set globals:
+                if self.gutils.is_table_empty("mult"):
+                    self.gutils.fill_empty_mult_globals()
+                # Pre-check if CONT switch is ON; otherwise enabled but unchecked.
+                self.multiple_channels_chbox.setChecked(options["IMULTC"] != "0")
+                self.multiple_channels_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("breach"):
                 qry = "SELECT ilevfail FROM levee_general"
@@ -303,7 +285,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.gutters_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("infil"):
-                # self.infiltration_chbox.setChecked(True)
                 self.infiltration_chbox.setChecked(options["INFIL"] != "0")
                 self.infiltration_chbox.setEnabled(True)
 
@@ -314,37 +295,40 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             # Mud and Sediment Transport:
             ISED = self.gutils.get_cont_par("ISED")
             MUD = self.gutils.get_cont_par("MUD")
-            mud_has_data = not self.gutils.is_table_empty("mud") # True if the mud table has records (data present)
-            sed_has_data = not self.gutils.is_table_empty("sed") # True if the sediment table has records (data present)
-            if ISED == "1" or MUD in ["1", "2"]:
-                # if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
-                # When CONT switches are ON, precheck and enable
-                if mud_has_data or sed_has_data:
-                    self.mud_and_sed_chbox.setChecked(True)
-                    self.mud_and_sed_chbox.setEnabled(True)
+
+            ised_off = (ISED is None) or (str(ISED) != "1")
+            mud_off = (MUD is None) or (str(MUD) not in ("1", "2"))
+
+            # If BOTH are effectively OFF (set to None)
+            if ised_off and mud_off:
+                self.mud_and_sed_chbox.setChecked(False)
+                self.mud_and_sed_chbox.setEnabled(False)
             else:
-                # When CONT switches are OFF and data exists, enable but not prechecked
+                # At least one mode is ON (Mud/debris, Sediment, or Two phase).
+                # Enable the checkbox if there is any mud/sed data in the project.
+                mud_has_data = not self.gutils.is_table_empty("mud")
+                sed_has_data = not self.gutils.is_table_empty("sed")
                 if mud_has_data or sed_has_data:
-                    self.mud_and_sed_chbox.setChecked(False)
                     self.mud_and_sed_chbox.setEnabled(True)
+                    self.mud_and_sed_chbox.setChecked(True)  # checked since a mode is ON
+                else:
+                    # No data: leave it unchecked; you can also choose to keep it disabled if you prefer.
+                    self.mud_and_sed_chbox.setChecked(False)
+                    self.mud_and_sed_chbox.setEnabled(False)
 
             if not self.gutils.is_table_empty("evapor"):
-                # self.evaporation_chbox.setChecked(True)
                 self.evaporation_chbox.setChecked(options["IEVAP"] != "0")
                 self.evaporation_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("struct"):
-                # self.hydr_struct_chbox.setChecked(True)
                 self.hydr_struct_chbox.setChecked(options["IHYDRSTRUCT"] != "0")
                 self.hydr_struct_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("rain"):
-                # self.rain_chbox.setChecked(True)
                 self.rain_chbox.setChecked(options["IRAIN"] != "0")
                 self.rain_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("swmmflo"):
-                # self.storm_drain_chbox.setChecked(True)
                 self.storm_drain_chbox.setChecked(options["SWMM"] != "0")
                 self.storm_drain_chbox.setEnabled(True)
 
@@ -384,15 +368,70 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
 
+    # (Name, checkbox_attr, table_name_or_tuple, cont_key_or_tuple)
+    component_specs = [
+        ("Channels", "channels_chbox", "chan", "ICHANNEL"),
+        ("Evaporation", "evaporation_chbox", "evapor", "IEVAP"),
+        ("Hydraulic Structures", "hydr_struct_chbox", "struct", "IHYDRSTRUCT"),
+        ("Infiltration", "infiltration_chbox", "infil", "INFIL"),
+        ("Rain", "rain_chbox", "rain", "IRAIN"),
+        ("Levees", "levees_chbox", "levee_data", "LEVEE"),
+        ("Streets", "streets_chbox", "streets", "MSTREET"),
+        ("Reduction Factors", "reduction_factors_chbox", "blocked_cells", "IWRFS"),
+        ("Storm Drain", "storm_drain_chbox", "swmmflo", "SWMM"),
+        ("Multiple Channel", "multiple_channels_chbox", ("mult_cells", "simple_mult_cells"), "IMULTC"),
+    ]
+
     def select_components(self):
-        if self.channels_chbox.isChecked():
-            self.components.append("Channels")
+        # reset each time in case dialog instance is reused
+        self.components = []
+        self.component_actions = {}
 
-        if self.reduction_factors_chbox.isChecked():
-            self.components.append("Reduction Factors")
+        # CONT/DAT-governed components
+        for comp_name, chbox_attr, table_name, cont_key in self.component_specs:
+            checkbox = getattr(self, chbox_attr)
 
-        if self.streets_chbox.isChecked():
-            self.components.append("Streets")
+            # skip if not checked
+            if not checkbox.isChecked():
+                self.component_actions[comp_name] = "skipped"
+                continue
+
+            # has_data: accept one or many tables
+            if isinstance(table_name, (list, tuple, set)):
+                has_data = any(not self.gutils.is_table_empty(t) for t in table_name)
+            else:
+                has_data = not self.gutils.is_table_empty(table_name)
+
+            # CONT state: accept one or many keys
+            if isinstance(cont_key, (list, tuple, set)):
+                is_on = any(str(self.gutils.get_cont_par(k)) != "0" for k in cont_key)
+            else:
+                is_on = str(self.gutils.get_cont_par(cont_key)) != "0"
+
+            # EXPORT mode, data exists, but switch(es) are OFF → ask user how to proceed
+            if self.in_or_out == "out" and has_data and not is_on:
+                title = f"{comp_name} switch is OFF"
+                msg = (
+                    f"The CONT.DAT switch for <b>{comp_name}</b> is currently <b>OFF</b>."
+                    "<br><br>How would you like to proceed?"
+                )
+                user_choice = self.uc.dialog_with_2_customized_buttons(title, msg, "Export ONLY","Export and Switch ON",)
+                if user_choice == QMessageBox.Yes: # Export Only
+                    decision = "export_only"
+                elif user_choice == QMessageBox.No: # Export and Switch On
+                    decision = "export_and_turn_on"
+                else:
+                    decision = "skipped" # Close / Cancel
+                if decision in ("export_only", "export_and_turn_on"):
+                    self.components.append(comp_name)
+                self.component_actions[comp_name] = decision
+            else:
+                # already ON, or no data, or import mode
+                self.components.append(comp_name)
+                self.component_actions[comp_name] = "normal"
+
+        if self.mud_and_sed_chbox.isChecked():
+            self.components.append("Mudflow and Sediment Transport")
 
         if self.outflow_elements_chbox.isChecked():
             self.components.append("Outflow Elements")
@@ -400,41 +439,17 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         if self.inflow_elements_chbox.isChecked():
             self.components.append("Inflow Elements")
 
-        if self.levees_chbox.isChecked():
-            self.components.append("Levees")
-
-        if self.multiple_channels_chbox.isChecked():
-            self.components.append("Multiple Channels")
-
         if self.breach_chbox.isChecked():
             self.components.append("Breach")
 
         if self.gutters_chbox.isChecked():
             self.components.append("Gutters")
 
-        if self.infiltration_chbox.isChecked():
-            self.components.append("Infiltration")
-
         if self.floodplain_xs_chbox.isChecked():
             self.components.append("Floodplain Cross Sections")
 
-        if self.mud_and_sed_chbox.isChecked():
-            self.components.append("Mudflow and Sediment Transport")
-
-        if self.evaporation_chbox.isChecked():
-            self.components.append("Evaporation")
-
-        if self.hydr_struct_chbox.isChecked():
-            self.components.append("Hydraulic  Structures")
-
         if self.mudflo_chbox.isChecked():
             self.components.append("MODFLO-2D")
-
-        if self.rain_chbox.isChecked():
-            self.components.append("Rain")
-
-        if self.storm_drain_chbox.isChecked():
-            self.components.append("Storm Drain")
 
         if self.spatial_shallow_n_chbox.isChecked():
             self.components.append("Spatial Shallow-n")

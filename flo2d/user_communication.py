@@ -336,3 +336,4 @@ class TwoInputsDialog(QDialog):
 
         layout.addSpacing(20)
         layout.addLayout(button_layout)
+

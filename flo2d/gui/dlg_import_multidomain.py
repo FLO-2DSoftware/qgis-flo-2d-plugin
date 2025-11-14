@@ -6,7 +6,7 @@ from itertools import combinations
 try:
     import h5py
 except ImportError:
-    pass
+    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
 import numpy as np
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox

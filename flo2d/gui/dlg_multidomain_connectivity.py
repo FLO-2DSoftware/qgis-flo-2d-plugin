@@ -4,7 +4,7 @@ import time
 try:
     import h5py
 except ImportError:
-    pass
+    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt.QtCore import NULL
 

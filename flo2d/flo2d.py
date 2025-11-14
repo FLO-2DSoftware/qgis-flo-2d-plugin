@@ -19,7 +19,7 @@ from contextlib import contextmanager
 
 from PyQt5.QtWidgets import QToolButton, QProgressDialog, QPushButton
 from osgeo import gdal, ogr
-from qgis._core import  QgsCoordinateReferenceSystem, QgsVectorLayer, QgsRasterLayer
+from qgis._core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsRasterLayer
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import (
@@ -92,6 +92,7 @@ from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version
 
 from PIL import Image
+
 
 @contextmanager
 def cd(newdir):
@@ -1408,7 +1409,8 @@ class Flo2D(object):
                     self.uc.bar_info(exe_name + " started!", dur=3)
                     self.uc.log_info(exe_name + " started!")
                 else:
-                    if os.path.isfile(project_dir + "\\" + "CONT.DAT") or os.path.isfile(project_dir + "\\" + "Input.hdf5"):
+                    if os.path.isfile(project_dir + "\\" + "CONT.DAT") or os.path.isfile(
+                            project_dir + "\\" + "Input.hdf5"):
                         program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
                         program.perform()
                         self.uc.bar_info(exe_name + " started!", dur=3)
@@ -1458,11 +1460,12 @@ class Flo2D(object):
                 new_gpkg = uri[len("geopackage:"):].split('?')[0]
             else:
                 QApplication.restoreOverrideCursor()
-                msg = ("<b>It looks like you're trying to open an old FLO-2D geopackage or FLO-2D *.qgz project.</b><br><br>"
-                          "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
-                          "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
-                          "<a href='https://flo-2d.com/contact'>Tech Support</a>"
-                )
+                msg = (
+                    "<b>It looks like you're trying to open an old FLO-2D geopackage or FLO-2D *.qgz project.</b><br><br>"
+                    "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
+                    "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
+                    "<a href='https://flo-2d.com/contact'>Tech Support</a>"
+                    )
                 self.uc.show_warn(msg)
                 self.uc.log_info(msg)
                 return
@@ -1480,7 +1483,7 @@ class Flo2D(object):
                 "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
                 "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
                 "<a href='https://flo-2d.com/contact'>Tech Support</a>"
-                )
+            )
             self.uc.show_warn(msg)
             self.uc.log_info(msg)
             return
@@ -1900,7 +1903,7 @@ class Flo2D(object):
                     if "Evaporation" not in dlg_components.components:
                         import_calls.remove("import_evapor")
 
-                    if "Hydraulic  Structures" not in dlg_components.components:
+                    if "Hydraulic Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
                         import_calls.remove("import_hystruc_bridge_xs")
 
@@ -1993,13 +1996,13 @@ class Flo2D(object):
                 finally:
                     if self.files_used != "" or self.files_not_used != "":
                         msg = (
-                            "Files read by this project:\n\n"
-                            + self.files_used
-                            + (
-                                ""
-                                if self.files_not_used == ""
-                                else "\n\nFiles not found or empty:\n\n" + self.files_not_used
-                            )
+                                "Files read by this project:\n\n"
+                                + self.files_used
+                                + (
+                                    ""
+                                    if self.files_not_used == ""
+                                    else "\n\nFiles not found or empty:\n\n" + self.files_not_used
+                                )
                         )
                         self.uc.show_info(msg)
                         self.uc.log_info(msg)
@@ -2102,7 +2105,14 @@ class Flo2D(object):
         s.setValue("FLO-2D/lastGdsDir", indir)
         self.f2d_widget.setup_project_folder()
         self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
-        self.f2g.set_parser(input_hdf5)
+        ok = self.f2g.set_parser(input_hdf5)
+        if not ok:
+            # stop immediately — do NOT continue importing
+            self.uc.log_info("Import Failed! Not possible to set the parser. Check your Input.hdf5 file.")
+            self.uc.bar_error("Import Failed! Not possible to set the parser. Check your Input.hdf5 file.")
+            self.gutils.enable_geom_triggers()
+            return
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
         empty = self.f2g.is_table_empty("grid")
         if not empty:
@@ -2350,7 +2360,7 @@ class Flo2D(object):
                     # if "Surface Water Rating Tables" not in dlg_components.components:
                     #     import_calls.remove("import_outrc")
 
-                    if "Hydraulic  Structures" not in dlg_components.components:
+                    if "Hydraulic Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
                         import_calls.remove("import_hystruc_bridge_xs")
 
@@ -2705,7 +2715,7 @@ class Flo2D(object):
                 if user_preference == "hdf5":
                     dlg_components.hdf5_rb.setChecked(True)
                     dlg_components.data_rb.setChecked(False)
-                elif user_preference  == "data":
+                elif user_preference == "data":
                     dlg_components.hdf5_rb.setChecked(False)
                     dlg_components.data_rb.setChecked(True)
                 else:
@@ -2816,7 +2826,20 @@ class Flo2D(object):
                         return
                     export_message = "Datasets exported to\n" + output_hdf5 + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
-                    self.f2g.set_parser(output_hdf5, get_cell_size=False)
+                    # Check whether the parser could be created
+                    ok = self.f2g.set_parser(output_hdf5, get_cell_size=False)
+                    if not ok:
+                        # set_parser() already showed a detailed massage
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_error("HDF5 export aborted: Could not initialize HDF5 parser/writer.")
+                        self.uc.log_info(
+                            "HDF5 export failed! Could not initialize the HDF5 writer.\n\n"
+                            "Please install the 'h5py' package in the QGIS Python "
+                            "environment and try again."
+                        )
+                        return
+
+
                     remove = ("export_bridge_coeff_data", "export_wstime", "export_wsurf")
                     export_calls_filtered = [item for item in export_calls if item not in remove]
                     self.export_flo2d_files(output_hdf5, export_calls_filtered, dlg_components)
@@ -2861,23 +2884,45 @@ class Flo2D(object):
                     self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
     def export_flo2d_files(self, outdir, export_calls, dlg_components):
+        '''
+            Instead of probing components tables again, as was done in dlg_components.py,
+            let export decisions be driven by the user's explicit choices in
+            dlg_components.py i.e "export_and_turn_on", "export_only", or "cancel".
+        '''
 
-        if "Channels" not in dlg_components.components:
+        self.f2g.export_intent = dict(
+            dlg_components.component_actions)  # Use the user's chosen export actions (export & turn on / export only / cancel) instead of inferring from data presence.
+
+        chan_action = dlg_components.component_actions.get("Channels")
+        chan_exports = ("export_chan", "export_xsec")
+        if ("Channels" not in dlg_components.components) or (chan_action == "cancel"):
             self.gutils.set_cont_par("ICHANNEL", 0)
-            export_calls.remove("export_chan")
-            export_calls.remove("export_xsec")
+            for n in chan_exports:
+                if n in export_calls:
+                    export_calls.remove(n)
+        elif chan_action == "export_only":
+
+            self.gutils.set_cont_par("ICHANNEL", 0)
         else:
             self.gutils.set_cont_par("ICHANNEL", 1)
 
-        if "Reduction Factors" not in dlg_components.components:
+        arf_action = dlg_components.component_actions.get("Reduction Factors")
+        if ("Reduction Factors" not in dlg_components.components) or (arf_action == "cancel"):
             self.gutils.set_cont_par("IWRFS", 0)
-            export_calls.remove("export_arf")
+            if "export_arf" in export_calls:
+                export_calls.remove("export_arf")
+        elif arf_action == "export_only":
+            self.gutils.set_cont_par("IWRFS", 0)
         else:
             self.gutils.set_cont_par("IWRFS", 1)
 
-        if "Streets" not in dlg_components.components:
+        streets_action = dlg_components.component_actions.get("Streets")
+        if ("Streets" not in dlg_components.components) or (streets_action == "cancel"):
             self.gutils.set_cont_par("MSTREET", 0)
-            export_calls.remove("export_street")
+            if "export_street" in export_calls:
+                export_calls.remove("export_street")
+        elif streets_action == "export_only":
+            self.gutils.set_cont_par("MSTREET", 0)
         else:
             self.gutils.set_cont_par("MSTREET", 1)
 
@@ -2893,15 +2938,23 @@ class Flo2D(object):
         if "Surface Water Rating Tables" not in dlg_components.components:
             export_calls.remove("export_outrc")
 
-        if "Levees" not in dlg_components.components:
+        levees_action = dlg_components.component_actions.get("Levees")
+        if ("Levees" not in dlg_components.components) or (levees_action == "cancel"):
             self.gutils.set_cont_par("LEVEE", 0)
-            export_calls.remove("export_levee")
+            if "export_levee" in export_calls:
+                export_calls.remove("export_levee")
+        elif levees_action == "export_only":
+            self.gutils.set_cont_par("LEVEE", 0)
         else:
             self.gutils.set_cont_par("LEVEE", 1)
 
-        if "Multiple Channels" not in dlg_components.components:
+        mult_channels_action = dlg_components.component_actions.get("Multiple Channel")
+        if ("Multiple Channel" not in dlg_components.components) or (mult_channels_action == "cancel"):
             self.gutils.set_cont_par("IMULTC", 0)
-            export_calls.remove("export_mult")
+            if "export_mult" in export_calls:
+                export_calls.remove("export_mult")
+        elif mult_channels_action == "export_only":
+            self.gutils.set_cont_par("IMULTC", 0)
         else:
             self.gutils.set_cont_par("IMULTC", 1)
 
@@ -2911,9 +2964,13 @@ class Flo2D(object):
         if "Gutters" not in dlg_components.components:
             export_calls.remove("export_gutter")
 
-        if "Infiltration" not in dlg_components.components:
+        infiltration_action = dlg_components.component_actions.get("Infiltration")
+        if ("Infiltration" not in dlg_components.components) or (infiltration_action == "cancel"):
             self.gutils.set_cont_par("INFIL", 0)
-            export_calls.remove("export_infil")
+            if "export_infil" in export_calls:
+                export_calls.remove("export_infil")
+        elif infiltration_action == "export_only":
+            self.gutils.set_cont_par("INFIL", 0)
         else:
             self.gutils.set_cont_par("INFIL", 1)
 
@@ -2925,33 +2982,41 @@ class Flo2D(object):
             self.gutils.set_cont_par("ISED", 0)
             export_calls.remove("export_sed")
 
-        if "Evaporation" not in dlg_components.components:
+        evaporation_action = dlg_components.component_actions.get("Evaporation")
+        if ("Evaporation" not in dlg_components.components) or (evaporation_action == "cancel"):
             self.gutils.set_cont_par("IEVAP", 0)
-            export_calls.remove("export_evapor")
+            if "export_evapor" in export_calls:
+                export_calls.remove("export_evapor")
+        elif evaporation_action == "export_only":
+            self.gutils.set_cont_par("IEVAP", 0)
         else:
             self.gutils.set_cont_par("IEVAP", 1)
 
-        if "Hydraulic  Structures" not in dlg_components.components:
+        hyd_action = getattr(dlg_components, "component_actions", {}).get("Hydraulic Structures")
+        if ("Hydraulic Structures" not in dlg_components.components) or (hyd_action == "cancel"):
             self.gutils.set_cont_par("IHYDRSTRUCT", 0)
-            export_calls.remove("export_hystruc")
-            export_calls.remove("export_bridge_xsec")
-            if "export_bridge_coeff_data" in export_calls:
-                export_calls.remove("export_bridge_coeff_data")
+            for n in ("export_hystruc", "export_bridge_xsec", "export_bridge_coeff_data"):
+                if n in export_calls:
+                    export_calls.remove(n)
         else:
-            self.gutils.set_cont_par("IHYDRSTRUCT", 1)
             xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
             if not xsecs:
-                export_calls.remove("export_bridge_xsec")
-                if "export_bridge_coeff_data" in export_calls:
-                    export_calls.remove("export_bridge_coeff_data")
+                for n in ("export_bridge_xsec", "export_bridge_coeff_data"):
+                    if n in export_calls:
+                        export_calls.remove(n)
+            if hyd_action == "export_only":
+                self.gutils.set_cont_par("IHYDRSTRUCT", 0)
+            elif hyd_action == "export_and_turn_on":
+                self.gutils.set_cont_par("IHYDRSTRUCT", 1)
+            else:
+                self.gutils.set_cont_par("IHYDRSTRUCT", 1)
 
-        if "Rain" not in dlg_components.components:
+        rain_action = dlg_components.component_actions.get("Rain")
+        if ("Rain" not in dlg_components.components) or (rain_action == "cancel"):
             self.gutils.set_cont_par("IRAIN", 0)
-            export_calls.remove("export_rain")
-            if "export_raincell" in export_calls:
-                export_calls.remove("export_raincell")
-            if "export_raincellraw" in export_calls:
-                export_calls.remove("export_raincellraw")
+            for n in ("export_rain", "export_raincell", "export_raincellraw"):
+                if n in export_calls:
+                    export_calls.remove(n)
         else:
             if not self.f2d_widget.rain_editor.realtime_rainfall_grp.isChecked():
                 if "export_raincell" in export_calls:
@@ -2959,17 +3024,29 @@ class Flo2D(object):
             if not self.f2d_widget.rain_editor.realtime_rainfall_raw_grp.isChecked():
                 if "export_raincellraw" in export_calls:
                     export_calls.remove("export_raincellraw")
-            self.gutils.set_cont_par("IRAIN", 1)
+            if rain_action == "export_only":
+                self.gutils.set_cont_par("IRAIN", 0)
+            else:
+                self.gutils.set_cont_par("IRAIN", 1)
 
-        if "Storm Drain" not in dlg_components.components:
+        sd_action = getattr(dlg_components, "component_actions", {}).get("Storm Drain")
+        sd_exports = (
+            "export_swmmflo",
+            "export_swmmflort",
+            "export_swmmoutf",
+            "export_swmmflodropbox",
+            "export_sdclogging",
+            "export_swmminp",  # may be optional
+        )
+        if ("Storm Drain" not in dlg_components.components) or (sd_action == "cancel"):
             self.gutils.set_cont_par("SWMM", 0)
-            export_calls.remove("export_swmmflo")
-            export_calls.remove("export_swmmflort")
-            export_calls.remove("export_swmmoutf")
-            export_calls.remove("export_swmmflodropbox")
-            export_calls.remove("export_sdclogging")
-            if "export_swmminp" in export_calls:
-                export_calls.remove("export_swmminp")
+            for n in sd_exports:
+                if n in export_calls:
+                    export_calls.remove(n)
+        elif sd_action == "export_only":
+            self.gutils.set_cont_par("SWMM", 0)
+        elif sd_action == "export_and_turn_on":
+            self.gutils.set_cont_par("SWMM", 1)
         else:
             self.gutils.set_cont_par("SWMM", 1)
 
@@ -3669,7 +3746,8 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_storage_units WHERE fid = ?", (fid,)).fetchone()
+        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_storage_units WHERE fid = ?",
+                                         (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('storage_unit', name, grid)
 
@@ -4499,10 +4577,12 @@ class Flo2D(object):
                 if layer_name in self.lyrs.layer_names and gpkg_path not in layer_source:
                     renamed_layer = layer_name + '_ext'
                     layer.setName(renamed_layer)
-                    self.uc.bar_warn('FLO-2D Plugin does not allow layers with the name equal to the FLO-2D layers! The '
-                                     f'{layer_name} layer was renamed to {renamed_layer}.')
-                    self.uc.log_info(f'FLO-2D Plugin does not allow layers with the name equal to the FLO-2D layers! The '
-                                     f'{layer_name} layer was renamed to {renamed_layer}.')
+                    self.uc.bar_warn(
+                        'FLO-2D Plugin does not allow layers with the name equal to the FLO-2D layers! The '
+                        f'{layer_name} layer was renamed to {renamed_layer}.')
+                    self.uc.log_info(
+                        f'FLO-2D Plugin does not allow layers with the name equal to the FLO-2D layers! The '
+                        f'{layer_name} layer was renamed to {renamed_layer}.')
             except:
                 pass
 

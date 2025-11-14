@@ -14,7 +14,7 @@ import numpy as np
 try:
     import h5py
 except ImportError:
-    pass
+    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
 
 from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsPointXY
 
