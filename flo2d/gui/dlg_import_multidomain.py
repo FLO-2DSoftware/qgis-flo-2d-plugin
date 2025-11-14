@@ -806,18 +806,18 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_outrc",  Add back when the OUTRC process is completed
             # "import_outflow",
             "import_rain",
-            # "import_raincell",
+            "import_raincell",
             # "import_raincellraw",
             # "import_evapor",
             "import_infil",
-            # "import_chan",
-            # "import_xsec",
+            "import_chan",
+            "import_xsec",
             "import_hystruc",
             # "import_hystruc_bridge_xs",
             # "import_street",
             "import_arf",
             # "import_mult",
-            # "import_sed",
+            "import_sed",
             "import_levee",
             "import_fpxsec",
             # "import_breach",
@@ -826,12 +826,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_steep_slopen",
             "import_lid_volume",
             "import_shallowNSpatial",
-            # "import_swmminp",
-            # "import_swmmflo",
-            # "import_swmmflort",
-            # "import_swmmoutf",
-            # "import_swmmflodropbox",
-            # "import_sdclogging",
+            "import_swmminp",
+            "import_swmmflo",
+            "import_swmmflort",
+            "import_swmmoutf",
+            "import_swmmflodropbox",
+            "import_sdclogging",
             "import_tolspatial",
             # "import_wsurf",
             # "import_wstime",
@@ -931,8 +931,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def call_IO_methods_dat(self, calls, debug, *args):
 
-        self.files_used = ""
-        self.files_not_used = ""
+        # self.files_used = ""
+        # self.files_not_used = ""
 
         # progDialog = QProgressDialog("Exporting to DATA...", None, 0, len(calls))
         # progDialog.setModal(True)
@@ -941,7 +941,13 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         # i = 0
         #
         # # QApplication.setOverrideCursor(Qt.WaitCursor)
+
         for call in calls:
+
+            local_args = args
+
+            if call == "import_swmminp":
+                local_args = ("SWMM.INP", False)
 
             # i += 1
             # progDialog.setValue(i)
@@ -999,8 +1005,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             start_time = time.time()
 
             method = getattr(self.f2g, call)
-            if method(*args):
-                self.uc.log_info('Entrou!')
+            if method(*local_args):
+                pass
 
             self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
 

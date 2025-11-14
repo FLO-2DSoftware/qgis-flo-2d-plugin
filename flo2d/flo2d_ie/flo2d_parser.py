@@ -720,6 +720,8 @@ class ParseDAT(object):
 
     def parse_raincell(self):
         rain = self.dat_files["RAINCELL.DAT"]
+        if not rain:
+            return None, None
         par = self.single_parser(rain)
         line1 = next(par)
         head = line1[:2]
@@ -798,6 +800,8 @@ class ParseDAT(object):
 
     def parse_chan(self):
         chan = self.dat_files["CHAN.DAT"]
+        if not chan:
+            return None, None, None, None
         bank = self.dat_files["CHANBANK.DAT"]
         xsec = self.dat_files["XSEC.DAT"]
         par = self.single_parser(chan)  # Iterator to deliver lines of CHAN.DAT one by one.
@@ -887,6 +891,8 @@ class ParseDAT(object):
 
     def parse_xsec(self):
         xsec = self.dat_files["XSEC.DAT"]
+        if not xsec:
+            return None
         par = self.single_parser(xsec)
         key = ()
         data = OrderedDict()
@@ -1000,6 +1006,8 @@ class ParseDAT(object):
 
     def parse_sed(self):
         sed = self.dat_files["SED.DAT"]
+        if not sed:
+            return None
         par = self.single_parser(sed)
         data = defaultdict(list)
         vals = slice(1, None)
@@ -1133,36 +1141,32 @@ class ParseDAT(object):
 
     def parse_swmmflo(self):
         swmmflo = self.dat_files["SWMMFLO.DAT"]
+        if not swmmflo:
+            return None
         par = self.single_parser(swmmflo)
         data = [row for row in par]
         return data
 
     def parse_swmmflodropbox(self):
         swmmflodropbox = self.dat_files["SWMMFLODROPBOX.DAT"]
+        if not swmmflodropbox:
+            return None
         par = self.single_parser(swmmflodropbox)
         data = [row for row in par]
         return data
     
     def parse_sdclogging(self):
         sdclogging = self.dat_files["SDCLOGGING.DAT"]
+        if not sdclogging:
+            return None
         par = self.single_parser(sdclogging)
         data = [row for row in par]
         return data
     
     def parse_swmmflort(self):
-        # swmmflort = self.dat_files["SWMMFLORT.DAT"]
-        # par = self.single_parser(swmmflort)
-        # data = []
-        # for row in par:
-        #     char = row[0]
-        #     if char == "D":
-        #         row.append([])
-        #         data.append(row[1:])
-        #     else:
-        #         data[-1][-1].append(row[1:])
-        # return data
-
         swmmflort = self.dat_files["SWMMFLORT.DAT"]
+        if not swmmflort:
+            return None
         par = self.single_parser(swmmflort)
         data = []
         for row in par:
@@ -1179,6 +1183,8 @@ class ParseDAT(object):
 
     def parse_swmmoutf(self):
         swmmoutf = self.dat_files["SWMMOUTF.DAT"]
+        if not swmmoutf:
+            return None
         par = self.single_parser(swmmoutf)
         data = [row for row in par]
         return data

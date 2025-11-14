@@ -4313,7 +4313,7 @@ class Flo2D(object):
             4: "Levees",
             5: "Floodplain Cross-Sections",
             6: "Storm Drains",
-            7: "Hydraulic structures",
+            7: "Hydraulic Structures",
         }
         self.uncheck_all_info_tools()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
