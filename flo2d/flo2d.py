@@ -2831,12 +2831,12 @@ class Flo2D(object):
                     if not ok:
                         # set_parser() already showed a detailed massage
                         QApplication.restoreOverrideCursor()
-                        self.uc.bar_error(
+                        self.uc.bar_error("HDF5 export aborted: Could not initialize HDF5 parser/writer.")
+                        self.uc.log_info(
                             "HDF5 export failed! Could not initialize the HDF5 writer.\n\n"
                             "Please install the 'h5py' package in the QGIS Python "
                             "environment and try again."
                         )
-                        self.uc.log_info("HDF5 export aborted: Could not initialize HDF5 parser/writer.")
                         return
 
 
