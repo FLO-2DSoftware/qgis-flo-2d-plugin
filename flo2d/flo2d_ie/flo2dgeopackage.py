@@ -1521,37 +1521,152 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing RAIN data from HDF5 failed!", e)
             return False
 
-    def import_raincell(self):
+    def import_raincell(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_raincell_dat()
+            return self.import_raincell_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_raincell_hdf5()
 
-    def import_raincell_dat(self):
+    def import_raincell_dat(self, grid_to_domain):
         head_sql = [
             """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
             3,
         ]
         data_sql = [
-            """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+            """INSERT OR IGNORE INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
             3,
         ]
 
-        self.clear_tables("raincell", "raincell_data")
-
         header, data = self.parser.parse_raincell()
-        head_sql += [tuple(header)]
+        if not header:
+            return
 
-        time_step = float(header[0])
-        irinters = int(header[1])
-        data_len = len(data)
-        grid_count = data_len // irinters
-        data_gen = (data[i: i + grid_count] for i in range(0, data_len, grid_count))
-        time_interval = 0
-        for data_series in data_gen:
-            for row in data_series:
-                data_sql += [(time_interval,) + tuple(row)]
-            time_interval += time_step
+        if not grid_to_domain:
+            self.clear_tables("raincell", "raincell_data")
+            head_sql += [tuple(header)]
+            time_step = float(header[0])
+            irinters = int(header[1])
+            data_len = len(data)
+            grid_count = data_len // irinters
+            data_gen = (data[i: i + grid_count] for i in range(0, data_len, grid_count))
+            time_interval = 0
+            for data_series in data_gen:
+                for row in data_series:
+                    data_sql += [(time_interval,) + tuple(row)]
+                time_interval += time_step
+
+        else:
+            self.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_raincell_data_unique
+                    ON raincell_data(time_interval, rrgrid, iraindum);
+                """)
+
+            # Header insert only once
+            raincell_check = self.execute("SELECT COUNT(*) FROM raincell;").fetchone()
+            if raincell_check and raincell_check[0] == 0:
+                head_sql += [tuple(header)]
+
+            time_step = float(header[0])
+            irinters = int(header[1])
+
+            # Highest grid id we care about
+            ngrid = max(grid_to_domain.keys())
+
+            def iter_series_streaming(data_rows, ngrid, irinters):
+                """
+                Yield exactly `irinters` time steps as lists of (rrgrid, iraindum).
+                Robust to:
+                  - old format (full ngrid lines per step)
+                  - new format with sentinel (ngrid, 0.0)
+                  - new format without sentinel (early end), detected by rrgrid reset
+                """
+                steps_emitted = 0
+                cur = []
+                j = 1  # next expected grid in this time step
+
+                def close_step():
+                    nonlocal cur, j
+                    if cur:
+                        yield list(cur)
+                        cur.clear()
+                    else:
+                        # empty step, still emit an empty list to keep count consistent
+                        yield []
+                    j = 1
+
+                for rrgrid, iraindum in data_rows:
+                    rg = int(float(rrgrid))
+                    val = float(iraindum)
+
+                    # If we detect a reset (rg < j), the previous time step ended
+                    if rg < j:
+                        # Emit the previous step
+                        for emitted in close_step():
+                            yield emitted
+                            steps_emitted += 1
+                            if steps_emitted == irinters:
+                                return
+                        # fall through to handle this record in the new step
+                        # j was reset to 1
+
+                    # Fill gaps with zeros up to rg - 1
+                    # We only store the user record here; zeros will be inserted later
+                    cur.append((rg, val))
+                    j = rg + 1
+
+                    # If we naturally walked past ngrid, close the step
+                    if j > ngrid:
+                        for emitted in close_step():
+                            yield emitted
+                            steps_emitted += 1
+                            if steps_emitted == irinters:
+                                return
+
+                # End of file: if current step is incomplete, still emit it
+                if steps_emitted < irinters:
+                    for emitted in close_step():
+                        yield emitted
+                        steps_emitted += 1
+                        if steps_emitted == irinters:
+                            return
+
+                # If there are still fewer than irinters, pad with empty steps
+                while steps_emitted < irinters:
+                    yield []
+                    steps_emitted += 1
+
+            # Build streaming generator
+            data_gen = iter_series_streaming(data, ngrid, irinters)
+
+            seen = set()
+            time_interval = 0.0
+
+            for data_series in data_gen:
+                # We will write zeros for all missing grids by walking j forward
+                j = 1
+
+                # To speed up membership checks, collect present grids in a dict
+                # There can be duplicates; last one wins
+                present = {}
+                for rg, val in data_series:
+                    present[int(rg)] = float(val)
+
+                # Walk 1..ngrid and fill from `present`, zero otherwise
+                # This guarantees both formats behave identically on output
+                for g in range(1, ngrid + 1):
+                    rrdom = grid_to_domain.get(g)
+                    if rrdom is None:
+                        continue
+                    val = present.get(g, 0.0)
+
+                    key = (time_interval, rrdom, val)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    data_sql += [(time_interval, rrdom, val)]
+
+                time_interval += time_step
+
         self.batch_execute(head_sql, data_sql)
 
     def import_raincell_hdf5(self):
@@ -1988,38 +2103,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
-    def import_chan(self):
+    def import_chan(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_chan_dat()
+            return self.import_chan_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_chan_hdf5()
 
-    def import_chan_dat(self):
-
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+    def import_chan_dat(self, grid_to_domain):
 
         chan_sql = [
             """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn, ibaseflow) VALUES""",
             6,
         ]
         chan_elems_sql = [
-            """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
+            """INSERT OR IGNORE INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
             8,
         ]
         chan_r_sql = [
-            """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+            """INSERT OR IGNORE INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
             5,
         ]
         chan_v_sql = [
-            """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+            """INSERT OR IGNORE INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
                                                  excdep, a11, a22, b11, b22, c11, c22) VALUES""",
             17,
         ]
         chan_t_sql = [
-            """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+            """INSERT OR IGNORE INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
             7,
         ]
-        chan_n_sql = ["""INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""", 3]
+        chan_n_sql = ["""INSERT OR IGNORE INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""", 3]
         chan_wsel_sql = [
             """INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES""",
             4,
@@ -2041,7 +2154,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "N": [chan_n_sql, 2, 3],
         }
 
-        try:
+        segments, wsel, confluence, noexchange = self.parser.parse_chan()
+        if not segments:
+            return
+
+        # try:
+        if not grid_to_domain:
             self.clear_tables(
                 "chan",
                 "chan_elems",
@@ -2055,13 +2173,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "chan_wsel",
             )
 
-            segments, wsel, confluence, noexchange = self.parser.parse_chan()
             for i, seg in enumerate(segments, 1):
                 bLine = "0.0"
                 if seg[-1][0] == "B":
-                    bLine = seg[-1][1] 
-                    seg.pop()  
-                    
+                    bLine = seg[-1][1]
+                    seg.pop()
+
                 xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
                 gids = []
                 for ii, row in enumerate(xs, 1):  # Adds counter ii to iterable.
@@ -2079,7 +2196,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 options = seg[:-1]
                 geom = self.build_linestring(gids)
                 chan_sql += [(geom,) + tuple(options + [bLine])]
-                
 
             for row in wsel:
                 chan_wsel_sql += [tuple(row)]
@@ -2096,32 +2212,116 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 geom = self.grid_centroids([gid])[gid]
                 chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
                 elems_e_sql += [(i, gid)]
+        else:
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_elems_fid ON chan_elems(fid);")
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_r_elem_fid ON chan_r(elem_fid);")
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_v_elem_fid ON chan_v(elem_fid);")
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_t_elem_fid ON chan_t(elem_fid);")
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_n_elem_fid ON chan_n(elem_fid);")
 
-            self.batch_execute(
-                chan_sql,
-                chan_elems_sql,
-                chan_r_sql,
-                chan_v_sql,
-                chan_t_sql,
-                chan_n_sql,
-                chan_conf_sql,
-                chan_e_sql,
-                elems_e_sql,
-                chan_wsel_sql,
-            )
-            qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
-            self.execute(qry)
-            QApplication.restoreOverrideCursor()
+            chan_fid = self.execute("SELECT MAX(fid) FROM chan;").fetchone()
+            if chan_fid and chan_fid[0]:
+                chan_fid = chan_fid[0] + 1
+            else:
+                chan_fid = 1
 
-        except Exception:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn(
-                "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
-            )
-            self.uc.log_info(
-                "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
-            )
+            nxsecnum = self.execute(f"SELECT MAX(nxsecnum) FROM chan_n;").fetchone()
+            if nxsecnum and nxsecnum[0]:
+                nxsecnum = nxsecnum[0] + 1
+            else:
+                nxsecnum = 1
+
+            i = chan_fid
+            for seg in segments:
+                bLine = "0.0"
+                if seg[-1][0] == "B":
+                    bLine = seg[-1][1]
+                    seg.pop()
+
+                xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
+                gids = []
+                j = 1
+                for row in xs:  # Adds counter ii to iterable.
+                    char = row[0]  # " R", "V", "T", or "N"
+                    gid = grid_to_domain.get(int(row[1]))  # Grid element number (no matter what 'char' is).
+                    previous_gid = self.execute("SELECT fid FROM chan_elems WHERE id = (SELECT MAX(id) FROM chan_elems);").fetchone()
+                    if previous_gid and previous_gid[0]:
+                        if int(gid) == int(previous_gid[0]):
+                            continue
+                    rbank = grid_to_domain.get(int(row[-1]))
+                    geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else self.build_linestring([gid, gid])
+                    sql, fcn_idx, xlen_idx = sqls[char]
+                    xlen = row.pop(xlen_idx)
+                    fcn = row.pop(fcn_idx)
+                    params = row[1:-1]
+                    params = list(params)
+                    params[0] = gid
+                    if char == "N": # adjust the nxsecnum for channels crossing domains
+                        params[1] = nxsecnum
+                        # Check if the current gid is in the chan_n table, if so, skip increasing nxsecnum
+                        if self.execute("SELECT COUNT(*) FROM chan_n WHERE elem_fid = ?;", (gid,)).fetchone()[0] == 0:
+                            nxsecnum += 1
+                    gids.append(gid)
+                    chan_elems_sql += [(geom, gid, i, j, rbank, fcn, xlen, char)]
+                    sql += [tuple(params)]
+                    j += 1
+                options = seg[:-1]
+                geom = self.build_linestring(gids)
+                chan_sql += [(geom,) + tuple(options + [bLine])]
+                i += 1
+
+            for row in wsel:
+                chan_wsel_sql += [tuple(row)]
+
+            # Confluences
+            con_fid = self.execute("SELECT MAX(fid) FROM chan_confluences;").fetchone()
+            if con_fid and con_fid[0]:
+                con_fid = con_fid[0] + 1
+            else:
+                con_fid = 1
+            for i, row in enumerate(confluence, start=con_fid):
+                gid1, gid2 = grid_to_domain.get(int(row[1])), grid_to_domain.get(int(row[2]))
+                cells = self.grid_centroids([gid1, gid2], buffers=True)
+
+                geom1, geom2 = cells[gid1], cells[gid2]
+                chan_conf_sql += [(geom1, i, 0, gid1)]
+                chan_conf_sql += [(geom2, i, 1, gid2)]
+
+            # No-Exchange cells
+            noe_fid = self.execute("SELECT MAX(fid) FROM noexchange_chan_cells;").fetchone()
+            if noe_fid and noe_fid[0]:
+                noe_fid = noe_fid[0] + 1
+            else:
+                noe_fid = 1
+            for i, row in enumerate(noexchange, start=noe_fid):
+                gid = grid_to_domain.get(int(row[-1]))
+                geom = self.grid_centroids([gid])[gid]
+                chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
+                elems_e_sql += [(i, gid)]
+
+        self.batch_execute(
+            chan_sql,
+            chan_elems_sql,
+            chan_r_sql,
+            chan_v_sql,
+            chan_t_sql,
+            chan_n_sql,
+            chan_conf_sql,
+            chan_e_sql,
+            elems_e_sql,
+            chan_wsel_sql,
+        )
+        qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
+        self.execute(qry)
+
+        # except Exception:
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn(
+        #         "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
+        #     )
+        #     self.uc.log_info(
+        #         "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
+        #     )
 
     def import_chan_hdf5(self):
         channel_group = self.parser.read_groups("Input/Channels")
@@ -2374,21 +2574,68 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except:
             self.gutils.fill_chan_interior_nodes_table()
 
-    def import_xsec(self):
+    def import_xsec(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_xsec_dat()
+            return self.import_xsec_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_xsec_hdf5()
 
-    def import_xsec_dat(self):
+    def import_xsec_dat(self, grid_to_domain):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
-        self.clear_tables("xsec_n_data")
         data = self.parser.parse_xsec()
-        for key in list(data.keys()):
-            xsec_no, xsec_name = key
-            nodes = data[key]
-            for row in nodes:
-                xsec_sql += [(xsec_no,) + tuple(row)]
+        if not data:
+            return
+        if not grid_to_domain:
+            self.clear_tables("xsec_n_data")
+            for key in list(data.keys()):
+                xsec_no, xsec_name = key
+                nodes = data[key]
+                for row in nodes:
+                    xsec_sql += [(xsec_no,) + tuple(row)]
+        # This code is for multiple domains, to check if a xs was already added in shared subdomains
+        else:
+            current_fid = self.execute("SELECT MAX(chan_n_nxsecnum) FROM xsec_n_data;").fetchone()
+            if current_fid and current_fid[0]:
+                current_fid = current_fid[0] + 1
+            else:
+                current_fid = 1
+
+            i = current_fid
+            for key in list(data.keys()):
+                _, xsec_name = key
+                nodes = data[key]
+
+                # Prepare new xsec rounded data for comparison
+                new_rounded = [(round(float(x), 2), round(float(y), 2)) for x, y in nodes]
+
+                # Flag to mark if this cross section is identical to any of the last 3
+                identical_found = False
+
+                # Loop through up to the last 3 previous sections - This may be enough
+                for offset in range(1, 4):  # check (i - 1), (i - 2), (i - 3)
+                    prev_id = i - offset
+                    xs_data = self.execute(
+                        "SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ?;",
+                        (prev_id,)
+                    ).fetchall()
+
+                    if xs_data:
+                        xs_rounded = [(round(x, 2), round(y, 2)) for x, y in xs_data]
+
+                        # If identical to any of the previous three, mark and break
+                        if xs_rounded == new_rounded:
+                            identical_found = True
+                            break
+
+                # Skip if identical to any of the last three
+                if identical_found:
+                    continue
+
+                # Otherwise, add new cross section
+                for row in nodes:
+                    xsec_sql += [(i,) + tuple(row)]
+
+                i += 1
 
         self.batch_execute(xsec_sql)
 
@@ -3211,13 +3458,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )
                 self.uc.log_info("Error while importing SIMPLE_MULT data from hdf5 file!")
 
-    def import_sed(self):
+    def import_sed(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_sed_dat()
+            return self.import_sed_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_sed_hdf5()
 
-    def import_sed_dat(self):
+    def import_sed_dat(self, grid_to_domain):
         sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
         sed_c_sql = [
             """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt,
@@ -3234,17 +3481,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             3,
         ]
         areas_d_sql = ["""INSERT INTO mud_areas (geom, debrisv) VALUES""", 2]
-        cells_d_sql = ["""INSERT INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
+        cells_d_sql = ["""INSERT OR IGNORE INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
         areas_g_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
-        cells_g_sql = ["""INSERT INTO sed_group_cells (area_fid, grid_fid) VALUES""", 2]
+        cells_g_sql = ["""INSERT OR IGNORE INTO sed_group_cells (area_fid, grid_fid) VALUES""", 2]
         areas_r_sql = ["""INSERT INTO sed_rigid_areas (geom) VALUES""", 1]
-        cells_r_sql = ["""INSERT INTO sed_rigid_cells (area_fid, grid_fid) VALUES""", 2]
+        cells_r_sql = ["""INSERT OR IGNORE INTO sed_rigid_cells (area_fid, grid_fid) VALUES""", 2]
         areas_s_sql = [
             """INSERT INTO sed_supply_areas (geom, dist_fid, isedcfp, ased, bsed) VALUES""",
             5,
         ]
         cells_s_sql = [
-            """INSERT INTO sed_supply_cells (area_fid, grid_fid) VALUES""",
+            """INSERT OR IGNORE INTO sed_supply_cells (area_fid, grid_fid) VALUES""",
             2,
         ]
         sed_n_sql = ["""INSERT INTO sed_supply_frac (fid) VALUES""", 1]
@@ -3273,77 +3520,168 @@ class Flo2dGeoPackage(GeoPackageUtils):
         }  # Create a new empty dictionary
         error = ""
 
-        self.clear_tables(
-            "mud",
-            "mud_areas",
-            "mud_cells",
-            "sed",
-            "sed_groups",
-            "sed_group_areas",
-            "sed_group_cells",
-            "sed_group_frac",
-            "sed_group_frac_data",
-            "sed_rigid_areas",
-            "sed_rigid_cells",
-            "sed_supply_areas",
-            "sed_supply_cells",
-            "sed_supply_frac",
-            "sed_supply_frac_data",
-        )
+        data = self.parser.parse_sed()
+        if not data:
+            return None
 
         try:
-            n_cells = self.gutils.execute("SELECT COUNT(fid) FROM grid;").fetchone()[0]
-            data = self.parser.parse_sed()
-            for key, value in data.items():
-                # If value satisfies the condition, then store it in new_dict
-                if key == "S":
-                    for v in value:
-                        if int(v[0]) <= n_cells:
-                            new_dict["S"].append(v)
-                        else:
-                            error += v[0] + "\n"
-                else:
-                    for v in value:
-                        new_dict[key].append(v)
+            if not grid_to_domain:
+                self.clear_tables(
+                    "mud",
+                    "mud_areas",
+                    "mud_cells",
+                    "sed",
+                    "sed_groups",
+                    "sed_group_areas",
+                    "sed_group_cells",
+                    "sed_group_frac",
+                    "sed_group_frac_data",
+                    "sed_rigid_areas",
+                    "sed_rigid_cells",
+                    "sed_supply_areas",
+                    "sed_supply_cells",
+                    "sed_supply_frac",
+                    "sed_supply_frac_data",
+                )
 
-            data = new_dict
-            gids = (x[0] for x in chain(data["D"], data["G"], data["R"], data["S"]))
-            cells = self.grid_centroids(gids)
-            for row in data["M"]:
-                sed_m_sql += [tuple(row)]
-            for row in data["C"]:
-                erow = ["10.0"]
-                if data["E"]:
-                    erow = data["E"][0]
-                if erow:
-                    row += erow
-                else:
-                    row.append(None)
-                sed_c_sql += [tuple(row)]
-            for i, row in enumerate(data["Z"], 1):
-                sgf_sql += [(i,)]
-                sed_z_sql += [(i,) + tuple(row[:-1])]
-                for prow in row[-1]:
-                    sed_p_sql += [(i,) + tuple(prow)]
-            for char, asql, csql in parts:
-                for i, row in enumerate(data[char], 1):
+                n_cells = self.gutils.execute("SELECT COUNT(fid) FROM grid;").fetchone()[0]
+                for key, value in data.items():
+                    # If value satisfies the condition, then store it in new_dict
+                    if key == "S":
+                        for v in value:
+                            if int(v[0]) <= n_cells:
+                                new_dict["S"].append(v)
+                            else:
+                                error += v[0] + "\n"
+                    else:
+                        for v in value:
+                            new_dict[key].append(v)
+
+                data = new_dict
+                gids = (x[0] for x in chain(data["D"], data["G"], data["R"], data["S"]))
+                cells = self.grid_centroids(gids)
+                for row in data["M"]:
+                    sed_m_sql += [tuple(row)]
+                for row in data["C"]:
+                    erow = ["10.0"]
+                    if data["E"]:
+                        erow = data["E"][0]
+                    if erow:
+                        row += erow
+                    else:
+                        row.append(None)
+                    sed_c_sql += [tuple(row)]
+                for i, row in enumerate(data["Z"], 1):
+                    sgf_sql += [(i,)]
+                    sed_z_sql += [(i,) + tuple(row[:-1])]
+                    for prow in row[-1]:
+                        sed_p_sql += [(i,) + tuple(prow)]
+                for char, asql, csql in parts:
+                    for i, row in enumerate(data[char], 1):
+                        gid = row[0]
+                        vals = row[1:]
+                        geom = self.build_square(cells[gid], self.shrink)
+                        asql += [(geom,) + tuple(vals)]
+                        csql += [(i, gid)]
+
+                for i, row in enumerate(data["S"], 1):
                     gid = row[0]
-                    vals = row[1:]
+                    vals = row[1:-1]
+                    nrows = row[-1]
                     geom = self.build_square(cells[gid], self.shrink)
-                    asql += [(geom,) + tuple(vals)]
-                    csql += [(i, gid)]
+                    areas_s_sql += [(geom, i) + tuple(vals)]
+                    cells_s_sql += [(i, gid)]
+                    for ii, nrow in enumerate(nrows, 1):
+                        sed_n_sql += [(ii,)]
+                        data_n_sql += [(i,) + tuple(nrow)]
+                # triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
+            else:
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_mud_cells_grid ON mud_cells(grid_fid);")
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_sed_group_cells_grid ON sed_group_cells(grid_fid);")
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_sed_rigid_cells_grid ON sed_rigid_cells(grid_fid);")
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_sed_supply_cells_grid ON sed_supply_cells(grid_fid);")
+                n_cells = max(grid_to_domain.keys())
+                for key, value in data.items():
+                    # If value satisfies the condition, then store it in new_dict
+                    if key == "S":
+                        for v in value:
+                            if int(v[0]) <= n_cells:
+                                new_dict["S"].append(v)
+                            else:
+                                error += str(grid_to_domain.get(int(v[0]))) + "\n"
+                    else:
+                        for v in value:
+                            new_dict[key].append(v)
 
-            for i, row in enumerate(data["S"], 1):
-                gid = row[0]
-                vals = row[1:-1]
-                nrows = row[-1]
-                geom = self.build_square(cells[gid], self.shrink)
-                areas_s_sql += [(geom, i) + tuple(vals)]
-                cells_s_sql += [(i, gid)]
-                for ii, nrow in enumerate(nrows, 1):
-                    sed_n_sql += [(ii,)]
-                    data_n_sql += [(i,) + tuple(nrow)]
-            triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
+                data = new_dict
+                gids = (grid_to_domain.get(int(x[0])) for x in chain(data["D"], data["G"], data["R"], data["S"]))
+                cells = self.grid_centroids(gids)
+
+                for row in data["M"]:
+                    sed_m_sql += [tuple(row)]
+
+                options_check = self.execute("SELECT COUNT(*) FROM sed;").fetchone()
+                if not (options_check and options_check[0] > 0):
+                    for row in data["C"]:
+                        row[-1] = 0  # set ISEDISPLAY to 0
+                        erow = ["10.0"]
+                        if data["E"]:
+                            erow = data["E"][0]
+                        if erow:
+                            row += erow
+                        else:
+                            row.append(None)
+                        sed_c_sql += [tuple(row)]
+
+                sgf_fid = self.execute("SELECT MAX(fid) FROM sed_group_frac;").fetchone()
+                if not(sgf_fid and sgf_fid[0]):
+                    for i, row in enumerate(data["Z"], start=1):
+                        sgf_sql += [(i,)]
+                        sed_z_sql += [(i,) + tuple(row[:-1])]
+                        for prow in row[-1]:
+                            sed_p_sql += [(i,) + tuple(prow)]
+
+                d_fid = self.execute("SELECT MAX(fid) FROM mud_areas;").fetchone()
+                d_fid = d_fid[0] + 1 if d_fid and d_fid[0] else 1
+                g_fid = self.execute("SELECT MAX(fid) FROM sed_group_areas;").fetchone()
+                g_fid = g_fid[0] + 1 if g_fid and g_fid[0] else 1
+                r_fid = self.execute("SELECT MAX(fid) FROM sed_rigid_areas;").fetchone()
+                r_fid = r_fid[0] + 1 if r_fid and r_fid[0] else 1
+                fid_map = {"D": d_fid, "G": g_fid, "R": r_fid}
+                for char, asql, csql in parts:
+                    start_fid = fid_map[char]
+                    for i, row in enumerate(data[char], start=start_fid):
+                        gid = grid_to_domain.get(int(row[0]))
+                        vals = row[1:]
+                        geom = self.build_square(cells[gid], self.shrink)
+                        asql += [(geom,) + tuple(vals)]
+                        csql += [(i, gid)]
+
+                ssa_fid = self.execute("SELECT MAX(fid) FROM sed_supply_areas;").fetchone()
+                if ssa_fid and ssa_fid[0]:
+                    ssa_fid = ssa_fid[0] + 1
+                else:
+                    ssa_fid = 1
+                for i, row in enumerate(data["S"], start=ssa_fid):
+                    gid = grid_to_domain.get(int(row[0]))
+                    vals = row[1:-1]
+                    nrows = row[-1]
+                    geom = self.build_square(cells[gid], self.shrink)
+                    areas_s_sql += [(geom, i) + tuple(vals)]
+                    cells_s_sql += [(i, gid)]
+                    ssf_fid = self.execute("SELECT MAX(fid) FROM sed_supply_frac;").fetchone()
+                    if ssf_fid and ssf_fid[0]:
+                        ssf_fid = ssf_fid[0] + 1
+                    else:
+                        ssf_fid = 1
+                    for ii, nrow in enumerate(nrows, start=ssf_fid):
+                        sed_n_sql += [(ii,)]
+                        data_n_sql += [(i,) + tuple(nrow)]
+
             self.batch_execute(
                 sed_m_sql,
                 areas_d_sql,
@@ -5876,7 +6214,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                     time_series_name = ?;"""
 
             time_series_data_data = swmminp_dict.get('TIMESERIES', [])
-            self.uc.log_info(str(time_series_data_data))
             if len(time_series_data_data) > 0:
                 updated_time_series = 0
                 added_time_series = 0
@@ -6112,13 +6449,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmmflo(self):
+    def import_swmmflo(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmflo_dat()
+            return self.import_swmmflo_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmflo_hdf5()
 
-    def import_swmmflo_dat(self):
+    def import_swmmflo_dat(self, grid_to_domain):
 
         swmmflo_sql = [
             """INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
@@ -6126,29 +6463,57 @@ class Flo2dGeoPackage(GeoPackageUtils):
             12,
         ]
 
-        self.clear_tables("swmmflo")
         data = self.parser.parse_swmmflo()
-        gids = (x[1] for x in data)
-        cells = self.grid_centroids(gids, buffers=True)
-        for row in data:
-            gid = row[1]
-            geom = cells[gid]
-            row.append(row[8])
-            # Update the user_swmm_inlets_junctions if existing
-            if not self.is_table_empty('user_swmm_inlets_junctions'):
-                update_qry = (f"""UPDATE user_swmm_inlets_junctions
-                                SET
-                                intype = '{row[3]}',
-                                swmm_length = '{row[4]}',
-                                swmm_width = '{row[5]}',
-                                swmm_height = '{row[6]}',
-                                swmm_coeff = '{row[7]}',
-                                curbheight = '{row[9]}',
-                                swmm_feature = '{row[10]}'
-                                WHERE name = '{row[2]}' AND grid = '{row[1]}';""")
-                self.execute(update_qry)
+        if not data:
+            return
 
-            swmmflo_sql += [(geom,) + tuple(row)]
+        if not grid_to_domain:
+            self.clear_tables("swmmflo")
+            gids = (x[1] for x in data)
+            cells = self.grid_centroids(gids, buffers=True)
+            for row in data:
+                gid = row[1]
+                geom = cells[gid]
+                row.append(row[8])
+                # Update the user_swmm_inlets_junctions if existing
+                if not self.is_table_empty('user_swmm_inlets_junctions'):
+                    update_qry = (f"""UPDATE user_swmm_inlets_junctions
+                                    SET
+                                    intype = '{row[3]}',
+                                    swmm_length = '{row[4]}',
+                                    swmm_width = '{row[5]}',
+                                    swmm_height = '{row[6]}',
+                                    swmm_coeff = '{row[7]}',
+                                    curbheight = '{row[9]}',
+                                    swmm_feature = '{row[10]}'
+                                    WHERE name = '{row[2]}' AND grid = '{row[1]}';""")
+                    self.execute(update_qry)
+
+                swmmflo_sql += [(geom,) + tuple(row)]
+
+        else:
+            gids = (grid_to_domain.get(int(x[1])) for x in data)
+            cells = self.grid_centroids(gids, buffers=True)
+            for row in data:
+                gid = grid_to_domain.get(int(row[1]))
+                row[1] = gid
+                geom = cells[gid]
+                row.append(row[8])
+                # Update the user_swmm_inlets_junctions if existing
+                if not self.is_table_empty('user_swmm_inlets_junctions'):
+                    update_qry = (f"""UPDATE user_swmm_inlets_junctions
+                                    SET
+                                    intype = '{row[3]}',
+                                    swmm_length = '{row[4]}',
+                                    swmm_width = '{row[5]}',
+                                    swmm_height = '{row[6]}',
+                                    swmm_coeff = '{row[7]}',
+                                    curbheight = '{row[9]}',
+                                    swmm_feature = '{row[10]}'
+                                    WHERE name = '{row[2]}' AND grid = '{gid}';""")
+                    self.execute(update_qry)
+
+                swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)
 
@@ -6191,17 +6556,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing SWMMFLO data from HDF5 failed!", e)
             self.uc.log_info("ERROR: Importing SWMMFLO data from HDF5 failed!")
 
-    def import_swmmflodropbox(self):
+    def import_swmmflodropbox(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmflodropbox_dat()
+            return self.import_swmmflodropbox_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmflodropbox_hdf5()
 
-    def import_swmmflodropbox_dat(self):
+    def import_swmmflodropbox_dat(self, grid_to_domain):
         """
         Function to import the SWMMFLODROPBOX.DAT
         """
         data = self.parser.parse_swmmflodropbox()
+        if not data:
+            return
+
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
+            return
+
         for row in data:
             name = row[0]
             area = row[2]
@@ -6233,17 +6604,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("Importing SWMMFLODROPBOX data from HDF5 failed!", e)
             self.uc.log_info("Importing SWMMFLODROPBOX data from HDF5 failed!")
 
-    def import_sdclogging(self):
+    def import_sdclogging(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_sdclogging_dat()
+            return self.import_sdclogging_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_sdclogging_hdf5()
 
-    def import_sdclogging_dat(self):
+    def import_sdclogging_dat(self, grid_to_domain):
         """
         Function to import the SDCLOGGING.DAT
         """
         data = self.parser.parse_sdclogging()
+        if not data:
+            return
+
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
+            return
+
         for row in data:
             name = row[2]
             clog_fact = row[3]
@@ -6280,13 +6657,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("Importing SDCLOGGING data from HDF5 failed!", e)
             self.uc.log_info("Importing SDCLOGGING data from HDF5 failed!")
 
-    def import_swmmflort(self):
+    def import_swmmflort(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmflort_dat()
+            return self.import_swmmflort_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmflort_hdf5()
 
-    def import_swmmflort_dat(self):
+    def import_swmmflort_dat(self, grid_to_domain):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
 
@@ -6294,68 +6671,111 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         """
         try:
-            # swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
 
             swmmflort_rows = []
             rt_data_rows = []
             culvert_rows = []
 
             data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
-            for i, row in enumerate(data, 1):
-                if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
-                    gid, params = row[1:]
-                    name = "RatingTable{}".format(i)
-                elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
-                    gid, inlet_name, params = row[1:]
-                    name = inlet_name
-                elif row[0] == "S":
-                    try:
-                        gid, inlet_name, cdiameter, params = row[1:]
-                    except ValueError as e:
-                        raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
-                        continue
+            if not data:
+                return None
 
-                if row[0] == "D":  # Rating Table
-                    swmmflort_rows.append((gid, name))
+            if not grid_to_domain:
+                self.clear_tables("swmmflort")
+                self.clear_tables("swmmflort_data")
+                self.clear_tables("swmmflo_culvert")
+                for i, row in enumerate(data, 1):
+                    if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
+                        gid, params = row[1:]
+                        name = "RatingTable{}".format(i)
+                    elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
+                        gid, inlet_name, params = row[1:]
+                        name = inlet_name
+                    elif row[0] == "S":
+                        try:
+                            gid, inlet_name, cdiameter, params = row[1:]
+                        except ValueError as e:
+                            raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
+                            continue
 
-                    for j in range(1, len(params)):
-                        rt_data_rows.append(((i,) + tuple(params[j])))
+                    if row[0] == "D":  # Rating Table
+                        swmmflort_rows.append((gid, name))
 
-                elif row[0] == "S":  # Culvert Eq.
-                    if gid in (None, "", 'None'):
-                        pass
-                    elif int(gid) < 1:
-                        pass
-                    else:
-                        culvert_rows.append(
-                            (
-                                gid,
-                                inlet_name,
-                                cdiameter,
-                                row[4][0][0],
-                                row[4][0][1],
-                                row[4][0][2],
-                                row[4][0][3],
+                        for j in range(1, len(params)):
+                            rt_data_rows.append(((i,) + tuple(params[j])))
+
+                    elif row[0] == "S":  # Culvert Eq.
+                        if gid in (None, "", 'None'):
+                            pass
+                        elif int(gid) < 1:
+                            pass
+                        else:
+                            culvert_rows.append(
+                                (
+                                    gid,
+                                    inlet_name,
+                                    cdiameter,
+                                    row[4][0][0],
+                                    row[4][0][1],
+                                    row[4][0][2],
+                                    row[4][0][3],
+                                )
                             )
-                        )
+            else:
+                for i, row in enumerate(data, 1):
+                    if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
+                        gid, params = row[1:]
+                        gid = grid_to_domain.get(int(gid))
+                        name = "RatingTable{}".format(i)
+                    elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
+                        gid, inlet_name, params = row[1:]
+                        gid = grid_to_domain.get(int(gid))
+                        name = inlet_name
+                    elif row[0] == "S":
+                        try:
+                            gid, inlet_name, cdiameter, params = row[1:]
+                            gid = grid_to_domain.get(int(gid))
+                        except ValueError as e:
+                            raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
+                            continue
+
+                    if row[0] == "D":  # Rating Table
+                        swmmflort_rows.append((gid, name))
+
+                        for j in range(1, len(params)):
+                            rt_data_rows.append(((i,) + tuple(params[j])))
+
+                    elif row[0] == "S":  # Culvert Eq.
+                        if gid in (None, "", 'None'):
+                            pass
+                        elif int(gid) < 1:
+                            pass
+                        else:
+                            culvert_rows.append(
+                                (
+                                    gid,
+                                    inlet_name,
+                                    cdiameter,
+                                    row[4][0][0],
+                                    row[4][0][1],
+                                    row[4][0][2],
+                                    row[4][0][3],
+                                )
+                            )
 
             if swmmflort_rows:
-                self.clear_tables("swmmflort")
                 self.con.executemany(
                     "INSERT INTO swmmflort (grid_fid, name) VALUES (?,?);",
                     swmmflort_rows,
                 )
-                # self.batch_execute(swmmflort_sql)
 
             if rt_data_rows:
-                self.clear_tables("swmmflort_data")
                 self.con.executemany(
                     "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);",
                     rt_data_rows,
                 )
 
             if culvert_rows:
-                self.clear_tables("swmmflo_culvert")
                 qry = """INSERT INTO swmmflo_culvert 
                         (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) 
                         VALUES (?, ?, ?, ?, ?, ?, ?);"""
@@ -6438,45 +6858,76 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!.\n", e)
         #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!")
 
-    def import_swmmoutf(self):
+    def import_swmmoutf(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_swmmoutf_dat()
+            return self.import_swmmoutf_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_swmmoutf_hdf5()
 
-    def import_swmmoutf_dat(self):
+    def import_swmmoutf_dat(self, grid_to_domain):
         swmmoutf_sql = [
             """INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""",
             4,
         ]
 
-        self.clear_tables("swmmoutf")
         data = self.parser.parse_swmmoutf()
-        gids = []
-        # Outfall outside the grid -> Don't look for the grid centroid
-        for x in data:
-            if x[1] != '-9999':
-                gids.append(x[1])
-        cells = self.grid_centroids(gids, buffers=True)
-        have_outside = False
-        for row in data:
-            outfall_name = row[0]
-            gid = row[1]
-            allow_q = row[2]
-            # Update the swmm_allow_discharge on the user_swmm_outlets
-            self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
-            # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
-            if gid == '-9999':
-                have_outside = True
-                geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
-                if geom_qry:
-                    geom = geom_qry[0]
-                else:  # When there is no SWMM.INP
-                    self.uc.log_info(f"{outfall_name} outside the grid!")
-                    continue
-            else:
-                geom = cells[gid]
-            swmmoutf_sql += [(geom,) + tuple(row)]
+        if not data:
+            return
+
+        if not grid_to_domain:
+            self.clear_tables("swmmoutf")
+            gids = []
+            # Outfall outside the grid -> Don't look for the grid centroid
+            for x in data:
+                if x[1] != '-9999':
+                    gids.append(x[1])
+            cells = self.grid_centroids(gids, buffers=True)
+            have_outside = False
+            for row in data:
+                outfall_name = row[0]
+                gid = row[1]
+                allow_q = row[2]
+                # Update the swmm_allow_discharge on the user_swmm_outlets
+                self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
+                # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
+                if gid == '-9999':
+                    have_outside = True
+                    geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
+                    if geom_qry:
+                        geom = geom_qry[0]
+                    else:  # When there is no SWMM.INP
+                        self.uc.log_info(f"{outfall_name} outside the grid!")
+                        continue
+                else:
+                    geom = cells[gid]
+                swmmoutf_sql += [(geom,) + tuple(row)]
+        else:
+            gids = []
+            # Outfall outside the grid -> Don't look for the grid centroid
+            for x in data:
+                if x[1] != '-9999':
+                    gids.append(grid_to_domain.get(int(x[1])))
+            cells = self.grid_centroids(gids, buffers=True)
+            have_outside = False
+            for row in data:
+                outfall_name = row[0]
+                gid = grid_to_domain.get(int(row[1]))
+                row[1] = gid
+                allow_q = row[2]
+                # Update the swmm_allow_discharge on the user_swmm_outlets
+                self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
+                # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
+                if gid == '-9999':
+                    have_outside = True
+                    geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
+                    if geom_qry:
+                        geom = geom_qry[0]
+                    else:  # When there is no SWMM.INP
+                        self.uc.log_info(f"{outfall_name} outside the grid!")
+                        continue
+                else:
+                    geom = cells[gid]
+                swmmoutf_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmoutf_sql)
 
@@ -9000,7 +9451,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg_box.setIcon(QMessageBox.Information)
 
             # Display the message box and wait for the user to click a button
-            QApplication.restoreOverrideCursor()
+            # QApplication.restoreOverrideCursor()
             msg_box.exec_()
 
             # New RAINCELL.DAT
@@ -9009,9 +9460,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
                     data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    n_cells = number_of_elements(self.gutils, grid_lyr)
                 else:
                     data_sql = f"""
-                    SELECT
+                    SELECT DISTINCT
+                        rd.time_interval,
                         md.domain_cell, 
                         rd.iraindum 
                     FROM 
@@ -9022,12 +9476,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         md.domain_fid = {subdomain}
                     ORDER BY rd.time_interval, md.domain_cell;
                     """
+                    n_cells = self.execute("SELECT COUNT() FROM schema_md_cells WHERE domain_fid = ? AND geom IS NULL", (subdomain,)).fetchone()[0]
                 size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
                 line1 = "{0} {1} {2}\n"
                 line2 = "{0} {1}\n"
-
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                n_cells = number_of_elements(self.gutils, grid_lyr)
 
                 raincell_head = self.execute(head_sql).fetchone()
                 raincell_rows = self.execute(data_sql)
@@ -9043,15 +9495,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     for row in raincell_rows:
                         # Check if it is the last grid element -> Needs to be printed every single interval
-                        if row[0] == n_cells:
-                            if row[1] is None:
-                                r.write(line2.format(row[0], "0"))
+                        if int(row[1]) == int(n_cells):
+                            if row[2] is None:
+                                r.write(line2.format(row[1], "0"))
                             else:
-                                r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
-                        elif row[1] is None or row[1] == 0:
+                                r.write(line2.format(row[1], "{0:.4f}".format(float(row[2]))))
+                        elif row[2] is None or row[2] == 0:
                             pass
                         else:
-                            r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
+                            r.write(line2.format(row[1], "{0:.4f}".format(float(row[2]))))
                         progDialog.setValue(i)
                         i += 1
                 return True
@@ -9064,7 +9516,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
                 else:
                     data_sql = f"""
-                    SELECT
+                    SELECT DISTINCT
+                        rd.time_interval,
                         md.domain_cell, 
                         rd.iraindum 
                     FROM 
@@ -9091,12 +9544,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     progDialog.show()
                     i = 0
                     for row in raincell_rows:
-                        if row[1] is None:
-                            r.write(line2.format(row[0], "0"))
+                        if row[2] is None:
+                            r.write(line2.format(row[1], "0"))
                         else:
-                            # r.write(line2.format(*row))
-                            r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
-                            # r.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
+                            r.write(line2.format(row[1], "{0:.4f}".format(float(row[2]))))
                         progDialog.setValue(i)
                         i += 1
 
@@ -10076,7 +10527,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             placeholders = ",".join(str(fid) for fid in fid_list)
             chan_sql = f"""SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid IN ({placeholders}) ORDER BY fid;"""
             chan_elems_sql = f"""
-                SELECT
+                SELECT DISTINCT
                     left_grid_md.domain_cell AS left_grid,
                     right_grid_md.domain_cell AS right_grid,
                     ce.fcn,
@@ -10219,17 +10670,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ISED = self.gutils.get_cont_par("ISED")
 
             i = 1
+            previous_domain_chan_elems = None # Used for channels in between subdomains
             for row in chan_rows:
                 row = [x if x is not None else "0" for x in row]
                 fid = row[0]
                 if ISED == "0":
                     row[4] = ""
+
+                chan_elems = self.execute(chan_elems_sql, (fid,)).fetchall()
+                n_elems = len(chan_elems)
+                if n_elems == 1: # This if statement is for channels in between subdomains
+                    previous_domain_chan_elems = chan_elems[0]
+                    continue
                 c.write(
                     segment.format(*row[1:5])
                 )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
                 # A single line for each channel segment. The next lines will be the grid elements of
                 # this channel segment.
-                for elems in self.execute(chan_elems_sql, (fid,)):
+
+                if previous_domain_chan_elems:
+                    chan_elems.insert(0, previous_domain_chan_elems)
+
+                for elems in chan_elems:
                     # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                     # 'chan_elems' table (the cross sections in the schematic layer),
                     #  that has the 'fid' value indicated (the channel segment id).
@@ -10263,6 +10725,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
+
+                previous_domain_chan_elems = None
 
                 # Set the geometry to NULL on connectivity cell on the channel right bank for subdomain
                 if subdomain:
@@ -10371,7 +10835,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             else:
                 chan_n_sql = f"""
-                    SELECT 
+                    SELECT DISTINCT
                         cn.nxsecnum,
                         cn.xsecname
                     FROM 
@@ -13204,13 +13668,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         WHERE 
                             usij.sd_type IN ('I', 'i', 'J')
                             AND (
-                                (md.domain_fid = {subdomain}
-								OR usij.grid + 0 = 0)
-                                AND EXISTS (
-                                    SELECT 1
-                                    FROM mult_domains AS mdm
-                                    WHERE mdm.fid = {subdomain}
-                                      AND ST_Intersects(CastAutomagic(usij.geom), CastAutomagic(mdm.geom))
+                                (md.domain_fid = {subdomain} OR usij.grid + 0 = 0)
+                                AND (
+                                    -- If there are no rows for this subdomain, skip the spatial filter
+                                    (SELECT COUNT(*) FROM mult_domains mdm_any WHERE mdm_any.fid = {subdomain}) = 0
+                                    OR
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM mult_domains mdm_hit
+                                        WHERE mdm_hit.fid = {subdomain}
+                                          AND ST_Intersects(CastAutomagic(usij.geom), CastAutomagic(mdm_hit.geom))
+                                    )
                                 )
                             )
                         ORDER BY 
@@ -13266,15 +13734,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         LEFT JOIN
                             schema_md_cells md ON uso.grid = md.grid_fid
                         WHERE 
-                            (
-                                md.domain_fid = {subdomain} 
-                                OR uso.grid + 0 = 0
-                            )
-                            AND EXISTS (
-                                SELECT 1
-                                FROM mult_domains AS mdm
-                                WHERE mdm.fid = {subdomain}
-                                  AND ST_Intersects(CastAutomagic(uso.geom), CastAutomagic(mdm.geom))
+							(
+                                (md.domain_fid = {subdomain} OR uso.grid + 0 = 0)
+                                AND (
+                                    -- If there are no rows for this subdomain, skip the spatial filter
+                                    (SELECT COUNT(*) FROM mult_domains mdm_any WHERE mdm_any.fid = {subdomain}) = 0
+                                    OR
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM mult_domains mdm_hit
+                                        WHERE mdm_hit.fid = {subdomain}
+                                          AND ST_Intersects(CastAutomagic(uso.geom), CastAutomagic(mdm_hit.geom))
+                                    )
+                                )
                             )
                         ORDER BY 
                             uso.name;"""
@@ -13365,15 +13837,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         JOIN
                             schema_md_cells md ON ussu.grid = md.grid_fid
                         WHERE 
-                            (
-                                md.domain_fid = {subdomain} 
-                                OR ussu.grid + 0 = 0
-                            )
-                            AND EXISTS (
-                                SELECT 1
-                                FROM mult_domains AS mdm
-                                WHERE mdm.fid = {subdomain}
-                                  AND ST_Intersects(CastAutomagic(ussu.geom), CastAutomagic(mdm.geom))
+							(
+                                (md.domain_fid = {subdomain} OR ussu.grid + 0 = 0)
+                                AND (
+                                    -- If there are no rows for this subdomain, skip the spatial filter
+                                    (SELECT COUNT(*) FROM mult_domains mdm_any WHERE mdm_any.fid = {subdomain}) = 0
+                                    OR
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM mult_domains mdm_hit
+                                        WHERE mdm_hit.fid = {subdomain}
+                                          AND ST_Intersects(CastAutomagic(ussu.geom), CastAutomagic(mdm_hit.geom))
+                                    )
+                                )
                             )
                         ORDER BY ussu.name;"""
 
@@ -13944,7 +14420,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if line != "":
                             swmm_inp_file.write("\n" + line)
                 else:
-                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n\n")
 
                 # INP INFLOWS ###################################################
                 try:
@@ -14010,7 +14486,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         placeholders = ','.join(['?'] * len(links_names))
                         SD_pump_curves_sql = f"""
-                        SELECT 
+                        SELECT DISTINCT
                             spcd.pump_curve_name, 
                             spcd.pump_curve_type, 
                             spcd.x_value, 
@@ -14034,7 +14510,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         placeholders = ','.join(['?'] * len(nodes_names))
                         SD_tidal_curves_data_sql = f"""
-                        SELECT 
+                        SELECT DISTINCT
                             stcd.tidal_curve_name, 
                             stcd.hour, 
                             stcd.stage
@@ -14056,7 +14532,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         placeholders = ','.join(['?'] * len(nodes_names))
                         SD_other_curves_sql = f"""
-                        SELECT 
+                        SELECT DISTINCT
                             soc.name, 
                             soc.type, 
                             soc.x_value, 
@@ -14429,6 +14905,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         vertices_sql = self.execute("""
                             SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name 
                             FROM user_swmm_conduits
+                            ORDER BY conduit_name
                         """).fetchall()
                     else:
                         placeholders = ','.join(['?'] * len(nodes_names))
@@ -14436,6 +14913,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name
                             FROM user_swmm_conduits
                             WHERE conduit_inlet IN ({placeholders}) AND conduit_outlet IN ({placeholders})
+                            ORDER BY conduit_name
                         """, nodes_names + nodes_names).fetchall()
 
                     for row in vertices_sql:
