@@ -25,7 +25,7 @@ from ..utils import Msge
 try:
     import h5py
 except ImportError:
-    pass
+    h5py = None
 
 class HDF5Group:
     def __init__(self, name: str):
