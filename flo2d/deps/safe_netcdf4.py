@@ -19,22 +19,7 @@ else:
     if not os.path.isdir(dll_dir):
         raise ImportError(f"[FLO-2D] Missing DLLs: {dll_dir}")
 
-    # Make sure cftime is importable
-    try:
-        import cftime  # noqa: F401
-    except ImportError:
-        cftime_wheel = os.path.join(
-            deps_dir, 'cftime',
-            f"cftime-1.6.5-{abi}-{abi}-win_amd64.whl"
-        )
-        if not os.path.exists(cftime_wheel):
-            raise ImportError(
-                f"[FLO-2D] cftime is required by netCDF4 but not installed, "
-                f"and wheel not found: {cftime_wheel}"
-            )
-        # Add the wheel to sys.path and import cftime
-        sys.path.append(cftime_wheel)
-        import cftime  # noqa: F401
+    from ..deps import safe_cftime as cftime
 
     # Prepend to sys.path
     if netcdf_dir in sys.path:
