@@ -4,6 +4,7 @@ import sys, os, importlib
 # Linux path: use system h5py for CI
 if os.name != "nt":
     import h5py
+    sys.modules[__name__] = h5py
 else:
     # Windows path: always use the plugin bundled build
     abi = f"cp{sys.version_info.major}{sys.version_info.minor}"
