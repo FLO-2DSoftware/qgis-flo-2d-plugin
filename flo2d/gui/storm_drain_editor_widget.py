@@ -721,9 +721,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 """
                     SELECT grid
                     FROM (
-                        SELECT grid FROM user_swmm_inlets_junctions WHERE grid <> -9999
+                        SELECT CAST(grid AS INTEGER) AS grid
+                        FROM user_swmm_inlets_junctions
+                        WHERE sd_type = 'I' AND CAST(grid AS INTEGER) > 0
+                    
                         UNION ALL
-                        SELECT grid FROM user_swmm_outlets          WHERE grid <> -9999
+                    
+                        SELECT CAST(grid AS INTEGER) AS grid
+                        FROM user_swmm_outlets
+                        WHERE CAST(grid AS INTEGER) > 0
                     )
                     GROUP BY grid
                     HAVING COUNT(*) >= 2
@@ -738,6 +744,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     "The following grid elements have more than one inlet or outfall:\n\n"
                     + grids_str
                     + "\n\nPlease correct the grid assignment on the user Storm Drain Inlets/Junctions and Storm Drain Outfalls layers."
+                )
+                self.uc.log_info(msg)
+                return False
+
+            shared_outfalls =  self.gutils.execute("""
+                    SELECT 
+                        usc.conduit_outlet AS outlet_name,
+                        COUNT(*) AS num_conduits
+                    FROM 
+                        user_swmm_conduits AS usc
+                    JOIN 
+                        user_swmm_outlets AS uso 
+                            ON uso.name = usc.conduit_outlet
+                    GROUP BY 
+                        usc.conduit_outlet
+                    HAVING 
+                        COUNT(*) > 1
+                    ORDER BY 
+                        usc.conduit_outlet;
+                """
+            ).fetchall()
+            if shared_outfalls:
+                outfalls = [str(item[0]) for item in shared_outfalls]
+                outfalls = " ".join(outfalls)
+                self.uc.bar_error("Some outfalls are connected to multiple conduits. Check the log for details.")
+                msg = (
+                    "Outfall connection conflict:\n\n"
+                    "The following outfalls are connected to more than one conduit:\n\n"
+                    f"{outfalls}\n\n"
+                    "Each outfall can be assigned to only one conduit. "
+                    "Please review and correct these assignments."
                 )
                 self.uc.log_info(msg)
                 return False
