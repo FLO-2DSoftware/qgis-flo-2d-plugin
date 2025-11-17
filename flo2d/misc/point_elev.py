@@ -452,70 +452,8 @@ def xyz_to_raster(xyz_inpath, extents, shape, resampling_option, srs, layername=
 def xyz_to_raster_gds_average(csv_file, extents, shape, srs, open_dashboard, procs, threads, nodata=None):
     print_line("XYZ-to-Raster-Average\n")
 
-    try:
-        from ..deps import safe_dask as dask
-        import subprocess
-    except ImportError:
-        message = "The dask library is not found in your python environment. This external library is required to " \
-                  "run some processes related to sampling elevation. More information on: https://www.dask.org/.\n\n" \
-                  "Would you like to install it automatically or " \
-                  "manually?\n\nSelect automatic if you have admin rights. Otherwise, contact your admin and " \
-                  "follow the manual steps."
-        title = "External library not found!"
-        button1 = "Automatic"
-        button2 = "Manual"
-
-        msgBox = QMessageBox()
-        msgBox.setWindowTitle(title)
-        msgBox.setText(message)
-        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close)
-        msgBox.setDefaultButton(QMessageBox.Yes)
-        buttonY = msgBox.button(QMessageBox.Yes)
-        buttonY.setText(button1)
-        buttonN = msgBox.button(QMessageBox.No)
-        buttonN.setText(button2)
-
-        install_options = msgBox.exec_()
-
-        if install_options == QMessageBox.Yes:
-            try:
-                import pathlib as pl
-                import subprocess
-                import sys
-
-                qgis_Path = pl.Path(sys.executable)
-                qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
-
-                subprocess.check_call(
-                    [qgis_python_path, "-m", "pip", "install", "--user", "dask"]
-                )
-                from ..deps import safe_dask as dask
-                import subprocess
-
-            except ImportError as e:
-                msgBox = QMessageBox()
-                msgBox.setText("Error while installing dask. Install it manually.")
-                msgBox.setWindowTitle("FLO-2D")
-                icon = QMessageBox.Critical
-                msgBox.setIcon(icon)
-                msgBox.exec_()
-                return
-
-        # Manual Installation
-        elif install_options == QMessageBox.No:
-            message = "1. Run OSGeo4W Shell as admin\n" \
-                      "2. Type this command: pip install dask\n\n" \
-                      "Wait the process to finish and rerun this process.\n\n" \
-                      "For more information, access https://flo-2d.com/contact/"
-            msgBox = QMessageBox()
-            msgBox.setText(message)
-            msgBox.setWindowTitle("FLO-2D")
-            icon = QMessageBox.Critical
-            msgBox.setIcon(icon)
-            msgBox.exec_()
-            return
-        else:
-            return
+    from ..deps import safe_dask as dask
+    import subprocess
 
     base_path, ext = os.path.splitext(csv_file)
     raster_outpath = "{}_gdsgrid.tif".format(base_path)  # hard-coded path
