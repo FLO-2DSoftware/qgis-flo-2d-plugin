@@ -12,6 +12,7 @@ import os
 import numpy as np
 
 from ..deps import safe_h5py as h5py
+from ..deps import safe_netcdf4 as netCDF4
 
 from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsPointXY
 
@@ -20,7 +21,6 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QProgressDialog
 
-from ..deps import safe_netcdf4 as netCDF4
 
 
 class ASCProcessor(object):
