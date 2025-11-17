@@ -3669,8 +3669,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 # INP INFLOWS ###################################################
                 try:
-                    SD_inflows_sql = """SELECT node_name, constituent, baseline, pattern_name, time_series_name, scale_factor
-                                      FROM swmm_inflows ORDER BY node_name;"""
+                    SD_inflows_sql = """
+                    SELECT 
+                        si.node_name, 
+                        si.constituent, 
+                        si.baseline, 
+                        si.pattern_name, 
+                        si.time_series_name, 
+                        si.scale_factor,
+                        COALESCE(usij.external_inflow, ussu.external_inflow, 0) AS external_inflow
+                    FROM 
+                        swmm_inflows AS si
+                    LEFT JOIN 
+                        user_swmm_inlets_junctions AS usij 
+                            ON si.node_name = usij.name
+                    LEFT JOIN
+                        user_swmm_storage_units AS ussu 
+                            ON si.node_name = ussu.name
+                    ORDER BY 
+                        si.node_name;
+                    """
                     inflows_rows = self.gutils.execute(SD_inflows_sql).fetchall()
                     if not inflows_rows:
                         pass
@@ -3695,7 +3713,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 row[2] if row[2] != 0 else "",
                                 row[3] if row[3] != "?" else "",
                             ]
-                            swmm_inp_file.write(line.format(*lrow))
+                            if int(row[6]) == 1:
+                                swmm_inp_file.write(line.format(*lrow))
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 230220.0751.1622: error while exporting [INFLOWS] to .INP file!", e)
