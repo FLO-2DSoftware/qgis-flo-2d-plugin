@@ -3067,7 +3067,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             # Export CONT, TOPO, CHAN and XSEC to temp folder
             self.f2g.export_cont_toler_dat(outdir)
-            self.f2g.export_mannings_n_topo_dat(outdir)
+            self.f2g.export_mannings_n_topo_dat(outdir, None)
             self.f2g.export_chan(outdir)
             self.f2g.export_xsec(outdir)
 
