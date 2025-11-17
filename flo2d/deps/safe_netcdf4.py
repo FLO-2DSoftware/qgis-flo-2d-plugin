@@ -11,13 +11,30 @@ if os.name != "nt":
 else:
     abi = f"cp{sys.version_info.major}{sys.version_info.minor}"
     deps_dir = os.path.dirname(__file__)
-    netcdf_dir = os.path.join(deps_dir, f"netcdf4_{abi}")   # e.g. deps/netcdf4_cp312
+    netcdf_dir = os.path.join(deps_dir, 'netCDF4', f"netcdf4_{abi}")   # e.g. deps/netcdf4_cp312
     dll_dir    = os.path.join(netcdf_dir, "netcdf4.libs")        # where DLLs usually are
 
     if not os.path.isdir(netcdf_dir):
         raise ImportError(f"[FLO-2D] netCDF4 folder not found for {abi}: {netcdf_dir}")
     if not os.path.isdir(dll_dir):
         raise ImportError(f"[FLO-2D] Missing DLLs: {dll_dir}")
+
+    # Make sure cftime is importable
+    try:
+        import cftime  # noqa: F401
+    except ImportError:
+        cftime_wheel = os.path.join(
+            deps_dir, 'cftime',
+            f"cftime-1.6.5-{abi}-{abi}-win_amd64.whl"
+        )
+        if not os.path.exists(cftime_wheel):
+            raise ImportError(
+                f"[FLO-2D] cftime is required by netCDF4 but not installed, "
+                f"and wheel not found: {cftime_wheel}"
+            )
+        # Add the wheel to sys.path and import cftime
+        sys.path.append(cftime_wheel)
+        import cftime  # noqa: F401
 
     # Prepend to sys.path
     if netcdf_dir in sys.path:

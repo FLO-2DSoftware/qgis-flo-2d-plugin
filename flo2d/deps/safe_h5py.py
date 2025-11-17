@@ -9,8 +9,8 @@ else:
     # Windows path: always use the plugin bundled build
     abi = f"cp{sys.version_info.major}{sys.version_info.minor}"
     deps_dir = os.path.dirname(__file__)
-    h5py_dir = os.path.join(deps_dir, f"h5py_{abi}")     # e.g. deps/h5py_cp312
-    dll_dir  = os.path.join(h5py_dir, "h5py")            # your working layout
+    h5py_dir = os.path.join(deps_dir, 'h5py', f"h5py_{abi}")     # e.g. deps/h5py_cp312
+    dll_dir  = os.path.join(h5py_dir, 'h5py')            # your working layout
 
     if not os.path.isdir(h5py_dir):
         raise ImportError(f"[FLO-2D] h5py folder not found for {abi}: {h5py_dir}")
