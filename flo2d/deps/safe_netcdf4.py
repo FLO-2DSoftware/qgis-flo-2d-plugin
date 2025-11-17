@@ -12,7 +12,7 @@ else:
     abi = f"cp{sys.version_info.major}{sys.version_info.minor}"
     deps_dir = os.path.dirname(__file__)
     netcdf_dir = os.path.join(deps_dir, f"netcdf4_{abi}")   # e.g. deps/netcdf4_cp312
-    dll_dir    = os.path.join(netcdf_dir, "netCDF4")        # where DLLs usually are
+    dll_dir    = os.path.join(netcdf_dir, "netcdf4.libs")        # where DLLs usually are
 
     if not os.path.isdir(netcdf_dir):
         raise ImportError(f"[FLO-2D] netCDF4 folder not found for {abi}: {netcdf_dir}")
