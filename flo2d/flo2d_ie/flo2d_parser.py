@@ -22,10 +22,7 @@ from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN,
     MULTIDOMAIN, QGIS
 from ..utils import Msge
 
-try:
-    import h5py
-except ImportError:
-    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
+from ..deps import safe_h5py as h5py
 
 class HDF5Group:
     def __init__(self, name: str):

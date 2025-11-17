@@ -12,7 +12,7 @@ import os
 import shutil
 import unittest
 
-import h5py
+from flo2d.deps import safe_h5py as h5py
 import numpy as np
 
 from .utilities import get_qgis_app

@@ -2,10 +2,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication
 
-try:
-    import h5py
-except ImportError:
-    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
+from ..deps import safe_h5py as h5py
+import numpy as np
 
 SCENARIO_COLOURS = [
     QColor("#1f77b4"),  # blue

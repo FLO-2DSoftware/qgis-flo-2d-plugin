@@ -3,7 +3,7 @@ import sys
 import traceback
 import warnings
 
-import dask
+from ..deps import safe_dask as dask
 import dask.dataframe as dd
 import numpy as np
 from dask.distributed import Client

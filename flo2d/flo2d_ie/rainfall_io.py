@@ -11,10 +11,8 @@ import os
 
 import numpy as np
 
-try:
-    import h5py
-except ImportError:
-    h5py = None # Define h5py as None when not installed to avoid NameError and allow custom error handling
+from ..deps import safe_h5py as h5py
+from ..deps import safe_netcdf4 as netCDF4
 
 from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsPointXY
 
@@ -22,6 +20,7 @@ from ..flo2d_tools.grid_tools import rasters2centroids
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QProgressDialog
+
 
 
 class ASCProcessor(object):
@@ -63,15 +62,7 @@ class NetCDFProcessor:
         self.vlayer = vlayer
         self.uc = UserCommunication(iface, "FLO-2D")
 
-        try:
-            from netCDF4 import Dataset, num2date
-        except ImportError:
-            msg = "The netCDF4 Python package is required to read NetCDF files. Please install it and try again."
-            self.uc.bar_error(msg)
-            self.uc.log_info(msg)
-            raise ImportError(msg)
-
-        self.nc = Dataset(nc_file, "r")
+        self.nc = netCDF4.Dataset(nc_file, "r")
         self.iface = iface
         self.gutils = gutils
 
@@ -81,7 +72,7 @@ class NetCDFProcessor:
         self.lat = self.nc.variables["latitude"][:]
         self.lon = self.nc.variables["longitude"][:]
         self.time = self.nc.variables["valid_time"]
-        self.dates = num2date(self.time[:], self.time.units)
+        self.dates = netCDF4.num2date(self.time[:], self.time.units)
 
         if self.lat[0] < self.lat[-1]:  # Flip if needed
             self.lat = self.lat[::-1]
