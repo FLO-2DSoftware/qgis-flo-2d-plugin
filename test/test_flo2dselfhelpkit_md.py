@@ -65,16 +65,16 @@ class TestFlo2dGlobalSelfHelpKit(unittest.TestCase):
         # cls.f2g.import_mannings_n_topo()
         # cls.f2g.import_swmminp()
 
-    # @classmethod
-    # def tearDownClass(cls):
-    #     cls.con.close()
-    #     for f in os.listdir(EXPORT_GLOBAL_DATA_DIR):
-    #         fpath = os.path.join(EXPORT_GLOBAL_DATA_DIR, f)
-    #         if os.path.isfile(fpath):
-    #             os.remove(fpath)
-    #         else:
-    #             pass
-    #     os.rmdir(EXPORT_GLOBAL_DATA_DIR)
+    @classmethod
+    def tearDownClass(cls):
+        cls.con.close()
+        for f in os.listdir(EXPORT_GLOBAL_DATA_DIR):
+            fpath = os.path.join(EXPORT_GLOBAL_DATA_DIR, f)
+            if os.path.isfile(fpath):
+                os.remove(fpath)
+            else:
+                pass
+        os.rmdir(EXPORT_GLOBAL_DATA_DIR)
 
     def test_global_arf(self):
         self.f2g.export_arf(EXPORT_GLOBAL_DATA_DIR)
