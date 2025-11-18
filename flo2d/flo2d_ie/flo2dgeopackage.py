@@ -9339,11 +9339,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             0
         ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
         rain_group.create_dataset('RAIN_DATA', [])
+        previous_value = None
         for row in self.execute(ts_data_sql, (fid,)):
             if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
-                rain_group.datasets["RAIN_DATA"].data.append(create_array(tsd_line, 2, np.float64, row))
-                # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
-                # selected from a list
+                _, value = row
+                if value != previous_value:
+                    rain_group.datasets["RAIN_DATA"].data.append(create_array(tsd_line, 2, np.float64, row))
+                    # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
+                    # selected from a list
+                previous_value = value
 
         # if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
         #     if (
@@ -9436,14 +9440,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 fid = rain_row[
                     0
                 ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
+                previous_value = None
                 for row in self.execute(ts_data_sql, (fid,)):
                     if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
-                        r.write(
-                            tsd_line3.format(*row)
-                        )  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
-                        # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
-                        # selected from a list
-
+                        _, value = row
+                        if value != previous_value:
+                            r.write(
+                                tsd_line3.format(*row)
+                            )  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
+                            # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
+                            # selected from a list
+                        previous_value = value
                 if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
                     if (
                             rain_row[-1] is not None
