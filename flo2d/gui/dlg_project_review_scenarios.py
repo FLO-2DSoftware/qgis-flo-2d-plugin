@@ -168,10 +168,14 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
 
         output_hdf5 = self.processed_results_le.text()
 
-        self.gutils.set_cont_par("SCENARIOS_RESULTS", output_hdf5)
+        if not os.path.isfile(output_hdf5):
+            self.uc.bar_warn("The processed results file does not exist. Please process the results before saving!")
+            self.uc.log_info("The processed results file does not exist. Please process the results before saving!")
+        else:
+            self.gutils.set_cont_par("SCENARIOS_RESULTS", output_hdf5)
 
-        self.uc.bar_info("Scenarios saved!")
-        self.uc.log_info("Scenarios saved!")
+            self.uc.bar_info("Scenarios saved!")
+            self.uc.log_info("Scenarios saved!")
 
         self.close()
 
@@ -191,16 +195,24 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         """
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        output_hdf5, _ = QFileDialog.getSaveFileName(
+
+        dialog = QFileDialog(
             None,
-            "Save processed results data into HDF5 format",
-            directory=last_dir,
-            filter="HDF5 file (*.hdf5; *.HDF5)",
+            "Select or Save processed results HDF5 file",
+            last_dir,
+            "HDF5 file (*.hdf5 *.HDF5)"
         )
-        if output_hdf5:
-            self.processed_results_le.setText(output_hdf5)
-            self.uc.bar_info("Processed results file path saved!")
-            self.uc.log_info("Processed results file path saved!")
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
+
+        if not dialog.exec_():
+            return
+
+        file_path = dialog.selectedFiles()[0]
+
+        self.processed_results_le.setText(file_path)
+        self.uc.bar_info("Processed results file path saved!")
+        self.uc.log_info("Processed results file path saved!")
 
     def process_results(self):
         """
