@@ -74,7 +74,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             self.parser = ParseDAT()
             self.parser.scan_project_dir(fpath)
+            # Look first for the imported data
             self.cell_size = int(round(self.parser.calculate_cellsize()))
+            # If cell size could not be determined from the TOPO.DAT file, fall back to the CONT parameter
+            if self.cell_size == 0:
+                self.cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
         elif self.parsed_format == self.FORMAT_HDF5:
             if h5py is None:
                 self.uc.show_critical(
@@ -86,7 +90,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             self.parser = ParseHDF5()
             self.parser.hdf5_filepath = fpath
+            # Look first for the imported data
             self.cell_size = int(round(self.parser.calculate_cellsize()))
+            # If cell size could not be determined from the HDF5 file, fall back to the CONT parameter
+            if self.cell_size == 0:
+                self.cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
         else:
             raise NotImplementedError("Unsupported extension type.")
         if not get_cell_size:
@@ -1443,9 +1451,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             rain_sql += [(fid_ts,) + tuple(options.values())]
             ts_sql += [(fid_ts,)]
 
+            previous_value = None
             for row in time_series:
                 dummy, time, value = row
-                tsd_sql += [(fid_ts, time, value)]
+                if value != previous_value:
+                    tsd_sql += [(fid_ts, time, value)]
+                previous_value = value
 
             for i, row in enumerate(rain_arf, 1):
                 gid, val = row
@@ -1465,9 +1476,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 rain_sql += [(fid_ts,) + tuple(options.values())]
                 ts_sql += [(fid_ts,)]
 
+                previous_value = None
                 for row in time_series:
                     dummy, time, value = row
-                    tsd_sql += [(fid_ts, time, value)]
+                    if value != previous_value:
+                        tsd_sql += [(fid_ts, time, value)]
+                    previous_value = value
 
             for i, row in enumerate(rain_arf, 1):
                 gid, val = row
@@ -1514,9 +1528,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Insert time series data
                 ts_sql += [(1,)]
                 rain_data = rain_group.datasets["RAIN_DATA"].data
+                previous_value = None
                 for row in rain_data:
                     time, value = row
-                    tsd_sql += [(1, time, value)]
+                    if value != previous_value:
+                        tsd_sql += [(1, time, value)]
+                    previous_value = value
 
                 # Insert ARF data if available
                 if "RAIN_ARF" in rain_group.datasets:
@@ -9322,11 +9339,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             0
         ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
         rain_group.create_dataset('RAIN_DATA', [])
+        previous_value = None
         for row in self.execute(ts_data_sql, (fid,)):
             if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
-                rain_group.datasets["RAIN_DATA"].data.append(create_array(tsd_line, 2, np.float64, row))
-                # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
-                # selected from a list
+                _, value = row
+                if value != previous_value:
+                    rain_group.datasets["RAIN_DATA"].data.append(create_array(tsd_line, 2, np.float64, row))
+                    # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
+                    # selected from a list
+                previous_value = value
 
         # if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
         #     if (
@@ -9419,14 +9440,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 fid = rain_row[
                     0
                 ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
+                previous_value = None
                 for row in self.execute(ts_data_sql, (fid,)):
                     if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
-                        r.write(
-                            tsd_line3.format(*row)
-                        )  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
-                        # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
-                        # selected from a list
-
+                        _, value = row
+                        if value != previous_value:
+                            r.write(
+                                tsd_line3.format(*row)
+                            )  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
+                            # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
+                            # selected from a list
+                        previous_value = value
                 if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
                     if (
                             rain_row[-1] is not None
