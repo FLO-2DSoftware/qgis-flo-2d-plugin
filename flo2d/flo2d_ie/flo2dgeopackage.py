@@ -9501,7 +9501,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg_box.setIcon(QMessageBox.Information)
 
             # Display the message box and wait for the user to click a button
-            # QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             msg_box.exec_()
 
             # New RAINCELL.DAT
@@ -9509,7 +9509,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
-                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                    data_sql = """SELECT time_interval, rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     n_cells = number_of_elements(self.gutils, grid_lyr)
                 else:
@@ -9563,7 +9563,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
-                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                    data_sql = """SELECT time_interval, rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
                 else:
                     data_sql = f"""
                     SELECT DISTINCT
