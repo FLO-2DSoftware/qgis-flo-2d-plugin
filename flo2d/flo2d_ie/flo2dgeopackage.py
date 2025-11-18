@@ -1559,18 +1559,105 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not header:
             return
 
+        def iter_series_streaming(data_rows, ngrid, irinters):
+            """
+            Yield exactly `irinters` time steps as lists of (rrgrid, iraindum).
+            Robust to:
+              - old format (full ngrid lines per step)
+              - new format with sentinel (ngrid, 0.0)
+              - new format without sentinel (early end), detected by rrgrid reset
+            """
+            steps_emitted = 0
+            cur = []
+            j = 1  # next expected grid in this time step
+
+            def close_step():
+                nonlocal cur, j
+                if cur:
+                    yield list(cur)
+                    cur.clear()
+                else:
+                    # empty step, still emit an empty list to keep count consistent
+                    yield []
+                j = 1
+
+            for rrgrid, iraindum in data_rows:
+                rg = int(float(rrgrid))
+                val = float(iraindum)
+
+                # If we detect a reset (rg < j), the previous time step ended
+                if rg < j:
+                    # Emit the previous step
+                    for emitted in close_step():
+                        yield emitted
+                        steps_emitted += 1
+                        if steps_emitted == irinters:
+                            return
+                    # fall through to handle this record in the new step
+                    # j was reset to 1
+
+                # Fill gaps with zeros up to rg - 1
+                # We only store the user record here; zeros will be inserted later
+                cur.append((rg, val))
+                j = rg + 1
+
+                # If we naturally walked past ngrid, close the step
+                if j > ngrid:
+                    for emitted in close_step():
+                        yield emitted
+                        steps_emitted += 1
+                        if steps_emitted == irinters:
+                            return
+
+            # End of file: if current step is incomplete, still emit it
+            if steps_emitted < irinters:
+                for emitted in close_step():
+                    yield emitted
+                    steps_emitted += 1
+                    if steps_emitted == irinters:
+                        return
+
+            # If there are still fewer than irinters, pad with empty steps
+            while steps_emitted < irinters:
+                yield []
+                steps_emitted += 1
+
         if not grid_to_domain:
             self.clear_tables("raincell", "raincell_data")
             head_sql += [tuple(header)]
             time_step = float(header[0])
             irinters = int(header[1])
-            data_len = len(data)
-            grid_count = data_len // irinters
-            data_gen = (data[i: i + grid_count] for i in range(0, data_len, grid_count))
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            grid_count = number_of_elements(self.gutils, grid_lyr)
+            data_gen = iter_series_streaming(data, grid_count, irinters)
+
+            seen = set()
             time_interval = 0
+
             for data_series in data_gen:
-                for row in data_series:
-                    data_sql += [(time_interval,) + tuple(row)]
+                # We will write zeros for all missing grids by walking j forward
+                j = 1
+
+                # To speed up membership checks, collect present grids in a dict
+                # There can be duplicates; last one wins
+                present = {}
+                for rg, val in data_series:
+                    present[int(rg)] = float(val)
+
+                # Walk 1..ngrid and fill from `present`, zero otherwise
+                # This guarantees both formats behave identically on output
+                for g in range(1, grid_count + 1):
+                    rrdom = g
+                    if rrdom is None:
+                        continue
+                    val = present.get(g, 0.0)
+
+                    key = (time_interval, rrdom, val)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    data_sql += [(time_interval, rrdom, val)]
+
                 time_interval += time_step
 
         else:
@@ -1589,69 +1676,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             # Highest grid id we care about
             ngrid = max(grid_to_domain.keys())
-
-            def iter_series_streaming(data_rows, ngrid, irinters):
-                """
-                Yield exactly `irinters` time steps as lists of (rrgrid, iraindum).
-                Robust to:
-                  - old format (full ngrid lines per step)
-                  - new format with sentinel (ngrid, 0.0)
-                  - new format without sentinel (early end), detected by rrgrid reset
-                """
-                steps_emitted = 0
-                cur = []
-                j = 1  # next expected grid in this time step
-
-                def close_step():
-                    nonlocal cur, j
-                    if cur:
-                        yield list(cur)
-                        cur.clear()
-                    else:
-                        # empty step, still emit an empty list to keep count consistent
-                        yield []
-                    j = 1
-
-                for rrgrid, iraindum in data_rows:
-                    rg = int(float(rrgrid))
-                    val = float(iraindum)
-
-                    # If we detect a reset (rg < j), the previous time step ended
-                    if rg < j:
-                        # Emit the previous step
-                        for emitted in close_step():
-                            yield emitted
-                            steps_emitted += 1
-                            if steps_emitted == irinters:
-                                return
-                        # fall through to handle this record in the new step
-                        # j was reset to 1
-
-                    # Fill gaps with zeros up to rg - 1
-                    # We only store the user record here; zeros will be inserted later
-                    cur.append((rg, val))
-                    j = rg + 1
-
-                    # If we naturally walked past ngrid, close the step
-                    if j > ngrid:
-                        for emitted in close_step():
-                            yield emitted
-                            steps_emitted += 1
-                            if steps_emitted == irinters:
-                                return
-
-                # End of file: if current step is incomplete, still emit it
-                if steps_emitted < irinters:
-                    for emitted in close_step():
-                        yield emitted
-                        steps_emitted += 1
-                        if steps_emitted == irinters:
-                            return
-
-                # If there are still fewer than irinters, pad with empty steps
-                while steps_emitted < irinters:
-                    yield []
-                    steps_emitted += 1
 
             # Build streaming generator
             data_gen = iter_series_streaming(data, ngrid, irinters)
@@ -9501,7 +9525,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg_box.setIcon(QMessageBox.Information)
 
             # Display the message box and wait for the user to click a button
-            # QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             msg_box.exec_()
 
             # New RAINCELL.DAT
@@ -9509,7 +9533,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
-                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                    data_sql = """SELECT time_interval, rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     n_cells = number_of_elements(self.gutils, grid_lyr)
                 else:
@@ -9563,7 +9587,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
-                    data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                    data_sql = """SELECT time_interval, rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
                 else:
                     data_sql = f"""
                     SELECT DISTINCT
