@@ -1,0 +1,171 @@
+[TITLE]
+INP file created by FLO-2D
+
+[OPTIONS]
+FLOW_UNITS           CFS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+START_DATE           06/28/2025
+START_TIME           00:00:00
+REPORT_START_DATE    06/28/2025
+REPORT_START_TIME    00:00:00
+END_DATE             06/28/2025
+END_TIME             10:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:06:00
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         00:01:00
+ALLOW_PONDING        NO
+INERTIAL_DAMPING     PARTIAL
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         0
+NORMAL_FLOW_LIMITED  BOTH
+SKIP_STEADY_STATE    NO
+FORCE_MAIN_EQUATION  H-W
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0.01
+
+[JUNCTIONS]
+;;               Invert     Max.       Init.      Surcharge  Ponded
+;;Name           Elev.      Depth      Depth      Depth      Area
+;;-------------- ---------- ---------- ---------- ---------- ----------
+I2-36-30-38      1388.04    3.70       0.00       0.00       0.00      
+I2-36-30-39      1387.20    4.20       0.00       0.00       0.00      
+I2-36-30-40      1391.40    3.20       0.00       0.00       0.00      
+I2-36-30-41      1390.40    5.50       0.00       0.00       0.00      
+Ids1             1380.00    15.00      0.00       0.00       0.00      
+Ids2             1382.00    13.00      0.00       0.00       0.00      
+Ids3             1384.00    11.00      0.00       0.00       0.00      
+Ids4             1386.00    9.00       0.00       0.00       0.00      
+
+[OUTFALLS]
+;;               Invert     Outfall      Stage/Table       Tide
+;;Name           Elev.      Type         Time Series       Gate
+;;-------------- ---------- ------------ ----------------  ----
+O-36-30-1        1380.30    FREE                           NO              
+O-36-30-106      1381.61    FREE                           NO              
+Ocistern         1380.00    FREE                           YES             
+
+[STORAGE]
+;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.
+;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters
+;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------
+Cistern1         1385     9        0        TABULAR    storage1                   0        0       
+Cistern2         1385     9        0        TABULAR    storage1                   0        0       
+Cistern3         1385     9        0        TABULAR    storage1                   0        0       
+
+[CONDUITS]
+;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.
+;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+DS2-1            Ids2             Ids1             123.70     0.018      0.00       0.00       0.00       1.00      
+DS3-2            Ids3             Ids2             180.02     0.018      0.00       0.00       0.00       1.00      
+DS4-3            Ids4             Ids3             152.99     0.018      0.00       0.00       0.00       1.00      
+P-I2-36-30-38    I2-36-30-38      I2-36-30-39      42.60      0.013      0.00       0.00       0.00       1.20      
+P-I2-36-30-39    I2-36-30-39      O-36-30-106      84.50      0.013      0.00       0.00       0.00       1.20      
+P-I2-36-30-40    I2-36-30-40      I2-36-30-41      60.36      0.013      0.00       0.00       0.00       1.20      
+P-I2-36-30-41    I2-36-30-41      O-36-30-1        111.13     0.013      0.00       0.00       0.00       1.20      
+
+[PUMPS]
+;;               Inlet            Outlet           Pump             Init.      Startup    Shutup
+;;Name           Node             Node             Curve            Status     Depth      Depth
+;;-------------- ---------------- ---------------- ---------------- ---------- ---------- -------
+CPump            Ids1             Cistern1         P1               OFF        3.00       1.00      
+
+[ORIFICES]
+;;               Inlet            Outlet           Orifice      Crest      Disch.      Flap      Open/Close
+;;Name           Node             Node             Type         Height     Coeff.      Gate      Time
+;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -----------
+orifice1         Cistern1         Cistern2         SIDE         0.50       0.65        NO        0.00     
+orifice2         Cistern2         Cistern3         SIDE         0.50       0.65        NO        0.00     
+
+[WEIRS]
+;;               Inlet            Outlet           Weir         Crest      Disch.      Flap      End      End
+;;Name           Node             Node             Type         Height     Coeff.      Gate      Con.     Coeff.
+;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -------  ---------
+weir1            Cistern3         Ocistern         V-NOTCH      4.50       3.30        NO        0        0.00     
+
+[XSECTIONS]
+;;Link           Shape        Geom1      Geom2      Geom3      Geom4      Barrels
+;;-------------- ------------ ---------- ---------- ---------- ---------- ----------
+DS2-1            CIRCULAR      1.00       0.00       0.000      0.00       1         
+DS3-2            CIRCULAR      1.00       0.00       0.000      0.00       1         
+DS4-3            CIRCULAR      1.00       0.00       0.000      0.00       1         
+P-I2-36-30-38    CIRCULAR      1.20       0.00       0.000      0.00       1         
+P-I2-36-30-39    CIRCULAR      1.20       0.00       0.000      0.00       1         
+P-I2-36-30-40    CIRCULAR      1.20       0.00       0.000      0.00       1         
+P-I2-36-30-41    CIRCULAR      1.20       0.00       0.000      0.00       1         
+orifice1         CIRCULAR      0.50       0.00       0.00       0.00                 
+orifice2         CIRCULAR      0.50       0.00       0.00       0.00                 
+weir1            TRIANGULAR    1.00       1.00       0.50       0.50                 
+
+[LOSSES]
+;;Link           Inlet      Outlet     Average    Flap Gate
+;;-------------- ---------- ---------- ---------- ----------
+DS2-1            0.0        0.0        0.00       NO        
+DS3-2            0.0        0.0        0.00       NO        
+DS4-3            0.0        0.0        0.00       NO        
+P-I2-36-30-38    0.0        0.0        0.00       NO        
+P-I2-36-30-39    0.0        0.0        0.00       NO        
+P-I2-36-30-40    0.0        0.0        0.00       NO        
+P-I2-36-30-41    0.0        0.0        0.00       NO        
+
+[CONTROLS]
+
+
+
+[CURVES]
+;;Name           Type       X-Value    Y-Value
+;;-------------- ---------- ---------- ----------
+
+;Horizontal Cylinder Depth v Area
+
+storage1         Storage    0.00       0.00      
+storage1                    0.25       29.36     
+storage1                    0.50       40.88     
+storage1                    1.00       55.91     
+storage1                    2.00       73.34     
+storage1                    3.00       82.00     
+storage1                    4.00       84.20     
+storage1                    4.50       85.00     
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+
+[PATTERNS]
+;;Name           Type       Multipliers
+;;-------------- ---------- -----------
+
+[REPORT]
+INPUT           YES
+CONTROLS        YES
+SUBCATCHMENTS   NONE
+NODES           ALL
+LINKS           ALL
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord 
+;;-------------- ------------------ ------------------
+I2-36-30-38      657405.418985      959384.064563     
+I2-36-30-39      657387.426937      959345.45043      
+I2-36-30-40      658068.396902      959169.03785      
+I2-36-30-41      658051.234188      959111.179836     
+Ids1             658089.392542      959745.700754     
+Ids2             658209.392542      959715.700754     
+Ids3             658389.392542      959715.700754     
+Ids4             658539.392542      959745.700754     
+O-36-30-1        658017.340353      959005.355428     
+O-36-30-106      657369.392542      959235.700754     
+Ocistern         658327.113375      959681.096587     
+Cistern1         658152.349864      959684.480347     
+Cistern2         658209.539084      959682.653452     
+Cistern3         658271.752265      959680.875933     
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------

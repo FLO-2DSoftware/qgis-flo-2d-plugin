@@ -362,12 +362,15 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.uc.log_info(f"Subdomain {domain_n} data saved to geopackage.")
         self.uc.bar_info(f"Subdomain {domain_n} data saved to geopackage.")
 
-    def import_global_domain(self):
+    def import_global_domain(self, test_subdomains=None):
         """
         Imports the global domain data. Handles the parsing and importing
         of global domain details from files into the geopackage.
         """
-        subdomains_paths = self.fetch_subdomain_paths()
+        if not test_subdomains:
+            subdomains_paths = self.fetch_subdomain_paths()
+        else:
+            subdomains_paths = test_subdomains
         total_subdomains = sum(1 for path in subdomains_paths if path)
 
         md_editor = MultipleDomainsEditorWidget(self.iface, self.lyrs)
@@ -585,8 +588,9 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
     def finalize_import(self):
         """Finalize the import process by refreshing the UI and showing success messages."""
         self.gutils.path = self.gutils.get_gpkg_path()
-        self.lyrs.load_all_layers(self.gutils)
-        self.lyrs.zoom_to_all()
+        if self.lyrs:
+            self.lyrs.load_all_layers(self.gutils)
+            self.lyrs.zoom_to_all()
         self.uc.log_info("Import of Multiple Domains finished successfully")
         self.uc.bar_info("Import of Multiple Domains finished successfully")
 
@@ -603,7 +607,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         #     QApplication.setOverrideCursor(Qt.WaitCursor)
 
         data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used = self.get_subdomain_data(subdomain_path)
-        default_n = float(self.gutils.get_cont_par("MANNING"))
+        default_n = float(self.gutils.get_cont_par("MANNING") or 0.04)
         batch_cells, batch_schema = [], []
 
         # Update CELLSIZE

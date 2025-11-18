@@ -37,27 +37,28 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = None
 
-        self.setup_connection()
-        self.populate_md_cbos()
+        if self.iface:
+            self.setup_connection()
+            self.populate_md_cbos()
 
-        # Domain Creation - Connections
-        self.create_md_polygon_btn.clicked.connect(self.create_md_polygon)
-        self.rollback_md_btn.clicked.connect(self.cancel_mult_domains_edits)
-        self.delete_md_schema_btn.clicked.connect(self.delete_schema_md)
-        # self.md_help_btn.clicked.connect()
-        self.change_md_name_btn.clicked.connect(self.change_md_name)
-        self.delete_md_btn.clicked.connect(self.delete_md)
-        self.md_center_btn.clicked.connect(self.md_center)
+            # Domain Creation - Connections
+            self.create_md_polygon_btn.clicked.connect(self.create_md_polygon)
+            self.rollback_md_btn.clicked.connect(self.cancel_mult_domains_edits)
+            self.delete_md_schema_btn.clicked.connect(self.delete_schema_md)
+            # self.md_help_btn.clicked.connect()
+            self.change_md_name_btn.clicked.connect(self.change_md_name)
+            self.delete_md_btn.clicked.connect(self.delete_md)
+            self.md_center_btn.clicked.connect(self.md_center)
 
-        self.schematize_md_btn.clicked.connect(self.schematize_md)
-        self.create_connectivity_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
+            self.schematize_md_btn.clicked.connect(self.schematize_md)
+            self.create_connectivity_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
 
-        self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
-        self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
-        self.schema_md_cells = self.lyrs.data["schema_md_cells"]["qlyr"]
-        self.user_md_connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-        self.mult_domains.afterCommitChanges.connect(self.save_user_md)
-        self.md_name_cbo.currentIndexChanged.connect(self.md_index_changed)
+            self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
+            self.schema_md_cells = self.lyrs.data["schema_md_cells"]["qlyr"]
+            self.user_md_connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+            self.mult_domains.afterCommitChanges.connect(self.save_user_md)
+            self.md_name_cbo.currentIndexChanged.connect(self.md_index_changed)
 
     def setup_connection(self):
         """
@@ -66,6 +67,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         Ensures smooth communication between the widget and the database, as well as
         connectivity with other components of the application.
         """
+        if self.iface is None:
+            return
         con = self.iface.f2d["con"]
         if con is None:
             return
