@@ -63,8 +63,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.rename_tseries_btn, "change_name.svg")
 
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
-        # self.grid = self.lyrs.data["grid"]["qlyr"]
-        # self.raincell_data = self.lyrs.data["raincell_data"]["qlyr"]
 
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
@@ -134,14 +132,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         self.con = con
         self.gutils = GeoPackageUtils(self.con, self.iface)
-
-        # qry = '''SELECT movingstorm FROM rain;'''
-        # row = self.gutils.execute(qry).fetchone()
-        # if is_number(row[0]):
-        #     if row[0] == '0':
-        #         self.moving_storm_chbox.setChecked(False)
-        #     else:
-        #         self.moving_storm_chbox.setChecked(True)
 
         qry = """SELECT value FROM cont WHERE name = 'IRAIN';"""
         row = self.gutils.execute(qry).fetchone()

@@ -14,6 +14,7 @@ from qgis.PyQt import QtCore
 from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox
 
 from .dlg_mud_and_sediment import MudAndSedimentDialog
+from .rain_editor_widget import RainEditorWidget
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero
@@ -356,33 +357,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         self.ITIMTEP.currentIndexChanged.connect(self.ITIMTEP_currentIndexChanged)
         self.ISED.currentIndexChanged.connect(self.ISED_currentIndexChanged)
         self.IDEBRV.clicked.connect(self.IDEBRV_clicked)
-
-        # self.timeAndPlotGroupBox.setObjectName("ColoredGroupBox")
-        # self.timeAndPlotGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.globalDataGroup.setObjectName("ColoredGroupBox")
-        # self.globalDataGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.systemComponentsSwitchesGroup.setObjectName("ColoredGroupBox")
-        # self.systemComponentsSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.physicalProcessesSwitchesGroup.setObjectName("ColoredGroupBox")
-        # self.physicalProcessesSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.conveyanceSrtructureSwitchesGroup.setObjectName("ColoredGroupBox")
-        # self.conveyanceSrtructureSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.floodplainChannelDisplayOptionsGroup.setObjectName("ColoredGroupBox")
-        # self.floodplainChannelDisplayOptionsGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.timeLapseOutputGroup.setObjectName("ColoredGroupBox")
-        # self.timeLapseOutputGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.numericalStabilityParametersGroupBox.setObjectName("ColoredGroupBox")
-        # self.numericalStabilityParametersGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
-        #
-        # self.courantNumbersGroup.setObjectName("ColoredGroupBox")
-        # self.courantNumbersGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
+        self.IWRFS.clicked.connect(self.IWRFS_clicked)
 
         self.polulate_values_JJ()
 
@@ -483,6 +458,21 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             self.uc.bar_warn("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.uc.log_info("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.IDEBRV.setChecked(False)
+
+    def IWRFS_clicked(self):
+        if self.IWRFS.isChecked():
+            pass
+        else:
+            if not self.gutils.is_table_empty("rain"):
+                irainbuilding = self.gutils.execute("SELECT irainbuilding FROM rain LIMIT 1;").fetchone()[0]
+                if int(irainbuilding) == 1:
+                    self.uc.bar_warn(
+                        "Turning off Area Reduction Factors (ARF) switch will also turn off Building Rain!"
+                    )
+                    self.uc.log_info(
+                        "Turning off Area Reduction Factors (ARF) switch will also turn off Building Rain!"
+                    )
+                    self.gutils.execute("UPDATE rain SET irainbuilding = 0;")
 
     def wire_switch_guards(self):
         """
