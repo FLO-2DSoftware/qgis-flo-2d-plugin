@@ -11729,6 +11729,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if self.execute(tbc_sql).fetchone() is None and self.execute(pbc_sql).fetchone() is None:
                 self.gutils.set_cont_par("IWRFS", 0)
+                self.gutils.execute("UPDATE rain SET irainbuilding = 0;")
                 return False
             # Otherwise refer to user's decision as dictated in flo2d.py
 
@@ -11825,6 +11826,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if self.execute(tbc_sql).fetchone() is None and self.execute(pbc_sql).fetchone() is None:
                 self.gutils.set_cont_par("IWRFS", 0)
+                self.gutils.execute("UPDATE rain SET irainbuilding = 0;")
                 return False
             # Otherwise refer to user's decision as dictated in flo2d.py
 

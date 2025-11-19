@@ -2909,10 +2909,12 @@ class Flo2D(object):
         arf_action = dlg_components.component_actions.get("Reduction Factors")
         if ("Reduction Factors" not in dlg_components.components) or (arf_action == "cancel"):
             self.gutils.set_cont_par("IWRFS", 0)
+            self.gutils.execute("UPDATE rain SET irainbuilding = 0;")
             if "export_arf" in export_calls:
                 export_calls.remove("export_arf")
         elif arf_action == "export_only":
             self.gutils.set_cont_par("IWRFS", 0)
+            self.gutils.execute("UPDATE rain SET irainbuilding = 0;")
         else:
             self.gutils.set_cont_par("IWRFS", 1)
 
@@ -3275,6 +3277,7 @@ class Flo2D(object):
                 if save:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     try:
+                        self.f2d_widget.rain_editor.rain_properties()
                         if dlg_control.save_parameters_JJ():
                             self.f2d_widget.ic_editor.populate_cbos()
                             self.uc.bar_info("Parameters saved!", dur=3)

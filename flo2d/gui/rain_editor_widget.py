@@ -63,8 +63,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.rename_tseries_btn, "change_name.svg")
 
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
-        # self.grid = self.lyrs.data["grid"]["qlyr"]
-        # self.raincell_data = self.lyrs.data["raincell_data"]["qlyr"]
 
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
@@ -134,14 +132,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         self.con = con
         self.gutils = GeoPackageUtils(self.con, self.iface)
-
-        # qry = '''SELECT movingstorm FROM rain;'''
-        # row = self.gutils.execute(qry).fetchone()
-        # if is_number(row[0]):
-        #     if row[0] == '0':
-        #         self.moving_storm_chbox.setChecked(False)
-        #     else:
-        #         self.moving_storm_chbox.setChecked(True)
 
         qry = """SELECT value FROM cont WHERE name = 'IRAIN';"""
         row = self.gutils.execute(qry).fetchone()
@@ -717,8 +707,18 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def set_building(self):
         if not self.rain:
             return
-        self.rain.irainbuilding = self.building_chbox.isChecked()
-        self.rain.set_row()
+
+        irainbuilding = self.building_chbox.isChecked()
+        if irainbuilding:
+            if self.gutils.is_table_empty("blocked_cells"):
+                self.uc.bar_warn("There are no ARF_WRF defined in the database!")
+                self.uc.bar_warn("There are no ARF_WRF defined in the database!")
+                self.rain.irainbuilding = False
+                self.building_chbox.setChecked(False)
+            else:
+                self.rain.irainbuilding = True
+                self.building_chbox.setChecked(True)
+            self.rain.set_row()
 
     def rain_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/rain-editor/Rain%20Editor.html"))        
