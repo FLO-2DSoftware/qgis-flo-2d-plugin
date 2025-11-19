@@ -5067,8 +5067,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                         # Combine time series with node data
                         for i, row in enumerate(node_data):
-                            row.insert(0, hours_lst[i])
-                            ScenariostimeSeries.append(row)
+                            try:
+                                row.insert(0, hours_lst[i])
+                                ScenariostimeSeries.append(row)
+                            except:
+                                pass
 
                         RPT_dict[f'Scenario {j}'] = ScenariostimeSeries
 
