@@ -3277,9 +3277,9 @@ class Flo2D(object):
                 if save:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     try:
+                        self.f2d_widget.rain_editor.rain_properties()
                         if dlg_control.save_parameters_JJ():
                             self.f2d_widget.ic_editor.populate_cbos()
-                            self.f2d_widget.rain_editor.rain_properties()
                             self.uc.bar_info("Parameters saved!", dur=3)
                             QApplication.restoreOverrideCursor()
                             break

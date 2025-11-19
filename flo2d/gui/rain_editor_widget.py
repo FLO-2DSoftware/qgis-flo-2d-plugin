@@ -707,8 +707,18 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def set_building(self):
         if not self.rain:
             return
-        self.rain.irainbuilding = self.building_chbox.isChecked()
-        self.rain.set_row()
+
+        irainbuilding = self.building_chbox.isChecked()
+        if irainbuilding:
+            if self.gutils.is_table_empty("blocked_cells"):
+                self.uc.bar_warn("There are no ARF_WRF defined in the database!")
+                self.uc.bar_warn("There are no ARF_WRF defined in the database!")
+                self.rain.irainbuilding = False
+                self.building_chbox.setChecked(False)
+            else:
+                self.rain.irainbuilding = True
+                self.building_chbox.setChecked(True)
+            self.rain.set_row()
 
     def rain_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/rain-editor/Rain%20Editor.html"))        
