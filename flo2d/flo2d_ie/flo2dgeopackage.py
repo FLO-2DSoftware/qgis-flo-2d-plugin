@@ -1433,6 +1433,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not options:
             return
 
+        repeated_value = False
+
         if not grid_to_domain:
             self.clear_tables(
                 "rain",
@@ -1456,6 +1458,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 dummy, time, value = row
                 if value != previous_value:
                     tsd_sql += [(fid_ts, time, value)]
+                else:
+                    repeated_value = True
+                    self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
                 previous_value = value
 
             for i, row in enumerate(rain_arf, 1):
@@ -1481,6 +1486,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     dummy, time, value = row
                     if value != previous_value:
                         tsd_sql += [(fid_ts, time, value)]
+                    else:
+                        repeated_value = True
+                        self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
                     previous_value = value
 
             for i, row in enumerate(rain_arf, 1):
@@ -1490,6 +1498,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)
         name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast (fid as text) """
         self.execute(name_qry)
+
+        if repeated_value:
+            self.uc.bar_warn("Rainfall data had repeated values that were removed. Check log for details.")
 
     def import_rain_hdf5(self):
         try:
@@ -1519,6 +1530,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     "rain_time_series_data",
                 )
 
+                repeated_value = False
+
                 # Read RAIN_GLOBAL dataset
                 rain_global = rain_group.datasets["RAIN_GLOBAL"].data
                 if len(rain_global) < 8:
@@ -1533,6 +1546,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     time, value = row
                     if value != previous_value:
                         tsd_sql += [(1, time, value)]
+                    else:
+                        repeated_value = True
+                        self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
                     previous_value = value
 
                 # Insert ARF data if available
@@ -1548,6 +1564,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Update time series name
                 name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast(fid as text);"""
                 self.execute(name_qry)
+
+                if repeated_value:
+                    self.uc.bar_warn("Rainfall data had repeated values that were removed. Check log for details.")
 
                 return True
 
@@ -9340,6 +9359,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
         rain_group.create_dataset('RAIN_DATA', [])
         previous_value = None
+        repeated_value = False
         for row in self.execute(ts_data_sql, (fid,)):
             if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
                 _, value = row
@@ -9347,6 +9367,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     rain_group.datasets["RAIN_DATA"].data.append(create_array(tsd_line, 2, np.float64, row))
                     # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
                     # selected from a list
+                else:
+                    repeated_value = True
+                    self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
                 previous_value = value
 
         # if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
@@ -9372,6 +9395,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ))
 
         self.parser.write_groups(rain_group)
+
+        if repeated_value:
+            self.uc.bar_warn("Rainfall data had repeated values that were removed. Check log for details.")
+
         return True
 
         # except Exception as e:
@@ -9433,6 +9460,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             rain = os.path.join(outdir, "RAIN.DAT")
+            repeated_value = False
             with open(rain, "w") as r:
                 r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
                 r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
@@ -9450,6 +9478,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             )  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
                             # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
                             # selected from a list
+                        else:
+                            repeated_value = True
+                            self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
                         previous_value = value
                 if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
                     if (
@@ -9467,6 +9498,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if rain_row[5] == 1:  # if irainarf from rain = 0, omit this line.
                     for row in self.execute(rain_cells_sql):
                         r.write(cell_line5.format(row[0], "{0:.3f}".format(row[1])))
+
+            if repeated_value:
+                self.uc.bar_warn("Rainfall data had repeated values that were removed. Check log for details.")
 
             return True
 
