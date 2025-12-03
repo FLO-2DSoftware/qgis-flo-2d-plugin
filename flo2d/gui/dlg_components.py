@@ -13,6 +13,7 @@ import os
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QMessageBox
 
+from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
@@ -24,8 +25,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, in_or_out):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
-
-        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         self.iface = iface
         self.setupUi(self)
@@ -45,8 +44,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         self.populate_components_dialog()
 
-        QApplication.restoreOverrideCursor()
-
     def populate_components_dialog(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -60,20 +57,26 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.components_note_lbl.setVisible(False)
             self.mannings_n_and_Topo_chbox.setVisible(False)
 
+            parser = ParseDAT()
+            cont = parser.parse_cont(last_dir + r"\CONT.DAT")
+
             if os.path.isfile(last_dir + r"\CHAN.DAT"):
                 if os.path.getsize(last_dir + r"\CHAN.DAT") > 0:
-                    self.channels_chbox.setChecked(True)
                     self.channels_chbox.setEnabled(True)
+                    if cont and cont['ICHANNEL'] != '0':
+                        self.channels_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\ARF.DAT"):
                 if os.path.getsize(last_dir + r"\ARF.DAT") > 0:
-                    self.reduction_factors_chbox.setChecked(True)
                     self.reduction_factors_chbox.setEnabled(True)
+                    if cont and cont['IWRFS'] != '0':
+                        self.reduction_factors_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\STREET.DAT"):
                 if os.path.getsize(last_dir + r"\STREET.DAT") > 0:
-                    self.streets_chbox.setChecked(True)
                     self.streets_chbox.setEnabled(True)
+                    if cont and cont['MSTREET'] != '0':
+                        self.streets_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\OUTFLOW.DAT"):
                 if os.path.getsize(last_dir + r"\OUTFLOW.DAT") > 0:
@@ -87,23 +90,27 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
             if os.path.isfile(last_dir + r"\LEVEE.DAT"):
                 if os.path.getsize(last_dir + r"\LEVEE.DAT") > 0:
-                    self.levees_chbox.setChecked(True)
                     self.levees_chbox.setEnabled(True)
+                    if cont and cont['LEVEE'] != '0':
+                        self.levees_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\MULT.DAT"):
                 if os.path.getsize(last_dir + r"\MULT.DAT") > 0:
-                    self.multiple_channels_chbox.setChecked(True)
                     self.multiple_channels_chbox.setEnabled(True)
+                    if cont and cont['IMULTC'] != '0':
+                        self.multiple_channels_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
                 if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
-                    self.multiple_channels_chbox.setChecked(True)
                     self.multiple_channels_chbox.setEnabled(True)
+                    if cont and cont['IMULTC'] != '0':
+                        self.multiple_channels_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\BREACH.DAT"):
                 if os.path.getsize(last_dir + r"\BREACH.DAT") > 0:
-                    self.breach_chbox.setChecked(True)
                     self.breach_chbox.setEnabled(True)
+                    if cont and cont['LEVEE'] != '0':
+                        self.breach_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\GUTTER.DAT"):
                 if os.path.getsize(last_dir + r"\GUTTER.DAT") > 0:
@@ -112,8 +119,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
             if os.path.isfile(last_dir + r"\INFIL.DAT"):
                 if os.path.getsize(last_dir + r"\INFIL.DAT") > 0:
-                    self.infiltration_chbox.setChecked(True)
                     self.infiltration_chbox.setEnabled(True)
+                    if cont and cont['INFIL'] != '0':
+                        self.infiltration_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\FPXSEC.DAT"):
                 if os.path.getsize(last_dir + r"\FPXSEC.DAT") > 0:
@@ -122,29 +130,37 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
             if os.path.isfile(last_dir + r"\SED.DAT"):
                 if os.path.getsize(last_dir + r"\SED.DAT") > 0:
-                    self.mud_and_sed_chbox.setChecked(True)
                     self.mud_and_sed_chbox.setEnabled(True)
+                    if cont and (cont['MUD'] != '0' or cont['ISED'] != '0'):
+                        self.mud_and_sed_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\EVAPOR.DAT"):
                 if os.path.getsize(last_dir + r"\EVAPOR.DAT") > 0:
-                    self.evaporation_chbox.setChecked(True)
                     self.evaporation_chbox.setEnabled(True)
+                    if cont and cont['IEVAP'] != '0':
+                        self.evaporation_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\HYSTRUC.DAT"):
                 if os.path.getsize(last_dir + r"\HYSTRUC.DAT") > 0:
-                    self.hydr_struct_chbox.setChecked(True)
                     self.hydr_struct_chbox.setEnabled(True)
+                    if cont and cont['IHYDRSTRUCT'] != '0':
+                        self.hydr_struct_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\RAIN.DAT"):
                 if os.path.getsize(last_dir + r"\RAIN.DAT") > 0:
-                    self.rain_chbox.setChecked(True)
                     self.rain_chbox.setEnabled(True)
+                    if cont and cont['IRAIN'] != '0':
+                        self.rain_chbox.setChecked(True)
 
-            if os.path.isfile(last_dir + r"\SWMMFLO.DAT") or os.path.isfile(last_dir + r"\SWMMOUTF.DAT") or os.path.isfile(last_dir + r"\SWMM.INP"):
-                if os.path.getsize(last_dir + r"\SWMMFLO.DAT") > 0 or os.path.getsize(
-                        last_dir + r"\SWMMOUTF.DAT") > 0 or os.path.getsize(last_dir + r"\SWMM.INP") > 0:
+            if (os.path.isfile(last_dir + r"\SWMMFLO.DAT") or
+                    os.path.isfile(last_dir + r"\SWMMOUTF.DAT") or
+                    os.path.isfile(last_dir + r"\SWMM.INP")):
+                if ((os.path.isfile(last_dir + r"\SWMMFLO.DAT") and os.path.getsize(last_dir + r"\SWMMFLO.DAT") > 0) or
+                        (os.path.isfile(last_dir + r"\SWMMOUTF.DAT") and os.path.getsize(last_dir + r"\SWMMOUTF.DAT") > 0) or
+                        (os.path.isfile(last_dir + r"\SWMM.INP") and os.path.getsize(last_dir + r"\SWMM.INP") > 0)):
                     self.storm_drain_chbox.setEnabled(True)
-                    self.storm_drain_chbox.setChecked(True)
+                    if cont and cont['SWMM'] != '0':
+                        self.storm_drain_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\TOLSPATIAL.DAT"):
                 if os.path.getsize(last_dir + r"\TOLSPATIAL.DAT") > 0:

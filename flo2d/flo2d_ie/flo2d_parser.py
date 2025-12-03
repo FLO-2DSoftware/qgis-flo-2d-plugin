@@ -16,6 +16,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from qgis._core import QgsMessageLog
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
     REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD, SEDIMENT, STREET, \
@@ -531,10 +532,11 @@ class ParseDAT(object):
             for dummy in range(loops):
                 row.insert(index, default)
 
-    def parse_cont(self):
+    def parse_cont(self, cont=None):
 
         results = {}
-        cont = self.dat_files["CONT.DAT"]
+        if cont is None:
+            cont = self.dat_files["CONT.DAT"]
         with open(cont, "r") as f:
             for c, row in enumerate(self.cont_rows):
                 if c == 0:
