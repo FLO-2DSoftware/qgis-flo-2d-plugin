@@ -12164,7 +12164,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tolspatial_cells"):
                 return False
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
+                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells;"""
             else:
                 tol_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell,

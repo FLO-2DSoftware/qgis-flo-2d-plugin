@@ -296,7 +296,7 @@ class TestFlo2dGlobalSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip ("Bug")
+    # @unittest.skip ("Bug")
     def test_global_tolspatial(self):                                                    # Failed (Bug)
         self.f2g.export_tolspatial(EXPORT_GLOBAL_DATA_DIR)
         infile = os.path.join(GLOBAL_DATA_DIR, "TOLSPATIAL.DAT")
