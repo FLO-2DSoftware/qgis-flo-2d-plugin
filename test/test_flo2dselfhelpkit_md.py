@@ -148,7 +148,7 @@ class TestFlo2dGlobalSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip ("Bug")
+    @unittest.skip ("OK")
     def test_global_levee(self):                                                         # Failed (Bug)
         self.f2g.export_levee(EXPORT_GLOBAL_DATA_DIR)
         infile = os.path.join(GLOBAL_DATA_DIR, "LEVEE.DAT")

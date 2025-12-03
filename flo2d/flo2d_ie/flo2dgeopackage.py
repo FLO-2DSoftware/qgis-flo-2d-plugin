@@ -12902,7 +12902,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
 
             if not subdomain:
-                levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
+                levee_data_sql = """SELECT DISTINCT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
                 levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
                 levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
             else:
