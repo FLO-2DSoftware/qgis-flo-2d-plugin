@@ -800,39 +800,39 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """Function to import multiple domains into one global domain"""
 
         import_calls = [
-            "import_cont_toler",
-            "import_inflow",
+            "import_cont_toler", # data
+            # "import_inflow", # data
             # "import_tailings",
             # "import_outrc",  Add back when the OUTRC process is completed
             # "import_outflow",
-            "import_rain",
-            "import_raincell",
+            # "import_rain", # data
+            # "import_raincell", # data
             # "import_raincellraw",
             # "import_evapor",
-            "import_infil",
-            "import_chan",
-            "import_xsec",
-            "import_hystruc",
+            # "import_infil", # data
+            # "import_chan", # data
+            # "import_xsec", # data
+            # "import_hystruc", # data
             # "import_hystruc_bridge_xs",
             # "import_street",
-            "import_arf",
+            # "import_arf", # data
             # "import_mult",
-            "import_sed",
-            "import_levee",
-            "import_fpxsec",
+            # "import_sed", # data
+            # "import_levee", # data
+            # "import_fpxsec", # data
             # "import_breach",
             # "import_gutter",
-            "import_fpfroude",
-            "import_steep_slopen",
-            "import_lid_volume",
-            "import_shallowNSpatial",
-            "import_swmminp",
-            "import_swmmflo",
-            "import_swmmflort",
-            "import_swmmoutf",
-            "import_swmmflodropbox",
-            "import_sdclogging",
-            "import_tolspatial",
+            # "import_fpfroude", # data
+            # "import_steep_slopen", # data
+            # "import_lid_volume", # data
+            # "import_shallowNSpatial", # data
+            # "import_swmminp", # data
+            # "import_swmmflo", # data
+            # "import_swmmflort", # data
+            # "import_swmmoutf", # data
+            # "import_swmmflodropbox", # data
+            # "import_sdclogging", # data
+            # "import_tolspatial", # data
             # "import_wsurf",
             # "import_wstime",
         ]
@@ -872,6 +872,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 hdf5_file = f"{subdomain_path}/Input.hdf5"
                 if os.path.isfile(hdf5_file):
                     self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                    if not self.f2g.set_parser(hdf5_file):
+                        return
                 else:
                     self.f2g = Flo2dGeoPackage(self.con, self.iface)
                     fname = subdomain_path + "/CONT.DAT"
@@ -887,6 +889,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 			ORDER BY domain_cell
                         """
                 mapped_rows = self.gutils.execute(map_qry, (subdomain,)).fetchall()
+                self.uc.log_info(str(mapped_rows))
                 grid_to_domain = {int(domain_grid): int(global_grid) for (domain_grid, global_grid) in mapped_rows}
 
                 if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
@@ -901,33 +904,28 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
     def call_IO_methods_hdf5(self, calls, debug, *args):
 
         self.uc.log_info("Entrou hdf5")
-        # self.f2g.parser.write_mode = "w"
-        #
+        self.f2g.parser.write_mode = "w"
+
         # progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
         # progDialog.setModal(True)
         # progDialog.setValue(0)
         # progDialog.show()
         # i = 0
         #
-        # for call in calls:
-        #
-        #     i += 1
-        #     progDialog.setValue(i)
-        #     progDialog.setLabelText(call)
-        #     QApplication.processEvents()
-        #
-        #     method = getattr(self.f2g, call)
-        #     try:
-        #         method(*args)
-        #         self.f2g.parser.write_mode = "a"
-        #     except Exception as e:
-        #         if debug is True:
-        #             self.uc.log_info(traceback.format_exc())
-        #         else:
-        #             raise
-        #
-        # self.f2g.parser.write_mode = "w"
-        # self.files_used = self.f2g.parser.list_input_subfolders()
+        for call in calls:
+
+            local_args = args
+
+            if call == "import_swmminp":
+                local_args = ("SWMM.INP", False)
+
+            start_time = time.time()
+
+            method = getattr(self.f2g, call)
+            if method(*local_args):
+                pass
+
+            self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
 
     def call_IO_methods_dat(self, calls, debug, *args):
 

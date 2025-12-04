@@ -275,32 +275,35 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                                     mult = hdf[hdf5_mult][()]  # shape (N, 3): [connected_subdomain, up_cell, down_cell]
                                     coords = hdf[hdf5_coor]  # shape (Ncells, 2): [x, y]
 
-                                    current_subdomain = None
-                                    prev_subdomain = None
+                                    seen = set()  # to avoid counting same (subdomain, up_cell) multiple times
 
-                                    # Iterate rows in order; start a new list when the connected_subdomain changes
                                     for row in mult:
                                         subdomain = int(row[0])  # connected_subdomain
                                         up_domain_cell = int(row[1])  # up cell id (1-based)
+                                        # down_cell = int(row[2])     # exists, but ignored to mimic DAT behavior
 
-                                        if subdomain != prev_subdomain:
-                                            current_subdomain = subdomain
-                                            multidomain_data[current_subdomain] = []
-                                            prev_subdomain = subdomain
+                                        key = (subdomain, up_domain_cell)
+                                        if key in seen:
+                                            # We already created an entry for this up cell in this subdomain.
+                                            # MULTIDOMAIN.DAT would have had a single "D up ..." line here.
+                                            continue
+                                        seen.add(key)
 
-                                        # Get coordinates for the up cell (convert to 0-based index)
+                                        # Ensure list exists for this subdomain
+                                        if subdomain not in multidomain_data:
+                                            multidomain_data[subdomain] = []
+
+                                        # Coordinate lookup (0-based index)
                                         x, y = coords[up_domain_cell - 1]
                                         up_domain_coords = f"POINT({float(x)} {float(y)})"
 
-                                        # Append same tuple structure you used before
-                                        multidomain_data[current_subdomain].append((up_domain_cell, up_domain_coords))
+                                        multidomain_data[subdomain].append((up_domain_cell, up_domain_coords))
 
-                                # Preserve your post-processing block
+                                # Same post-processing
                                 j = 2 + (i - 1) * 4
                                 for subdomain, connections in multidomain_data.items():
                                     for up_domain_cell, up_domain_coords in connections:
                                         bulk_insert_data.append((md_fid, up_domain_cell, subdomain, up_domain_coords))
-                                        bulk_insert_data.append((subdomain, "", "", up_domain_coords))
                                     j += 4
 
                                 used_multidomain_file = True
