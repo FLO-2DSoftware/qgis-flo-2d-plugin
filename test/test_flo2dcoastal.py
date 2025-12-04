@@ -147,7 +147,7 @@ class TestFlo2dCoastal(unittest.TestCase):
     def test_swmminp(self):
         self.f2g.import_swmminp()
         # Number of inlets
-        n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM chan_elems WHERE fid = 'I';""").fetchone()[0]
+        n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions WHERE sd_type = 'I';""").fetchone()[0]
         self.assertEqual(n_inlets, 283)
         # Number of junctions
         n_junctions = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions WHERE sd_type = 'J';""").fetchone()[0]
