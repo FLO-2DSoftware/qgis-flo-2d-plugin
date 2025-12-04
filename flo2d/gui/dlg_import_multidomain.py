@@ -824,15 +824,15 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_gutter",
             "import_fpfroude",
             "import_steep_slopen",
-            "import_lid_volume", # data
-            "import_shallowNSpatial", # data
+            "import_lid_volume",
+            "import_shallowNSpatial",
             # "import_swmminp", # data
             # "import_swmmflo", # data
             # "import_swmmflort", # data
             # "import_swmmoutf", # data
             # "import_swmmflodropbox", # data
             # "import_sdclogging", # data
-            # "import_tolspatial", # data
+            "import_tolspatial", # data
             # "import_wsurf",
             # "import_wstime",
         ]

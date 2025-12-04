@@ -7140,7 +7140,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_tolspatial_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_tolspatial_hdf5()
+            return self.import_tolspatial_hdf5(grid_to_domain)
 
     def import_tolspatial_dat(self, grid_to_domain):
         try:
@@ -7167,27 +7167,38 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing LID_VOLUME data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing LID_VOLUME data from DATA failed!")
 
-    def import_tolspatial_hdf5(self):
+    def import_tolspatial_hdf5(self, grid_to_domain):
 
         cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid, tol) VALUES""", 3]
 
-        self.clear_tables("tolspatial_cells")
-
         try:
-            # Access the TOLSPATIAL dataset
-            spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
-            if spatially_variable_group:
-                spatially_variable_group = spatially_variable_group[0]
-                if "TOLSPATIAL" in spatially_variable_group.datasets:
-                    tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
 
-                    # Process each row in the dataset
-                    for i, row in enumerate(tolspatial_data, 1):
-                        gid, tol = row
-                        cells_sql += [(i, gid, float(tol))]
+            if not grid_to_domain:
+                self.clear_tables("tolspatial_cells")
+                # Access the TOLSPATIAL dataset
+                spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
+                if spatially_variable_group:
+                    spatially_variable_group = spatially_variable_group[0]
+                    if "TOLSPATIAL" in spatially_variable_group.datasets:
+                        tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
+                        # Process each row in the dataset
+                        for i, row in enumerate(tolspatial_data, 1):
+                            gid, tol = row
+                            cells_sql += [(i, gid, float(tol))]
+            else:
+                spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
+                if spatially_variable_group:
+                    spatially_variable_group = spatially_variable_group[0]
+                    if "TOLSPATIAL" in spatially_variable_group.datasets:
+                        tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
+                        # Process each row in the dataset
+                        for i, row in enumerate(tolspatial_data, 1):
+                            domain_gid, tol = row
+                            global_gid = grid_to_domain.get(int(domain_gid))
+                            cells_sql += [(i, global_gid, float(tol))]
 
-                    self.batch_execute(cells_sql)
-                    return True
+            self.batch_execute(cells_sql)
+            return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -12215,7 +12226,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
+                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
             else:
                 tol_cells_sql = f"""SELECT 
                                         md.domain_cell,
@@ -12225,7 +12236,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     JOIN 
                                         schema_md_cells md ON tc.grid_fid = md.grid_fid    
                                     WHERE 
-                                        md.domain_fid = {subdomain}"""
+                                        md.domain_fid = {subdomain}
+                                    ORDER BY md.domain_cell"""
 
             two_values = "{0}  {1}\n"
 
@@ -12256,7 +12268,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tolspatial_cells"):
                 return False
             if not subdomain:
-                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells;"""
+                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
             else:
                 tol_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell,
