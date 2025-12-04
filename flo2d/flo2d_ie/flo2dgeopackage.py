@@ -4590,7 +4590,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_steep_slopen_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_steep_slopen_hdf5()
+            return self.import_steep_slopen_hdf5(grid_to_domain)
 
     def import_steep_slopen_dat(self, grid_to_domain):
         try:
@@ -4628,7 +4628,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing STEEP_SLOPEN data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing STEEP_SLOPEN data from DATA failed!")
 
-    def import_steep_slopen_hdf5(self):
+    def import_steep_slopen_hdf5(self, grid_to_domain):
         try:
             steep_slopen_group = self.parser.read_groups("Input/Spatially Variable")
             if steep_slopen_group:
@@ -4636,22 +4636,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
 
-                self.clear_tables("steep_slope_n_cells")
-
-                # Process STEEP_SLOPEN_GLOBAL dataset
-                if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
-                    data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
-                    isteepn_global = int(data[0])
-                    if isteepn_global == 0:
-                        return
-                    elif isteepn_global == 1:
-                        self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
-                        return
-                    elif isteepn_global == 2:
-                        if "STEEP_SLOPEN" in steep_slopen_group.datasets:
-                            grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
-                            for i, grid in enumerate(grid_elems, start=1):
-                                cells_sql += [(0, i, int(grid))]
+                if not grid_to_domain:
+                    self.clear_tables("steep_slope_n_cells")
+                    if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                        data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                        isteepn_global = int(data[0])
+                        if isteepn_global == 0:
+                            return
+                        elif isteepn_global == 1:
+                            self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                            return
+                        elif isteepn_global == 2:
+                            if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                                grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                                for i, grid in enumerate(grid_elems, start=1):
+                                    cells_sql += [(0, i, int(grid))]
+                    else:
+                        if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                            data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                            isteepn_global = int(data[0])
+                            if isteepn_global == 0:
+                                return
+                            elif isteepn_global == 1:
+                                self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                                return
+                            elif isteepn_global == 2:
+                                if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                                    grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                                    for i, grid in enumerate(grid_elems, start=1):
+                                        cells_sql += [(0, i, grid_to_domain.get(int(grid)))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
