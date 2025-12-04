@@ -587,6 +587,9 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def finalize_import(self):
         """Finalize the import process by refreshing the UI and showing success messages."""
+        # check the hydraulic structures - this is a workaround
+        if not self.gutils.is_table_empty("struct"):
+            self.gutils.set_cont_par("IHYDRSTRUCT", 1)
         self.gutils.path = self.gutils.get_gpkg_path()
         if self.lyrs:
             self.lyrs.load_all_layers(self.gutils)
