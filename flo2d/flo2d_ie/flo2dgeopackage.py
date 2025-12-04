@@ -4527,7 +4527,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_fpfroude_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_fpfroude_hdf5()
+            return self.import_fpfroude_hdf5(grid_to_domain)
 
     def import_fpfroude_dat(self, grid_to_domain):
         try:
@@ -4554,7 +4554,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing FPFROUDE data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing FPFROUDE data from DATA failed!")
 
-    def import_fpfroude_hdf5(self):
+    def import_fpfroude_hdf5(self, grid_to_domain):
         try:
             fpfroude_group = self.parser.read_groups("Input/Spatially Variable")
             if fpfroude_group:
@@ -4562,14 +4562,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
 
-                self.clear_tables("fpfroude_cells")
-
-                # Process FPFROUDE dataset
-                if "FPFROUDE" in fpfroude_group.datasets:
-                    data = fpfroude_group.datasets["FPFROUDE"].data
-                    for i, row in enumerate(data, start=1):
-                        grid, froudefp = row
-                        cells_sql += [(i, int(grid), float(froudefp))]
+                if not grid_to_domain:
+                    self.clear_tables("fpfroude_cells")
+                    # Process FPFROUDE dataset
+                    if "FPFROUDE" in fpfroude_group.datasets:
+                        data = fpfroude_group.datasets["FPFROUDE"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, froudefp = row
+                            cells_sql += [(i, int(grid), float(froudefp))]
+                else:
+                    if "FPFROUDE" in fpfroude_group.datasets:
+                        data = fpfroude_group.datasets["FPFROUDE"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, froudefp = row
+                            global_fid = grid_to_domain.get(int(grid))
+                            cells_sql += [(i, int(global_fid), float(froudefp))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
