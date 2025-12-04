@@ -4678,7 +4678,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_lid_volume_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_lid_volume_hdf5()
+            return self.import_lid_volume_hdf5(grid_to_domain)
 
     def import_lid_volume_dat(self,grid_to_domain):
         try:
@@ -4705,7 +4705,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing LID_VOLUME data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing LID_VOLUME data from DATA failed!")
 
-    def import_lid_volume_hdf5(self):
+    def import_lid_volume_hdf5(self, grid_to_domain):
         try:
             lid_volume_group = self.parser.read_groups("Input/Spatially Variable")
             if lid_volume_group:
@@ -4713,14 +4713,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, area_fid, volume) VALUES""", 3]
 
-                self.clear_tables("lid_volume_cells")
-
-                # Process LID_VOLUME dataset
-                if "LID_VOLUME" in lid_volume_group.datasets:
-                    data = lid_volume_group.datasets["LID_VOLUME"].data
-                    for i, row in enumerate(data, start=1):
-                        grid, lid_volume = row
-                        cells_sql += [(int(grid), i, lid_volume)]
+                if not grid_to_domain:
+                    self.clear_tables("lid_volume_cells")
+                    if "LID_VOLUME" in lid_volume_group.datasets:
+                        data = lid_volume_group.datasets["LID_VOLUME"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, lid_volume = row
+                            cells_sql += [(int(grid), i, lid_volume)]
+                else:
+                    if "LID_VOLUME" in lid_volume_group.datasets:
+                        data = lid_volume_group.datasets["LID_VOLUME"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, lid_volume = row
+                            global_fid = grid_to_domain.get(int(grid))
+                            cells_sql += [(global_fid, i, lid_volume)]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
