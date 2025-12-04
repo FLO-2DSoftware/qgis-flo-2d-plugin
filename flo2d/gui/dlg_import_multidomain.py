@@ -825,7 +825,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_fpfroude",
             "import_steep_slopen",
             "import_lid_volume", # data
-            # "import_shallowNSpatial", # data
+            "import_shallowNSpatial", # data
             # "import_swmminp", # data
             # "import_swmmflo", # data
             # "import_swmmflort", # data

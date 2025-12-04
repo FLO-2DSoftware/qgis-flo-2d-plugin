@@ -7199,7 +7199,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_shallowNSpatial_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_shallowNSpatial_hdf5()
+            return self.import_shallowNSpatial_hdf5(grid_to_domain)
 
     def import_shallowNSpatial_dat(self, grid_to_domain):
         try:
@@ -7227,7 +7227,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing SHALLOWN_SPATIAL data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing SHALLOWN_SPATIAL data from DATA failed!")
 
-    def import_shallowNSpatial_hdf5(self):
+    def import_shallowNSpatial_hdf5(self, grid_to_domain):
         try:
             shallowNSpatial_group = self.parser.read_groups("Input/Spatially Variable")
             if shallowNSpatial_group:
@@ -7235,14 +7235,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid, shallow_n) VALUES""", 3]
 
-                self.clear_tables("spatialshallow_cells")
-
-                # Process SHALLOWN_SPATIAL dataset
-                if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
-                    data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
-                    for i, row in enumerate(data, start=1):
-                        grid, shallowNSpatial = row
-                        cells_sql += [(i, int(grid), float(shallowNSpatial))]
+                if not grid_to_domain:
+                    self.clear_tables("spatialshallow_cells")
+                    if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
+                        data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, shallowNSpatial = row
+                            cells_sql += [(i, int(grid), float(shallowNSpatial))]
+                else:
+                    if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
+                        data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, shallowNSpatial = row
+                            global_gid = grid_to_domain.get(int(grid))
+                            cells_sql += [(i, global_gid, float(shallowNSpatial))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -13536,17 +13542,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                cell_sql = """SELECT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
+                cell_sql = """SELECT DISTINCT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
             else:
                 cell_sql = f"""SELECT 
-                                    md.domain_cell,
-                                    ss.shallow_n 
+                                    DISTINCT(md.domain_cell), 
+                                    ss.shallow_n
                                 FROM 
                                     spatialshallow_cells AS ss
                                 JOIN 
                                     schema_md_cells md ON ss.grid_fid = md.grid_fid
                                 WHERE 
-                                    md.domain_fid = {subdomain};"""
+                                    md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;"""
 
             line1 = "{0} {1}\n"
 
@@ -13579,7 +13586,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                cell_sql = """SELECT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
+                cell_sql = """SELECT DISTINCT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
             else:
                 cell_sql = f"""SELECT 
                                     DISTINCT(md.domain_cell), 
