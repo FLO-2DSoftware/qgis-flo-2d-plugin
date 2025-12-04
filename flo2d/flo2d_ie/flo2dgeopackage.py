@@ -12224,7 +12224,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tolspatial_cells"):
                 return False
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
+                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells;"""
             else:
                 tol_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell,
@@ -12831,7 +12831,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
 
         if not subdomain:
-            levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
+            levee_data_sql = """SELECT DISTINCT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
             levee_fail_sql = """SELECT  grid_fid, 
                                         lfaildir, 
                                         failevel,
