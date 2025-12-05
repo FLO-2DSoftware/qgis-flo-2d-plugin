@@ -4086,7 +4086,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_levee_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_levee_hdf5()
+            return self.import_levee_hdf5(grid_to_domain)
 
     def import_levee_dat(self, grid_to_domain):
         lgeneral_sql = [
@@ -4145,7 +4145,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql)
 
-    def import_levee_hdf5(self):
+    def import_levee_hdf5(self, grid_to_domain):
         try:
             levee_group = self.parser.read_groups("Input/Levee")
             if levee_group:
@@ -4165,28 +4165,54 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     8,
                 ]
 
-                self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
+                if not grid_to_domain:
+                    self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
 
-                # Process LEVEE_GLOBAL dataset
-                if "LEVEE_GLOBAL" in levee_group.datasets:
-                    data = levee_group.datasets["LEVEE_GLOBAL"].data
-                    for row in data:
-                        raiselev, ilevfail = row
-                        lgeneral_sql += [(raiselev, int(ilevfail))]
+                    # Process LEVEE_GLOBAL dataset
+                    if "LEVEE_GLOBAL" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_GLOBAL"].data
+                        for row in data:
+                            raiselev, ilevfail = row
+                            lgeneral_sql += [(raiselev, int(ilevfail))]
 
-                if "LEVEE_DATA" in levee_group.datasets:
-                    data = levee_group.datasets["LEVEE_DATA"].data
-                    for row in data:
-                        lgridno, ldir, levcrest = row
-                        geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
-                        ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
+                    if "LEVEE_DATA" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_DATA"].data
+                        for row in data:
+                            lgridno, ldir, levcrest = row
+                            geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
+                            ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
 
-                if "LEVEE_FAILURE" in levee_group.datasets:
-                    data = levee_group.datasets["LEVEE_FAILURE"].data
-                    for row in data:
-                        lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
-                        lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate,
-                                          failwidrate)]
+                    if "LEVEE_FAILURE" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_FAILURE"].data
+                        for row in data:
+                            lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
+                            lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate,
+                                              failwidrate)]
+                else:
+
+                    # Process LEVEE_GLOBAL dataset
+                    if "LEVEE_GLOBAL" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_GLOBAL"].data
+                        for row in data:
+                            raiselev, ilevfail = row
+                            lgeneral_sql += [(raiselev, int(ilevfail))]
+
+                    if "LEVEE_DATA" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_DATA"].data
+                        for row in data:
+                            lgridno, ldir, levcrest = row
+                            lgridno = grid_to_domain[int(lgridno)]
+                            geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
+                            ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
+
+                    if "LEVEE_FAILURE" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_FAILURE"].data
+                        for row in data:
+                            lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
+                            lfailgrid = grid_to_domain[int(lfailgrid)]
+                            lfailure_sql += [
+                                (int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate,
+                                 failwidrate)]
 
                 if lgeneral_sql:
                     self.batch_execute(lgeneral_sql)
@@ -12956,54 +12982,54 @@ class Flo2dGeoPackage(GeoPackageUtils):
             levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
         else:
             levee_data_sql = f"""
-                                     SELECT 
-                                        md.domain_cell, 
-                                        ld.ldir, 
-                                        ld.levcrest 
-                                     FROM 
-                                        levee_data AS ld
-                                     JOIN
-                                        schema_md_cells md ON ld.grid_fid = md.grid_fid
-                                     WHERE 
-                                        md.domain_fid = {subdomain}
-                                     ORDER BY 
-                                        md.domain_cell, ld.fid;
-                                     """
+                                 SELECT 
+                                    DISTINCT(md.domain_cell), 
+                                    ld.ldir, 
+                                    ld.levcrest 
+                                 FROM 
+                                    levee_data AS ld
+                                 JOIN
+                                    schema_md_cells md ON ld.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell, ld.fid;
+                                 """
 
             levee_fail_sql = f"""
-                                     SELECT 
-                                        md.domain_cell, 
-                                        lf.lfaildir, 
-                                        lf.failevel,
-                                        lf.failtime,
-                                        lf.levbase,
-                                        lf.failwidthmax,
-                                        lf.failrate,
-                                        lf.failwidrate
-                                     FROM 
-                                        levee_failure AS lf
-                                     JOIN
-                                        schema_md_cells md ON lf.grid_fid = md.grid_fid
-                                     WHERE 
-                                        md.domain_fid = {subdomain}
-                                     ORDER BY 
-                                        md.domain_cell, lf.fid;
-                                     """
+                                 SELECT 
+                                    DISTINCT(md.domain_cell), 
+                                    lf.lfaildir, 
+                                    lf.failevel,
+                                    lf.failtime,
+                                    lf.levbase,
+                                    lf.failwidthmax,
+                                    lf.failrate,
+                                    lf.failwidrate
+                                 FROM 
+                                    levee_failure AS lf
+                                 JOIN
+                                    schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell, lf.fid;
+                                 """
 
             levee_frag_sql = f"""
-                                     SELECT 
-                                        md.domain_cell, 
-                                        lf.levfragchar, 
-                                        lf.levfragprob 
-                                     FROM 
-                                        levee_fragility AS lf
-                                     JOIN
-                                        schema_md_cells md ON lf.grid_fid = md.grid_fid
-                                     WHERE 
-                                        md.domain_fid = {subdomain}
-                                     ORDER BY 
-                                        md.domain_cell;
-                                     """
+                                 SELECT 
+                                    DISTINCT(md.domain_cell), 
+                                    lf.levfragchar, 
+                                    lf.levfragprob 
+                                 FROM 
+                                    levee_fragility AS lf
+                                 JOIN
+                                    schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell;
+                                 """
 
         # line1 = "{0}  {1}\n"
         # line3 = "{0}  {1}  {2}\n"
@@ -13074,7 +13100,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
 
             if not subdomain:
-                levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
+                levee_data_sql = """SELECT DISTINCT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
                 levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
                 levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
             else:

@@ -818,7 +818,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_arf",
             # "import_mult",
             # "import_sed", # data
-            # "import_levee", # data
+            "import_levee",
             # "import_fpxsec", # data
             # "import_breach",
             # "import_gutter",
@@ -902,15 +902,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def call_IO_methods_hdf5(self, calls, debug, *args):
 
-        self.uc.log_info("Entrou hdf5")
         self.f2g.parser.write_mode = "w"
 
-        # progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
-        # progDialog.setModal(True)
-        # progDialog.setValue(0)
-        # progDialog.show()
-        # i = 0
-        #
         for call in calls:
 
             local_args = args
@@ -928,17 +921,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def call_IO_methods_dat(self, calls, debug, *args):
 
-        # self.files_used = ""
-        # self.files_not_used = ""
-
-        # progDialog = QProgressDialog("Exporting to DATA...", None, 0, len(calls))
-        # progDialog.setModal(True)
-        # progDialog.setValue(0)
-        # progDialog.show()
-        # i = 0
-        #
-        # # QApplication.setOverrideCursor(Qt.WaitCursor)
-
         for call in calls:
 
             local_args = args
@@ -946,59 +928,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             if call == "import_swmminp":
                 local_args = ("SWMM.INP", False)
 
-            # i += 1
-            # progDialog.setValue(i)
-            # progDialog.setLabelText(call)
-            # QApplication.processEvents()
-
-            # if call == "import_hystruc_bridge_xs":
-            #     dat = "BRIDGE_XSEC.DAT"
-            # elif call == "import_swmminp":
-            #     dat = "SWMM.INP"
-            # elif call == 'import_steep_slopen':
-            #     dat = "STEEP_SLOPEN.DAT"
-            # elif call == 'import_lid_volume':
-            #     dat = "LID_VOLUME.DAT"
-            # elif call == 'import_shallowNSpatial':
-            #     dat = "SHALLOWN_SPATIAL.DAT"
-            # elif call == "import_tailings":
-            #     if self.f2g.parser.dat_files["TAILINGS.DAT"] is not None:
-            #         dat = "TAILINGS.DAT"
-            #     if self.f2g.parser.dat_files["TAILINGS_CV.DAT"] is not None:
-            #         dat = "TAILINGS_CV.DAT"
-            #     if self.f2g.parser.dat_files["TAILINGS_STACK_DEPTH.DAT"] is not None:
-            #         dat = "TAILINGS_STACK_DEPTH.DAT"
-            # else:
-            #     dat = call.split("_")[-1].upper() + ".DAT"
-            # if call.startswith("import"):
-            #     if self.f2g.parser.dat_files[dat] is None:
-            #         if dat == "MULT.DAT":
-            #             if self.f2g.parser.dat_files["SIMPLE_MULT.DAT"] is None:
-            #                 self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
-            #                 self.files_not_used += dat + "\n"
-            #                 continue
-            #             else:
-            #                 self.files_used += "SIMPLE_MULT.DAT\n"
-            #                 pass
-            #         else:
-            #             self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
-            #             if dat not in ["WSURF.DAT", "WSTIME.DAT"]:
-            #                 self.files_not_used += dat + "\n"
-            #             continue
-            #     else:
-            #         if dat == "MULT.DAT":
-            #             self.files_used += dat + " and/or SIMPLE_MULT.DAT" + "\n"
-            #             pass
-            #         # elif os.path.getsize(os.path.join(last_dir, dat)) > 0:
-            #         #     self.files_used += dat + "\n"
-            #         #     if dat == "CHAN.DAT":
-            #         #         self.files_used += "CHANBANK.DAT" + "\n"
-            #         #     pass
-            #         else:
-            #             self.files_not_used += dat + "\n"
-            #             continue
-
-            # try:
             start_time = time.time()
 
             method = getattr(self.f2g, call)
@@ -1007,11 +936,4 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
             self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
 
-            # except Exception as e:
-            #     if debug is True:
-            #         self.uc.log_info(traceback.format_exc())
-            #     else:
-            #         raise
-
-        # QApplication.restoreOverrideCursor()
 
