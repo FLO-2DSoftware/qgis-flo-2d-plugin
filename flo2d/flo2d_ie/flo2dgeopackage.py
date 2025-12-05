@@ -3240,117 +3240,180 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_arf_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_arf_hdf5()
+            return self.import_arf_hdf5(grid_to_domain)
 
     def import_arf_dat(self, grid_to_domain):
-        # try:
-
-        self.gutils.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
-
-        cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
-        cells_sql = [
-            """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
-                                                   wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
-            12,
-        ]
-
-        head, data = self.parser.parse_arf()
-        if not head or not data:
-            return
-
-        if not grid_to_domain:
-            self.clear_tables("blocked_cells")
-            cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-            gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
-            cells = self.grid_centroids(gids, buffers=True)
-
-            for i, row in enumerate(chain(data["T"], data["PB"]), 1):
-                gid = str(abs(int(row[0])))
-                centroid = cells[gid]
-                cells_sql += [(centroid, i) + tuple(row)]
-        else:
-            area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
-            if area_fid and area_fid[0]:
-                area_fid = area_fid[0] + 1
-            else:
-                area_fid = 1
-            cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-            gids = (str(grid_to_domain[abs(int(x[0]))]) for x in chain(data["T"], data["PB"]))
-            cells = self.grid_centroids(gids, buffers=True)
-            for i, row in enumerate(chain(data["T"], data["PB"]), start=area_fid):
-                gid = str(grid_to_domain[abs(int(row[0]))])
-                arf = row[1]
-                wrf1 = row[2]
-                wrf2 = row[3]
-                wrf3 = row[4]
-                wrf4 = row[5]
-                wrf5 = row[6]
-                wrf6 = row[7]
-                wrf7 = row[8]
-                wrf8 = row[9]
-                centroid = cells[gid]
-                cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
-
-        self.batch_execute(cont_sql, cells_sql)
-
-        # except Exception as e:
-        #     self.uc.show_error(
-        #         "ERROR 050420.1720.0701: couldn't import ARF.DAT file!"
-        #         + "\n__________________________________________________",
-        #         e,
-        #     )
-
-    def import_arf_hdf5(self):
         try:
+
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
+
+            cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+            cells_sql = [
+                """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                                                       wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
+                12,
+            ]
+
+            head, data = self.parser.parse_arf()
+            if not head or not data:
+                return
+
+            if not grid_to_domain:
+                self.clear_tables("blocked_cells")
+                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+                gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
+                cells = self.grid_centroids(gids, buffers=True)
+
+                for i, row in enumerate(chain(data["T"], data["PB"]), 1):
+                    gid = str(abs(int(row[0])))
+                    centroid = cells[gid]
+                    cells_sql += [(centroid, i) + tuple(row)]
+            else:
+                area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
+                if area_fid and area_fid[0]:
+                    area_fid = area_fid[0] + 1
+                else:
+                    area_fid = 1
+                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+                gids = (str(grid_to_domain[abs(int(x[0]))]) for x in chain(data["T"], data["PB"]))
+                cells = self.grid_centroids(gids, buffers=True)
+                for i, row in enumerate(chain(data["T"], data["PB"]), start=area_fid):
+                    gid = float(row[0])
+                    if gid < 0:
+                        gid = str(-grid_to_domain[int(abs(gid))])
+                    else:
+                        gid = str(grid_to_domain[int(abs(gid))])
+                    arf = row[1]
+                    wrf1 = row[2]
+                    wrf2 = row[3]
+                    wrf3 = row[4]
+                    wrf4 = row[5]
+                    wrf5 = row[6]
+                    wrf6 = row[7]
+                    wrf7 = row[8]
+                    wrf8 = row[9]
+                    centroid = cells[str(grid_to_domain[abs(int(row[0]))])]
+                    cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
+
+            self.batch_execute(cont_sql, cells_sql)
+
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR 050420.1720.0701: couldn't import ARF.DAT file!"
+                + "\n__________________________________________________",
+                e,
+            )
+
+    def import_arf_hdf5(self, grid_to_domain):
+        try:
+
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
+
             arfwrf_group = self.parser.read_groups("Input/Reduction Factors")
             if arfwrf_group:
                 arfwrf_group = arfwrf_group[0]
 
                 cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
                 cells_sql = [
-                    """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                    """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
                                                            wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
                     12,
                 ]
                 # collapse_sql = ["""INSERT INTO user_blocked_areas (geom, collapse, calc_arf, calc_wrf) VALUES""", 4]
 
-                self.clear_tables("blocked_cells")
+                if not grid_to_domain:
+                    self.clear_tables("blocked_cells")
 
-                i = 1
+                    i = 1
 
-                grid_group = self.parser.read_groups("Input/Grid")[0]
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
 
-                # Read ARF_GLOBAL dataset
-                if "ARF_GLOBAL" in arfwrf_group.datasets:
-                    arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
-                    if arf_global.size > 0:
-                        cont_sql += [("IARFBLOCKMOD", arf_global[0])]
+                    # Read ARF_GLOBAL dataset
+                    if "ARF_GLOBAL" in arfwrf_group.datasets:
+                        arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
+                        if arf_global.size > 0:
+                            cont_sql += [("IARFBLOCKMOD", arf_global[0])]
 
-                # Read ARF_TOTALLY_BLOCKED dataset
-                if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
-                    totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for i, cell in enumerate(totally_blocked, 1):
-                        cell = int(cell)
-                        geom = self.build_point_xy(x_list[abs(cell) - 1], y_list[abs(cell) - 1])
-                        arf = 1
-                        wrf = 1
-                        cells_sql += [(geom, i, cell, arf) + (wrf,) * 8]  # Remaining WRF values are 0
+                    # Read ARF_TOTALLY_BLOCKED dataset
+                    if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
+                        totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, cell in enumerate(totally_blocked, 1):
+                            geom = self.build_point_xy(x_list[int(abs(cell)) - 1], y_list[int(abs(cell)) - 1])
+                            if cell < 0:
+                                cell = -int(abs(cell))
+                            else:
+                                cell = int(abs(cell))
+                            arf = 1
+                            wrf = 1
+                            cells_sql += [(geom, i, cell, arf) + (wrf,) * 8]  # Remaining WRF values are 0
 
-                # Read ARF_PARTIALLY_BLOCKED dataset
-                if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
-                    partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for row in partially_blocked:
-                        i += 1
-                        grid_fid = int(row[0])
-                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        arf = float(row[1])
-                        wrf_values = row[2:]
-                        cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+                    # Read ARF_PARTIALLY_BLOCKED dataset
+                    if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
+                        partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in partially_blocked:
+                            i += 1
+                            grid_fid = row[0]
+                            geom = self.build_point_xy(x_list[int(abs(grid_fid)) - 1], y_list[int(abs(grid_fid)) - 1])
+                            if grid_fid < 0:
+                                grid_fid = -int(abs(grid_fid))
+                            else:
+                                grid_fid = int(abs(grid_fid))
+                            arf = float(row[1])
+                            wrf_values = row[2:]
+                            cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+                else:
+
+                    area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
+                    if area_fid and area_fid[0]:
+                        area_fid = area_fid[0] + 1
+                    else:
+                        area_fid = 1
+
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+
+                    # Read ARF_GLOBAL dataset
+                    if "ARF_GLOBAL" in arfwrf_group.datasets:
+                        arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
+                        if arf_global.size > 0:
+                            cont_sql += [("IARFBLOCKMOD", arf_global[0])]
+
+                    # Read ARF_TOTALLY_BLOCKED dataset
+                    if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
+                        totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, cell in enumerate(totally_blocked, 1):
+                            geom = self.build_point_xy(x_list[int(abs(cell)) - 1], y_list[int(abs(cell)) - 1])
+                            if cell < 0:
+                                cell = -grid_to_domain[int(abs(cell))]
+                            else:
+                                cell = grid_to_domain[int(abs(cell))]
+                            arf = 1
+                            wrf = 1
+                            cells_sql += [(geom, i, cell, arf) + (wrf,) * 8]  # Remaining WRF values are 0
+
+                    # Read ARF_PARTIALLY_BLOCKED dataset
+                    if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
+                        partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in partially_blocked:
+                            area_fid += 1
+                            grid_fid = row[0]
+                            geom = self.build_point_xy(x_list[int(abs(grid_fid)) - 1], y_list[int(abs(grid_fid)) - 1])
+                            if grid_fid < 0:
+                                grid_fid = -grid_to_domain[int(abs(grid_fid))]
+                            else:
+                                grid_fid = grid_to_domain[int(abs(grid_fid))]
+                            arf = float(row[1])
+                            wrf_values = row[2:]
+                            cells_sql += [(geom, area_fid, grid_fid, arf) + tuple(wrf_values)]
 
                 # Execute batch inserts
                 self.batch_execute(cont_sql, cells_sql)
@@ -11782,15 +11845,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
             else:
                 tbc_sql = f"""SELECT DISTINCT
-                                md.domain_cell, 
-                                area_fid 
-                            FROM 
-                                blocked_cells AS bc
-                            JOIN 
-                                schema_md_cells md ON bc.grid_fid = md.grid_fid
-                            WHERE 
-                                arf = 1 AND md.domain_fid = {subdomain}
-                            ORDER BY md.domain_cell;"""
+                                    CASE 
+                                        WHEN bc.grid_fid < 0 THEN -md.domain_cell
+                                        ELSE md.domain_cell
+                                    END AS signed_domain_cell,
+                                    area_fid
+                                FROM blocked_cells AS bc
+                                JOIN schema_md_cells md 
+                                  ON ABS(bc.grid_fid) = md.grid_fid
+                                WHERE arf = 1
+                                  AND md.domain_fid = {subdomain}
+                                ORDER BY signed_domain_cell;"""
 
                 pbc_sql = f"""SELECT DISTINCT
                                 md.domain_cell, 
@@ -11880,15 +11945,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
 
             else:
-                tbc_sql = f"""SELECT 
-                                md.domain_cell, 
-                                area_fid 
-                            FROM 
-                                blocked_cells AS bc
-                            JOIN 
-                                schema_md_cells md ON bc.grid_fid = md.grid_fid
-                            WHERE 
-                                arf = 1 AND md.domain_fid = {subdomain};"""
+                tbc_sql = f"""SELECT DISTINCT
+                                    CASE 
+                                        WHEN bc.grid_fid < 0 THEN -md.domain_cell
+                                        ELSE md.domain_cell
+                                    END AS signed_domain_cell,
+                                    area_fid
+                                FROM blocked_cells AS bc
+                                JOIN schema_md_cells md 
+                                  ON ABS(bc.grid_fid) = md.grid_fid
+                                WHERE arf = 1
+                                  AND md.domain_fid = {subdomain}
+                                ORDER BY signed_domain_cell;"""
 
                 pbc_sql = f"""SELECT 
                                 md.domain_cell, 
