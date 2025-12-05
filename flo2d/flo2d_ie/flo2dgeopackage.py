@@ -1411,7 +1411,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_rain_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_rain_hdf5()
+            return self.import_rain_hdf5(grid_to_domain)
 
     def import_rain_dat(self, grid_to_domain):
         rain_sql = [
@@ -1502,7 +1502,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if repeated_value:
             self.uc.bar_warn("Rainfall data had repeated values that were removed. Check log for details.")
 
-    def import_rain_hdf5(self):
+    def import_rain_hdf5(self, grid_to_domain):
         try:
             rain_group = self.parser.read_groups("Input/Rainfall")
             if rain_group:
@@ -1523,40 +1523,73 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     3,
                 ]
 
-                self.clear_tables(
-                    "rain",
-                    "rain_arf_cells",
-                    "rain_time_series",
-                    "rain_time_series_data",
-                )
-
                 repeated_value = False
 
-                # Read RAIN_GLOBAL dataset
-                rain_global = rain_group.datasets["RAIN_GLOBAL"].data
-                if len(rain_global) < 8:
-                    raise ValueError("RAIN_GLOBAL dataset is incomplete.")
-                rain_sql += [(1,) + tuple(rain_global[:8])]
+                if not grid_to_domain:
 
-                # Insert time series data
-                ts_sql += [(1,)]
-                rain_data = rain_group.datasets["RAIN_DATA"].data
-                previous_value = None
-                for row in rain_data:
-                    time, value = row
-                    if value != previous_value:
-                        tsd_sql += [(1, time, value)]
+                    self.clear_tables(
+                        "rain",
+                        "rain_arf_cells",
+                        "rain_time_series",
+                        "rain_time_series_data",
+                    )
+
+                    # Read RAIN_GLOBAL dataset
+                    rain_global = rain_group.datasets["RAIN_GLOBAL"].data
+                    if len(rain_global) < 8:
+                        raise ValueError("RAIN_GLOBAL dataset is incomplete.")
+                    rain_sql += [(1,) + tuple(rain_global[:8])]
+
+                    # Insert time series data
+                    ts_sql += [(1,)]
+                    rain_data = rain_group.datasets["RAIN_DATA"].data
+                    previous_value = None
+                    for row in rain_data:
+                        time, value = row
+                        if value != previous_value:
+                            tsd_sql += [(1, time, value)]
+                        else:
+                            repeated_value = True
+                            self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
+                        previous_value = value
+
+                    # Insert ARF data if available
+                    if "RAIN_ARF" in rain_group.datasets:
+                        rain_arf = rain_group.datasets["RAIN_ARF"].data
+                        for i, row in enumerate(rain_arf, 1):
+                            grid_fid, arf = row
+                            cells_sql += [(i, int(grid_fid), float(arf))]
+                else:
+                    # Check if there is any existing data on the rain table, if so, it means that it was already imported
+                    options_check = self.execute("SELECT COUNT(*) FROM rain;").fetchone()
+                    if options_check and options_check[0] > 0:
+                        pass
                     else:
-                        repeated_value = True
-                        self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
-                    previous_value = value
+                        # Read RAIN_GLOBAL dataset
+                        rain_global = rain_group.datasets["RAIN_GLOBAL"].data
+                        if len(rain_global) < 8:
+                            raise ValueError("RAIN_GLOBAL dataset is incomplete.")
+                        rain_sql += [(1,) + tuple(rain_global[:8])]
 
-                # Insert ARF data if available
-                if "RAIN_ARF" in rain_group.datasets:
-                    rain_arf = rain_group.datasets["RAIN_ARF"].data
-                    for i, row in enumerate(rain_arf, 1):
-                        grid_fid, arf = row
-                        cells_sql += [(i, int(grid_fid), float(arf))]
+                        # Insert time series data
+                        ts_sql += [(1,)]
+                        rain_data = rain_group.datasets["RAIN_DATA"].data
+                        previous_value = None
+                        for row in rain_data:
+                            time, value = row
+                            if value != previous_value:
+                                tsd_sql += [(1, time, value)]
+                            else:
+                                repeated_value = True
+                                self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
+                            previous_value = value
+
+                    # Insert ARF data if available
+                    if "RAIN_ARF" in rain_group.datasets:
+                        rain_arf = rain_group.datasets["RAIN_ARF"].data
+                        for i, row in enumerate(rain_arf, 1):
+                            grid_fid, arf = row
+                            cells_sql += [(i, grid_to_domain.get(int(grid_fid)), float(arf))]
 
                 # Execute batch inserts
                 self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)
