@@ -1608,11 +1608,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing RAIN data from HDF5 failed!", e)
             return False
 
-    def import_raincell(self, grid_to_domain=None):
+    def import_raincell(self, grid_to_domain=None, raincell_hdf5_path=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_raincell_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_raincell_hdf5()
+            return self.import_raincell_hdf5(grid_to_domain, raincell_hdf5_path)
 
     def import_raincell_dat(self, grid_to_domain):
         head_sql = [
@@ -1780,24 +1780,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(head_sql, data_sql)
 
-    def import_raincell_hdf5(self):
-        try:
+    def import_raincell_hdf5(self, grid_to_domain, raincell_hdf5_path):
+        # try:
 
+        if not raincell_hdf5_path:
             s = QSettings()
             project_dir = s.value("FLO-2D/lastGdsDir")
-
             raincell = os.path.join(project_dir, "RAINCELL.HDF5")
-            if os.path.exists(raincell):
+        else:
+            raincell = raincell_hdf5_path
 
-                head_sql = [
-                    """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
-                    3,
-                ]
+        if os.path.exists(raincell):
 
-                data_sql = [
-                    """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
-                    3,
-                ]
+            head_sql = [
+                """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
+                3,
+            ]
+
+            data_sql = [
+                """INSERT OR IGNORE INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+                3,
+            ]
+
+            if not grid_to_domain:
 
                 self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
 
@@ -1830,21 +1835,60 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             # Ensure native Python float for DB drivers
                             val = float(col[rrgrid - 1])
                             data_sql += [(int(i), int(rrgrid), val)]
-
-                    if head_sql:
-                        self.batch_execute(head_sql)
-
-                    if data_sql:
-                        self.batch_execute(data_sql)
-
-                return True
             else:
-                return False
 
-        except Exception as e:
-            self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
-            self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+                self.execute("""
+                        CREATE UNIQUE INDEX IF NOT EXISTS idx_raincell_data_unique
+                        ON raincell_data(time_interval, rrgrid, iraindum);
+                    """)
+
+                with h5py.File(raincell, "r") as f:
+                    grp = f["raincell"]
+
+                    # Header insert only once
+                    raincell_check = self.execute("SELECT COUNT(*) FROM raincell;").fetchone()
+                    if raincell_check and raincell_check[0] == 0:
+                        # Read header scalars
+                        rainintime = int(grp["RAININTIME"][()])  # scalar int
+                        irinters = int(grp["IRINTERS"][()])  # scalar int
+
+                        # TIMESTAMP is a 1-element array of bytes
+                        ts0 = grp["TIMESTAMP"][0]
+                        if isinstance(ts0, (bytes, bytearray)):
+                            timestamp = ts0.decode("utf-8", errors="ignore")
+                        else:
+                            timestamp = str(ts0)
+
+                        head_sql += [(rainintime, int(irinters), timestamp)]
+
+                    # Bulk insert raincell_data in chunks
+                    dts = grp["IRAINDUM"]  # shape (n_cells, irinters)
+                    n_cells, n_intervals = dts.shape
+
+                    # Iterate column-wise to keep locality by time_interval
+                    for i in range(n_intervals):
+                        col = dts[:, i]  # length n_cells
+                        # Append rows to chunk
+                        # rrgrid is 1..n_cells to match your exported order
+                        for rrgrid in range(1, n_cells + 1):
+                            # Ensure native Python float for DB drivers
+                            val = float(col[rrgrid - 1])
+                            data_sql += [(int(i), int(grid_to_domain[rrgrid]), val)]
+
+            if head_sql:
+                self.batch_execute(head_sql)
+
+            if data_sql:
+                self.batch_execute(data_sql)
+
+            return True
+        else:
             return False
+
+        # except Exception as e:
+        #     self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
+        #     self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+        #     return False
 
     def import_raincellraw(self):
         if self.parsed_format == self.FORMAT_DAT:

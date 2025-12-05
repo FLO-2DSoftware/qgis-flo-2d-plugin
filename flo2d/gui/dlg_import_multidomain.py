@@ -806,7 +806,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_outrc",  Add back when the OUTRC process is completed
             # "import_outflow",
             "import_rain",
-            # "import_raincell", # data
+            "import_raincell",
             # "import_raincellraw",
             # "import_evapor",
             "import_infil",
@@ -910,6 +910,13 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
             if call == "import_swmminp":
                 local_args = ("SWMM.INP", False)
+            # add the subdomain path
+            if call == "import_raincell":
+                if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
+                    dirname = os.path.dirname(self.f2g.parser.hdf5_filepath)
+                    raincell_hdf5_path = os.path.join(dirname, "RAINCELL.HDF5")
+                    local_args += (raincell_hdf5_path,)
+
 
             start_time = time.time()
 
@@ -922,7 +929,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
     def call_IO_methods_dat(self, calls, debug, *args):
 
         for call in calls:
-
             local_args = args
 
             if call == "import_swmminp":
