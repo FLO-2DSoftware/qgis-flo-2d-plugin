@@ -809,7 +809,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_raincell", # data
             # "import_raincellraw",
             # "import_evapor",
-            # "import_infil", # data
+            "import_infil",
             # "import_chan", # data
             # "import_xsec", # data
             # "import_hystruc", # data
