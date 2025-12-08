@@ -3140,7 +3140,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_hystruc_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_hystruc_hdf5()
+            return self.import_hystruc_hdf5(grid_to_domain)
 
     def import_hystruc_dat(self, grid_to_domain):
         try:
@@ -3286,12 +3286,55 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "ERROR 040220.0742: Importing hydraulic structures failed!\nPlease check HYSTRUC.DAT data format and values."
             )
 
-    def import_hystruc_hdf5(self):
-        try:
-            hydrostruct_group = self.parser.read_groups("Input/Hydraulic Structures")
-            if hydrostruct_group:
-                hydrostruct_group = hydrostruct_group[0]
+    def import_hystruc_hdf5(self, grid_to_domain):
+        # try:
+        hydrostruct_group = self.parser.read_groups("Input/Hydraulic Structures")
+        if hydrostruct_group:
+            hydrostruct_group = hydrostruct_group[0]
 
+            hystruc_params = [
+                "fid",
+                "geom",
+                "ifporchan",
+                "icurvtable",
+                "inflonod",
+                "outflonod",
+                "inoutcont",
+                "headrefel",
+                "clength",
+                "cdiameter",
+            ]
+
+            hystruc_sql = [
+                "INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES",
+                10,
+            ]
+            ratc_sql = [
+                """INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""",
+                6,
+            ]
+            repl_ratc_sql = [
+                """INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES""",
+                6,
+            ]
+            ratt_sql = [
+                """INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""",
+                4,
+            ]
+            culvert_sql = [
+                """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES""",
+                7,
+            ]
+            storm_sql = [
+                """INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""",
+                3,
+            ]
+            bridge_sql = [
+                """INSERT INTO bridge_variables (struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT) VALUES""",
+                25,
+            ]
+
+            if not grid_to_domain:
                 self.clear_tables(
                     "struct",
                     "rat_curves",
@@ -3301,48 +3344,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     "storm_drains",
                     "bridge_variables",
                 )
-
-                hystruc_params = [
-                    "fid",
-                    "geom",
-                    "ifporchan",
-                    "icurvtable",
-                    "inflonod",
-                    "outflonod",
-                    "inoutcont",
-                    "headrefel",
-                    "clength",
-                    "cdiameter",
-                ]
-
-                hystruc_sql = [
-                    "INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES",
-                    10,
-                ]
-                ratc_sql = [
-                    """INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""",
-                    6,
-                ]
-                repl_ratc_sql = [
-                    """INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES""",
-                    6,
-                ]
-                ratt_sql = [
-                    """INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""",
-                    4,
-                ]
-                culvert_sql = [
-                    """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES""",
-                    7,
-                ]
-                storm_sql = [
-                    """INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""",
-                    3,
-                ]
-                bridge_sql = [
-                    """INSERT INTO bridge_variables (struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT) VALUES""",
-                    25,
-                ]
 
                 # Process STR_CONTROL
                 if "STR_CONTROL" in hydrostruct_group.datasets:
@@ -3388,44 +3389,92 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     data = hydrostruct_group.datasets["BRIDGE_VARIABLES"].data
                     values = [row[0] for row in data]
                     bridge_sql += [tuple(values)]
+            else:
 
-                if hystruc_sql:
-                    self.batch_execute(hystruc_sql)
-
-                if ratc_sql:
-                    self.batch_execute(ratc_sql)
-
-                if repl_ratc_sql:
-                    self.batch_execute(repl_ratc_sql)
-
-                if ratt_sql:
-                    self.batch_execute(ratt_sql)
-
-                if culvert_sql:
-                    self.batch_execute(culvert_sql)
-
-                if storm_sql:
-                    self.batch_execute(storm_sql)
-
-                if bridge_sql:
-                    self.batch_execute(bridge_sql)
-
-                # Process STR_NAME
-                if "STR_NAME" in hydrostruct_group.datasets:
-                    data = hydrostruct_group.datasets["STR_NAME"].data
+                # Process STR_CONTROL
+                if "STR_CONTROL" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["STR_CONTROL"].data
                     for row in data:
-                        struct_fid, structname = row
-                        if isinstance(structname, bytes):
-                            structname = structname.decode("utf-8")
-                        self.execute(
-                            "UPDATE struct SET structname = ? WHERE fid = ?;",
-                            (structname, int(struct_fid))
-                        )
+                        struct_fid, ifporchan, icurvtable, inflonod, outflonod, inoutcont, headrefel, clength, cdiameter = row
+                        inflonod = grid_to_domain.get(int(inflonod))
+                        outflonod = grid_to_domain.get(int(outflonod))
+                        geom = self.build_linestring([int(inflonod), int(outflonod)])
+                        hystruc_sql += [
+                            (int(struct_fid), geom, int(ifporchan), int(icurvtable), int(inflonod), int(outflonod),
+                             int(inoutcont), headrefel, clength, cdiameter)]
 
-        except Exception:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_warn("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
-            self.uc.log_info("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
+                # Process RAT_CURVES
+                if "RATING_CURVE" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["RATING_CURVE"].data
+                    for row in data:
+                        struct_fid, hdepexc, coefq, expq, coefa, expa, repdep, rqcoef, rqexp, racoef, raexp = row
+                        ratc_sql += [(int(struct_fid), hdepexc, coefq, expq, coefa, expa)]
+                        repl_ratc_sql += [(int(struct_fid), repdep, rqcoef, rqexp, racoef, raexp)]
+
+                # Process RAT_TABLE
+                if "RATING_TABLE" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["RATING_TABLE"].data
+                    for row in data:
+                        rt_fid, hdepth, qtable, atable = row
+                        ratt_sql += [(int(rt_fid), hdepth, qtable, atable)]
+
+                # Process CULVERT EQUATIONS
+                if "CULVERT_EQUATIONS" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["CULVERT_EQUATIONS"].data
+                    for row in data:
+                        struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels = row
+                        culvert_sql += [(int(struct_fid), typec, typeen, culvertn, ke, cubase, int(multibarrels))]
+
+                # Process STORM_DRAIN
+                if "STORM_DRAIN" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["STORM_DRAIN"].data
+                    for row in data:
+                        struct_fid, istormdout, stormdmax = row
+                        storm_sql += [(int(struct_fid), int(istormdout), stormdmax)]
+
+                # Process BRIDGE VARIABLES
+                if "BRIDGE_VARIABLES" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["BRIDGE_VARIABLES"].data
+                    values = [row[0] for row in data]
+                    bridge_sql += [tuple(values)]
+
+            if hystruc_sql:
+                self.batch_execute(hystruc_sql)
+
+            if ratc_sql:
+                self.batch_execute(ratc_sql)
+
+            if repl_ratc_sql:
+                self.batch_execute(repl_ratc_sql)
+
+            if ratt_sql:
+                self.batch_execute(ratt_sql)
+
+            if culvert_sql:
+                self.batch_execute(culvert_sql)
+
+            if storm_sql:
+                self.batch_execute(storm_sql)
+
+            if bridge_sql:
+                self.batch_execute(bridge_sql)
+
+            # Process STR_NAME
+            if "STR_NAME" in hydrostruct_group.datasets:
+                data = hydrostruct_group.datasets["STR_NAME"].data
+                for row in data:
+                    struct_fid, structname = row
+                    if isinstance(structname, bytes):
+                        structname = structname.decode("utf-8")
+                    self.execute(
+                        "UPDATE struct SET structname = ? WHERE fid = ?;",
+                        (structname, int(struct_fid))
+                    )
+
+        # except Exception:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_warn("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
+        #     self.uc.log_info("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
 
     def import_hystruc_bridge_xs(self):
         if self.parsed_format == self.FORMAT_DAT:
