@@ -15,7 +15,7 @@ from PyQt5.QtCore import QSettings, Qt, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices
 from PyQt5.QtWidgets import QApplication
 from qgis._core import QgsPointXY, QgsGeometry
-from qgis.core import QgsFeatureRequest
+from qgis.core import QgsFeatureRequest, QgsSpatialIndex
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
 
@@ -72,6 +72,11 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
         self.schema_fpxsec_lyr = self.lyrs.data["fpxsec"]["qlyr"]
+
+        # Whenever the user finishes digitizing a new fpx cross-section
+        # check that it does not cross/touch existing cross-section(s)
+        if self.fpxsec_lyr is not None:
+            self.fpxsec_lyr.featureAdded.connect(self.on_fpxs_feature_added)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -178,6 +183,65 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.add_user_fpxs_btn.setChecked(True)
 
         self.lyrs.enter_edit_mode("user_fpxsec")
+
+
+    def on_fpxs_feature_added(self, fid):
+        # Only run this check if user_fpxsec layer is in edit mode
+        if not self.lyrs.any_lyr_in_edit("user_fpxsec"):
+            return
+
+        # Work with the FPXS layer
+        layer = self.fpxsec_lyr
+
+        # Get the newly added feature by its feature ID
+        new_feat = next(layer.getFeatures(QgsFeatureRequest(fid)), None)
+        if not new_feat:
+            # If the feature can't be found, stop
+            return
+
+        # Geometry of the newly added cross-section
+        new_geom = new_feat.geometry()
+        if not new_geom or new_geom.isEmpty():
+            # If geometry is missing or empty, stop
+            return
+
+        # Only fetch features whose bbox intersects the new geometry (performance filter)
+        request = QgsFeatureRequest().setFilterRect(new_geom.boundingBox())
+
+        # Check all potentially nearby features
+        for other in layer.getFeatures(request):
+            if other.id() == fid:
+                # Skip comparing the feature with itself
+                continue
+
+            # Geometry of the existing cross-section
+            other_geom = other.geometry()
+            if not other_geom or other_geom.isEmpty():
+                # Skip features with invalid/empty geometry
+                continue
+
+            # Enforce "do not cross / do not touch" rule
+            if new_geom.crosses(other_geom) or new_geom.touches(other_geom):
+                # Notify user and log the problem
+                self.uc.bar_error("Floodplain cross-sections are required not to intersect.")
+                self.uc.log_info(
+                    "ERROR 060319.XXXX: Floodplain cross-section crosses or touches "
+                    "existing cross-section. The last drawn XS has been removed."
+                )
+                # Exit the loop early due to the conflict
+                break
+        else:
+            # If the loop finishes with no break, no conflict was found, keep feature
+            return
+
+        # delete the new feature when conflict was found
+        try:
+            layer.deleteFeature(fid)  # Remove the invalid cross-section
+            layer.triggerRepaint()  # Refresh the map display
+        except Exception:
+            # Silently ignore any errors during delete/repaint
+            pass
+
 
     def save_fpxs_lyr_edits(self):
         if not self.lyrs.any_lyr_in_edit("user_fpxsec"):
