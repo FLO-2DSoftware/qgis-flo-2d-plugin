@@ -10,7 +10,7 @@
 import os
 import shutil
 import traceback
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 from itertools import chain, groupby
 from operator import itemgetter
@@ -2976,7 +2976,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_xsec_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_xsec_hdf5()
+            return self.import_xsec_hdf5(grid_to_domain)
 
     def import_xsec_dat(self, grid_to_domain):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
@@ -3037,31 +3037,101 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(xsec_sql)
 
-    def import_xsec_hdf5(self):
+    def import_xsec_hdf5(self, grid_to_domain):
         channel_group = self.parser.read_groups("Input/Channels")
         if channel_group:
             channel_group = channel_group[0]
             xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
-            self.clear_tables("xsec_n_data")
 
-            # Process XSEC_DATA
-            if "XSEC_DATA" in channel_group.datasets:
-                data = channel_group.datasets["XSEC_DATA"].data
-                for row in data:
-                    chan_n_nxsecnum, xi, yi = row
-                    xsec_sql += [(chan_n_nxsecnum, xi, yi)]
+            if not grid_to_domain:
+                self.clear_tables("xsec_n_data")
 
-            # Process XSEC_NAME
-            if "XSEC_NAME" in channel_group.datasets:
-                data = channel_group.datasets["XSEC_NAME"].data
-                for row in data:
-                    nsecum, xsecname = row
-                    if isinstance(xsecname, bytes):
-                        xsecname = xsecname.decode("utf-8")
-                    self.execute(
-                        "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
-                        (xsecname, int(nsecum))
-                    )
+                # Process XSEC_DATA
+                if "XSEC_DATA" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_DATA"].data
+                    for row in data:
+                        chan_n_nxsecnum, xi, yi = row
+                        xsec_sql += [(chan_n_nxsecnum, xi, yi)]
+
+                # Process XSEC_NAME
+                if "XSEC_NAME" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_NAME"].data
+                    for row in data:
+                        nsecum, xsecname = row
+                        if isinstance(xsecname, bytes):
+                            xsecname = xsecname.decode("utf-8")
+                        self.execute(
+                            "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
+                            (xsecname, int(nsecum))
+                        )
+            else:
+                current_fid = self.execute("SELECT MAX(chan_n_nxsecnum) FROM xsec_n_data;").fetchone()
+                if current_fid and current_fid[0]:
+                    current_fid = current_fid[0]
+                else:
+                    current_fid = 0
+
+                nodes = defaultdict(list)
+                # Process XSEC_DATA
+                if "XSEC_DATA" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_DATA"].data
+                    for row in data:
+                        chan_n_nxsecnum, xi, yi = row
+                        nodes[chan_n_nxsecnum].append((round(xi, 2), round(yi, 2)))
+
+                next_id = current_fid + 1
+                for key in list(nodes.keys()):
+                    identical_found = False
+                    # Loop through up to the last 3 previous sections - This may be enough
+                    for offset in range(1, 4):  # check (i - 1), (i - 2), (i - 3)
+                        prev_id = next_id - offset
+                        if prev_id < 0:
+                            continue
+
+                        xs_data = self.execute(
+                            "SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ?;",
+                            (prev_id,)
+                        ).fetchall()
+
+                        if xs_data:
+                            xs_rounded = [(round(x, 2), round(y, 2)) for x, y in xs_data]
+
+                            # If identical to any of the previous three, mark and break
+                            if xs_rounded == nodes[key]:
+                                identical_found = True
+                                break
+
+                    # Skip if identical to any of the last three
+                    if identical_found:
+                        continue
+
+                    for xi, yi in nodes[key]:
+                        xsec_sql += [(next_id, xi, yi)]
+
+                    next_id += 1
+
+                row = self.execute("SELECT MAX(nxsecnum) FROM chan_n;").fetchone()
+                if row and row[0] is not None:
+                    current_nxsecnum = int(row[0])
+                else:
+                    current_nxsecnum = 0
+
+                # Process XSEC_NAME
+                if "XSEC_NAME" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_NAME"].data
+                    total = len(data)
+                    for pos, row in (enumerate(reversed(data))):
+                        nsecum, xsecname = row
+                        if isinstance(xsecname, bytes):
+                            xsecname = xsecname.decode("utf-8")
+                        if isinstance(nsecum, bytes):
+                            nsecum = nsecum.decode("utf-8")
+                        nx = current_nxsecnum - pos
+
+                        self.execute(
+                            "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
+                            (xsecname, nx)
+                        )
 
             if xsec_sql:
                 self.batch_execute(xsec_sql)
@@ -11389,7 +11459,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             else:
                 chan_n_sql = f"""
-                    SELECT 
+                    SELECT DISTINCT
                         cn.nxsecnum,
                         cn.xsecname
                     FROM 
