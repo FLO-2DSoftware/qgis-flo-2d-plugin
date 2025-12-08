@@ -2327,7 +2327,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_chan_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_chan_hdf5()
+            return self.import_chan_hdf5(grid_to_domain)
 
     def import_chan_dat(self, grid_to_domain):
 
@@ -2543,7 +2543,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #         "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
         #     )
 
-    def import_chan_hdf5(self):
+    def import_chan_hdf5(self, grid_to_domain):
         channel_group = self.parser.read_groups("Input/Channels")
         if channel_group:
             channel_group = channel_group[0]
@@ -2553,24 +2553,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 6,
             ]
             chan_elems_sql = [
-                """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
+                """INSERT OR IGNORE INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
                 8,
             ]
             chan_r_sql = [
-                """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+                """INSERT OR IGNORE INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
                 5,
             ]
             # chan_v_sql = [
-            #     """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+            #     """INSERT OR IGNORE INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
             #                                          excdep, a11, a22, b11, b22, c11, c22) VALUES""",
             #     17,
             # ]
             chan_t_sql = [
-                """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+                """INSERT OR IGNORE INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
                 7,
             ]
             chan_n_sql = [
-                """INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""",
+                """INSERT OR IGNORE INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""",
                 3
             ]
             chan_wsel_sql = [
@@ -2591,18 +2591,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ]
 
             # try:
-            self.clear_tables(
-                "chan",
-                "chan_elems",
-                "chan_r",
-                "chan_v",
-                "chan_t",
-                "chan_n",
-                "chan_confluences",
-                "user_noexchange_chan_areas",
-                "noexchange_chan_cells",
-                "chan_wsel",
-            )
 
             xs_geom = {}
             left_bank_geom = {}
@@ -2610,131 +2598,321 @@ class Flo2dGeoPackage(GeoPackageUtils):
             prev_chan_id = None
             i = 1
 
-            # Read CHANBANK dataset (maps left to right bank grids)
-            if "CHANBANK" in channel_group.datasets:
-                data = channel_group.datasets["CHANBANK"].data
-                for row in data:
-                    left_bank_grid, right_bank_grid = row
-                    xs_geom[int(left_bank_grid)] = int(right_bank_grid)
+            if not grid_to_domain:
+                self.clear_tables(
+                    "chan",
+                    "chan_elems",
+                    "chan_r",
+                    "chan_v",
+                    "chan_t",
+                    "chan_n",
+                    "chan_confluences",
+                    "user_noexchange_chan_areas",
+                    "noexchange_chan_cells",
+                    "chan_wsel",
+                )
 
-            # Helper function to flush geometry per channel
-            def flush_channel_geometry():
-                if left_bank_grids and prev_chan_id is not None:
-                    left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
+                # Read CHANBANK dataset (maps left to right bank grids)
+                if "CHANBANK" in channel_group.datasets:
+                    data = channel_group.datasets["CHANBANK"].data
+                    for row in data:
+                        left_bank_grid, right_bank_grid = row
+                        xs_geom[int(left_bank_grid)] = int(right_bank_grid)
 
-            # Process CHAN_NATURAL
-            if "CHAN_NATURAL" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_NATURAL"].data
-                for row in data:
-                    chan_id, grid, fcn, xlen, nxecnum = row
-                    chan_id = int(chan_id)
-                    grid = int(grid)
+                # Helper function to flush geometry per channel
+                def flush_channel_geometry():
+                    if left_bank_grids and prev_chan_id is not None:
+                        left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
 
-                    if prev_chan_id is not None and chan_id != prev_chan_id:
-                        flush_channel_geometry()
-                        left_bank_grids = []
-                        i = 1
+                # Process CHAN_NATURAL
+                if "CHAN_NATURAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_NATURAL"].data
+                    for row in data:
+                        chan_id, grid, fcn, xlen, nxecnum = row
+                        chan_id = int(chan_id)
+                        grid = int(grid)
 
-                    chan_n_sql += [(grid, nxecnum, f"XS {int(nxecnum)}")]
-                    if xs_geom[grid] not in [0, "0"]:
-                        geom = self.build_linestring([grid, xs_geom[grid]])
-                    else:
-                        geom = None
-                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "N")]
-                    left_bank_grids.append(grid)
-                    prev_chan_id = chan_id
-                    i += 1
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
 
-            # Process CHAN_RECTANGULAR
-            if "CHAN_RECTANGULAR" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_RECTANGULAR"].data
-                for row in data:
-                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
-                    chan_id = int(chan_id)
-                    grid = int(grid)
+                        chan_n_sql += [(grid, nxecnum, f"XS {int(nxecnum)}")]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([grid, xs_geom[grid]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "N")]
+                        left_bank_grids.append(grid)
+                        prev_chan_id = chan_id
+                        i += 1
 
-                    if prev_chan_id is not None and chan_id != prev_chan_id:
-                        flush_channel_geometry()
-                        left_bank_grids = []
-                        i = 1
+                # Process CHAN_RECTANGULAR
+                if "CHAN_RECTANGULAR" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_RECTANGULAR"].data
+                    for row in data:
+                        chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
+                        chan_id = int(chan_id)
+                        grid = int(grid)
 
-                    chan_r_sql += [(grid, bankell, bankelr, fcw, fcd)]
-                    if xs_geom[grid] not in [0, "0"]:
-                        geom = self.build_linestring([grid, xs_geom[grid]])
-                    else:
-                        geom = None
-                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "R")]
-                    left_bank_grids.append(grid)
-                    prev_chan_id = chan_id
-                    i += 1
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
 
-            # Process CHAN_TRAPEZOIDAL
-            if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
-                for row in data:
-                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
-                    chan_id = int(chan_id)
-                    grid = int(grid)
+                        chan_r_sql += [(grid, bankell, bankelr, fcw, fcd)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([grid, xs_geom[grid]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "R")]
+                        left_bank_grids.append(grid)
+                        prev_chan_id = chan_id
+                        i += 1
 
-                    if prev_chan_id is not None and chan_id != prev_chan_id:
-                        flush_channel_geometry()
-                        left_bank_grids = []
-                        i = 1
+                # Process CHAN_TRAPEZOIDAL
+                if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
+                    for row in data:
+                        chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
+                        chan_id = int(chan_id)
+                        grid = int(grid)
 
-                    chan_t_sql += [(grid, bankell, bankelr, fcw, fcd, zl, zr)]
-                    if xs_geom[grid] not in [0, "0"]:
-                        geom = self.build_linestring([grid, xs_geom[grid]])
-                    else:
-                        geom = None
-                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "T")]
-                    left_bank_grids.append(grid)
-                    prev_chan_id = chan_id
-                    i += 1
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
 
-            # Finalize last channel after all groups
-            flush_channel_geometry()
+                        chan_t_sql += [(grid, bankell, bankelr, fcw, fcd, zl, zr)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([grid, xs_geom[grid]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "T")]
+                        left_bank_grids.append(grid)
+                        prev_chan_id = chan_id
+                        i += 1
 
-            # Process CHAN_GLOBAL for main channel table
-            if "CHAN_GLOBAL" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_GLOBAL"].data
-                for row in data:
-                    # This is done because some hdf5 do not have the ibaseflow on it
-                    if len(row) < 6:
-                        chan_id, depinitial, froudc, roughadj, isedn = row
-                        ibaseflow = 0
-                    else:
-                        chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
-                    chan_id = int(chan_id)
-                    geom = left_bank_geom.get(chan_id)
-                    if float(isedn) == -9999:
-                        isedn = None  # Default value for isedn if not provided
-                    chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
+                # Finalize last channel after all groups
+                flush_channel_geometry()
 
-            # Process CONFLUENCES
-            if "CONFLUENCES" in channel_group.datasets:
-                grid_group = self.parser.read_groups("Input/Grid")[0]
-                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                data = channel_group.datasets["CONFLUENCES"].data
-                for row in data:
-                    con_id, river_type, grid = row
-                    geom = self.build_point_xy(x_list[int(grid) - 1], y_list[int(grid) - 1])
-                    chan_conf_sql += [(geom, int(con_id), int(river_type), int(grid))]
+                # Process CHAN_GLOBAL for main channel table
+                if "CHAN_GLOBAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_GLOBAL"].data
+                    for row in data:
+                        # This is done because some hdf5 do not have the ibaseflow on it
+                        if len(row) < 6:
+                            chan_id, depinitial, froudc, roughadj, isedn = row
+                            ibaseflow = 0
+                        else:
+                            chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
+                        chan_id = int(chan_id)
+                        geom = left_bank_geom.get(chan_id)
+                        if float(isedn) == -9999:
+                            isedn = None  # Default value for isedn if not provided
+                        chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
 
-            # Process noexchange areas and cells
-            if "NOEXCHANGE" in channel_group.datasets:
-                data = channel_group.datasets["NOEXCHANGE"].data
-                for i, grid in enumerate(data, start=1):
-                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
-                    chan_e_sql += [(geom,)]
-                    elems_e_sql += [(i, int(grid))]
+                # Process CONFLUENCES
+                if "CONFLUENCES" in channel_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    data = channel_group.datasets["CONFLUENCES"].data
+                    for row in data:
+                        con_id, river_type, grid = row
+                        geom = self.build_point_xy(x_list[int(grid) - 1], y_list[int(grid) - 1])
+                        chan_conf_sql += [(geom, int(con_id), int(river_type), int(grid))]
 
-            # Process CHAN_WSEL
-            if "CHAN_WSE" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_WSE"].data
-                for row in data:
-                    seg_fid, istart, wselstart, iend, wselend = row
-                    chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
+                # Process noexchange areas and cells
+                if "NOEXCHANGE" in channel_group.datasets:
+                    data = channel_group.datasets["NOEXCHANGE"].data
+                    for i, grid in enumerate(data, start=1):
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        chan_e_sql += [(geom,)]
+                        elems_e_sql += [(i, int(grid))]
+
+                # Process CHAN_WSEL
+                if "CHAN_WSE" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_WSE"].data
+                    for row in data:
+                        seg_fid, istart, wselstart, iend, wselend = row
+                        chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
+            else:
+
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_elems_fid ON chan_elems(fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_r_elem_fid ON chan_r(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_v_elem_fid ON chan_v(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_t_elem_fid ON chan_t(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_n_elem_fid ON chan_n(elem_fid);")
+
+                prev_domain_chan_id = None
+
+                chan_id = self.execute("SELECT MAX(fid) FROM chan;").fetchone()
+                if chan_id and chan_id[0]:
+                    chan_id = chan_id[0] + 1
+                else:
+                    chan_id = 1
+
+                nxsecnum = self.execute(f"SELECT MAX(nxsecnum) FROM chan_n;").fetchone()
+                if nxsecnum and nxsecnum[0]:
+                    nxsecnum = nxsecnum[0] + 1
+                else:
+                    nxsecnum = 1
+
+                # Read CHANBANK dataset (maps left to right bank grids)
+                if "CHANBANK" in channel_group.datasets:
+                    data = channel_group.datasets["CHANBANK"].data
+                    for row in data:
+                        left_bank_grid, right_bank_grid = row
+                        xs_geom[int(left_bank_grid)] = int(right_bank_grid)
+
+                # Helper function to flush geometry per channel
+                def flush_channel_geometry():
+                    if left_bank_grids and prev_chan_id is not None:
+                        left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
+
+                # Process CHAN_NATURAL
+                if "CHAN_NATURAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_NATURAL"].data
+                    for row in data:
+                        domain_chan_id, grid, fcn, xlen, _ = row
+                        global_grid = grid_to_domain[int(grid)]
+
+                        if prev_domain_chan_id is not None and domain_chan_id != prev_domain_chan_id:
+                            chan_id += 1
+
+                        previous_gid = self.execute(
+                            "SELECT fid FROM chan_elems WHERE id = (SELECT MAX(id) FROM chan_elems);").fetchone()
+                        if previous_gid and previous_gid[0]:
+                            if int(global_grid) == int(previous_gid[0]):
+                                continue
+
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
+
+                        chan_n_sql += [(global_grid, nxsecnum, f"XS {int(nxsecnum)}")]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([global_grid, grid_to_domain[xs_geom[grid]]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, global_grid, chan_id, i, grid_to_domain[xs_geom[grid]], fcn, xlen, "N")]
+                        left_bank_grids.append(global_grid)
+                        prev_chan_id = chan_id
+                        prev_domain_chan_id = domain_chan_id
+                        i += 1
+                        nxsecnum += 1
+
+                # Process CHAN_RECTANGULAR
+                if "CHAN_RECTANGULAR" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_RECTANGULAR"].data
+                    for row in data:
+                        domain_chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
+                        global_grid = grid_to_domain[int(grid)]
+
+                        if prev_domain_chan_id is not None and domain_chan_id != prev_domain_chan_id:
+                            chan_id += 1
+
+                        previous_gid = self.execute(
+                            "SELECT fid FROM chan_elems WHERE id = (SELECT MAX(id) FROM chan_elems);").fetchone()
+                        if previous_gid and previous_gid[0]:
+                            if int(global_grid) == int(previous_gid[0]):
+                                continue
+
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
+
+                        chan_r_sql += [(global_grid, bankell, bankelr, fcw, fcd)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([global_grid, grid_to_domain[xs_geom[grid]]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, global_grid, chan_id, i, grid_to_domain[xs_geom[grid]], fcn, xlen, "R")]
+                        left_bank_grids.append(global_grid)
+                        prev_chan_id = chan_id
+                        prev_domain_chan_id = domain_chan_id
+                        i += 1
+
+                # Process CHAN_TRAPEZOIDAL
+                if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
+                    for row in data:
+                        domain_chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
+                        global_grid = grid_to_domain[int(grid)]
+
+                        if prev_domain_chan_id is not None and domain_chan_id != prev_domain_chan_id:
+                            chan_id += 1
+
+                        previous_gid = self.execute(
+                            "SELECT fid FROM chan_elems WHERE id = (SELECT MAX(id) FROM chan_elems);").fetchone()
+                        if previous_gid and previous_gid[0]:
+                            if int(global_grid) == int(previous_gid[0]):
+                                continue
+
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
+
+                        chan_t_sql += [(global_grid, bankell, bankelr, fcw, fcd, zl, zr)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([global_grid, grid_to_domain[xs_geom[grid]]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, global_grid, chan_id, i, grid_to_domain[xs_geom[grid]], fcn, xlen, "T")]
+                        left_bank_grids.append(global_grid)
+                        prev_chan_id = chan_id
+                        prev_domain_chan_id = domain_chan_id
+                        i += 1
+
+                # Finalize last channel after all groups
+                flush_channel_geometry()
+
+                # Process CHAN_GLOBAL for main channel table
+                if "CHAN_GLOBAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_GLOBAL"].data
+                    for row in data:
+                        # This is done because some hdf5 do not have the ibaseflow on it
+                        if len(row) < 6:
+                            _, depinitial, froudc, roughadj, isedn = row
+                            ibaseflow = 0
+                        else:
+                            _, depinitial, froudc, roughadj, ibaseflow, isedn = row
+                        geom = left_bank_geom.get(chan_id)
+                        if float(isedn) == -9999:
+                            isedn = None  # Default value for isedn if not provided
+                        chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
+
+                # Process CONFLUENCES
+                if "CONFLUENCES" in channel_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    data = channel_group.datasets["CONFLUENCES"].data
+                    for row in data:
+                        con_id, river_type, grid = row
+                        global_grid = grid_to_domain[int(grid)]
+                        geom = self.build_point_xy(x_list[global_grid - 1], y_list[global_grid - 1])
+                        chan_conf_sql += [(geom, int(con_id), int(river_type), global_grid)]
+
+                # Process noexchange areas and cells
+                if "NOEXCHANGE" in channel_group.datasets:
+                    data = channel_group.datasets["NOEXCHANGE"].data
+                    for j, grid in enumerate(data, start=1):
+                        global_grid = grid_to_domain[int(grid)]
+                        geom = self.build_square(self.grid_centroids([global_grid])[global_grid], self.cell_size)
+                        chan_e_sql += [(geom,)]
+                        elems_e_sql += [(j, global_grid)]
+
+                # Process CHAN_WSEL
+                if "CHAN_WSE" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_WSE"].data
+                    for row in data:
+                        seg_fid, istart, wselstart, iend, wselend = row
+                        chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
 
             if chan_n_sql:
                 self.batch_execute(chan_n_sql)
@@ -10797,6 +10975,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         ISED = self.gutils.get_cont_par("ISED")
 
+        k = 1
         for i, row in enumerate(chan_rows, start=1):
             row = [x if x is not None else "0" for x in row]
             fid, depinitial, froudc, roughadj, isedn, ibaseflow = row
@@ -10806,9 +10985,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 create_array(segment, 6, np.float64, (i, depinitial, froudc, roughadj, ibaseflow, isedn)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
             # A single line for each channel segment.
-            for elems in self.execute(
-                    chan_elems_sql, (fid,)
-            ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+            for elems in self.execute(chan_elems_sql, (fid,)):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                 # 'chan_elems' table (the cross sections in the schematic layer),
                 #  that has the 'fid' value indicated (the channel segment id).
                 elems = [
@@ -10862,6 +11039,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     if typ == 'N':
                         data = ([i] + res)
+                        if subdomain:
+                            data[-1] = k
+                            k += 1
                         try:
                             channel_group.datasets["CHAN_NATURAL"].data.append(data)
                         except:
