@@ -624,7 +624,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
-                "WARNING 060319.1724: Calculating SCS Curve Number parameters failed! Please check data in your input layers."
+                "WARNING 060319.1724: Calculating SCS Curve Number parameters failed! Please check that the Raster covers the Grid Layer."
             )
         finally:
             QApplication.restoreOverrideCursor()
