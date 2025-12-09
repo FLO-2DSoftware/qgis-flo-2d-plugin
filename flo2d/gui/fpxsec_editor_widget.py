@@ -341,7 +341,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         ids_str = ", ".join(str(fid) for fid in sorted(conflict_schema_fids))
 
         self.uc.bar_error("Schematization cancelled: one or more schematized floodplain cross-sections cross or touch each other.")
-        self.uc.log_info("ERROR 060319.XXXX: Schematization rolled back. Cross/touch conflicts in schematized FIDs: " + ids_str)
+        self.uc.log_info("Schematization rolled back. Cross/touch conflicts in schematized FIDs: " + ids_str)
 
         # Completely clear schematized results to avoid retaining an invalid partial result set.
         try:
@@ -370,6 +370,12 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             if conflict_user_fids and user_layer is not None:
                 user_layer.removeSelection() # Clear any existing selection,
                 user_layer.selectByIds(list(conflict_user_fids)) # then select the conflicting ones
+
+                # Draw rubberbands on top of the conflicting us XS
+                if self.lyrs is not None:
+                    self.lyrs.clear_rubber()  # Clear any existing rubberbands first
+                    for uid in conflict_user_fids:
+                        self.lyrs.show_feat_rubber(user_layer.id(), uid)  # Add a rubberband for each conflicting user XS
         except Exception:
             pass
 
@@ -388,10 +394,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
             fpxs.schematize_floodplain_xs()
 
-            # ************ New start ************ #
             if not self.validate_schematized_fpxs():
                 return
-            # ************ New end ************ #
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
