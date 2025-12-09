@@ -73,11 +73,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
         self.schema_fpxsec_lyr = self.lyrs.data["fpxsec"]["qlyr"]
 
-        # Whenever the user finishes digitizing a new fpx cross-section
-        # check that it does not cross/touch existing cross-section(s)
-        if self.fpxsec_lyr is not None:
-            self.fpxsec_lyr.featureAdded.connect(self.on_fpxs_feature_added)
-
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
@@ -184,65 +179,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         self.lyrs.enter_edit_mode("user_fpxsec")
 
-
-    def on_fpxs_feature_added(self, fid):
-        # Only run this check if user_fpxsec layer is in edit mode
-        if not self.lyrs.any_lyr_in_edit("user_fpxsec"):
-            return
-
-        # Work with the FPXS layer
-        layer = self.fpxsec_lyr
-
-        # Get the newly added feature by its feature ID
-        new_feat = next(layer.getFeatures(QgsFeatureRequest(fid)), None)
-        if not new_feat:
-            # If the feature can't be found, stop
-            return
-
-        # Geometry of the newly added cross-section
-        new_geom = new_feat.geometry()
-        if not new_geom or new_geom.isEmpty():
-            # If geometry is missing or empty, stop
-            return
-
-        # Only fetch features whose bbox intersects the new geometry (performance filter)
-        request = QgsFeatureRequest().setFilterRect(new_geom.boundingBox())
-
-        # Check all potentially nearby features
-        for other in layer.getFeatures(request):
-            if other.id() == fid:
-                # Skip comparing the feature with itself
-                continue
-
-            # Geometry of the existing cross-section
-            other_geom = other.geometry()
-            if not other_geom or other_geom.isEmpty():
-                # Skip features with invalid/empty geometry
-                continue
-
-            # Enforce "do not cross / do not touch" rule
-            if new_geom.crosses(other_geom) or new_geom.touches(other_geom):
-                # Notify user and log the problem
-                self.uc.bar_error("Floodplain cross-sections are required not to intersect.")
-                self.uc.log_info(
-                    "ERROR 060319.XXXX: Floodplain cross-section crosses or touches "
-                    "existing cross-section. The last drawn XS has been removed."
-                )
-                # Exit the loop early due to the conflict
-                break
-        else:
-            # If the loop finishes with no break, no conflict was found, keep feature
-            return
-
-        # delete the new feature when conflict was found
-        try:
-            layer.deleteFeature(fid)  # Remove the invalid cross-section
-            layer.triggerRepaint()  # Refresh the map display
-        except Exception:
-            # Silently ignore any errors during delete/repaint
-            pass
-
-
     def save_fpxs_lyr_edits(self):
         if not self.lyrs.any_lyr_in_edit("user_fpxsec"):
             return
@@ -312,6 +248,133 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             )
         self.populate_cbos(fid=fid, show_last_edited=False)
 
+    def validate_schematized_fpxs(self):
+        """
+        Validate schematized floodplain cross-sections.
+        If any schematized XS cross or touch each other, the whole schematization is rolled back.
+        Also conflicting original user floodplain cross-sections are selected in the user_fpxsec layer.
+        """
+        layer = self.schema_fpxsec_lyr
+        if layer is None:
+            return True
+
+        feats = [f for f in layer.getFeatures()]
+        if not feats:
+            return True
+
+        # Build spatial index for fast conflict checks on schematized XS (use bounding-box)
+        index = QgsSpatialIndex()
+        index.addFeatures(feats)
+
+        # Prepare containers for original user features
+        user_layer = self.fpxsec_lyr # Gets the original user floodplain XS layer
+        user_index = None # Placeholder for a spatial index on the user layer, initialized as None.
+        user_feats = [] # Will hold the original user features, if available
+        if user_layer is not None: # If the user layer exists:
+            user_feats = [uf for uf in user_layer.getFeatures()] # Load all user-drawn XS features into a list.
+            if user_feats: # If there are actually features, create another QgsSpatialIndex() and add those user features.
+                user_index = QgsSpatialIndex() # will be used later to quickly find which user XS correspond to conflicting schematized XS.
+                user_index.addFeatures(user_feats)
+
+        # Create set of FIDs from schematized layer that are in conflict, and their corresponding user layer FIDs (for highlighing)
+        conflict_schema_fids = set()
+        conflict_user_fids = set()
+
+        # First validation pass: find conflicts between schematized XS
+        for feat in feats:
+            geom = feat.geometry()
+            if not geom or geom.isEmpty():
+                continue
+
+            # First get candidate features ONLY via bounding box intersection
+            cand_ids = index.intersects(geom.boundingBox())
+            for cid in cand_ids:
+
+                # Skip self-comparison
+                if cid == feat.id():
+                    continue
+
+                # Fetch the candidate feature
+                other = next(layer.getFeatures(QgsFeatureRequest(cid)), None)
+                if other is None:
+                    continue
+
+                other_geom = other.geometry()
+                if not other_geom or other_geom.isEmpty():
+                    continue
+
+                # Any cross OR touch is considered a conflict
+                if geom.crosses(other_geom) or geom.touches(other_geom):
+                    conflict_schema_fids.add(feat.id())
+                    conflict_schema_fids.add(other.id())
+
+        # If no conflicts found, validation passes
+        if not conflict_schema_fids:
+            return True
+
+        # Second validation pass — find matching original USER XS so that the GUI can highlight what to inspect/fix.
+        # Both bounding box matching AND actual geometry intersection tests because geometries may not be identical after schematization.
+        if user_index is not None and user_layer is not None:
+            for feat in feats:
+                if feat.id() not in conflict_schema_fids:
+                    continue # Only need to check conflicting schematized IDs
+
+                geom = feat.geometry()
+                if not geom or geom.isEmpty():
+                    continue
+
+                # Find possible intersect candidates
+                cand_user_ids = user_index.intersects(geom.boundingBox())
+                for uid in cand_user_ids:
+                    user_feat = next(user_layer.getFeatures(QgsFeatureRequest(uid)), None)
+                    if user_feat is None:
+                        continue
+                    user_geom = user_feat.geometry()
+                    if not user_geom or user_geom.isEmpty():
+                        continue
+
+                    # If they intersect at all,consider this user XS "conflicting" for highlighting.
+                    if user_geom.intersects(geom) or user_geom.touches(geom):
+                        conflict_user_fids.add(uid)
+
+        # Convert conflicting schematized FIDs to readable form for logging
+        ids_str = ", ".join(str(fid) for fid in sorted(conflict_schema_fids))
+
+        self.uc.bar_error("Schematization cancelled: one or more schematized floodplain cross-sections cross or touch each other.")
+        self.uc.log_info("ERROR 060319.XXXX: Schematization rolled back. Cross/touch conflicts in schematized FIDs: " + ids_str)
+
+        # Completely clear schematized results to avoid retaining an invalid partial result set.
+        try:
+            if self.gutils is not None:
+                self.gutils.clear_tables("fpxsec", "fpxsec_cells")
+        except Exception:
+            pass
+
+        # Refresh layers so the user sees that everything was rolled back
+        try:
+            if self.lyrs is not None:
+                self.lyrs.clear_rubber()
+
+                # Refresh line layer
+                if "fpxsec" in self.lyrs.data and self.lyrs.data["fpxsec"]["qlyr"]:
+                    self.lyrs.data["fpxsec"]["qlyr"].triggerRepaint()
+
+                # Refresh cell layer
+                if "fpxsec_cells" in self.lyrs.data and self.lyrs.data["fpxsec_cells"]["qlyr"]:
+                    self.lyrs.data["fpxsec_cells"]["qlyr"].triggerRepaint()
+        except Exception:
+            pass
+
+        # Finally highlight original (user drawn) XS that let to the conflict(s)
+        try:
+            if conflict_user_fids and user_layer is not None:
+                user_layer.removeSelection() # Clear any existing selection,
+                user_layer.selectByIds(list(conflict_user_fids)) # then select the conflicting ones
+        except Exception:
+            pass
+
+        return False # Validation failed
+
     def schematize_fpxs(self):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool!")
@@ -324,6 +387,12 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.add_user_fpxs_btn.setChecked(False)
             fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
             fpxs.schematize_floodplain_xs()
+
+            # ************ New start ************ #
+            if not self.validate_schematized_fpxs():
+                return
+            # ************ New end ************ #
+
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
