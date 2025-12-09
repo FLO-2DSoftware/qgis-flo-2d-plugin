@@ -831,8 +831,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_swmmflort",
             "import_swmmoutf",
             "import_swmmflodropbox",
-            # "import_sdclogging", # data
-            "import_tolspatial", # data
+            "import_sdclogging", # data
+            "import_tolspatial",
             # "import_wsurf",
             # "import_wstime",
         ]

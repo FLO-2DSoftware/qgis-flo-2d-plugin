@@ -7291,7 +7291,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_sdclogging_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_sdclogging_hdf5()
+            return self.import_sdclogging_hdf5(grid_to_domain)
 
     def import_sdclogging_dat(self, grid_to_domain):
         """
@@ -7312,7 +7312,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                    SET swmm_clogging_factor = '{clog_fact}', swmm_time_for_clogging = '{clog_time}'
                                    WHERE name = '{name}'""")
 
-    def import_sdclogging_hdf5(self):
+    def import_sdclogging_hdf5(self, grid_to_domain):
         """
         Function to import the SDCLOGGING from hdf5 file
         """
@@ -16169,7 +16169,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
                          FROM user_swmm_inlets_junctions 
-                         WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
+                         WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0 ORDER BY name;"""
             else:
                 qry = f"""
                         SELECT 
@@ -16185,7 +16185,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             (usij.sd_type = 'I' OR usij.sd_type = 'J') 
                             AND usij.swmm_clogging_factor > 0.0 
                             AND usij.swmm_time_for_clogging > 0.0
-                            AND md.domain_fid = {subdomain};
+                            AND md.domain_fid = {subdomain}
+                        ORDER BY usij.name;
                         """
 
             rows = self.gutils.execute(qry).fetchall()
