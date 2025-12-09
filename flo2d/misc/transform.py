@@ -149,10 +149,10 @@ def xy(transform, rows, cols, offset="center"):
     single_col = False
     single_row = False
     try:
-        if not isinstance(cols, collections.Iterable):
+        if not isinstance(cols, collections.abc.Iterable):
             cols = [cols]
             single_col = True
-        if not isinstance(rows, collections.Iterable):
+        if not isinstance(rows, collections.abc.Iterable):
             rows = [rows]
             single_row = True
     except:
@@ -222,10 +222,10 @@ def rowcol(transform, xs, ys, op=math.floor, precision=None):
     single_x = False
     single_y = False
     try:
-        if not isinstance(xs, collections.Iterable):
+        if not isinstance(xs, collections.abc.Iterable):
             xs = [xs]
             single_x = True
-        if not isinstance(ys, collections.Iterable):
+        if not isinstance(ys, collections.abc.Iterable):
             ys = [ys]
             single_y = True
     except:
