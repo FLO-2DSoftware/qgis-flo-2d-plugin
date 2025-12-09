@@ -7111,7 +7111,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_swmmflo_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_swmmflo_hdf5()
+            return self.import_swmmflo_hdf5(grid_to_domain)
 
     def import_swmmflo_dat(self, grid_to_domain):
 
@@ -7175,7 +7175,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(swmmflo_sql)
 
-    def import_swmmflo_hdf5(self):
+    def import_swmmflo_hdf5(self, grid_to_domain):
         try:
             stormdrain_group = self.parser.read_groups("Input/Storm Drain")
             if stormdrain_group:
@@ -7187,26 +7187,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     13,
                 ]
 
-                self.clear_tables("swmmflo")
+                if not grid_to_domain:
+                    self.clear_tables("swmmflo")
 
-                # Process SWMMFLO_DATA dataset
-                if "SWMMFLO_DATA" in stormdrain_group.datasets:
-                    data = stormdrain_group.datasets["SWMMFLO_DATA"].data
-                    name = stormdrain_group.datasets["SWMMFLO_NAME"].data
-                    node_id_to_name = {int(row[0]): row[1] for row in name}
-                    grid_group = self.parser.read_groups("Input/Grid")[0]
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for row in data:
-                        node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
-                        swmm_ident = node_id_to_name.get(int(node_id), None)
-                        if isinstance(swmm_ident, bytes):
-                            swmm_ident = swmm_ident.decode("utf-8")
-                        geom = self.build_point_xy(x_list[int(swmm_jt) - 1], y_list[int(swmm_jt) - 1])
-                        swmm_char = "D"
-                        swmmflo_sql += [
-                            (geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width,
-                             swmm_height, swmm_coeff, 0, curbheight, feature)]
+                    # Process SWMMFLO_DATA dataset
+                    if "SWMMFLO_DATA" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in data:
+                            node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
+                            swmm_ident = node_id_to_name.get(int(node_id), None)
+                            if isinstance(swmm_ident, bytes):
+                                swmm_ident = swmm_ident.decode("utf-8")
+                            geom = self.build_point_xy(x_list[int(swmm_jt) - 1], y_list[int(swmm_jt) - 1])
+                            swmm_char = "D"
+                            swmmflo_sql += [
+                                (geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width,
+                                 swmm_height, swmm_coeff, 0, curbheight, feature)]
+                else:
+                    # Process SWMMFLO_DATA dataset
+                    if "SWMMFLO_DATA" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in data:
+                            node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
+                            swmm_ident = node_id_to_name.get(int(node_id), None)
+                            if isinstance(swmm_ident, bytes):
+                                swmm_ident = swmm_ident.decode("utf-8")
+                            geom = self.build_point_xy(grid_to_domain.get(x_list[int(swmm_jt) - 1]), grid_to_domain.get(y_list[int(swmm_jt) - 1]))
+                            swmm_jt = grid_to_domain.get(int(swmm_jt))
+                            swmm_char = "D"
+                            swmmflo_sql += [
+                                (geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length,
+                                 swmm_width,
+                                 swmm_height, swmm_coeff, 0, curbheight, feature)]
 
                 if swmmflo_sql:
                     self.batch_execute(swmmflo_sql)
