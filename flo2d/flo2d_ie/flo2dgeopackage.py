@@ -472,7 +472,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_inflow_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_inflow_hdf5()
+            return self.import_inflow_hdf5(grid_to_domain)
 
     def import_inflow_dat(self, grid_to_domain):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
@@ -673,13 +673,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.log_info(traceback.format_exc())
         #     self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
-    def import_inflow_hdf5(self):
-        try:
+    def import_inflow_hdf5(self, grid_to_domain):
+        # try:
 
-            inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")
-            if inflow_group:
-                inflow_group = inflow_group[0]
+        inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")
+        if inflow_group:
+            inflow_group = inflow_group[0]
 
+            inflow_sql = ["""INSERT INTO inflow (name, time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 6]
+            cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
+            ts_sql = ["""INSERT OR REPLACE INTO inflow_time_series (fid, name) VALUES""", 2]
+            tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4, ]
+
+            # Reservoirs
+            schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
+            user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
+
+            # Tailings Reservoirs
+            schematic_tailings_reservoirs_sql = [
+                """INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
+            user_tailing_reservoirs = [
+                """INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
+
+            if not grid_to_domain:
                 self.clear_tables(
                     "inflow",
                     "inflow_cells",
@@ -690,21 +706,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     "inflow_time_series",
                     "inflow_time_series_data",
                 )
-
-                inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 5]
-                cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
-                ts_sql = ["""INSERT OR REPLACE INTO inflow_time_series (fid, name) VALUES""", 2]
-                tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4, ]
-
-                # Reservoirs
-                schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
-                user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
-
-                # Tailings Reservoirs
-                schematic_tailings_reservoirs_sql = [
-                    """INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
-                user_tailing_reservoirs = [
-                    """INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
 
                 # Import inflow global parameters if present
                 if "INF_GLOBAL" in inflow_group.datasets:
@@ -723,7 +724,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             ident = 'F'
                         else:
                             ident = 'C'
-                        inflow_sql += [(int(ts_id), ident, int(inoutfc), 'point', i)]
+                        inflow_sql += [("Inflow " + str(ts_id), int(ts_id), ident, int(inoutfc), 'point', i)]
                         cells_sql += [(i, int(khiin))]
                         ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
@@ -755,37 +756,111 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             schematic_tailings_reservoirs_sql += [(grid_fid, wsel, n_value, tailings, schema_geom)]
                             user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
 
-                if inflow_sql:
-                    self.batch_execute(inflow_sql)
+            else:
 
-                if cells_sql:
-                    self.batch_execute(cells_sql)
+                current_bc_grids_sql = self.execute("SELECT grid_fid FROM inflow_cells;").fetchall()
+                current_bc_grids = []
+                if current_bc_grids_sql:
+                    current_bc_grids = [int(row[0]) for row in current_bc_grids_sql]
 
-                if ts_sql:
-                    self.batch_execute(ts_sql)
+                # Import inflow global parameters if present
+                if "INF_GLOBAL" in inflow_group.datasets:
+                    inflow_global = inflow_group.datasets["INF_GLOBAL"].data
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)",
+                                 ("IHOURDAILY", int(inflow_global[0]),
+                                  GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)",
+                                 ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
 
-                if tsd_sql:
-                    self.batch_execute(tsd_sql)
+                inflow_fid = self.execute("SELECT MAX(bc_fid) FROM inflow;").fetchone()
+                if inflow_fid and inflow_fid[0]:
+                    inflow_fid = inflow_fid[0] + 1
+                else:
+                    inflow_fid = 1
 
-                if schematic_reservoirs_sql:
-                    self.batch_execute(schematic_reservoirs_sql)
+                hpj1_dict = defaultdict(list)
+                hpj2_dict = defaultdict(list)
+                hpj3_dict = defaultdict(list)
+                # Import inflow time series data
+                if "TS_INF_DATA" in inflow_group.datasets:
+                    for tsd in inflow_group.datasets["TS_INF_DATA"].data:
+                        ts_id, hpj1, hpj2, hpj3 = tsd
+                        hpj1_dict[ts_id].append(hpj1)
+                        hpj2_dict[ts_id].append(hpj2)
+                        hpj3_dict[ts_id].append(hpj3)
 
-                if user_reservoirs_sql:
-                    self.batch_execute(user_reservoirs_sql)
+                # Import inflow time series
+                if "INF_GRID" in inflow_group.datasets:
+                    i = inflow_fid
+                    for inflow_grid in inflow_group.datasets["INF_GRID"].data:
+                        ifc, inoutfc, khiin, ts_id = inflow_grid
+                        global_gid = grid_to_domain.get(int(khiin))
+                        if int(global_gid) not in current_bc_grids:
+                            if ifc in [0, '0']:
+                                ident = 'F'
+                            else:
+                                ident = 'C'
+                            inflow_sql += [("Inflow " + str(i), i, ident, int(inoutfc), 'point', i)]
+                            cells_sql += [(i, int(global_gid))]
+                            ts_sql += [(i, "Time series " + str(i))]
+                            for hpj1, hpj2, hpj3 in zip(hpj1_dict[ts_id], hpj2_dict[ts_id], hpj3_dict[ts_id]):
+                                if hpj3 == -9999:
+                                    tsd_sql += [(i, hpj1, hpj2, None)]
+                                else:
+                                    tsd_sql += [(i, hpj1, hpj2, hpj3)]
+                            i += 1
 
-                if schematic_tailings_reservoirs_sql:
-                    self.batch_execute(schematic_tailings_reservoirs_sql)
+                # Import reservoir
+                if "RESERVOIRS" in inflow_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for reservoir in inflow_group.datasets["RESERVOIRS"].data:
+                        grid_fid, wsel, n_value, tailings = reservoir
+                        user_geom = self.build_point_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1])
+                        schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1],
+                                                           self.cell_size)
+                        global_fid = grid_to_domain.get(int(grid_fid))
+                        # Water
+                        if int(tailings) == -9999:
+                            schematic_reservoirs_sql += [(global_fid, wsel, n_value, schema_geom)]
+                            user_reservoirs_sql += [(wsel, n_value, user_geom)]
+                        # Tailings
+                        else:
+                            schematic_tailings_reservoirs_sql += [(global_fid, wsel, n_value, tailings, schema_geom)]
+                            user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
 
-                if user_tailing_reservoirs:
-                    self.batch_execute(user_tailing_reservoirs)
+            if inflow_sql:
+                self.batch_execute(inflow_sql)
 
-                return True
+            if cells_sql:
+                self.batch_execute(cells_sql)
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR: importing INFLOW from HDF5 failed!\n", e)
-            self.uc.log_info("ERROR: importing INFLOW from HDF5 failed!")
-            return False
+            if ts_sql:
+                self.batch_execute(ts_sql)
+
+            if tsd_sql:
+                self.batch_execute(tsd_sql)
+
+            if schematic_reservoirs_sql:
+                self.batch_execute(schematic_reservoirs_sql)
+
+            if user_reservoirs_sql:
+                self.batch_execute(user_reservoirs_sql)
+
+            if schematic_tailings_reservoirs_sql:
+                self.batch_execute(schematic_tailings_reservoirs_sql)
+
+            if user_tailing_reservoirs:
+                self.batch_execute(user_tailing_reservoirs)
+
+            return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR: importing INFLOW from HDF5 failed!\n", e)
+        #     self.uc.log_info("ERROR: importing INFLOW from HDF5 failed!")
+        #     return False
 
     def import_outrc(self):
         """
@@ -8782,7 +8857,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         )
 
         if not subdomain:
-            inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
+            inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY grid_fid, inflow_fid;"""
         else:
             inflow_cells_sql = f"""
                                 SELECT DISTINCT
@@ -8794,7 +8869,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells md ON ic.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid = {subdomain}
-                                ORDER BY ic.inflow_fid, md.domain_cell;
+                                ORDER BY md.domain_cell, ic.inflow_fid;
                                 """
 
         # Divide inflow line hydrograph between grid elements

@@ -801,7 +801,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         import_calls = [
             "import_cont_toler",
-            # "import_inflow", # data
+            "import_inflow",
             # "import_tailings",
             # "import_outrc",  Add back when the OUTRC process is completed
             # "import_outflow",
