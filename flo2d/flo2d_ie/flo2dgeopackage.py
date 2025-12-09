@@ -7344,7 +7344,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_swmmflort_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_swmmflort_hdf5()
+            return self.import_swmmflort_hdf5(grid_to_domain)
 
     def import_swmmflort_dat(self, grid_to_domain):
         """
@@ -7468,79 +7468,111 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
 
-    def import_swmmflort_hdf5(self):
+    def import_swmmflort_hdf5(self, grid_to_domain):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
 
         Reads rating tables from SWMMFLORT.DAT and fills data of QGIS tables swmmflort and swmmflort_data.
 
         """
-        # try:
-        stormdrain_group = self.parser.read_groups("Input/Storm Drain")
-        if stormdrain_group:
-            stormdrain_group = stormdrain_group[0]
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
 
-            swmmflort_sql = [
-                """INSERT OR REPLACE INTO swmmflort (fid, grid_fid, name) VALUES""",
-                3,
-            ]
+                swmmflort_sql = [
+                    """INSERT OR REPLACE INTO swmmflort (fid, grid_fid, name) VALUES""",
+                    3,
+                ]
 
-            swmmflort_data_sql = [
-                """INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""",
-                3,
-            ]
+                swmmflort_data_sql = [
+                    """INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""",
+                    3,
+                ]
 
-            swmmflo_culvert_sql = [
-                """INSERT INTO swmmflo_culvert (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) VALUES""",
-                7,
-            ]
+                swmmflo_culvert_sql = [
+                    """INSERT INTO swmmflo_culvert (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) VALUES""",
+                    7,
+                ]
 
-            self.clear_tables("swmmflort", "swmmflort_data", "swmmflo_culvert")
+                if not grid_to_domain:
+                    self.clear_tables("swmmflort", "swmmflort_data", "swmmflo_culvert")
 
-            # Process RATING_TABLE dataset
-            if "RATING_TABLE" in stormdrain_group.datasets:
-                data = stormdrain_group.datasets["RATING_TABLE"].data
-                grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
-                node_id_to_grid = {int(row[0]): row[1] for row in grid}
-                name = stormdrain_group.datasets["SWMMFLO_NAME"].data
-                node_id_to_name = {int(row[0]): row[1] for row in name}
-                for i, row in enumerate(data, start=1):
-                    node_id, depth, q = row
-                    grid_fid = node_id_to_grid.get(int(node_id), None)
-                    rt_name = node_id_to_name.get(int(node_id), None)
-                    if isinstance(rt_name, bytes):
-                        rt_name = rt_name.decode("utf-8")
-                    swmmflort_sql += [(int(node_id), int(grid_fid), rt_name)]
-                    swmmflort_data_sql += [(int(node_id), depth, q)]
+                    # Process RATING_TABLE dataset
+                    if "RATING_TABLE" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["RATING_TABLE"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for i, row in enumerate(data, start=1):
+                            node_id, depth, q = row
+                            grid_fid = node_id_to_grid.get(int(node_id), None)
+                            rt_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(rt_name, bytes):
+                                rt_name = rt_name.decode("utf-8")
+                            swmmflort_sql += [(int(node_id), int(grid_fid), rt_name)]
+                            swmmflort_data_sql += [(int(node_id), depth, q)]
 
-            if "CULVERT_EQUATIONS" in stormdrain_group.datasets:
-                data = stormdrain_group.datasets["CULVERT_EQUATIONS"].data
-                grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
-                node_id_to_grid = {int(row[0]): row[1] for row in grid}
-                name = stormdrain_group.datasets["SWMMFLO_NAME"].data
-                node_id_to_name = {int(row[0]): row[1] for row in name}
-                for row in data:
-                    node_id, cdiameter, typec, typeen, cubase, multbarrels = row
-                    grid_fid = node_id_to_grid.get(int(node_id), None)
-                    culvert_name = node_id_to_name.get(int(node_id), None)
-                    if isinstance(culvert_name, bytes):
-                        culvert_name = culvert_name.decode("utf-8")
-                    swmmflo_culvert_sql += [
-                        (int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
+                    if "CULVERT_EQUATIONS" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["CULVERT_EQUATIONS"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for row in data:
+                            node_id, cdiameter, typec, typeen, cubase, multbarrels = row
+                            grid_fid = node_id_to_grid.get(int(node_id), None)
+                            culvert_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(culvert_name, bytes):
+                                culvert_name = culvert_name.decode("utf-8")
+                            swmmflo_culvert_sql += [
+                                (int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
+                else:
+                    # Process RATING_TABLE dataset
+                    if "RATING_TABLE" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["RATING_TABLE"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for i, row in enumerate(data, start=1):
+                            node_id, depth, q = row
+                            grid_fid = grid_to_domain.get(node_id_to_grid.get(int(node_id), None))
+                            rt_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(rt_name, bytes):
+                                rt_name = rt_name.decode("utf-8")
+                            swmmflort_sql += [(int(node_id), int(grid_fid), rt_name)]
+                            swmmflort_data_sql += [(int(node_id), depth, q)]
 
-            if swmmflort_sql:
-                self.batch_execute(swmmflort_sql)
+                    if "CULVERT_EQUATIONS" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["CULVERT_EQUATIONS"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for row in data:
+                            node_id, cdiameter, typec, typeen, cubase, multbarrels = row
+                            grid_fid = grid_to_domain.get(node_id_to_grid.get(int(node_id), None))
+                            culvert_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(culvert_name, bytes):
+                                culvert_name = culvert_name.decode("utf-8")
+                            swmmflo_culvert_sql += [
+                                (int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
 
-            if swmmflort_data_sql:
-                self.batch_execute(swmmflort_data_sql)
+                if swmmflort_sql:
+                    self.batch_execute(swmmflort_sql)
 
-            if swmmflo_culvert_sql:
-                self.batch_execute(swmmflo_culvert_sql)
+                if swmmflort_data_sql:
+                    self.batch_execute(swmmflort_data_sql)
 
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!.\n", e)
-        #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!")
+                if swmmflo_culvert_sql:
+                    self.batch_execute(swmmflo_culvert_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Importing SWMMFLORT from hdf5 failed!.\n", e)
+            self.uc.show_error("Importing SWMMFLORT from hdf5 failed!")
 
     def import_swmmoutf(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
