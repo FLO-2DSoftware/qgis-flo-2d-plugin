@@ -4671,7 +4671,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_fpxsec_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_fpxsec_hdf5()
+            return self.import_fpxsec_hdf5(grid_to_domain)
 
     def import_fpxsec_dat(self, grid_to_domain):
         cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
@@ -4769,7 +4769,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             """
             self.execute(delete_query)
 
-    def import_fpxsec_hdf5(self):
+    def import_fpxsec_hdf5(self, grid_to_domain):
         try:
             fpxsec_group = self.parser.read_groups("Input/Floodplain")
             if fpxsec_group:
@@ -4779,27 +4779,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
                 cells_sql = ["""INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""", 3]
 
-                self.clear_tables("fpxsec", "fpxsec_cells")
+                if not grid_to_domain:
+                    self.clear_tables("fpxsec", "fpxsec_cells")
 
-                # Read FPXSEC_GLOBAL dataset
-                if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
-                    nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
-                    cont_sql += [("NXPRT", str(nxprt))]
+                    # Read FPXSEC_GLOBAL dataset
+                    if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
+                        nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
+                        cont_sql += [("NXPRT", str(nxprt))]
 
-                # Read FPXSEC_DATA dataset
-                if "FPXSEC_DATA" in fpxsec_group.datasets:
-                    data = fpxsec_group.datasets["FPXSEC_DATA"].data
-                    grid_group = self.parser.read_groups("Input/Grid")[0]
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for i, row in enumerate(data, start=1):
-                        iflo, nnxsec = row[:2]
-                        gids = [int(g) for g in row[2:] if int(g) != -9999]
-                        line_geom = self.build_linestring(gids)
-                        fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
-                        for gid in gids:
-                            point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
-                            cells_sql += [(point_geom, i, int(gid))]
+                    # Read FPXSEC_DATA dataset
+                    if "FPXSEC_DATA" in fpxsec_group.datasets:
+                        data = fpxsec_group.datasets["FPXSEC_DATA"].data
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, row in enumerate(data, start=1):
+                            iflo, nnxsec = row[:2]
+                            gids = [int(g) for g in row[2:] if int(g) != -9999]
+                            line_geom = self.build_linestring(gids)
+                            fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
+                            for gid in gids:
+                                point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
+                                cells_sql += [(point_geom, i, int(gid))]
+                else:
+
+                    fpxsec_fid = self.execute("SELECT MAX(fid) FROM fpxsec;").fetchone()
+                    if fpxsec_fid and fpxsec_fid[0]:
+                        fpxsec_fid = fpxsec_fid[0] + 1
+                    else:
+                        fpxsec_fid = 1
+
+                    # Read FPXSEC_GLOBAL dataset
+                    if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
+                        nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
+                        cont_sql += [("NXPRT", str(nxprt))]
+
+                    # Read FPXSEC_DATA dataset
+                    if "FPXSEC_DATA" in fpxsec_group.datasets:
+                        data = fpxsec_group.datasets["FPXSEC_DATA"].data
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, row in enumerate(data, start=fpxsec_fid):
+                            iflo, nnxsec = row[:2]
+                            global_gids = [grid_to_domain.get(int(g)) for g in row[2:] if int(g) != -9999]
+                            domain_gids = [int(g) for g in row[2:] if int(g) != -9999]
+                            line_geom = self.build_linestring(global_gids)
+                            fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
+                            for domain_gid in domain_gids:
+                                point_geom = self.build_point_xy(grid_to_domain.get(x_list[int(domain_gid) - 1]), grid_to_domain.get(y_list[int(domain_gid) - 1]))
+                                cells_sql += [(point_geom, i, grid_to_domain.get(int(domain_gid)))]
 
                 if cont_sql:
                     self.batch_execute(cont_sql)
@@ -4809,6 +4838,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
+
+                # Join cross sections that were slip by the export process
+                if grid_to_domain:
+
+                    r_dict = {}
+                    r_grid_fids = self.execute("""SELECT fpxsec_fid, grid_fid
+                                                  FROM fpxsec_cells
+                                                  WHERE grid_fid IN (
+                                                    SELECT grid_fid
+                                                    FROM fpxsec_cells
+                                                    GROUP BY grid_fid
+                                                    HAVING COUNT(*) >= 2
+                                                  )
+                                                  ORDER BY grid_fid;""").fetchall()
+                    if r_grid_fids:
+                        # Build the dictionary containing the repeated grid elements
+                        for fid, r_grid in r_grid_fids:
+                            r_dict.setdefault(r_grid, []).append(fid)
+                        # Merge the geometries of the repeated grid elements
+                        for _, fpxsec_fids in r_dict.items():
+                            grid_elements = self.execute(
+                                f"SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid IN ({','.join(['?'] * len(fpxsec_fids))});",
+                                tuple(fpxsec_fids)
+                            ).fetchall()
+                            grid_elements = [gid[0] for gid in grid_elements]
+                            min_fpxsec_fid = min(fpxsec_fids)
+                            # Remove the other fpxsec entry
+                            max_fpxsec_fid = max(fpxsec_fids)
+                            # Remove the other fpxsec entries
+                            if min_fpxsec_fid != max_fpxsec_fid:
+                                self.execute(f"DELETE FROM fpxsec WHERE fid = {max_fpxsec_fid};")
+                            self.execute(
+                                f"DELETE FROM fpxsec_cells WHERE fpxsec_fid IN ({','.join(['?'] * len(fpxsec_fids))});",
+                                tuple(fpxsec_fids)
+                            )
+                            # Update the geometry of the remaining fpxsec entry
+                            geom = self.build_linestring(grid_elements)
+                            self.execute("UPDATE fpxsec SET geom = ?, nnxsec = ? WHERE fid = ?;",
+                                         (geom, len(grid_elements), min_fpxsec_fid))
+                            for grid in grid_elements:
+                                grid_geom = self.single_centroid(grid, buffers=True)
+                                self.execute(
+                                    "INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES (?, ?, ?);",
+                                    (grid_geom, min_fpxsec_fid, grid)
+                                )
+                    # Delete all repeated grid_fid, keeping only the one with the smallest fpxsec_fid
+                    delete_query = """
+                    DELETE FROM fpxsec_cells
+                    WHERE ROWID NOT IN (
+                        SELECT MIN(ROWID)
+                        FROM fpxsec_cells
+                        GROUP BY grid_fid
+                    );
+                    """
+                    self.execute(delete_query)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()

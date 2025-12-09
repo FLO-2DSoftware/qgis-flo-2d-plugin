@@ -800,7 +800,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """Function to import multiple domains into one global domain"""
 
         import_calls = [
-            "import_cont_toler", # data
+            "import_cont_toler",
             # "import_inflow", # data
             # "import_tailings",
             # "import_outrc",  Add back when the OUTRC process is completed
@@ -812,14 +812,14 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_infil",
             "import_chan",
             "import_xsec",
-            "import_hystruc", # data
+            "import_hystruc",
             # "import_hystruc_bridge_xs",
             # "import_street",
             "import_arf",
             # "import_mult",
             # "import_sed", # data
             "import_levee",
-            # "import_fpxsec", # data
+            "import_fpxsec",
             # "import_breach",
             # "import_gutter",
             "import_fpfroude",
@@ -831,7 +831,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_swmmflort",
             "import_swmmoutf",
             "import_swmmflodropbox",
-            "import_sdclogging", # data
+            "import_sdclogging",
             "import_tolspatial",
             # "import_wsurf",
             # "import_wstime",
