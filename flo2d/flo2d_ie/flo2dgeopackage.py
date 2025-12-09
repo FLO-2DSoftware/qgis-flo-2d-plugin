@@ -7242,7 +7242,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_swmmflodropbox_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_swmmflodropbox_hdf5()
+            return self.import_swmmflodropbox_hdf5(grid_to_domain)
 
     def import_swmmflodropbox_dat(self, grid_to_domain):
         """
@@ -7260,7 +7260,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             area = row[2]
             self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{area}' WHERE name = '{name}'")
 
-    def import_swmmflodropbox_hdf5(self):
+    def import_swmmflodropbox_hdf5(self, grid_to_domain):
         """
         Function to import the SWMMFLODROPBOX.DAT
         """
@@ -16073,7 +16073,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                qry = """SELECT name, grid, drboxarea  FROM user_swmm_inlets_junctions WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
+                qry = """SELECT name, grid, drboxarea  FROM user_swmm_inlets_junctions WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0 ORDER BY name;"""
             else:
                 qry = f"""SELECT 
                             usij.name, 
@@ -16084,7 +16084,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                          JOIN
                             schema_md_cells md ON usij.grid = md.grid_fid
                         WHERE 
-                            md.domain_fid = {subdomain} AND SUBSTR(usij.name, 1,1) NOT LIKE 'J%'  AND usij.drboxarea > 0.0;"""
+                            md.domain_fid = {subdomain} AND SUBSTR(usij.name, 1,1) NOT LIKE 'J%'  AND usij.drboxarea > 0.0 ORDER BY usij.name;"""
 
             rows = self.gutils.execute(qry).fetchall()
             if rows:
