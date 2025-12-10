@@ -804,7 +804,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             "import_inflow",
             # "import_tailings",
             # "import_outrc",  Add back when the OUTRC process is completed
-            # "import_outflow",
+            "import_outflow",
             "import_rain",
             "import_raincell",
             # "import_raincellraw",
