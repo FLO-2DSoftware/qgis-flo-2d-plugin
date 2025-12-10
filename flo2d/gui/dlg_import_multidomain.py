@@ -817,7 +817,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_street",
             "import_arf",
             # "import_mult",
-            # "import_sed", # data
+            "import_sed",
             "import_levee",
             "import_fpxsec",
             # "import_breach",
@@ -836,24 +836,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # "import_wsurf",
             # "import_wstime",
         ]
-
-        # empty = self.f2g.is_table_empty("grid")
-        # # check if a grid exists in the grid table
-        # if not empty:
-        #     q = "There is a grid already defined in GeoPackage. Overwrite it?"
-        #     if self.uc.question(q):
-        #         pass
-        #     else:
-        #         self.uc.bar_info("Import cancelled!", dur=3)
-        #         self.uc.log_info("Import cancelled!")
-        #         return
-        #
-        # # Check if TOLER.DAT exist:
-        # if not os.path.isfile(subdomain_path + r"\TOLER.DAT") or os.path.getsize(subdomain_path + r"\TOLER.DAT") == 0:
-        #     self.uc.bar_error("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
-        #     self.uc.log_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
-        #     self.gutils.enable_geom_triggers()
-        #     return
 
         progress_dialog = QProgressDialog(f"Importing components for Subdomain 1...", None, 0, total_subdomains + 1)
         progress_dialog.setWindowTitle("FLO-2D Multiple Domains Import")
