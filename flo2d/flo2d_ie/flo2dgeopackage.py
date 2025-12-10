@@ -1801,7 +1801,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             3,
         ]
         cells_sql = [
-            """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
+            """INSERT OR IGNORE INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
             3,
         ]
 
@@ -1843,6 +1843,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gid, val = row
                 cells_sql += [(i, gid, val)]
         else:
+
+            self.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_rain_arf_cells_unique
+                    ON rain_arf_cells(grid_fid);
+                """)
+
             # Check if there is any existing data on the rain table, if so, it means that it was already imported
             options_check = self.execute("SELECT COUNT(*) FROM rain;").fetchone()
             if options_check and options_check[0] > 0:
@@ -1895,7 +1901,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     3,
                 ]
                 cells_sql = [
-                    """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
+                    """INSERT OR IGNORE INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
                     3,
                 ]
 
@@ -1936,6 +1942,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             grid_fid, arf = row
                             cells_sql += [(i, int(grid_fid), float(arf))]
                 else:
+
+                    self.execute("""
+                            CREATE UNIQUE INDEX IF NOT EXISTS idx_rain_arf_cells_unique
+                            ON rain_arf_cells(grid_fid);
+                        """)
+
                     # Check if there is any existing data on the rain table, if so, it means that it was already imported
                     options_check = self.execute("SELECT COUNT(*) FROM rain;").fetchone()
                     if options_check and options_check[0] > 0:
@@ -10389,7 +10401,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
         if not subdomain:
-            rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
+            rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY grid_fid;"""
         else:
             rain_cells_sql = f"""SELECT DISTINCT
                                     md.domain_cell, 
@@ -10495,7 +10507,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
 
             if not subdomain:
-                rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
+                rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY grid_fid;"""
             else:
                 rain_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell, 
