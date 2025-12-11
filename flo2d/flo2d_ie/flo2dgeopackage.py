@@ -1033,77 +1033,162 @@ class Flo2dGeoPackage(GeoPackageUtils):
             3,
         ]
 
-        self.clear_tables(
-            "outflow",
-            "outflow_cells",
-            "qh_params",
-            "qh_params_data",
-            "qh_table",
-            "qh_table_data",
-            "outflow_time_series",
-            "outflow_time_series_data",
-        )
         data = self.parser.parse_outflow()
+        if not data:
+            return None
 
-        qh_params_fid = 0
-        qh_tab_fid = 0
-        ts_fid = 0
-        fid = 1
-        bc_fid = self.gutils.execute("SELECT MAX(tab_bc_fid) FROM all_schem_bc").fetchone()
-        if bc_fid and bc_fid[0]:
-            bc_fid = bc_fid[0] + 1
-        else:
-            bc_fid = 1
-        for gid, values in data.items():
-            chan_out = values["K"]
-            fp_out = values["O"]
-            hydro_out = values["hydro_out"]
-            chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 4
-            if values["qh_params"]:
-                qh_params_fid += 1
-                chan_qhpar_fid = qh_params_fid
-                qh_params_sql += [(qh_params_fid,)]
-                for row in values["qh_params"]:
-                    qh_params_data_sql += [(qh_params_fid,) + tuple(row)]
+        if not grid_to_domain:
+
+            self.clear_tables(
+                "outflow",
+                "outflow_cells",
+                "qh_params",
+                "qh_params_data",
+                "qh_table",
+                "qh_table_data",
+                "outflow_time_series",
+                "outflow_time_series_data",
+            )
+
+            qh_params_fid = 0
+            qh_tab_fid = 0
+            ts_fid = 0
+            fid = 1
+            bc_fid = self.gutils.execute("SELECT MAX(tab_bc_fid) FROM all_schem_bc").fetchone()
+            if bc_fid and bc_fid[0]:
+                bc_fid = bc_fid[0] + 1
             else:
-                pass
-            if values["qh_data"]:
-                qh_tab_fid += 1
-                chan_qhtab_fid = qh_tab_fid
-                qh_tab_sql += [(qh_tab_fid,)]
-                for row in values["qh_data"]:
-                    qh_tab_data_sql += [(qh_tab_fid,) + tuple(row)]
-            else:
-                pass
-            if values["time_series"]:
-                ts_fid += 1
-                if values["N"] == 1:
-                    fp_tser_fid = ts_fid
-                elif values["N"] == 2:
-                    chan_tser_fid = ts_fid
+                bc_fid = 1
+            for gid, values in data.items():
+                chan_out = values["K"]
+                fp_out = values["O"]
+                hydro_out = values["hydro_out"]
+                chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 4
+                if values["qh_params"]:
+                    qh_params_fid += 1
+                    chan_qhpar_fid = qh_params_fid
+                    qh_params_sql += [(qh_params_fid,)]
+                    for row in values["qh_params"]:
+                        qh_params_data_sql += [(qh_params_fid,) + tuple(row)]
                 else:
                     pass
-                ts_sql += [(ts_fid,)]
-                for row in values["time_series"]:
-                    ts_data_sql += [(ts_fid,) + tuple(row)]
+                if values["qh_data"]:
+                    qh_tab_fid += 1
+                    chan_qhtab_fid = qh_tab_fid
+                    qh_tab_sql += [(qh_tab_fid,)]
+                    for row in values["qh_data"]:
+                        qh_tab_data_sql += [(qh_tab_fid,) + tuple(row)]
+                else:
+                    pass
+                if values["time_series"]:
+                    ts_fid += 1
+                    if values["N"] == 1:
+                        fp_tser_fid = ts_fid
+                    elif values["N"] == 2:
+                        chan_tser_fid = ts_fid
+                    else:
+                        pass
+                    ts_sql += [(ts_fid,)]
+                    for row in values["time_series"]:
+                        ts_data_sql += [(ts_fid,) + tuple(row)]
+                else:
+                    pass
+                outflow_sql += [
+                    (
+                        chan_out,
+                        fp_out,
+                        hydro_out,
+                        chan_tser_fid,
+                        chan_qhpar_fid,
+                        chan_qhtab_fid,
+                        fp_tser_fid,
+                        'point',
+                        bc_fid,
+                    )
+                ]
+                cells_sql += [(fid, gid, 'point')]
+                fid += 1
+                bc_fid += 1
+        else:
+
+            bc_fid = self.execute("SELECT MAX(tab_bc_fid) FROM all_schem_bc;").fetchone()
+            if bc_fid and bc_fid[0] is not None:
+                bc_fid = bc_fid[0] + 1
             else:
-                pass
-            outflow_sql += [
-                (
-                    chan_out,
-                    fp_out,
-                    hydro_out,
-                    chan_tser_fid,
-                    chan_qhpar_fid,
-                    chan_qhtab_fid,
-                    fp_tser_fid,
-                    'point',
-                    bc_fid,
-                )
-            ]
-            cells_sql += [(fid, gid, 'point')]
-            fid += 1
-            bc_fid += 1
+                bc_fid = 1
+
+            ts_fid = self.execute("SELECT MAX(fid) FROM outflow_time_series;").fetchone()
+            if ts_fid and ts_fid[0]:
+                ts_fid = ts_fid[0]
+            else:
+                ts_fid = 0
+
+            qh_params_fid = self.execute("SELECT MAX(fid) FROM qh_params;").fetchone()
+            if qh_params_fid and qh_params_fid[0]:
+                qh_params_fid = qh_params_fid[0]
+            else:
+                qh_params_fid = 0
+
+            qh_tab_fid = self.execute("SELECT MAX(fid) FROM qh_table;").fetchone()
+            if qh_tab_fid and qh_tab_fid[0]:
+                qh_tab_fid = qh_tab_fid[0]
+            else:
+                qh_tab_fid = 0
+
+            for gid, values in data.items():
+                gid = grid_to_domain.get(int(gid))
+                chan_out = values["K"]
+                fp_out = values["O"]
+                hydro_out = values["hydro_out"]
+                chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 4
+                if values["qh_params"]:
+                    qh_params_fid += 1
+                    chan_qhpar_fid = qh_params_fid
+                    qh_params_sql += [(qh_params_fid,)]
+                    for row in values["qh_params"]:
+                        qh_params_data_sql += [(qh_params_fid,) + tuple(row)]
+                else:
+                    pass
+                if values["qh_data"]:
+                    qh_tab_fid += 1
+                    chan_qhtab_fid = qh_tab_fid
+                    qh_tab_sql += [(qh_tab_fid,)]
+                    for row in values["qh_data"]:
+                        qh_tab_data_sql += [(qh_tab_fid,) + tuple(row)]
+                else:
+                    pass
+                if values["time_series"]:
+                    ts_fid += 1
+                    if values["N"] == 1:
+                        fp_tser_fid = ts_fid
+                    elif values["N"] == 2:
+                        chan_tser_fid = ts_fid
+                    else:
+                        pass
+                    ts_sql += [(ts_fid,)]
+                    for row in values["time_series"]:
+                        ts_data_sql += [(ts_fid,) + tuple(row)]
+                else:
+                    pass
+
+                # Don't import the MD outflow cells (hydro_out!=0)
+                if hydro_out in [0, "0"]:
+                    self.uc.log_info(str(hydro_out))
+                    outflow_sql += [
+                        (
+                            chan_out,
+                            fp_out,
+                            hydro_out,
+                            chan_tser_fid,
+                            chan_qhpar_fid,
+                            chan_qhtab_fid,
+                            fp_tser_fid,
+                            'point',
+                            bc_fid,
+                        )
+                    ]
+                    cells_sql += [(bc_fid, gid, 'point')]
+                    bc_fid += 1
 
         self.batch_execute(
             qh_params_sql,

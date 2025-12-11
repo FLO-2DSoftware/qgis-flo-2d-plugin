@@ -644,6 +644,8 @@ class ParseDAT(object):
     def parse_outflow(self, outflow=None):
         if outflow is None:
             outflow = self.dat_files["OUTFLOW.DAT"]
+            if not outflow:
+                return None
         par = self.single_parser(outflow)
         data = OrderedDict()
         cur_gid = None
