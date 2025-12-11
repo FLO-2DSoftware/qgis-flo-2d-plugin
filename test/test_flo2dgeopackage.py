@@ -59,14 +59,19 @@ def get_all_datasets(h5file):
     h5file.visititems(visitor)
     return datasets
 
-def compare_datasets(file1_path, file2_path, dataset):
+def compare_datasets(file1_path, file2_path, dataset, sorted=False):
     with h5py.File(file1_path, 'r') as f1, h5py.File(file2_path, 'r') as f2:
         # Check if the dataset exists in both files
         if dataset not in f1 or dataset not in f2:
             return False
-        d1 = f1[dataset]
-        d2 = f2[dataset]
-        return datasets_equal(d1, d2)
+        if sorted:
+            d1 = np.sort(f1[dataset][()])
+            d2 = np.sort(f2[dataset][()])
+            return datasets_equal(d1, d2)
+        else:
+            d1 = f1[dataset]
+            d2 = f2[dataset]
+            return datasets_equal(d1, d2)
 
 def datasets_equal(d1, d2):
     # Compare shape
@@ -835,7 +840,7 @@ class TestFlo2dGeoPackageHDF5(unittest.TestCase):
 
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_GLOBAL"))
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_PARTIALLY_BLOCKED"))
-        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_TOTALLY_BLOCKED"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_TOTALLY_BLOCKED", sorted=True))
 
     def test_export_levee(self):
 

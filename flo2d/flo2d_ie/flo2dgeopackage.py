@@ -13190,7 +13190,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 arfwrf_group.create_dataset('ARF_TOTALLY_BLOCKED', [])
                 for row in self.execute(tbc_sql):
                     cell = row[0]
-                    self.uc.log_info(str(row))
                     # collapse = self.execute(collapse_sql, (row[1],)).fetchone()
                     # Check for collapse data, sometimes there is no collapse data
                     # # if collapse:
