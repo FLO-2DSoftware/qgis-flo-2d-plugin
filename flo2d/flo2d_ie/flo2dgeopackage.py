@@ -1173,7 +1173,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 # Don't import the MD outflow cells (hydro_out!=0)
                 if hydro_out in [0, "0"]:
-                    self.uc.log_info(str(hydro_out))
                     outflow_sql += [
                         (
                             chan_out,
@@ -2951,6 +2950,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     params[0] = gid
                     if char == "N": # adjust the nxsecnum for channels crossing domains
                         params[1] = nxsecnum
+                        self.uc.log_info(str(params[2]))
                         # Check if the current gid is in the chan_n table, if so, skip increasing nxsecnum
                         if self.execute("SELECT COUNT(*) FROM chan_n WHERE elem_fid = ?;", (gid,)).fetchone()[0] == 0:
                             nxsecnum += 1
@@ -9156,41 +9156,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         # Create the INF_GLOBAL dataset
         ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
-        # Adjust the ideplt grid number to the multi domain cell
-        if subdomain:
-            ideplt = self.execute(f"""
-                                    SELECT
-                                        md.domain_cell 
-                                    FROM 
-                                        schema_md_cells AS md
-                                    JOIN 
-                                        grid g ON g.fid = md.grid_fid
-                                    WHERE 
-                                        g.fid = {ideplt[0]} AND md.domain_fid = {subdomain}
-                                    """).fetchone()
-        if ideplt is None:
-            if not subdomain:
-                first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
-            else:
-                first_gid = self.execute(f"""SELECT 
-                                                md.domain_cell 
-                                            FROM 
-                                                inflow_cells AS ic
-                                            JOIN
-                                                schema_md_cells md ON ic.grid_fid = md.grid_fid
-                                            WHERE 
-                                                md.domain_fid = {subdomain}
-                                            ORDER BY ic.fid LIMIT 1;""").fetchone()
-            ideplt = first_gid if first_gid is not None else (0,)
 
         if ideplt:
-            ideplt = ideplt[0]
+            ideplt = int(ideplt[0])
+
+        if ideplt != 0:
+
+            # Adjust the ideplt grid number to the multi domain cell
+            if subdomain:
+                ideplt = self.execute(f"""
+                                        SELECT
+                                            md.domain_cell 
+                                        FROM 
+                                            schema_md_cells AS md
+                                        JOIN 
+                                            grid g ON g.fid = md.grid_fid
+                                        WHERE 
+                                            g.fid = {ideplt} AND md.domain_fid = {subdomain}
+                                        """).fetchone()
+
+            if ideplt is None:
+                if not subdomain:
+                    first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
+                else:
+                    first_gid = self.execute(f"""SELECT 
+                                                    md.domain_cell 
+                                                FROM 
+                                                    inflow_cells AS ic
+                                                JOIN
+                                                    schema_md_cells md ON ic.grid_fid = md.grid_fid
+                                                WHERE 
+                                                    md.domain_fid = {subdomain}
+                                                ORDER BY ic.fid LIMIT 1;""").fetchone()
+                ideplt = first_gid if first_gid is not None else (0,)
 
         ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
         if ihourdaily:
             ihourdaily = ihourdaily[0]
         else:
             ihourdaily = 0
+
+        if isinstance(ideplt, tuple):
+            ideplt = ideplt[0]
 
         inflow_global = [float(ihourdaily), float(ideplt)]
 
