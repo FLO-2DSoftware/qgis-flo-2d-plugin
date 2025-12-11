@@ -10,7 +10,7 @@
 import os
 import shutil
 import traceback
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 from itertools import chain, groupby
 from operator import itemgetter
@@ -472,7 +472,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_inflow_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_inflow_hdf5()
+            return self.import_inflow_hdf5(grid_to_domain)
 
     def import_inflow_dat(self, grid_to_domain):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
@@ -673,13 +673,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.log_info(traceback.format_exc())
         #     self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
-    def import_inflow_hdf5(self):
-        try:
+    def import_inflow_hdf5(self, grid_to_domain):
+        # try:
 
-            inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")
-            if inflow_group:
-                inflow_group = inflow_group[0]
+        inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")
+        if inflow_group:
+            inflow_group = inflow_group[0]
 
+            inflow_sql = ["""INSERT INTO inflow (name, time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 6]
+            cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
+            ts_sql = ["""INSERT OR REPLACE INTO inflow_time_series (fid, name) VALUES""", 2]
+            tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4, ]
+
+            # Reservoirs
+            schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
+            user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
+
+            # Tailings Reservoirs
+            schematic_tailings_reservoirs_sql = [
+                """INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
+            user_tailing_reservoirs = [
+                """INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
+
+            if not grid_to_domain:
                 self.clear_tables(
                     "inflow",
                     "inflow_cells",
@@ -690,21 +706,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     "inflow_time_series",
                     "inflow_time_series_data",
                 )
-
-                inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 5]
-                cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
-                ts_sql = ["""INSERT OR REPLACE INTO inflow_time_series (fid, name) VALUES""", 2]
-                tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4, ]
-
-                # Reservoirs
-                schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
-                user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
-
-                # Tailings Reservoirs
-                schematic_tailings_reservoirs_sql = [
-                    """INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
-                user_tailing_reservoirs = [
-                    """INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
 
                 # Import inflow global parameters if present
                 if "INF_GLOBAL" in inflow_group.datasets:
@@ -723,7 +724,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             ident = 'F'
                         else:
                             ident = 'C'
-                        inflow_sql += [(int(ts_id), ident, int(inoutfc), 'point', i)]
+                        inflow_sql += [("Inflow " + str(ts_id), int(ts_id), ident, int(inoutfc), 'point', i)]
                         cells_sql += [(i, int(khiin))]
                         ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
@@ -755,37 +756,111 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             schematic_tailings_reservoirs_sql += [(grid_fid, wsel, n_value, tailings, schema_geom)]
                             user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
 
-                if inflow_sql:
-                    self.batch_execute(inflow_sql)
+            else:
 
-                if cells_sql:
-                    self.batch_execute(cells_sql)
+                current_bc_grids_sql = self.execute("SELECT grid_fid FROM inflow_cells;").fetchall()
+                current_bc_grids = []
+                if current_bc_grids_sql:
+                    current_bc_grids = [int(row[0]) for row in current_bc_grids_sql]
 
-                if ts_sql:
-                    self.batch_execute(ts_sql)
+                # Import inflow global parameters if present
+                if "INF_GLOBAL" in inflow_group.datasets:
+                    inflow_global = inflow_group.datasets["INF_GLOBAL"].data
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)",
+                                 ("IHOURDAILY", int(inflow_global[0]),
+                                  GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)",
+                                 ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
 
-                if tsd_sql:
-                    self.batch_execute(tsd_sql)
+                inflow_fid = self.execute("SELECT MAX(bc_fid) FROM inflow;").fetchone()
+                if inflow_fid and inflow_fid[0]:
+                    inflow_fid = inflow_fid[0] + 1
+                else:
+                    inflow_fid = 1
 
-                if schematic_reservoirs_sql:
-                    self.batch_execute(schematic_reservoirs_sql)
+                hpj1_dict = defaultdict(list)
+                hpj2_dict = defaultdict(list)
+                hpj3_dict = defaultdict(list)
+                # Import inflow time series data
+                if "TS_INF_DATA" in inflow_group.datasets:
+                    for tsd in inflow_group.datasets["TS_INF_DATA"].data:
+                        ts_id, hpj1, hpj2, hpj3 = tsd
+                        hpj1_dict[ts_id].append(hpj1)
+                        hpj2_dict[ts_id].append(hpj2)
+                        hpj3_dict[ts_id].append(hpj3)
 
-                if user_reservoirs_sql:
-                    self.batch_execute(user_reservoirs_sql)
+                # Import inflow time series
+                if "INF_GRID" in inflow_group.datasets:
+                    i = inflow_fid
+                    for inflow_grid in inflow_group.datasets["INF_GRID"].data:
+                        ifc, inoutfc, khiin, ts_id = inflow_grid
+                        global_gid = grid_to_domain.get(int(khiin))
+                        if int(global_gid) not in current_bc_grids:
+                            if ifc in [0, '0']:
+                                ident = 'F'
+                            else:
+                                ident = 'C'
+                            inflow_sql += [("Inflow " + str(i), i, ident, int(inoutfc), 'point', i)]
+                            cells_sql += [(i, int(global_gid))]
+                            ts_sql += [(i, "Time series " + str(i))]
+                            for hpj1, hpj2, hpj3 in zip(hpj1_dict[ts_id], hpj2_dict[ts_id], hpj3_dict[ts_id]):
+                                if hpj3 == -9999:
+                                    tsd_sql += [(i, hpj1, hpj2, None)]
+                                else:
+                                    tsd_sql += [(i, hpj1, hpj2, hpj3)]
+                            i += 1
 
-                if schematic_tailings_reservoirs_sql:
-                    self.batch_execute(schematic_tailings_reservoirs_sql)
+                # Import reservoir
+                if "RESERVOIRS" in inflow_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for reservoir in inflow_group.datasets["RESERVOIRS"].data:
+                        grid_fid, wsel, n_value, tailings = reservoir
+                        user_geom = self.build_point_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1])
+                        schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1],
+                                                           self.cell_size)
+                        global_fid = grid_to_domain.get(int(grid_fid))
+                        # Water
+                        if int(tailings) == -9999:
+                            schematic_reservoirs_sql += [(global_fid, wsel, n_value, schema_geom)]
+                            user_reservoirs_sql += [(wsel, n_value, user_geom)]
+                        # Tailings
+                        else:
+                            schematic_tailings_reservoirs_sql += [(global_fid, wsel, n_value, tailings, schema_geom)]
+                            user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
 
-                if user_tailing_reservoirs:
-                    self.batch_execute(user_tailing_reservoirs)
+            if inflow_sql:
+                self.batch_execute(inflow_sql)
 
-                return True
+            if cells_sql:
+                self.batch_execute(cells_sql)
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR: importing INFLOW from HDF5 failed!\n", e)
-            self.uc.log_info("ERROR: importing INFLOW from HDF5 failed!")
-            return False
+            if ts_sql:
+                self.batch_execute(ts_sql)
+
+            if tsd_sql:
+                self.batch_execute(tsd_sql)
+
+            if schematic_reservoirs_sql:
+                self.batch_execute(schematic_reservoirs_sql)
+
+            if user_reservoirs_sql:
+                self.batch_execute(user_reservoirs_sql)
+
+            if schematic_tailings_reservoirs_sql:
+                self.batch_execute(schematic_tailings_reservoirs_sql)
+
+            if user_tailing_reservoirs:
+                self.batch_execute(user_tailing_reservoirs)
+
+            return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR: importing INFLOW from HDF5 failed!\n", e)
+        #     self.uc.log_info("ERROR: importing INFLOW from HDF5 failed!")
+        #     return False
 
     def import_outrc(self):
         """
@@ -929,13 +1004,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: importing TAILINGS from HDF5 failed!")
             return False
 
-    def import_outflow(self):
+    def import_outflow(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.import_outflow_dat()
+            return self.import_outflow_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_outflow_hdf5()
+            return self.import_outflow_hdf5(grid_to_domain)
 
-    def import_outflow_dat(self):
+    def import_outflow_dat(self, grid_to_domain):
         outflow_sql = [
             """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
                                             chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
@@ -1065,22 +1140,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qhtab_name_qry = """UPDATE qh_table SET name = 'Q(h) table ' ||  cast(fid as text);"""
         self.execute(qhtab_name_qry)
 
-    def import_outflow_hdf5(self):
+    def import_outflow_hdf5(self, grid_to_domain):
         try:
             outflow_group = self.parser.read_groups("Input/Boundary Conditions/Outflow")
             if outflow_group:
                 outflow_group = outflow_group[0]
-
-                self.clear_tables(
-                    "outflow",
-                    "outflow_cells",
-                    "qh_params",
-                    "qh_params_data",
-                    "qh_table",
-                    "qh_table_data",
-                    "outflow_time_series",
-                    "outflow_time_series_data",
-                )
 
                 floodplain_outflow_sql = [
                     """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
@@ -1100,120 +1164,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ts_sql = ["""INSERT OR REPLACE INTO outflow_time_series (fid, name) VALUES""", 2]
                 ts_data_sql = ["""INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES""", 3]
 
-                update_sql = []
-                parsed_grid = {}
-                fid = 1
-                bc_fid = self.execute("SELECT MAX(fid) FROM all_schem_bc;").fetchone()
-                if bc_fid and bc_fid[0] is not None:
-                    bc_fid = bc_fid[0] + 1
-                else:
-                    bc_fid = 1
+                if not grid_to_domain:
+                    self.clear_tables(
+                        "outflow",
+                        "outflow_cells",
+                        "qh_params",
+                        "qh_params_data",
+                        "qh_table",
+                        "qh_table_data",
+                        "outflow_time_series",
+                        "outflow_time_series_data",
+                    )
 
-                # Read datasets
-                if "FP_OUT_GRID" in outflow_group.datasets:
-                    data = outflow_group.datasets["FP_OUT_GRID"].data
-                    for grid in data:
-                        if grid not in parsed_grid.keys():
-                            parsed_grid[grid] = fid
-                            floodplain_outflow_sql += [
-                                (
-                                    fid,
-                                    1,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    'point',
-                                    bc_fid,
-                                )
-                            ]
-                            cells_sql += [
-                                (
-                                    fid,
-                                    int(grid),
-                                    'point'
-                                )
-                            ]
-                            fid += 1
-                            bc_fid += 1
-                        else:
-                            existing_fid = parsed_grid[grid]
-                            update_sql.append(f"UPDATE outflow SET fp_out = 1 WHERE fid = {existing_fid};")
+                    update_sql = []
+                    parsed_grid = {}
+                    fid = 1
+                    bc_fid = self.execute("SELECT MAX(fid) FROM all_schem_bc;").fetchone()
+                    if bc_fid and bc_fid[0] is not None:
+                        bc_fid = bc_fid[0] + 1
+                    else:
+                        bc_fid = 1
 
-                if "CH_OUT_GRID" in outflow_group.datasets:
-                    data = outflow_group.datasets["CH_OUT_GRID"].data
-                    for grid in data:
-                        if grid not in parsed_grid.keys():
-                            parsed_grid[grid] = fid
-                            channel_outflow_sql += [
-                                (
-                                    fid,
-                                    1,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    'point',
-                                    bc_fid,
-                                )
-                            ]
-                            cells_sql += [
-                                (
-                                    fid,
-                                    int(grid),
-                                    'point'
-                                )
-                            ]
-                            fid += 1
-                            bc_fid += 1
-                        else:
-                            existing_fid = parsed_grid[grid]
-                            update_sql.append(f"UPDATE outflow SET chan_out = 1 WHERE fid = {existing_fid};")
-
-                if "HYD_OUT_GRID" in outflow_group.datasets:
-                    data = outflow_group.datasets["HYD_OUT_GRID"].data
-                    for row in data:
-                        hydro_out, grid = row
-                        floodplain_outflow_sql += [
-                            (
-                                fid,
-                                0,
-                                int(hydro_out),
-                                0,
-                                0,
-                                0,
-                                0,
-                                'point',
-                                bc_fid,
-                            )
-                        ]
-                        cells_sql += [
-                            (
-                                fid,
-                                int(grid),
-                                'point'
-                            )
-                        ]
-                        fid += 1
-                        bc_fid += 1
-
-                if "TS_OUT_GRID" in outflow_group.datasets:
-                    data = outflow_group.datasets["TS_OUT_GRID"].data
-                    for row in data:
-                        grid, cell_type, ts_id = row
-                        if grid not in parsed_grid.keys():
-                            if int(cell_type) == 0:  # floodplain
+                    # Read datasets
+                    if "FP_OUT_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["FP_OUT_GRID"].data
+                        for grid in data:
+                            if grid not in parsed_grid.keys():
+                                parsed_grid[grid] = fid
                                 floodplain_outflow_sql += [
                                     (
                                         fid,
+                                        1,
                                         0,
                                         0,
                                         0,
                                         0,
                                         0,
-                                        int(ts_id),
                                         'point',
                                         bc_fid,
                                     )
@@ -1225,17 +1211,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         'point'
                                     )
                                 ]
-                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
                                 fid += 1
                                 bc_fid += 1
+                            else:
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(f"UPDATE outflow SET fp_out = 1 WHERE fid = {existing_fid};")
 
-                            if int(cell_type) == 1:  # channel
+                    if "CH_OUT_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["CH_OUT_GRID"].data
+                        for grid in data:
+                            if grid not in parsed_grid.keys():
+                                parsed_grid[grid] = fid
                                 channel_outflow_sql += [
                                     (
                                         fid,
+                                        1,
                                         0,
                                         0,
-                                        int(ts_id),
                                         0,
                                         0,
                                         0,
@@ -1250,40 +1242,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         'point'
                                     )
                                 ]
-                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
                                 fid += 1
                                 bc_fid += 1
-                        else:
-                            if int(cell_type) == 0:  # floodplain
+                            else:
                                 existing_fid = parsed_grid[grid]
-                                update_sql.append(
-                                    f"UPDATE outflow SET fp_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
-                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                                update_sql.append(f"UPDATE outflow SET chan_out = 1 WHERE fid = {existing_fid};")
 
-                            if int(cell_type) == 1:  # channel
-                                existing_fid = parsed_grid[grid]
-                                update_sql.append(
-                                    f"UPDATE outflow SET chan_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
-                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
-
-                if "TS_OUT_DATA" in outflow_group.datasets:
-                    data = outflow_group.datasets["TS_OUT_DATA"].data
-                    for row in data:
-                        ts_id, time, value = row
-                        ts_data_sql += [(int(ts_id), time, value)]
-
-                if "QH_PARAMS_GRID" in outflow_group.datasets:
-                    data = outflow_group.datasets["QH_PARAMS_GRID"].data
-                    for row in data:
-                        grid, qh_params_id = row
-                        if grid not in parsed_grid.keys():
-                            channel_outflow_sql += [
+                    if "HYD_OUT_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["HYD_OUT_GRID"].data
+                        for row in data:
+                            hydro_out, grid = row
+                            floodplain_outflow_sql += [
                                 (
                                     fid,
-                                    1,
+                                    0,
+                                    int(hydro_out),
                                     0,
                                     0,
-                                    qh_params_id,
                                     0,
                                     0,
                                     'point',
@@ -1297,60 +1272,461 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     'point'
                                 )
                             ]
-                            qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
                             fid += 1
                             bc_fid += 1
-                        else:
-                            existing_fid = parsed_grid[grid]
-                            update_sql.append(
-                                f"UPDATE outflow SET chan_qhpar_fid = {int(qh_params_id)} WHERE fid = {existing_fid};")
-                            qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
 
-                if "QH_PARAMS" in outflow_group.datasets:
-                    data = outflow_group.datasets["QH_PARAMS"].data
-                    for row in data:
-                        qh_params_id, param1, param2, param3 = row
-                        qh_params_data_sql += [(int(qh_params_id), param1, param2, param3)]
+                    if "TS_OUT_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["TS_OUT_GRID"].data
+                        for row in data:
+                            grid, cell_type, ts_id = row
+                            if grid not in parsed_grid.keys():
+                                if int(cell_type) == 0:  # floodplain
+                                    floodplain_outflow_sql += [
+                                        (
+                                            fid,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            int(ts_id),
+                                            'point',
+                                            bc_fid,
+                                        )
+                                    ]
+                                    cells_sql += [
+                                        (
+                                            fid,
+                                            int(grid),
+                                            'point'
+                                        )
+                                    ]
+                                    ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                                    fid += 1
+                                    bc_fid += 1
 
-                if "QH_TABLE_GRID" in outflow_group.datasets:
-                    data = outflow_group.datasets["QH_TABLE_GRID"].data
-                    for row in data:
-                        grid, qh_table_id = row
-                        if grid not in parsed_grid.keys():
-                            channel_outflow_sql += [
-                                (
-                                    fid,
-                                    1,
-                                    0,
-                                    0,
-                                    0,
-                                    qh_table_id,
-                                    0,
-                                    'point',
-                                    bc_fid,
-                                )
-                            ]
-                            cells_sql += [
-                                (
-                                    fid,
-                                    int(grid),
-                                    'point'
-                                )
-                            ]
-                            qh_tab_sql += [(int(qh_table_id), "Q(h) table " + str(qh_table_id))]
-                            fid += 1
-                            bc_fid += 1
-                        else:
-                            existing_fid = parsed_grid[grid]
-                            update_sql.append(
-                                f"UPDATE outflow SET chan_qhtab_fid = {int(qh_table_id)} WHERE fid = {existing_fid};")
-                            qh_tab_data_sql += [(int(qh_table_id), "Q(h) parameters " + str(qh_table_id))]
+                                if int(cell_type) == 1:  # channel
+                                    channel_outflow_sql += [
+                                        (
+                                            fid,
+                                            0,
+                                            0,
+                                            int(ts_id),
+                                            0,
+                                            0,
+                                            0,
+                                            'point',
+                                            bc_fid,
+                                        )
+                                    ]
+                                    cells_sql += [
+                                        (
+                                            fid,
+                                            int(grid),
+                                            'point'
+                                        )
+                                    ]
+                                    ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                                    fid += 1
+                                    bc_fid += 1
+                            else:
+                                if int(cell_type) == 0:  # floodplain
+                                    existing_fid = parsed_grid[grid]
+                                    update_sql.append(
+                                        f"UPDATE outflow SET fp_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                    ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
-                if "QH_TABLE" in outflow_group.datasets:
-                    data = outflow_group.datasets["QH_TABLE"].data
-                    for row in data:
-                        qh_table_id, param1, param2 = row
-                        qh_tab_data_sql += [(int(qh_table_id), param1, param2)]
+                                if int(cell_type) == 1:  # channel
+                                    existing_fid = parsed_grid[grid]
+                                    update_sql.append(
+                                        f"UPDATE outflow SET chan_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                    ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+
+                    if "TS_OUT_DATA" in outflow_group.datasets:
+                        data = outflow_group.datasets["TS_OUT_DATA"].data
+                        for row in data:
+                            ts_id, time, value = row
+                            ts_data_sql += [(int(ts_id), time, value)]
+
+                    if "QH_PARAMS_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_PARAMS_GRID"].data
+                        for row in data:
+                            grid, qh_params_id = row
+                            if grid not in parsed_grid.keys():
+                                channel_outflow_sql += [
+                                    (
+                                        fid,
+                                        1,
+                                        0,
+                                        0,
+                                        qh_params_id,
+                                        0,
+                                        0,
+                                        'point',
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
+                                fid += 1
+                                bc_fid += 1
+                            else:
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(
+                                    f"UPDATE outflow SET chan_qhpar_fid = {int(qh_params_id)} WHERE fid = {existing_fid};")
+                                qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
+
+                    if "QH_PARAMS" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_PARAMS"].data
+                        for row in data:
+                            qh_params_id, param1, param2, param3 = row
+                            qh_params_data_sql += [(int(qh_params_id), param1, param2, param3)]
+
+                    if "QH_TABLE_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_TABLE_GRID"].data
+                        for row in data:
+                            grid, qh_table_id = row
+                            if grid not in parsed_grid.keys():
+                                channel_outflow_sql += [
+                                    (
+                                        fid,
+                                        1,
+                                        0,
+                                        0,
+                                        0,
+                                        qh_table_id,
+                                        0,
+                                        'point',
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                qh_tab_sql += [(int(qh_table_id), "Q(h) table " + str(qh_table_id))]
+                                fid += 1
+                                bc_fid += 1
+                            else:
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(
+                                    f"UPDATE outflow SET chan_qhtab_fid = {int(qh_table_id)} WHERE fid = {existing_fid};")
+                                qh_tab_data_sql += [(int(qh_table_id), "Q(h) parameters " + str(qh_table_id))]
+
+                    if "QH_TABLE" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_TABLE"].data
+                        for row in data:
+                            qh_table_id, param1, param2 = row
+                            qh_tab_data_sql += [(int(qh_table_id), param1, param2)]
+                else:
+                    update_sql = []
+                    parsed_grid = {}
+
+                    # The bc_fid, ts_fid, qh_params_fid and qh_table_fid are the fid that should be added on the geopackage
+                    # The bc_id, ts_id, qh_params_id and qh_table_id are the id that are used on the hdf5 file
+
+                    bc_fid = self.execute("SELECT MAX(tab_bc_fid) FROM all_schem_bc;").fetchone()
+                    if bc_fid and bc_fid[0] is not None:
+                        bc_fid = bc_fid[0] + 1
+                    else:
+                        bc_fid = 1
+
+                    ts_fid = self.execute("SELECT MAX(fid) FROM outflow_time_series;").fetchone()
+                    if ts_fid and ts_fid[0]:
+                        ts_fid = ts_fid[0] + 1
+                    else:
+                        ts_fid = 1
+
+                    qh_params_fid = self.execute("SELECT MAX(fid) FROM qh_params;").fetchone()
+                    if qh_params_fid and qh_params_fid[0]:
+                        qh_params_fid = qh_params_fid[0] + 1
+                    else:
+                        qh_params_fid = 1
+
+                    qh_table_fid = self.execute("SELECT MAX(fid) FROM qh_table;").fetchone()
+                    if qh_table_fid and qh_table_fid[0]:
+                        qh_table_fid = qh_table_fid[0] + 1
+                    else:
+                        qh_table_fid = 1
+
+                    # Read datasets
+                    if "FP_OUT_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["FP_OUT_GRID"].data
+                        for grid in data:
+                            grid = grid_to_domain.get(int(grid))
+                            if grid not in parsed_grid.keys():
+                                parsed_grid[grid] = bc_fid
+                                floodplain_outflow_sql += [
+                                    (
+                                        bc_fid,
+                                        1,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        'point',
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        bc_fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                bc_fid += 1
+                            else:
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(f"UPDATE outflow SET fp_out = 1 WHERE bc_fid = {existing_fid};")
+
+                    if "CH_OUT_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["CH_OUT_GRID"].data
+                        for grid in data:
+                            grid = grid_to_domain.get(int(grid))
+                            if grid not in parsed_grid.keys():
+                                parsed_grid[grid] = bc_fid
+                                channel_outflow_sql += [
+                                    (
+                                        bc_fid,
+                                        1,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        'point',
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        bc_fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                bc_fid += 1
+                            else:
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(f"UPDATE outflow SET chan_out = 1 WHERE bc_fid = {existing_fid};")
+
+                    # if "HYD_OUT_GRID" in outflow_group.datasets:
+                    #     data = outflow_group.datasets["HYD_OUT_GRID"].data
+                    #     for row in data:
+                    #         hydro_out, grid = row
+                    #         grid = grid_to_domain.get(int(grid))
+                    #         floodplain_outflow_sql += [
+                    #             (
+                    #                 bc_fid,
+                    #                 0,
+                    #                 int(hydro_out),
+                    #                 0,
+                    #                 0,
+                    #                 0,
+                    #                 0,
+                    #                 'point',
+                    #                 bc_fid,
+                    #             )
+                    #         ]
+                    #         cells_sql += [
+                    #             (
+                    #                 bc_fid,
+                    #                 int(grid),
+                    #                 'point'
+                    #             )
+                    #         ]
+                    #         bc_fid += 1
+
+                    ts_out_time_dict = defaultdict(list)
+                    ts_out_value_dict = defaultdict(list)
+                    if "TS_OUT_DATA" in outflow_group.datasets:
+                        data = outflow_group.datasets["TS_OUT_DATA"].data
+                        for row in data:
+                            ts_id, time, value = row
+                            ts_out_time_dict[ts_id].append(time)
+                            ts_out_value_dict[ts_id].append(value)
+
+                    if "TS_OUT_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["TS_OUT_GRID"].data
+                        for row in data:
+                            grid, cell_type, ts_id = row
+                            grid = grid_to_domain.get(int(grid))
+                            if grid not in parsed_grid.keys():
+                                if int(cell_type) == 0:  # floodplain
+                                    floodplain_outflow_sql += [
+                                        (
+                                            bc_fid,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            int(ts_fid),
+                                            'point',
+                                            bc_fid,
+                                        )
+                                    ]
+                                    cells_sql += [
+                                        (
+                                            bc_fid,
+                                            int(grid),
+                                            'point'
+                                        )
+                                    ]
+                                    ts_sql += [(int(ts_fid), "Time series " + str(ts_fid))]
+                                    bc_fid += 1
+
+                                if int(cell_type) == 1:  # channel
+                                    channel_outflow_sql += [
+                                        (
+                                            bc_fid,
+                                            0,
+                                            0,
+                                            int(ts_fid),
+                                            0,
+                                            0,
+                                            0,
+                                            'point',
+                                            bc_fid,
+                                        )
+                                    ]
+                                    cells_sql += [
+                                        (
+                                            bc_fid,
+                                            int(grid),
+                                            'point'
+                                        )
+                                    ]
+                                    ts_sql += [(int(ts_fid), "Time series " + str(ts_fid))]
+                                    bc_fid += 1
+
+                                for time, value in zip(ts_out_time_dict[ts_id], ts_out_value_dict[ts_id]):
+                                    ts_data_sql += [(int(ts_fid), time, value)]
+
+                                ts_fid += 1
+
+                            else:
+                                if int(cell_type) == 0:  # floodplain
+                                    existing_fid = parsed_grid[grid]
+                                    update_sql.append(
+                                        f"UPDATE outflow SET fp_tser_fid = {int(ts_fid)} WHERE fid = {existing_fid};")
+                                    ts_sql += [(int(ts_fid), "Time series " + str(ts_fid))]
+
+                                if int(cell_type) == 1:  # channel
+                                    existing_fid = parsed_grid[grid]
+                                    update_sql.append(
+                                        f"UPDATE outflow SET chan_tser_fid = {int(ts_fid)} WHERE fid = {existing_fid};")
+                                    ts_sql += [(int(ts_fid), "Time series " + str(ts_fid))]
+
+                    qh_params_param1_dict = defaultdict(list)
+                    qh_params_param2_dict = defaultdict(list)
+                    qh_params_param3_dict = defaultdict(list)
+                    if "QH_PARAMS" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_PARAMS"].data
+                        for row in data:
+                            qh_params_id, param1, param2, param3 = row
+                            qh_params_param1_dict[qh_params_id].append(param1)
+                            qh_params_param2_dict[qh_params_id].append(param2)
+                            qh_params_param3_dict[qh_params_id].append(param3)
+
+                    if "QH_PARAMS_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_PARAMS_GRID"].data
+                        for row in data:
+                            grid, qh_params_id = row
+                            grid = grid_to_domain.get(int(grid))
+                            if grid not in parsed_grid.keys():
+                                channel_outflow_sql += [
+                                    (
+                                        bc_fid,
+                                        1,
+                                        0,
+                                        0,
+                                        qh_params_fid,
+                                        0,
+                                        0,
+                                        'point',
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        bc_fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                qh_params_sql += [(int(qh_params_fid), "Q(h) parameters " + str(qh_params_fid))]
+                                bc_fid += 1
+
+                                for param1, param2, param3 in zip(qh_params_param1_dict[qh_params_id], qh_params_param2_dict[qh_params_id], qh_params_param3_dict[qh_params_id]):
+                                    qh_params_data_sql += [(int(qh_params_fid), param1, param2, param3)]
+
+                                qh_params_fid += 1
+
+                            else:
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(
+                                    f"UPDATE outflow SET chan_qhpar_fid = {int(qh_params_id)} WHERE fid = {existing_fid};")
+                                qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
+
+                    qh_table_param1_dict = defaultdict(list)
+                    qh_table_param2_dict = defaultdict(list)
+                    if "QH_TABLE" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_TABLE"].data
+                        for row in data:
+                            qh_table_id, param1, param2 = row
+                            qh_table_param1_dict[qh_table_id].append(param1)
+                            qh_table_param2_dict[qh_table_id].append(param2)
+
+                    if "QH_TABLE_GRID" in outflow_group.datasets:
+                        data = outflow_group.datasets["QH_TABLE_GRID"].data
+                        for row in data:
+                            grid, qh_table_id = row
+                            grid = grid_to_domain.get(int(grid))
+                            if grid not in parsed_grid.keys():
+                                channel_outflow_sql += [
+                                    (
+                                        bc_fid,
+                                        1,
+                                        0,
+                                        0,
+                                        0,
+                                        qh_table_fid,
+                                        0,
+                                        'point',
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        bc_fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                qh_tab_sql += [(int(qh_table_fid), "Q(h) table " + str(qh_table_fid))]
+                                bc_fid += 1
+
+                                for param1, param2 in zip(qh_table_param1_dict[qh_table_id], qh_table_param2_dict[qh_table_id]):
+                                    qh_tab_data_sql += [(int(qh_table_fid), param1, param2)]
+                                qh_table_fid += 1
+
+                            else:
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(
+                                    f"UPDATE outflow SET chan_qhtab_fid = {int(qh_table_id)} WHERE fid = {existing_fid};")
+                                qh_tab_data_sql += [(int(qh_table_id), "Q(h) parameters " + str(qh_table_id))]
 
                 if floodplain_outflow_sql:
                     self.batch_execute(floodplain_outflow_sql)
@@ -1411,7 +1787,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_rain_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_rain_hdf5()
+            return self.import_rain_hdf5(grid_to_domain)
 
     def import_rain_dat(self, grid_to_domain):
         rain_sql = [
@@ -1425,7 +1801,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             3,
         ]
         cells_sql = [
-            """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
+            """INSERT OR IGNORE INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
             3,
         ]
 
@@ -1467,6 +1843,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gid, val = row
                 cells_sql += [(i, gid, val)]
         else:
+
+            self.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_rain_arf_cells_unique
+                    ON rain_arf_cells(grid_fid);
+                """)
+
             # Check if there is any existing data on the rain table, if so, it means that it was already imported
             options_check = self.execute("SELECT COUNT(*) FROM rain;").fetchone()
             if options_check and options_check[0] > 0:
@@ -1502,7 +1884,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if repeated_value:
             self.uc.bar_warn("Rainfall data had repeated values that were removed. Check log for details.")
 
-    def import_rain_hdf5(self):
+    def import_rain_hdf5(self, grid_to_domain):
         try:
             rain_group = self.parser.read_groups("Input/Rainfall")
             if rain_group:
@@ -1519,44 +1901,83 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     3,
                 ]
                 cells_sql = [
-                    """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
+                    """INSERT OR IGNORE INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
                     3,
                 ]
 
-                self.clear_tables(
-                    "rain",
-                    "rain_arf_cells",
-                    "rain_time_series",
-                    "rain_time_series_data",
-                )
-
                 repeated_value = False
 
-                # Read RAIN_GLOBAL dataset
-                rain_global = rain_group.datasets["RAIN_GLOBAL"].data
-                if len(rain_global) < 8:
-                    raise ValueError("RAIN_GLOBAL dataset is incomplete.")
-                rain_sql += [(1,) + tuple(rain_global[:8])]
+                if not grid_to_domain:
 
-                # Insert time series data
-                ts_sql += [(1,)]
-                rain_data = rain_group.datasets["RAIN_DATA"].data
-                previous_value = None
-                for row in rain_data:
-                    time, value = row
-                    if value != previous_value:
-                        tsd_sql += [(1, time, value)]
+                    self.clear_tables(
+                        "rain",
+                        "rain_arf_cells",
+                        "rain_time_series",
+                        "rain_time_series_data",
+                    )
+
+                    # Read RAIN_GLOBAL dataset
+                    rain_global = rain_group.datasets["RAIN_GLOBAL"].data
+                    if len(rain_global) < 8:
+                        raise ValueError("RAIN_GLOBAL dataset is incomplete.")
+                    rain_sql += [(1,) + tuple(rain_global[:8])]
+
+                    # Insert time series data
+                    ts_sql += [(1,)]
+                    rain_data = rain_group.datasets["RAIN_DATA"].data
+                    previous_value = None
+                    for row in rain_data:
+                        time, value = row
+                        if value != previous_value:
+                            tsd_sql += [(1, time, value)]
+                        else:
+                            repeated_value = True
+                            self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
+                        previous_value = value
+
+                    # Insert ARF data if available
+                    if "RAIN_ARF" in rain_group.datasets:
+                        rain_arf = rain_group.datasets["RAIN_ARF"].data
+                        for i, row in enumerate(rain_arf, 1):
+                            grid_fid, arf = row
+                            cells_sql += [(i, int(grid_fid), float(arf))]
+                else:
+
+                    self.execute("""
+                            CREATE UNIQUE INDEX IF NOT EXISTS idx_rain_arf_cells_unique
+                            ON rain_arf_cells(grid_fid);
+                        """)
+
+                    # Check if there is any existing data on the rain table, if so, it means that it was already imported
+                    options_check = self.execute("SELECT COUNT(*) FROM rain;").fetchone()
+                    if options_check and options_check[0] > 0:
+                        pass
                     else:
-                        repeated_value = True
-                        self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
-                    previous_value = value
+                        # Read RAIN_GLOBAL dataset
+                        rain_global = rain_group.datasets["RAIN_GLOBAL"].data
+                        if len(rain_global) < 8:
+                            raise ValueError("RAIN_GLOBAL dataset is incomplete.")
+                        rain_sql += [(1,) + tuple(rain_global[:8])]
 
-                # Insert ARF data if available
-                if "RAIN_ARF" in rain_group.datasets:
-                    rain_arf = rain_group.datasets["RAIN_ARF"].data
-                    for i, row in enumerate(rain_arf, 1):
-                        grid_fid, arf = row
-                        cells_sql += [(i, int(grid_fid), float(arf))]
+                        # Insert time series data
+                        ts_sql += [(1,)]
+                        rain_data = rain_group.datasets["RAIN_DATA"].data
+                        previous_value = None
+                        for row in rain_data:
+                            time, value = row
+                            if value != previous_value:
+                                tsd_sql += [(1, time, value)]
+                            else:
+                                repeated_value = True
+                                self.uc.log_info(f"Rainfall repeated percentage of {value} was removed.")
+                            previous_value = value
+
+                    # Insert ARF data if available
+                    if "RAIN_ARF" in rain_group.datasets:
+                        rain_arf = rain_group.datasets["RAIN_ARF"].data
+                        for i, row in enumerate(rain_arf, 1):
+                            grid_fid, arf = row
+                            cells_sql += [(i, grid_to_domain.get(int(grid_fid)), float(arf))]
 
                 # Execute batch inserts
                 self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)
@@ -1575,11 +1996,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing RAIN data from HDF5 failed!", e)
             return False
 
-    def import_raincell(self, grid_to_domain=None):
+    def import_raincell(self, grid_to_domain=None, raincell_hdf5_path=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_raincell_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_raincell_hdf5()
+            return self.import_raincell_hdf5(grid_to_domain, raincell_hdf5_path)
 
     def import_raincell_dat(self, grid_to_domain):
         head_sql = [
@@ -1747,24 +2168,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(head_sql, data_sql)
 
-    def import_raincell_hdf5(self):
-        try:
+    def import_raincell_hdf5(self, grid_to_domain, raincell_hdf5_path):
+        # try:
 
+        if not raincell_hdf5_path:
             s = QSettings()
             project_dir = s.value("FLO-2D/lastGdsDir")
-
             raincell = os.path.join(project_dir, "RAINCELL.HDF5")
-            if os.path.exists(raincell):
+        else:
+            raincell = raincell_hdf5_path
 
-                head_sql = [
-                    """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
-                    3,
-                ]
+        if os.path.exists(raincell):
 
-                data_sql = [
-                    """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
-                    3,
-                ]
+            head_sql = [
+                """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
+                3,
+            ]
+
+            data_sql = [
+                """INSERT OR IGNORE INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+                3,
+            ]
+
+            if not grid_to_domain:
 
                 self.clear_tables("raincell", "raincell_data", "raincellraw", "flo2d_raincell")
 
@@ -1797,21 +2223,60 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             # Ensure native Python float for DB drivers
                             val = float(col[rrgrid - 1])
                             data_sql += [(int(i), int(rrgrid), val)]
-
-                    if head_sql:
-                        self.batch_execute(head_sql)
-
-                    if data_sql:
-                        self.batch_execute(data_sql)
-
-                return True
             else:
-                return False
 
-        except Exception as e:
-            self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
-            self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+                self.execute("""
+                        CREATE UNIQUE INDEX IF NOT EXISTS idx_raincell_data_unique
+                        ON raincell_data(time_interval, rrgrid, iraindum);
+                    """)
+
+                with h5py.File(raincell, "r") as f:
+                    grp = f["raincell"]
+
+                    # Header insert only once
+                    raincell_check = self.execute("SELECT COUNT(*) FROM raincell;").fetchone()
+                    if raincell_check and raincell_check[0] == 0:
+                        # Read header scalars
+                        rainintime = int(grp["RAININTIME"][()])  # scalar int
+                        irinters = int(grp["IRINTERS"][()])  # scalar int
+
+                        # TIMESTAMP is a 1-element array of bytes
+                        ts0 = grp["TIMESTAMP"][0]
+                        if isinstance(ts0, (bytes, bytearray)):
+                            timestamp = ts0.decode("utf-8", errors="ignore")
+                        else:
+                            timestamp = str(ts0)
+
+                        head_sql += [(rainintime, int(irinters), timestamp)]
+
+                    # Bulk insert raincell_data in chunks
+                    dts = grp["IRAINDUM"]  # shape (n_cells, irinters)
+                    n_cells, n_intervals = dts.shape
+
+                    # Iterate column-wise to keep locality by time_interval
+                    for i in range(n_intervals):
+                        col = dts[:, i]  # length n_cells
+                        # Append rows to chunk
+                        # rrgrid is 1..n_cells to match your exported order
+                        for rrgrid in range(1, n_cells + 1):
+                            # Ensure native Python float for DB drivers
+                            val = float(col[rrgrid - 1])
+                            data_sql += [(int(i), int(grid_to_domain[rrgrid]), val)]
+
+            if head_sql:
+                self.batch_execute(head_sql)
+
+            if data_sql:
+                self.batch_execute(data_sql)
+
+            return True
+        else:
             return False
+
+        # except Exception as e:
+        #     self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
+        #     self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+        #     return False
 
     def import_raincellraw(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -1925,7 +2390,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_infil_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_infil_hdf5()
+            return self.import_infil_hdf5(grid_to_domain)
 
     def import_infil_dat(self, grid_to_domain):
 
@@ -2030,7 +2495,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("Error while importing infiltration data!")
             self.uc.bar_error("Error while importing infiltration data!")
 
-    def import_infil_hdf5(self):
+    def import_infil_hdf5(self, grid_to_domain):
         # Access the infiltration group
         infil_group = self.parser.read_groups("Input/Infiltration")
         if infil_group:
@@ -2055,23 +2520,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "decaya",
                 "fhortonia"
             ]
+
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_cells_green_grid ON infil_cells_green(grid_fid);")
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_cells_scs_grid ON infil_cells_scs(grid_fid);")
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_cells_horton_grid ON infil_cells_horton(grid_fid);")
+            self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_infil_chan_grid ON infil_chan_elems(grid_fid);")
+
             infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 17]
             infil_seg_sql = [
                 """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
                 4,
             ]
             infil_green_sql = [
-                """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
+                """INSERT OR IGNORE INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
                                                                      abstrinf, rtimpf, soil_depth) VALUES""",
                 7,
             ]
-            infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
+            infil_scs_sql = ["""INSERT OR IGNORE INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
             infil_horton_sql = [
-                """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
+                """INSERT OR IGNORE INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
                 4,
             ]
             infil_chan_sql = [
-                """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
+                """INSERT OR IGNORE INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
                 2,
             ]
 
@@ -2082,66 +2553,125 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "C": infil_chan_sql,
             }
 
-            self.clear_tables(
-                "infil",
-                "infil_chan_seg",
-                "infil_cells_green",
-                "infil_cells_scs",
-                "infil_cells_horton",
-                "infil_chan_elems",
-            )
-
             try:
 
-                # Read INFIL_METHOD dataset
-                infil_method = int(infil_group.datasets["INFIL_METHOD"].data[0])
-                infil_data = [infil_method] + [None] * (len(infil_params) - 1)
+                if not grid_to_domain:
+                    self.clear_tables(
+                        "infil",
+                        "infil_chan_seg",
+                        "infil_cells_green",
+                        "infil_cells_scs",
+                        "infil_cells_horton",
+                        "infil_chan_elems",
+                    )
 
-                # Populate infil_sql with global infiltration parameters
-                if infil_method == 1 or infil_method == 3:  # Green-Ampt
-                    infil_ga_global = infil_group.datasets["INFIL_GA_GLOBAL"].data
-                    infil_data[1:7] = infil_ga_global[:6]  # ABSTR, SATI, SATF, POROS, SOILD, INFCHAN
-                    infil_data[7:10] = infil_ga_global[6:9]  # HYDCALL, SOILALL, HYDCADJ
+                    # Read INFIL_METHOD dataset
+                    infil_method = int(infil_group.datasets["INFIL_METHOD"].data[0])
+                    infil_data = [infil_method] + [None] * (len(infil_params) - 1)
 
-                if infil_method == 2 or infil_method == 3:  # SCS
-                    infil_scs_global = infil_group.datasets["INFIL_SCS_GLOBAL"].data
-                    infil_data[11:13] = infil_scs_global[:2]  # SCSNALL, ABSTR1
+                    # Populate infil_sql with global infiltration parameters
+                    if infil_method == 1 or infil_method == 3:  # Green-Ampt
+                        infil_ga_global = infil_group.datasets["INFIL_GA_GLOBAL"].data
+                        infil_data[1:7] = infil_ga_global[:6]  # ABSTR, SATI, SATF, POROS, SOILD, INFCHAN
+                        infil_data[7:10] = infil_ga_global[6:9]  # HYDCALL, SOILALL, HYDCADJ
 
-                if infil_method == 4:  # Horton
-                    infil_horton_global = infil_group.datasets["INFIL_HORTON_GLOBAL"].data
-                    infil_data[13:17] = infil_horton_global[:4]  # FHORTONI, FHORTONF, DECAYA, FHORTONIA
+                    if infil_method == 2 or infil_method == 3:  # SCS
+                        infil_scs_global = infil_group.datasets["INFIL_SCS_GLOBAL"].data
+                        infil_data[11:13] = infil_scs_global[:2]  # SCSNALL, ABSTR1
 
-                infil_sql += [tuple(infil_data)]
+                    if infil_method == 4:  # Horton
+                        infil_horton_global = infil_group.datasets["INFIL_HORTON_GLOBAL"].data
+                        infil_data[13:17] = infil_horton_global[:4]  # FHORTONI, FHORTONF, DECAYA, FHORTONIA
 
-                # Populate infil_chan_seg
-                if "INFIL_CHAN_SEG" in infil_group.datasets:
-                    infil_chan_seg_data = infil_group.datasets["INFIL_CHAN_SEG"].data
-                    for i, row in enumerate(infil_chan_seg_data, 1):
-                        infil_seg_sql += [(i,) + tuple(row)]
+                    infil_sql += [tuple(infil_data)]
 
-                # Populate infil_cells_green
-                if "INFIL_GA_CELLS" in infil_group.datasets:
-                    infil_ga_cells = infil_group.datasets["INFIL_GA_CELLS"].data
-                    for row in infil_ga_cells:
-                        sqls["F"] += [tuple(row)]
+                    # Populate infil_chan_seg
+                    if "INFIL_CHAN_SEG" in infil_group.datasets:
+                        infil_chan_seg_data = infil_group.datasets["INFIL_CHAN_SEG"].data
+                        for i, row in enumerate(infil_chan_seg_data, 1):
+                            infil_seg_sql += [(i,) + tuple(row)]
 
-                # Populate infil_cells_scs
-                if "INFIL_SCS_CELLS" in infil_group.datasets:
-                    infil_scs_cells = infil_group.datasets["INFIL_SCS_CELLS"].data
-                    for row in infil_scs_cells:
-                        sqls["S"] += [tuple(row)]
+                    # Populate infil_cells_green
+                    if "INFIL_GA_CELLS" in infil_group.datasets:
+                        infil_ga_cells = infil_group.datasets["INFIL_GA_CELLS"].data
+                        for row in infil_ga_cells:
+                            sqls["F"] += [tuple(row)]
 
-                # Populate infil_cells_horton
-                if "INFIL_HORTON_CELLS" in infil_group.datasets:
-                    infil_horton_cells = infil_group.datasets["INFIL_HORTON_CELLS"].data
-                    for row in infil_horton_cells:
-                        sqls["H"] += [tuple(row)]
+                    # Populate infil_cells_scs
+                    if "INFIL_SCS_CELLS" in infil_group.datasets:
+                        infil_scs_cells = infil_group.datasets["INFIL_SCS_CELLS"].data
+                        for row in infil_scs_cells:
+                            sqls["S"] += [tuple(row)]
 
-                # Populate infil_chan_elems
-                if "INFIL_CHAN_ELEMS" in infil_group.datasets:
-                    infil_chan_elems = infil_group.datasets["INFIL_CHAN_ELEMS"].data
-                    for row in infil_chan_elems:
-                        sqls["C"] += [tuple(row)]
+                    # Populate infil_cells_horton
+                    if "INFIL_HORTON_CELLS" in infil_group.datasets:
+                        infil_horton_cells = infil_group.datasets["INFIL_HORTON_CELLS"].data
+                        for row in infil_horton_cells:
+                            sqls["H"] += [tuple(row)]
+
+                    # Populate infil_chan_elems
+                    if "INFIL_CHAN_ELEMS" in infil_group.datasets:
+                        infil_chan_elems = infil_group.datasets["INFIL_CHAN_ELEMS"].data
+                        for row in infil_chan_elems:
+                            sqls["C"] += [tuple(row)]
+                else:
+                    # Read INFIL_METHOD dataset
+                    infil_method = int(infil_group.datasets["INFIL_METHOD"].data[0])
+                    infil_data = [infil_method] + [None] * (len(infil_params) - 1)
+
+                    # Populate infil_sql with global infiltration parameters
+                    if infil_method == 1 or infil_method == 3:  # Green-Ampt
+                        infil_ga_global = infil_group.datasets["INFIL_GA_GLOBAL"].data
+                        infil_data[1:7] = infil_ga_global[:6]  # ABSTR, SATI, SATF, POROS, SOILD, INFCHAN
+                        infil_data[7:10] = infil_ga_global[6:9]  # HYDCALL, SOILALL, HYDCADJ
+
+                    if infil_method == 2 or infil_method == 3:  # SCS
+                        infil_scs_global = infil_group.datasets["INFIL_SCS_GLOBAL"].data
+                        infil_data[11:13] = infil_scs_global[:2]  # SCSNALL, ABSTR1
+
+                    if infil_method == 4:  # Horton
+                        infil_horton_global = infil_group.datasets["INFIL_HORTON_GLOBAL"].data
+                        infil_data[13:17] = infil_horton_global[:4]  # FHORTONI, FHORTONF, DECAYA, FHORTONIA
+
+                    infil_sql += [tuple(infil_data)]
+
+                    # Populate infil_chan_seg
+                    if "INFIL_CHAN_SEG" in infil_group.datasets:
+                        infil_chan_seg_data = infil_group.datasets["INFIL_CHAN_SEG"].data
+                        for i, row in enumerate(infil_chan_seg_data, 1):
+                            infil_seg_sql += [(i,) + tuple(row)]
+
+                    # Populate infil_cells_green
+                    if "INFIL_GA_CELLS" in infil_group.datasets:
+                        infil_ga_cells = infil_group.datasets["INFIL_GA_CELLS"].data
+                        for row in infil_ga_cells:
+                            grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth = row
+                            grid_fid = grid_to_domain[int(grid_fid)]
+                            sqls["F"] += [(grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)]
+
+                    # Populate infil_cells_scs
+                    if "INFIL_SCS_CELLS" in infil_group.datasets:
+                        infil_scs_cells = infil_group.datasets["INFIL_SCS_CELLS"].data
+                        for row in infil_scs_cells:
+                            grid_fid, scsn = row
+                            grid_fid = grid_to_domain[int(grid_fid)]
+                            sqls["S"] += [(grid_fid, scsn)]
+
+                    # Populate infil_cells_horton
+                    if "INFIL_HORTON_CELLS" in infil_group.datasets:
+                        infil_horton_cells = infil_group.datasets["INFIL_HORTON_CELLS"].data
+                        for row in infil_horton_cells:
+                            grid_fid, fhorti, fhortf, deca = row
+                            grid_fid = grid_to_domain[int(grid_fid)]
+                            sqls["H"] += [(grid_fid, fhorti, fhortf, deca)]
+
+                    # Populate infil_chan_elems
+                    if "INFIL_CHAN_ELEMS" in infil_group.datasets:
+                        infil_chan_elems = infil_group.datasets["INFIL_CHAN_ELEMS"].data
+                        for row in infil_chan_elems:
+                            grid_fid, hydconch = row
+                            grid_fid = grid_to_domain[int(grid_fid)]
+                            sqls["C"] += [(grid_fid, hydconch)]
 
                 # Execute batch inserts
                 self.batch_execute(
@@ -2185,7 +2715,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_chan_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_chan_hdf5()
+            return self.import_chan_hdf5(grid_to_domain)
 
     def import_chan_dat(self, grid_to_domain):
 
@@ -2401,7 +2931,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #         "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
         #     )
 
-    def import_chan_hdf5(self):
+    def import_chan_hdf5(self, grid_to_domain):
         channel_group = self.parser.read_groups("Input/Channels")
         if channel_group:
             channel_group = channel_group[0]
@@ -2411,24 +2941,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 6,
             ]
             chan_elems_sql = [
-                """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
+                """INSERT OR IGNORE INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
                 8,
             ]
             chan_r_sql = [
-                """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+                """INSERT OR IGNORE INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
                 5,
             ]
             # chan_v_sql = [
-            #     """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+            #     """INSERT OR IGNORE INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
             #                                          excdep, a11, a22, b11, b22, c11, c22) VALUES""",
             #     17,
             # ]
             chan_t_sql = [
-                """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+                """INSERT OR IGNORE INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
                 7,
             ]
             chan_n_sql = [
-                """INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""",
+                """INSERT OR IGNORE INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""",
                 3
             ]
             chan_wsel_sql = [
@@ -2449,18 +2979,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ]
 
             # try:
-            self.clear_tables(
-                "chan",
-                "chan_elems",
-                "chan_r",
-                "chan_v",
-                "chan_t",
-                "chan_n",
-                "chan_confluences",
-                "user_noexchange_chan_areas",
-                "noexchange_chan_cells",
-                "chan_wsel",
-            )
 
             xs_geom = {}
             left_bank_geom = {}
@@ -2468,131 +2986,321 @@ class Flo2dGeoPackage(GeoPackageUtils):
             prev_chan_id = None
             i = 1
 
-            # Read CHANBANK dataset (maps left to right bank grids)
-            if "CHANBANK" in channel_group.datasets:
-                data = channel_group.datasets["CHANBANK"].data
-                for row in data:
-                    left_bank_grid, right_bank_grid = row
-                    xs_geom[int(left_bank_grid)] = int(right_bank_grid)
+            if not grid_to_domain:
+                self.clear_tables(
+                    "chan",
+                    "chan_elems",
+                    "chan_r",
+                    "chan_v",
+                    "chan_t",
+                    "chan_n",
+                    "chan_confluences",
+                    "user_noexchange_chan_areas",
+                    "noexchange_chan_cells",
+                    "chan_wsel",
+                )
 
-            # Helper function to flush geometry per channel
-            def flush_channel_geometry():
-                if left_bank_grids and prev_chan_id is not None:
-                    left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
+                # Read CHANBANK dataset (maps left to right bank grids)
+                if "CHANBANK" in channel_group.datasets:
+                    data = channel_group.datasets["CHANBANK"].data
+                    for row in data:
+                        left_bank_grid, right_bank_grid = row
+                        xs_geom[int(left_bank_grid)] = int(right_bank_grid)
 
-            # Process CHAN_NATURAL
-            if "CHAN_NATURAL" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_NATURAL"].data
-                for row in data:
-                    chan_id, grid, fcn, xlen, nxecnum = row
-                    chan_id = int(chan_id)
-                    grid = int(grid)
+                # Helper function to flush geometry per channel
+                def flush_channel_geometry():
+                    if left_bank_grids and prev_chan_id is not None:
+                        left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
 
-                    if prev_chan_id is not None and chan_id != prev_chan_id:
-                        flush_channel_geometry()
-                        left_bank_grids = []
-                        i = 1
+                # Process CHAN_NATURAL
+                if "CHAN_NATURAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_NATURAL"].data
+                    for row in data:
+                        chan_id, grid, fcn, xlen, nxecnum = row
+                        chan_id = int(chan_id)
+                        grid = int(grid)
 
-                    chan_n_sql += [(grid, nxecnum, f"XS {int(nxecnum)}")]
-                    if xs_geom[grid] not in [0, "0"]:
-                        geom = self.build_linestring([grid, xs_geom[grid]])
-                    else:
-                        geom = None
-                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "N")]
-                    left_bank_grids.append(grid)
-                    prev_chan_id = chan_id
-                    i += 1
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
 
-            # Process CHAN_RECTANGULAR
-            if "CHAN_RECTANGULAR" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_RECTANGULAR"].data
-                for row in data:
-                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
-                    chan_id = int(chan_id)
-                    grid = int(grid)
+                        chan_n_sql += [(grid, nxecnum, f"XS {int(nxecnum)}")]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([grid, xs_geom[grid]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "N")]
+                        left_bank_grids.append(grid)
+                        prev_chan_id = chan_id
+                        i += 1
 
-                    if prev_chan_id is not None and chan_id != prev_chan_id:
-                        flush_channel_geometry()
-                        left_bank_grids = []
-                        i = 1
+                # Process CHAN_RECTANGULAR
+                if "CHAN_RECTANGULAR" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_RECTANGULAR"].data
+                    for row in data:
+                        chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
+                        chan_id = int(chan_id)
+                        grid = int(grid)
 
-                    chan_r_sql += [(grid, bankell, bankelr, fcw, fcd)]
-                    if xs_geom[grid] not in [0, "0"]:
-                        geom = self.build_linestring([grid, xs_geom[grid]])
-                    else:
-                        geom = None
-                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "R")]
-                    left_bank_grids.append(grid)
-                    prev_chan_id = chan_id
-                    i += 1
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
 
-            # Process CHAN_TRAPEZOIDAL
-            if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
-                for row in data:
-                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
-                    chan_id = int(chan_id)
-                    grid = int(grid)
+                        chan_r_sql += [(grid, bankell, bankelr, fcw, fcd)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([grid, xs_geom[grid]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "R")]
+                        left_bank_grids.append(grid)
+                        prev_chan_id = chan_id
+                        i += 1
 
-                    if prev_chan_id is not None and chan_id != prev_chan_id:
-                        flush_channel_geometry()
-                        left_bank_grids = []
-                        i = 1
+                # Process CHAN_TRAPEZOIDAL
+                if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
+                    for row in data:
+                        chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
+                        chan_id = int(chan_id)
+                        grid = int(grid)
 
-                    chan_t_sql += [(grid, bankell, bankelr, fcw, fcd, zl, zr)]
-                    if xs_geom[grid] not in [0, "0"]:
-                        geom = self.build_linestring([grid, xs_geom[grid]])
-                    else:
-                        geom = None
-                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "T")]
-                    left_bank_grids.append(grid)
-                    prev_chan_id = chan_id
-                    i += 1
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
 
-            # Finalize last channel after all groups
-            flush_channel_geometry()
+                        chan_t_sql += [(grid, bankell, bankelr, fcw, fcd, zl, zr)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([grid, xs_geom[grid]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "T")]
+                        left_bank_grids.append(grid)
+                        prev_chan_id = chan_id
+                        i += 1
 
-            # Process CHAN_GLOBAL for main channel table
-            if "CHAN_GLOBAL" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_GLOBAL"].data
-                for row in data:
-                    # This is done because some hdf5 do not have the ibaseflow on it
-                    if len(row) < 6:
-                        chan_id, depinitial, froudc, roughadj, isedn = row
-                        ibaseflow = 0
-                    else:
-                        chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
-                    chan_id = int(chan_id)
-                    geom = left_bank_geom.get(chan_id)
-                    if float(isedn) == -9999:
-                        isedn = None  # Default value for isedn if not provided
-                    chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
+                # Finalize last channel after all groups
+                flush_channel_geometry()
 
-            # Process CONFLUENCES
-            if "CONFLUENCES" in channel_group.datasets:
-                grid_group = self.parser.read_groups("Input/Grid")[0]
-                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                data = channel_group.datasets["CONFLUENCES"].data
-                for row in data:
-                    con_id, river_type, grid = row
-                    geom = self.build_point_xy(x_list[int(grid) - 1], y_list[int(grid) - 1])
-                    chan_conf_sql += [(geom, int(con_id), int(river_type), int(grid))]
+                # Process CHAN_GLOBAL for main channel table
+                if "CHAN_GLOBAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_GLOBAL"].data
+                    for row in data:
+                        # This is done because some hdf5 do not have the ibaseflow on it
+                        if len(row) < 6:
+                            chan_id, depinitial, froudc, roughadj, isedn = row
+                            ibaseflow = 0
+                        else:
+                            chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
+                        chan_id = int(chan_id)
+                        geom = left_bank_geom.get(chan_id)
+                        if float(isedn) == -9999:
+                            isedn = None  # Default value for isedn if not provided
+                        chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
 
-            # Process noexchange areas and cells
-            if "NOEXCHANGE" in channel_group.datasets:
-                data = channel_group.datasets["NOEXCHANGE"].data
-                for i, grid in enumerate(data, start=1):
-                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
-                    chan_e_sql += [(geom,)]
-                    elems_e_sql += [(i, int(grid))]
+                # Process CONFLUENCES
+                if "CONFLUENCES" in channel_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    data = channel_group.datasets["CONFLUENCES"].data
+                    for row in data:
+                        con_id, river_type, grid = row
+                        geom = self.build_point_xy(x_list[int(grid) - 1], y_list[int(grid) - 1])
+                        chan_conf_sql += [(geom, int(con_id), int(river_type), int(grid))]
 
-            # Process CHAN_WSEL
-            if "CHAN_WSE" in channel_group.datasets:
-                data = channel_group.datasets["CHAN_WSE"].data
-                for row in data:
-                    seg_fid, istart, wselstart, iend, wselend = row
-                    chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
+                # Process noexchange areas and cells
+                if "NOEXCHANGE" in channel_group.datasets:
+                    data = channel_group.datasets["NOEXCHANGE"].data
+                    for i, grid in enumerate(data, start=1):
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        chan_e_sql += [(geom,)]
+                        elems_e_sql += [(i, int(grid))]
+
+                # Process CHAN_WSEL
+                if "CHAN_WSE" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_WSE"].data
+                    for row in data:
+                        seg_fid, istart, wselstart, iend, wselend = row
+                        chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
+            else:
+
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_elems_fid ON chan_elems(fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_r_elem_fid ON chan_r(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_v_elem_fid ON chan_v(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_t_elem_fid ON chan_t(elem_fid);")
+                self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_n_elem_fid ON chan_n(elem_fid);")
+
+                prev_domain_chan_id = None
+
+                chan_id = self.execute("SELECT MAX(fid) FROM chan;").fetchone()
+                if chan_id and chan_id[0]:
+                    chan_id = chan_id[0] + 1
+                else:
+                    chan_id = 1
+
+                nxsecnum = self.execute(f"SELECT MAX(nxsecnum) FROM chan_n;").fetchone()
+                if nxsecnum and nxsecnum[0]:
+                    nxsecnum = nxsecnum[0] + 1
+                else:
+                    nxsecnum = 1
+
+                # Read CHANBANK dataset (maps left to right bank grids)
+                if "CHANBANK" in channel_group.datasets:
+                    data = channel_group.datasets["CHANBANK"].data
+                    for row in data:
+                        left_bank_grid, right_bank_grid = row
+                        xs_geom[int(left_bank_grid)] = int(right_bank_grid)
+
+                # Helper function to flush geometry per channel
+                def flush_channel_geometry():
+                    if left_bank_grids and prev_chan_id is not None:
+                        left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
+
+                # Process CHAN_NATURAL
+                if "CHAN_NATURAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_NATURAL"].data
+                    for row in data:
+                        domain_chan_id, grid, fcn, xlen, _ = row
+                        global_grid = grid_to_domain[int(grid)]
+
+                        if prev_domain_chan_id is not None and domain_chan_id != prev_domain_chan_id:
+                            chan_id += 1
+
+                        previous_gid = self.execute(
+                            "SELECT fid FROM chan_elems WHERE id = (SELECT MAX(id) FROM chan_elems);").fetchone()
+                        if previous_gid and previous_gid[0]:
+                            if int(global_grid) == int(previous_gid[0]):
+                                continue
+
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
+
+                        chan_n_sql += [(global_grid, nxsecnum, f"XS {int(nxsecnum)}")]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([global_grid, grid_to_domain[xs_geom[grid]]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, global_grid, chan_id, i, grid_to_domain[xs_geom[grid]], fcn, xlen, "N")]
+                        left_bank_grids.append(global_grid)
+                        prev_chan_id = chan_id
+                        prev_domain_chan_id = domain_chan_id
+                        i += 1
+                        nxsecnum += 1
+
+                # Process CHAN_RECTANGULAR
+                if "CHAN_RECTANGULAR" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_RECTANGULAR"].data
+                    for row in data:
+                        domain_chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
+                        global_grid = grid_to_domain[int(grid)]
+
+                        if prev_domain_chan_id is not None and domain_chan_id != prev_domain_chan_id:
+                            chan_id += 1
+
+                        previous_gid = self.execute(
+                            "SELECT fid FROM chan_elems WHERE id = (SELECT MAX(id) FROM chan_elems);").fetchone()
+                        if previous_gid and previous_gid[0]:
+                            if int(global_grid) == int(previous_gid[0]):
+                                continue
+
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
+
+                        chan_r_sql += [(global_grid, bankell, bankelr, fcw, fcd)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([global_grid, grid_to_domain[xs_geom[grid]]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, global_grid, chan_id, i, grid_to_domain[xs_geom[grid]], fcn, xlen, "R")]
+                        left_bank_grids.append(global_grid)
+                        prev_chan_id = chan_id
+                        prev_domain_chan_id = domain_chan_id
+                        i += 1
+
+                # Process CHAN_TRAPEZOIDAL
+                if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
+                    for row in data:
+                        domain_chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
+                        global_grid = grid_to_domain[int(grid)]
+
+                        if prev_domain_chan_id is not None and domain_chan_id != prev_domain_chan_id:
+                            chan_id += 1
+
+                        previous_gid = self.execute(
+                            "SELECT fid FROM chan_elems WHERE id = (SELECT MAX(id) FROM chan_elems);").fetchone()
+                        if previous_gid and previous_gid[0]:
+                            if int(global_grid) == int(previous_gid[0]):
+                                continue
+
+                        if prev_chan_id is not None and chan_id != prev_chan_id:
+                            flush_channel_geometry()
+                            left_bank_grids = []
+                            i = 1
+
+                        chan_t_sql += [(global_grid, bankell, bankelr, fcw, fcd, zl, zr)]
+                        if xs_geom[grid] not in [0, "0"]:
+                            geom = self.build_linestring([global_grid, grid_to_domain[xs_geom[grid]]])
+                        else:
+                            geom = None
+                        chan_elems_sql += [(geom, global_grid, chan_id, i, grid_to_domain[xs_geom[grid]], fcn, xlen, "T")]
+                        left_bank_grids.append(global_grid)
+                        prev_chan_id = chan_id
+                        prev_domain_chan_id = domain_chan_id
+                        i += 1
+
+                # Finalize last channel after all groups
+                flush_channel_geometry()
+
+                # Process CHAN_GLOBAL for main channel table
+                if "CHAN_GLOBAL" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_GLOBAL"].data
+                    for row in data:
+                        # This is done because some hdf5 do not have the ibaseflow on it
+                        if len(row) < 6:
+                            _, depinitial, froudc, roughadj, isedn = row
+                            ibaseflow = 0
+                        else:
+                            _, depinitial, froudc, roughadj, ibaseflow, isedn = row
+                        geom = left_bank_geom.get(chan_id)
+                        if float(isedn) == -9999:
+                            isedn = None  # Default value for isedn if not provided
+                        chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
+
+                # Process CONFLUENCES
+                if "CONFLUENCES" in channel_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    data = channel_group.datasets["CONFLUENCES"].data
+                    for row in data:
+                        con_id, river_type, grid = row
+                        global_grid = grid_to_domain[int(grid)]
+                        geom = self.build_point_xy(x_list[global_grid - 1], y_list[global_grid - 1])
+                        chan_conf_sql += [(geom, int(con_id), int(river_type), global_grid)]
+
+                # Process noexchange areas and cells
+                if "NOEXCHANGE" in channel_group.datasets:
+                    data = channel_group.datasets["NOEXCHANGE"].data
+                    for j, grid in enumerate(data, start=1):
+                        global_grid = grid_to_domain[int(grid)]
+                        geom = self.build_square(self.grid_centroids([global_grid])[global_grid], self.cell_size)
+                        chan_e_sql += [(geom,)]
+                        elems_e_sql += [(j, global_grid)]
+
+                # Process CHAN_WSEL
+                if "CHAN_WSE" in channel_group.datasets:
+                    data = channel_group.datasets["CHAN_WSE"].data
+                    for row in data:
+                        seg_fid, istart, wselstart, iend, wselend = row
+                        chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
 
             if chan_n_sql:
                 self.batch_execute(chan_n_sql)
@@ -2656,7 +3364,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_xsec_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_xsec_hdf5()
+            return self.import_xsec_hdf5(grid_to_domain)
 
     def import_xsec_dat(self, grid_to_domain):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
@@ -2717,31 +3425,101 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(xsec_sql)
 
-    def import_xsec_hdf5(self):
+    def import_xsec_hdf5(self, grid_to_domain):
         channel_group = self.parser.read_groups("Input/Channels")
         if channel_group:
             channel_group = channel_group[0]
             xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
-            self.clear_tables("xsec_n_data")
 
-            # Process XSEC_DATA
-            if "XSEC_DATA" in channel_group.datasets:
-                data = channel_group.datasets["XSEC_DATA"].data
-                for row in data:
-                    chan_n_nxsecnum, xi, yi = row
-                    xsec_sql += [(chan_n_nxsecnum, xi, yi)]
+            if not grid_to_domain:
+                self.clear_tables("xsec_n_data")
 
-            # Process XSEC_NAME
-            if "XSEC_NAME" in channel_group.datasets:
-                data = channel_group.datasets["XSEC_NAME"].data
-                for row in data:
-                    nsecum, xsecname = row
-                    if isinstance(xsecname, bytes):
-                        xsecname = xsecname.decode("utf-8")
-                    self.execute(
-                        "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
-                        (xsecname, int(nsecum))
-                    )
+                # Process XSEC_DATA
+                if "XSEC_DATA" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_DATA"].data
+                    for row in data:
+                        chan_n_nxsecnum, xi, yi = row
+                        xsec_sql += [(chan_n_nxsecnum, xi, yi)]
+
+                # Process XSEC_NAME
+                if "XSEC_NAME" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_NAME"].data
+                    for row in data:
+                        nsecum, xsecname = row
+                        if isinstance(xsecname, bytes):
+                            xsecname = xsecname.decode("utf-8")
+                        self.execute(
+                            "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
+                            (xsecname, int(nsecum))
+                        )
+            else:
+                current_fid = self.execute("SELECT MAX(chan_n_nxsecnum) FROM xsec_n_data;").fetchone()
+                if current_fid and current_fid[0]:
+                    current_fid = current_fid[0]
+                else:
+                    current_fid = 0
+
+                nodes = defaultdict(list)
+                # Process XSEC_DATA
+                if "XSEC_DATA" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_DATA"].data
+                    for row in data:
+                        chan_n_nxsecnum, xi, yi = row
+                        nodes[chan_n_nxsecnum].append((round(xi, 2), round(yi, 2)))
+
+                next_id = current_fid + 1
+                for key in list(nodes.keys()):
+                    identical_found = False
+                    # Loop through up to the last 3 previous sections - This may be enough
+                    for offset in range(1, 4):  # check (i - 1), (i - 2), (i - 3)
+                        prev_id = next_id - offset
+                        if prev_id < 0:
+                            continue
+
+                        xs_data = self.execute(
+                            "SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ?;",
+                            (prev_id,)
+                        ).fetchall()
+
+                        if xs_data:
+                            xs_rounded = [(round(x, 2), round(y, 2)) for x, y in xs_data]
+
+                            # If identical to any of the previous three, mark and break
+                            if xs_rounded == nodes[key]:
+                                identical_found = True
+                                break
+
+                    # Skip if identical to any of the last three
+                    if identical_found:
+                        continue
+
+                    for xi, yi in nodes[key]:
+                        xsec_sql += [(next_id, xi, yi)]
+
+                    next_id += 1
+
+                row = self.execute("SELECT MAX(nxsecnum) FROM chan_n;").fetchone()
+                if row and row[0] is not None:
+                    current_nxsecnum = int(row[0])
+                else:
+                    current_nxsecnum = 0
+
+                # Process XSEC_NAME
+                if "XSEC_NAME" in channel_group.datasets:
+                    data = channel_group.datasets["XSEC_NAME"].data
+                    total = len(data)
+                    for pos, row in (enumerate(reversed(data))):
+                        nsecum, xsecname = row
+                        if isinstance(xsecname, bytes):
+                            xsecname = xsecname.decode("utf-8")
+                        if isinstance(nsecum, bytes):
+                            nsecum = nsecum.decode("utf-8")
+                        nx = current_nxsecnum - pos
+
+                        self.execute(
+                            "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
+                            (xsecname, nx)
+                        )
 
             if xsec_sql:
                 self.batch_execute(xsec_sql)
@@ -2750,7 +3528,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_hystruc_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_hystruc_hdf5()
+            return self.import_hystruc_hdf5(grid_to_domain)
 
     def import_hystruc_dat(self, grid_to_domain):
         try:
@@ -2896,12 +3674,55 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "ERROR 040220.0742: Importing hydraulic structures failed!\nPlease check HYSTRUC.DAT data format and values."
             )
 
-    def import_hystruc_hdf5(self):
-        try:
-            hydrostruct_group = self.parser.read_groups("Input/Hydraulic Structures")
-            if hydrostruct_group:
-                hydrostruct_group = hydrostruct_group[0]
+    def import_hystruc_hdf5(self, grid_to_domain):
+        # try:
+        hydrostruct_group = self.parser.read_groups("Input/Hydraulic Structures")
+        if hydrostruct_group:
+            hydrostruct_group = hydrostruct_group[0]
 
+            hystruc_params = [
+                "fid",
+                "geom",
+                "ifporchan",
+                "icurvtable",
+                "inflonod",
+                "outflonod",
+                "inoutcont",
+                "headrefel",
+                "clength",
+                "cdiameter",
+            ]
+
+            hystruc_sql = [
+                "INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES",
+                10,
+            ]
+            ratc_sql = [
+                """INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""",
+                6,
+            ]
+            repl_ratc_sql = [
+                """INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES""",
+                6,
+            ]
+            ratt_sql = [
+                """INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""",
+                4,
+            ]
+            culvert_sql = [
+                """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES""",
+                7,
+            ]
+            storm_sql = [
+                """INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""",
+                3,
+            ]
+            bridge_sql = [
+                """INSERT INTO bridge_variables (struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT) VALUES""",
+                25,
+            ]
+
+            if not grid_to_domain:
                 self.clear_tables(
                     "struct",
                     "rat_curves",
@@ -2911,48 +3732,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     "storm_drains",
                     "bridge_variables",
                 )
-
-                hystruc_params = [
-                    "fid",
-                    "geom",
-                    "ifporchan",
-                    "icurvtable",
-                    "inflonod",
-                    "outflonod",
-                    "inoutcont",
-                    "headrefel",
-                    "clength",
-                    "cdiameter",
-                ]
-
-                hystruc_sql = [
-                    "INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES",
-                    10,
-                ]
-                ratc_sql = [
-                    """INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""",
-                    6,
-                ]
-                repl_ratc_sql = [
-                    """INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES""",
-                    6,
-                ]
-                ratt_sql = [
-                    """INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""",
-                    4,
-                ]
-                culvert_sql = [
-                    """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES""",
-                    7,
-                ]
-                storm_sql = [
-                    """INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""",
-                    3,
-                ]
-                bridge_sql = [
-                    """INSERT INTO bridge_variables (struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT) VALUES""",
-                    25,
-                ]
 
                 # Process STR_CONTROL
                 if "STR_CONTROL" in hydrostruct_group.datasets:
@@ -2998,44 +3777,92 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     data = hydrostruct_group.datasets["BRIDGE_VARIABLES"].data
                     values = [row[0] for row in data]
                     bridge_sql += [tuple(values)]
+            else:
 
-                if hystruc_sql:
-                    self.batch_execute(hystruc_sql)
-
-                if ratc_sql:
-                    self.batch_execute(ratc_sql)
-
-                if repl_ratc_sql:
-                    self.batch_execute(repl_ratc_sql)
-
-                if ratt_sql:
-                    self.batch_execute(ratt_sql)
-
-                if culvert_sql:
-                    self.batch_execute(culvert_sql)
-
-                if storm_sql:
-                    self.batch_execute(storm_sql)
-
-                if bridge_sql:
-                    self.batch_execute(bridge_sql)
-
-                # Process STR_NAME
-                if "STR_NAME" in hydrostruct_group.datasets:
-                    data = hydrostruct_group.datasets["STR_NAME"].data
+                # Process STR_CONTROL
+                if "STR_CONTROL" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["STR_CONTROL"].data
                     for row in data:
-                        struct_fid, structname = row
-                        if isinstance(structname, bytes):
-                            structname = structname.decode("utf-8")
-                        self.execute(
-                            "UPDATE struct SET structname = ? WHERE fid = ?;",
-                            (structname, int(struct_fid))
-                        )
+                        struct_fid, ifporchan, icurvtable, inflonod, outflonod, inoutcont, headrefel, clength, cdiameter = row
+                        inflonod = grid_to_domain.get(int(inflonod))
+                        outflonod = grid_to_domain.get(int(outflonod))
+                        geom = self.build_linestring([int(inflonod), int(outflonod)])
+                        hystruc_sql += [
+                            (int(struct_fid), geom, int(ifporchan), int(icurvtable), int(inflonod), int(outflonod),
+                             int(inoutcont), headrefel, clength, cdiameter)]
 
-        except Exception:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_warn("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
-            self.uc.log_info("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
+                # Process RAT_CURVES
+                if "RATING_CURVE" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["RATING_CURVE"].data
+                    for row in data:
+                        struct_fid, hdepexc, coefq, expq, coefa, expa, repdep, rqcoef, rqexp, racoef, raexp = row
+                        ratc_sql += [(int(struct_fid), hdepexc, coefq, expq, coefa, expa)]
+                        repl_ratc_sql += [(int(struct_fid), repdep, rqcoef, rqexp, racoef, raexp)]
+
+                # Process RAT_TABLE
+                if "RATING_TABLE" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["RATING_TABLE"].data
+                    for row in data:
+                        rt_fid, hdepth, qtable, atable = row
+                        ratt_sql += [(int(rt_fid), hdepth, qtable, atable)]
+
+                # Process CULVERT EQUATIONS
+                if "CULVERT_EQUATIONS" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["CULVERT_EQUATIONS"].data
+                    for row in data:
+                        struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels = row
+                        culvert_sql += [(int(struct_fid), typec, typeen, culvertn, ke, cubase, int(multibarrels))]
+
+                # Process STORM_DRAIN
+                if "STORM_DRAIN" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["STORM_DRAIN"].data
+                    for row in data:
+                        struct_fid, istormdout, stormdmax = row
+                        storm_sql += [(int(struct_fid), int(istormdout), stormdmax)]
+
+                # Process BRIDGE VARIABLES
+                if "BRIDGE_VARIABLES" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["BRIDGE_VARIABLES"].data
+                    values = [row[0] for row in data]
+                    bridge_sql += [tuple(values)]
+
+            if hystruc_sql:
+                self.batch_execute(hystruc_sql)
+
+            if ratc_sql:
+                self.batch_execute(ratc_sql)
+
+            if repl_ratc_sql:
+                self.batch_execute(repl_ratc_sql)
+
+            if ratt_sql:
+                self.batch_execute(ratt_sql)
+
+            if culvert_sql:
+                self.batch_execute(culvert_sql)
+
+            if storm_sql:
+                self.batch_execute(storm_sql)
+
+            if bridge_sql:
+                self.batch_execute(bridge_sql)
+
+            # Process STR_NAME
+            if "STR_NAME" in hydrostruct_group.datasets:
+                data = hydrostruct_group.datasets["STR_NAME"].data
+                for row in data:
+                    struct_fid, structname = row
+                    if isinstance(structname, bytes):
+                        structname = structname.decode("utf-8")
+                    self.execute(
+                        "UPDATE struct SET structname = ? WHERE fid = ?;",
+                        (structname, int(struct_fid))
+                    )
+
+        # except Exception:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_warn("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
+        #     self.uc.log_info("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
 
     def import_hystruc_bridge_xs(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -3240,117 +4067,180 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_arf_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_arf_hdf5()
+            return self.import_arf_hdf5(grid_to_domain)
 
     def import_arf_dat(self, grid_to_domain):
-        # try:
-
-        self.gutils.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
-
-        cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
-        cells_sql = [
-            """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
-                                                   wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
-            12,
-        ]
-
-        head, data = self.parser.parse_arf()
-        if not head or not data:
-            return
-
-        if not grid_to_domain:
-            self.clear_tables("blocked_cells")
-            cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-            gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
-            cells = self.grid_centroids(gids, buffers=True)
-
-            for i, row in enumerate(chain(data["T"], data["PB"]), 1):
-                gid = str(abs(int(row[0])))
-                centroid = cells[gid]
-                cells_sql += [(centroid, i) + tuple(row)]
-        else:
-            area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
-            if area_fid and area_fid[0]:
-                area_fid = area_fid[0] + 1
-            else:
-                area_fid = 1
-            cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-            gids = (str(grid_to_domain[abs(int(x[0]))]) for x in chain(data["T"], data["PB"]))
-            cells = self.grid_centroids(gids, buffers=True)
-            for i, row in enumerate(chain(data["T"], data["PB"]), start=area_fid):
-                gid = str(grid_to_domain[abs(int(row[0]))])
-                arf = row[1]
-                wrf1 = row[2]
-                wrf2 = row[3]
-                wrf3 = row[4]
-                wrf4 = row[5]
-                wrf5 = row[6]
-                wrf6 = row[7]
-                wrf7 = row[8]
-                wrf8 = row[9]
-                centroid = cells[gid]
-                cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
-
-        self.batch_execute(cont_sql, cells_sql)
-
-        # except Exception as e:
-        #     self.uc.show_error(
-        #         "ERROR 050420.1720.0701: couldn't import ARF.DAT file!"
-        #         + "\n__________________________________________________",
-        #         e,
-        #     )
-
-    def import_arf_hdf5(self):
         try:
+
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
+
+            cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+            cells_sql = [
+                """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                                                       wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
+                12,
+            ]
+
+            head, data = self.parser.parse_arf()
+            if not head or not data:
+                return
+
+            if not grid_to_domain:
+                self.clear_tables("blocked_cells")
+                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+                gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
+                cells = self.grid_centroids(gids, buffers=True)
+
+                for i, row in enumerate(chain(data["T"], data["PB"]), 1):
+                    gid = str(abs(int(row[0])))
+                    centroid = cells[gid]
+                    cells_sql += [(centroid, i) + tuple(row)]
+            else:
+                area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
+                if area_fid and area_fid[0]:
+                    area_fid = area_fid[0] + 1
+                else:
+                    area_fid = 1
+                cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
+                gids = (str(grid_to_domain[abs(int(x[0]))]) for x in chain(data["T"], data["PB"]))
+                cells = self.grid_centroids(gids, buffers=True)
+                for i, row in enumerate(chain(data["T"], data["PB"]), start=area_fid):
+                    gid = float(row[0])
+                    if gid < 0:
+                        gid = str(-grid_to_domain[int(abs(gid))])
+                    else:
+                        gid = str(grid_to_domain[int(abs(gid))])
+                    arf = row[1]
+                    wrf1 = row[2]
+                    wrf2 = row[3]
+                    wrf3 = row[4]
+                    wrf4 = row[5]
+                    wrf5 = row[6]
+                    wrf6 = row[7]
+                    wrf7 = row[8]
+                    wrf8 = row[9]
+                    centroid = cells[str(grid_to_domain[abs(int(row[0]))])]
+                    cells_sql += [(centroid, i, gid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8)]
+
+            self.batch_execute(cont_sql, cells_sql)
+
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR 050420.1720.0701: couldn't import ARF.DAT file!"
+                + "\n__________________________________________________",
+                e,
+            )
+
+    def import_arf_hdf5(self, grid_to_domain):
+        try:
+
+            self.gutils.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_blocked_cells_grid ON blocked_cells(grid_fid);")
+
             arfwrf_group = self.parser.read_groups("Input/Reduction Factors")
             if arfwrf_group:
                 arfwrf_group = arfwrf_group[0]
 
                 cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
                 cells_sql = [
-                    """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                    """INSERT OR IGNORE INTO blocked_cells (geom, area_fid, grid_fid, arf,
                                                            wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
                     12,
                 ]
                 # collapse_sql = ["""INSERT INTO user_blocked_areas (geom, collapse, calc_arf, calc_wrf) VALUES""", 4]
 
-                self.clear_tables("blocked_cells")
+                if not grid_to_domain:
+                    self.clear_tables("blocked_cells")
 
-                i = 1
+                    i = 1
 
-                grid_group = self.parser.read_groups("Input/Grid")[0]
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
 
-                # Read ARF_GLOBAL dataset
-                if "ARF_GLOBAL" in arfwrf_group.datasets:
-                    arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
-                    if arf_global.size > 0:
-                        cont_sql += [("IARFBLOCKMOD", arf_global[0])]
+                    # Read ARF_GLOBAL dataset
+                    if "ARF_GLOBAL" in arfwrf_group.datasets:
+                        arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
+                        if arf_global.size > 0:
+                            cont_sql += [("IARFBLOCKMOD", arf_global[0])]
 
-                # Read ARF_TOTALLY_BLOCKED dataset
-                if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
-                    totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for i, cell in enumerate(totally_blocked, 1):
-                        cell = int(cell)
-                        geom = self.build_point_xy(x_list[abs(cell) - 1], y_list[abs(cell) - 1])
-                        arf = 1
-                        wrf = 1
-                        cells_sql += [(geom, i, cell, arf) + (wrf,) * 8]  # Remaining WRF values are 0
+                    # Read ARF_TOTALLY_BLOCKED dataset
+                    if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
+                        totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, cell in enumerate(totally_blocked, 1):
+                            geom = self.build_point_xy(x_list[int(abs(cell)) - 1], y_list[int(abs(cell)) - 1])
+                            if cell < 0:
+                                cell = -int(abs(cell))
+                            else:
+                                cell = int(abs(cell))
+                            arf = 1
+                            wrf = 1
+                            cells_sql += [(geom, i, cell, arf) + (wrf,) * 8]  # Remaining WRF values are 0
 
-                # Read ARF_PARTIALLY_BLOCKED dataset
-                if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
-                    partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for row in partially_blocked:
-                        i += 1
-                        grid_fid = int(row[0])
-                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        arf = float(row[1])
-                        wrf_values = row[2:]
-                        cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+                    # Read ARF_PARTIALLY_BLOCKED dataset
+                    if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
+                        partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in partially_blocked:
+                            i += 1
+                            grid_fid = row[0]
+                            geom = self.build_point_xy(x_list[int(abs(grid_fid)) - 1], y_list[int(abs(grid_fid)) - 1])
+                            if grid_fid < 0:
+                                grid_fid = -int(abs(grid_fid))
+                            else:
+                                grid_fid = int(abs(grid_fid))
+                            arf = float(row[1])
+                            wrf_values = row[2:]
+                            cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+                else:
+
+                    area_fid = self.execute("SELECT MAX(area_fid) FROM blocked_cells;").fetchone()
+                    if area_fid and area_fid[0]:
+                        area_fid = area_fid[0] + 1
+                    else:
+                        area_fid = 1
+
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+
+                    # Read ARF_GLOBAL dataset
+                    if "ARF_GLOBAL" in arfwrf_group.datasets:
+                        arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
+                        if arf_global.size > 0:
+                            cont_sql += [("IARFBLOCKMOD", arf_global[0])]
+
+                    # Read ARF_TOTALLY_BLOCKED dataset
+                    if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
+                        totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, cell in enumerate(totally_blocked, 1):
+                            geom = self.build_point_xy(x_list[int(abs(cell)) - 1], y_list[int(abs(cell)) - 1])
+                            if cell < 0:
+                                cell = -grid_to_domain[int(abs(cell))]
+                            else:
+                                cell = grid_to_domain[int(abs(cell))]
+                            arf = 1
+                            wrf = 1
+                            cells_sql += [(geom, i, cell, arf) + (wrf,) * 8]  # Remaining WRF values are 0
+
+                    # Read ARF_PARTIALLY_BLOCKED dataset
+                    if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
+                        partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in partially_blocked:
+                            area_fid += 1
+                            grid_fid = row[0]
+                            geom = self.build_point_xy(x_list[int(abs(grid_fid)) - 1], y_list[int(abs(grid_fid)) - 1])
+                            if grid_fid < 0:
+                                grid_fid = -grid_to_domain[int(abs(grid_fid))]
+                            else:
+                                grid_fid = grid_to_domain[int(abs(grid_fid))]
+                            arf = float(row[1])
+                            wrf_values = row[2:]
+                            cells_sql += [(geom, area_fid, grid_fid, arf) + tuple(wrf_values)]
 
                 # Execute batch inserts
                 self.batch_execute(cont_sql, cells_sql)
@@ -3543,7 +4433,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_sed_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_sed_hdf5()
+            return self.import_sed_hdf5(grid_to_domain)
 
     def import_sed_dat(self, grid_to_domain):
         sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
@@ -3820,25 +4710,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
-    def import_sed_hdf5(self):
+    def import_sed_hdf5(self, grid_to_domain):
         # try:
+        self.gutils.disable_geom_triggers()
         sed_group = self.parser.read_groups("Input/Mudflow and Sediment Transport")
         if sed_group:
             sed_group = sed_group[0]
 
-            sed_m_sql = [
-                """INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""",
-                6,
-            ]
+            sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
             sed_c_sql = [
                 """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt,
                                              cvfg, isedsupply, isedisplay, scourdep) VALUES""",
                 10,
             ]
-            # sgf_sql = [
-            #     """INSERT INTO sed_group_frac (fid) VALUES""",
-            #     1,
-            # ]
+            sgf_sql = ["""INSERT INTO sed_group_frac (fid) VALUES""", 1]
             sed_z_sql = [
                 """INSERT INTO sed_groups (dist_fid, isedeqi, bedthick, cvfi) VALUES""",
                 4,
@@ -3848,10 +4733,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 3,
             ]
             areas_d_sql = ["""INSERT INTO mud_areas (geom, debrisv) VALUES""", 2]
-            cells_d_sql = ["""INSERT INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
+            cells_d_sql = ["""INSERT OR IGNORE INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
             areas_g_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
             cells_g_sql = ["""INSERT INTO sed_group_cells (area_fid, grid_fid) VALUES""", 2]
             areas_r_sql = ["""INSERT INTO sed_rigid_areas (geom) VALUES""", 1]
+            cells_r_sql = ["""INSERT OR IGNORE INTO sed_rigid_cells (area_fid, grid_fid) VALUES""", 2]
             areas_s_sql = [
                 """INSERT INTO sed_supply_areas (geom, dist_fid, isedcfp, ased, bsed) VALUES""",
                 5,
@@ -3866,88 +4752,209 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 3,
             ]
 
-            self.clear_tables(
-                "mud",
-                "mud_areas",
-                "mud_cells",
-                "sed",
-                "sed_groups",
-                "sed_group_areas",
-                "sed_group_cells",
-                "sed_group_frac",
-                "sed_group_frac_data",
-                "sed_rigid_areas",
-                "sed_rigid_cells",
-                "sed_supply_areas",
-                "sed_supply_cells",
-                "sed_supply_frac",
-                "sed_supply_frac_data",
-            )
+            if not grid_to_domain:
+                self.clear_tables(
+                    "mud",
+                    "mud_areas",
+                    "mud_cells",
+                    "sed",
+                    "sed_groups",
+                    "sed_group_areas",
+                    "sed_group_cells",
+                    "sed_group_frac",
+                    "sed_group_frac_data",
+                    "sed_rigid_areas",
+                    "sed_rigid_cells",
+                    "sed_supply_areas",
+                    "sed_supply_cells",
+                    "sed_supply_frac",
+                    "sed_supply_frac_data",
+                )
 
-            # Process MUDFLOW_PARAMS
-            if "MUDFLOW_PARAMS" in sed_group.datasets:
-                data = sed_group.datasets["MUDFLOW_PARAMS"].data
-                for row in data:
-                    va, vb, ysa, ysb, sgsm, xkx = row
-                    sed_m_sql += [(va, vb, ysa, ysb, sgsm, xkx)]
+                # Process MUDFLOW_PARAMS
+                if "MUDFLOW_PARAMS" in sed_group.datasets:
+                    data = sed_group.datasets["MUDFLOW_PARAMS"].data
+                    for row in data:
+                        va, vb, ysa, ysb, sgsm, xkx = row
+                        sed_m_sql += [(va, vb, ysa, ysb, sgsm, xkx)]
 
-            # Process SED_PARAMS
-            if "SED_PARAMS" in sed_group.datasets:
-                data = sed_group.datasets["SED_PARAMS"].data
-                for row in data:
-                    isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep = row
-                    sed_c_sql += [(int(isedeqg), int(isedsizefrac), dfifty, sgrad, sgst, dryspwt, cvfg, int(isedsupply),
-                                   int(isedisplay), scourdep)]
+                # Process SED_PARAMS
+                if "SED_PARAMS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_PARAMS"].data
+                    for row in data:
+                        isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep = row
+                        sed_c_sql += [(int(isedeqg), int(isedsizefrac), dfifty, sgrad, sgst, dryspwt, cvfg, int(isedsupply),
+                                       int(isedisplay), scourdep)]
 
-            if "SED_GROUPS" in sed_group.datasets:
-                data = sed_group.datasets["SED_GROUPS"].data
-                for row in data:
-                    dist_fid, isedeqi, bedthick, cvfi = row
-                    sed_z_sql += [(int(dist_fid), int(isedeqi), bedthick, cvfi)]
+                if "SED_GROUPS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_GROUPS"].data
+                    for row in data:
+                        dist_fid, isedeqi, bedthick, cvfi = row
+                        sed_z_sql += [(int(dist_fid), int(isedeqi), bedthick, cvfi)]
 
-            if "SED_GROUPS_FRAC_DATA" in sed_group.datasets:
-                data = sed_group.datasets["SED_GROUPS_FRAC_DATA"].data
-                for row in data:
-                    dist_fid, sediam, sedpercent = row
-                    sed_p_sql += [(int(dist_fid), sediam, sedpercent)]
+                if "SED_GROUPS_FRAC_DATA" in sed_group.datasets:
+                    data = sed_group.datasets["SED_GROUPS_FRAC_DATA"].data
+                    for row in data:
+                        dist_fid, sediam, sedpercent = row
+                        sed_p_sql += [(int(dist_fid), sediam, sedpercent)]
 
-            if "MUDFLOW_AREAS" in sed_group.datasets:
-                data = sed_group.datasets["MUDFLOW_AREAS"].data
-                for i, row in enumerate(data, start=1):
-                    grid, debrisv = row
-                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
-                    areas_d_sql += [(geom, debrisv)]
-                    cells_d_sql += [(i, int(grid))]
+                if "MUDFLOW_AREAS" in sed_group.datasets:
+                    data = sed_group.datasets["MUDFLOW_AREAS"].data
+                    for i, row in enumerate(data, start=1):
+                        grid, debrisv = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        areas_d_sql += [(geom, debrisv)]
+                        cells_d_sql += [(i, int(grid))]
 
-            if "SED_GROUPS_AREAS" in sed_group.datasets:
-                data = sed_group.datasets["SED_GROUPS_AREAS"].data
-                for i, row in enumerate(data, start=1):
-                    group_id, grid = row
-                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
-                    areas_g_sql += [(geom, int(group_id))]
-                    cells_g_sql += [(int(group_id), int(grid))]
+                if "SED_GROUPS_AREAS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_GROUPS_AREAS"].data
+                    for i, row in enumerate(data, start=1):
+                        group_id, grid = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        areas_g_sql += [(geom, int(group_id))]
+                        cells_g_sql += [(int(group_id), int(grid))]
 
-            if "SED_RIGID_CELLS" in sed_group.datasets:
-                data = sed_group.datasets["SED_RIGID_CELLS"].data
-                for grid in data:
-                    grid = grid[0]
-                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.shrink)
-                    areas_r_sql += [(geom,)]
+                if "SED_RIGID_CELLS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_RIGID_CELLS"].data
+                    for grid in data:
+                        grid = grid[0]
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.shrink)
+                        areas_r_sql += [(geom,)]
 
-            if "SED_SUPPLY_AREAS" in sed_group.datasets:
-                data = sed_group.datasets["SED_SUPPLY_AREAS"].data
-                for row in data:
-                    dist_fid, isedgrid, isedcfp, ased, bsed = row
-                    geom = self.build_square(self.grid_centroids([int(isedgrid)])[int(isedgrid)], self.cell_size)
-                    areas_s_sql += [(geom, int(dist_fid), int(isedcfp), ased, bsed)]
-                    cells_s_sql += [(int(dist_fid), int(isedgrid))]
+                if "SED_SUPPLY_AREAS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_SUPPLY_AREAS"].data
+                    for row in data:
+                        dist_fid, isedgrid, isedcfp, ased, bsed = row
+                        geom = self.build_square(self.grid_centroids([int(isedgrid)])[int(isedgrid)], self.cell_size)
+                        areas_s_sql += [(geom, int(dist_fid), int(isedcfp), ased, bsed)]
+                        cells_s_sql += [(int(dist_fid), int(isedgrid))]
 
-            if "SED_SUPPLY_FRAC_DATA" in sed_group.datasets:
-                data = sed_group.datasets["SED_SUPPLY_FRAC_DATA"].data
-                for i, row in enumerate(data, start=1):
-                    dist_fid, ssediam, ssedpercent = row
-                    sed_n_sql += [(i,)]
-                    data_n_sql += [(int(dist_fid), ssediam, ssedpercent)]
+                if "SED_SUPPLY_FRAC_DATA" in sed_group.datasets:
+                    data = sed_group.datasets["SED_SUPPLY_FRAC_DATA"].data
+                    for i, row in enumerate(data, start=1):
+                        dist_fid, ssediam, ssedpercent = row
+                        sed_n_sql += [(i,)]
+                        data_n_sql += [(int(dist_fid), ssediam, ssedpercent)]
+
+            else:
+
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_mud_cells_grid ON mud_cells(grid_fid);")
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_sed_rigid_cells_grid ON sed_rigid_cells(grid_fid);")
+
+                # Process MUDFLOW_PARAMS
+                if "MUDFLOW_PARAMS" in sed_group.datasets:
+                    data = sed_group.datasets["MUDFLOW_PARAMS"].data
+                    for row in data:
+                        va, vb, ysa, ysb, sgsm, xkx = row
+                        sed_m_sql += [(va, vb, ysa, ysb, sgsm, xkx)]
+
+                options_check = self.execute("SELECT COUNT(*) FROM sed;").fetchone()
+                if not (options_check and options_check[0] > 0):
+                    # Process SED_PARAMS
+                    if "SED_PARAMS" in sed_group.datasets:
+                        data = sed_group.datasets["SED_PARAMS"].data
+                        for row in data:
+                            isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep = row
+                            sed_c_sql += [
+                                (int(isedeqg), int(isedsizefrac), dfifty, sgrad, sgst, dryspwt, cvfg, int(isedsupply),
+                                 int(isedisplay), scourdep)]
+
+                if "SED_GROUPS_AREAS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_GROUPS_AREAS"].data
+                    for row in data:
+                        group_id, grid = row
+                        domain_grid = grid_to_domain.get(int(grid))
+                        geom = self.build_square(self.grid_centroids([int(domain_grid)])[int(domain_grid)], self.cell_size)
+                        areas_g_sql += [(geom, int(group_id))]
+                        cells_g_sql += [(int(group_id), int(domain_grid))]
+
+                sediam_dict = defaultdict(list)
+                sedpercent_dict = defaultdict(list)
+                if "SED_GROUPS_FRAC_DATA" in sed_group.datasets:
+                    data = sed_group.datasets["SED_GROUPS_FRAC_DATA"].data
+                    for row in data:
+                        dist_fid, sediam, sedpercent = row
+                        sediam_dict[int(dist_fid)].append(sediam)
+                        sedpercent_dict[int(dist_fid)].append(sedpercent)
+
+                sgf_fid = self.execute("SELECT MAX(fid) FROM sed_group_frac;").fetchone()
+                sgf_fid = sgf_fid[0] + 1 if sgf_fid and sgf_fid[0] else 1
+
+                previous_id = sgf_fid - 1 if sgf_fid > 1 else None
+                previous_sed_z_data = None
+                if previous_id is not None:
+                    previous_sed_z_data = self.execute(
+                        "SELECT isedeqi, bedthick, cvfi FROM sed_groups WHERE fid = ?;",
+                        (previous_id,),
+                    ).fetchone()
+
+                if "SED_GROUPS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_GROUPS"].data
+                    for row in data:
+                        dist_fid, isedeqi, bedthick, cvfi = row
+                        reuse_previous = (
+                                previous_id is not None
+                                and previous_sed_z_data
+                                and int(isedeqi) == previous_sed_z_data[0]
+                                and bedthick == previous_sed_z_data[1]
+                                and cvfi == previous_sed_z_data[2]
+                        )
+
+                        if not reuse_previous:
+                            sed_z_sql += [(int(sgf_fid), int(isedeqi), bedthick, cvfi)]
+                            sgf_sql += [(int(sgf_fid),)]
+
+                            if int(dist_fid) in sediam_dict:
+                                for sediam, sedpercent in zip(sediam_dict[int(dist_fid)], sedpercent_dict[int(dist_fid)]):
+                                    sed_p_sql += [(int(sgf_fid), sediam, sedpercent)]
+
+                d_fid = self.execute("SELECT MAX(fid) FROM mud_areas;").fetchone()
+                d_fid = d_fid[0] + 1 if d_fid and d_fid[0] else 1
+                if "MUDFLOW_AREAS" in sed_group.datasets:
+                    data = sed_group.datasets["MUDFLOW_AREAS"].data
+                    for i, row in enumerate(data, start=d_fid):
+                        grid, debrisv = row
+                        grid = grid_to_domain.get(int(grid))
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        areas_d_sql += [(geom, debrisv)]
+                        cells_d_sql += [(i, int(grid))]
+
+                r_fid = self.execute("SELECT MAX(fid) FROM sed_rigid_areas;").fetchone()
+                r_fid = r_fid[0] + 1 if r_fid and r_fid[0] else 1
+                if "SED_RIGID_CELLS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_RIGID_CELLS"].data
+                    for i, grid in enumerate(data, start=r_fid):
+                        grid = grid[0]
+                        grid = grid_to_domain.get(int(grid))
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.shrink)
+                        areas_r_sql += [(geom,)]
+
+                ssediam_dict = defaultdict(list)
+                ssedpercent_dict = defaultdict(list)
+                if "SED_SUPPLY_FRAC_DATA" in sed_group.datasets:
+                    data = sed_group.datasets["SED_SUPPLY_FRAC_DATA"].data
+                    for row in data:
+                        dist_fid, ssediam, ssedpercent = row
+                        ssediam_dict[int(dist_fid)].append(ssediam)
+                        ssedpercent_dict[int(dist_fid)].append(ssedpercent)
+
+                ssa_fid = self.execute("SELECT MAX(fid) FROM sed_supply_areas;").fetchone()
+                ssa_fid = ssa_fid[0] + 1 if ssa_fid and ssa_fid[0] else 1
+
+                if "SED_SUPPLY_AREAS" in sed_group.datasets:
+                    data = sed_group.datasets["SED_SUPPLY_AREAS"].data
+                    for row in data:
+                        dist_fid, isedgrid, isedcfp, ased, bsed = row
+                        isedgrid = grid_to_domain.get(int(isedgrid))
+                        geom = self.build_square(self.grid_centroids([int(isedgrid)])[int(isedgrid)], self.cell_size)
+                        areas_s_sql += [(geom, int(ssa_fid), int(isedcfp), ased, bsed)]
+                        cells_s_sql += [(int(ssa_fid), int(isedgrid))]
+
+                        for ssediam, ssedpercent in zip(ssediam_dict[int(dist_fid)], ssedpercent_dict[int(dist_fid)]):
+                            data_n_sql += [(int(ssa_fid), ssediam, ssedpercent)]
+
 
             if sed_m_sql:
                 self.batch_execute(sed_m_sql)
@@ -3957,6 +4964,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if sed_z_sql:
                 self.batch_execute(sed_z_sql)
+
+            if sgf_sql:
+                self.batch_execute(sgf_sql)
 
             if sed_p_sql:
                 self.batch_execute(sed_p_sql)
@@ -4008,7 +5018,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.set_cont_par("ISED", 0)
 
             return True
-
+        self.gutils.enable_geom_triggers()
         # except Exception as e:
         #     QApplication.restoreOverrideCursor()
         #     self.uc.show_error(
@@ -4023,7 +5033,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_levee_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_levee_hdf5()
+            return self.import_levee_hdf5(grid_to_domain)
 
     def import_levee_dat(self, grid_to_domain):
         lgeneral_sql = [
@@ -4082,7 +5092,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql)
 
-    def import_levee_hdf5(self):
+    def import_levee_hdf5(self, grid_to_domain):
         try:
             levee_group = self.parser.read_groups("Input/Levee")
             if levee_group:
@@ -4102,28 +5112,54 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     8,
                 ]
 
-                self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
+                if not grid_to_domain:
+                    self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
 
-                # Process LEVEE_GLOBAL dataset
-                if "LEVEE_GLOBAL" in levee_group.datasets:
-                    data = levee_group.datasets["LEVEE_GLOBAL"].data
-                    for row in data:
-                        raiselev, ilevfail = row
-                        lgeneral_sql += [(raiselev, int(ilevfail))]
+                    # Process LEVEE_GLOBAL dataset
+                    if "LEVEE_GLOBAL" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_GLOBAL"].data
+                        for row in data:
+                            raiselev, ilevfail = row
+                            lgeneral_sql += [(raiselev, int(ilevfail))]
 
-                if "LEVEE_DATA" in levee_group.datasets:
-                    data = levee_group.datasets["LEVEE_DATA"].data
-                    for row in data:
-                        lgridno, ldir, levcrest = row
-                        geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
-                        ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
+                    if "LEVEE_DATA" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_DATA"].data
+                        for row in data:
+                            lgridno, ldir, levcrest = row
+                            geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
+                            ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
 
-                if "LEVEE_FAILURE" in levee_group.datasets:
-                    data = levee_group.datasets["LEVEE_FAILURE"].data
-                    for row in data:
-                        lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
-                        lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate,
-                                          failwidrate)]
+                    if "LEVEE_FAILURE" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_FAILURE"].data
+                        for row in data:
+                            lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
+                            lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate,
+                                              failwidrate)]
+                else:
+
+                    # Process LEVEE_GLOBAL dataset
+                    if "LEVEE_GLOBAL" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_GLOBAL"].data
+                        for row in data:
+                            raiselev, ilevfail = row
+                            lgeneral_sql += [(raiselev, int(ilevfail))]
+
+                    if "LEVEE_DATA" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_DATA"].data
+                        for row in data:
+                            lgridno, ldir, levcrest = row
+                            lgridno = grid_to_domain[int(lgridno)]
+                            geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
+                            ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
+
+                    if "LEVEE_FAILURE" in levee_group.datasets:
+                        data = levee_group.datasets["LEVEE_FAILURE"].data
+                        for row in data:
+                            lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
+                            lfailgrid = grid_to_domain[int(lfailgrid)]
+                            lfailure_sql += [
+                                (int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate,
+                                 failwidrate)]
 
                 if lgeneral_sql:
                     self.batch_execute(lgeneral_sql)
@@ -4143,7 +5179,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_fpxsec_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_fpxsec_hdf5()
+            return self.import_fpxsec_hdf5(grid_to_domain)
 
     def import_fpxsec_dat(self, grid_to_domain):
         cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
@@ -4241,7 +5277,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             """
             self.execute(delete_query)
 
-    def import_fpxsec_hdf5(self):
+    def import_fpxsec_hdf5(self, grid_to_domain):
         try:
             fpxsec_group = self.parser.read_groups("Input/Floodplain")
             if fpxsec_group:
@@ -4251,27 +5287,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
                 cells_sql = ["""INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""", 3]
 
-                self.clear_tables("fpxsec", "fpxsec_cells")
+                if not grid_to_domain:
+                    self.clear_tables("fpxsec", "fpxsec_cells")
 
-                # Read FPXSEC_GLOBAL dataset
-                if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
-                    nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
-                    cont_sql += [("NXPRT", str(nxprt))]
+                    # Read FPXSEC_GLOBAL dataset
+                    if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
+                        nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
+                        cont_sql += [("NXPRT", str(nxprt))]
 
-                # Read FPXSEC_DATA dataset
-                if "FPXSEC_DATA" in fpxsec_group.datasets:
-                    data = fpxsec_group.datasets["FPXSEC_DATA"].data
-                    grid_group = self.parser.read_groups("Input/Grid")[0]
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for i, row in enumerate(data, start=1):
-                        iflo, nnxsec = row[:2]
-                        gids = [int(g) for g in row[2:] if int(g) != -9999]
-                        line_geom = self.build_linestring(gids)
-                        fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
-                        for gid in gids:
-                            point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
-                            cells_sql += [(point_geom, i, int(gid))]
+                    # Read FPXSEC_DATA dataset
+                    if "FPXSEC_DATA" in fpxsec_group.datasets:
+                        data = fpxsec_group.datasets["FPXSEC_DATA"].data
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, row in enumerate(data, start=1):
+                            iflo, nnxsec = row[:2]
+                            gids = [int(g) for g in row[2:] if int(g) != -9999]
+                            line_geom = self.build_linestring(gids)
+                            fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
+                            for gid in gids:
+                                point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
+                                cells_sql += [(point_geom, i, int(gid))]
+                else:
+
+                    fpxsec_fid = self.execute("SELECT MAX(fid) FROM fpxsec;").fetchone()
+                    if fpxsec_fid and fpxsec_fid[0]:
+                        fpxsec_fid = fpxsec_fid[0] + 1
+                    else:
+                        fpxsec_fid = 1
+
+                    # Read FPXSEC_GLOBAL dataset
+                    if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
+                        nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
+                        cont_sql += [("NXPRT", str(nxprt))]
+
+                    # Read FPXSEC_DATA dataset
+                    if "FPXSEC_DATA" in fpxsec_group.datasets:
+                        data = fpxsec_group.datasets["FPXSEC_DATA"].data
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for i, row in enumerate(data, start=fpxsec_fid):
+                            iflo, nnxsec = row[:2]
+                            global_gids = [grid_to_domain.get(int(g)) for g in row[2:] if int(g) != -9999]
+                            domain_gids = [int(g) for g in row[2:] if int(g) != -9999]
+                            line_geom = self.build_linestring(global_gids)
+                            fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
+                            for domain_gid in domain_gids:
+                                point_geom = self.build_point_xy(grid_to_domain.get(x_list[int(domain_gid) - 1]), grid_to_domain.get(y_list[int(domain_gid) - 1]))
+                                cells_sql += [(point_geom, i, grid_to_domain.get(int(domain_gid)))]
 
                 if cont_sql:
                     self.batch_execute(cont_sql)
@@ -4281,6 +5346,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
+
+                # Join cross sections that were slip by the export process
+                if grid_to_domain:
+
+                    r_dict = {}
+                    r_grid_fids = self.execute("""SELECT fpxsec_fid, grid_fid
+                                                  FROM fpxsec_cells
+                                                  WHERE grid_fid IN (
+                                                    SELECT grid_fid
+                                                    FROM fpxsec_cells
+                                                    GROUP BY grid_fid
+                                                    HAVING COUNT(*) >= 2
+                                                  )
+                                                  ORDER BY grid_fid;""").fetchall()
+                    if r_grid_fids:
+                        # Build the dictionary containing the repeated grid elements
+                        for fid, r_grid in r_grid_fids:
+                            r_dict.setdefault(r_grid, []).append(fid)
+                        # Merge the geometries of the repeated grid elements
+                        for _, fpxsec_fids in r_dict.items():
+                            grid_elements = self.execute(
+                                f"SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid IN ({','.join(['?'] * len(fpxsec_fids))});",
+                                tuple(fpxsec_fids)
+                            ).fetchall()
+                            grid_elements = [gid[0] for gid in grid_elements]
+                            min_fpxsec_fid = min(fpxsec_fids)
+                            # Remove the other fpxsec entry
+                            max_fpxsec_fid = max(fpxsec_fids)
+                            # Remove the other fpxsec entries
+                            if min_fpxsec_fid != max_fpxsec_fid:
+                                self.execute(f"DELETE FROM fpxsec WHERE fid = {max_fpxsec_fid};")
+                            self.execute(
+                                f"DELETE FROM fpxsec_cells WHERE fpxsec_fid IN ({','.join(['?'] * len(fpxsec_fids))});",
+                                tuple(fpxsec_fids)
+                            )
+                            # Update the geometry of the remaining fpxsec entry
+                            geom = self.build_linestring(grid_elements)
+                            self.execute("UPDATE fpxsec SET geom = ?, nnxsec = ? WHERE fid = ?;",
+                                         (geom, len(grid_elements), min_fpxsec_fid))
+                            for grid in grid_elements:
+                                grid_geom = self.single_centroid(grid, buffers=True)
+                                self.execute(
+                                    "INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES (?, ?, ?);",
+                                    (grid_geom, min_fpxsec_fid, grid)
+                                )
+                    # Delete all repeated grid_fid, keeping only the one with the smallest fpxsec_fid
+                    delete_query = """
+                    DELETE FROM fpxsec_cells
+                    WHERE ROWID NOT IN (
+                        SELECT MIN(ROWID)
+                        FROM fpxsec_cells
+                        GROUP BY grid_fid
+                    );
+                    """
+                    self.execute(delete_query)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -4527,7 +5647,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_fpfroude_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_fpfroude_hdf5()
+            return self.import_fpfroude_hdf5(grid_to_domain)
 
     def import_fpfroude_dat(self, grid_to_domain):
         try:
@@ -4554,7 +5674,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing FPFROUDE data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing FPFROUDE data from DATA failed!")
 
-    def import_fpfroude_hdf5(self):
+    def import_fpfroude_hdf5(self, grid_to_domain):
         try:
             fpfroude_group = self.parser.read_groups("Input/Spatially Variable")
             if fpfroude_group:
@@ -4562,14 +5682,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
 
-                self.clear_tables("fpfroude_cells")
-
-                # Process FPFROUDE dataset
-                if "FPFROUDE" in fpfroude_group.datasets:
-                    data = fpfroude_group.datasets["FPFROUDE"].data
-                    for i, row in enumerate(data, start=1):
-                        grid, froudefp = row
-                        cells_sql += [(i, int(grid), float(froudefp))]
+                if not grid_to_domain:
+                    self.clear_tables("fpfroude_cells")
+                    # Process FPFROUDE dataset
+                    if "FPFROUDE" in fpfroude_group.datasets:
+                        data = fpfroude_group.datasets["FPFROUDE"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, froudefp = row
+                            cells_sql += [(i, int(grid), float(froudefp))]
+                else:
+                    if "FPFROUDE" in fpfroude_group.datasets:
+                        data = fpfroude_group.datasets["FPFROUDE"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, froudefp = row
+                            global_fid = grid_to_domain.get(int(grid))
+                            cells_sql += [(i, int(global_fid), float(froudefp))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -4583,7 +5710,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_steep_slopen_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_steep_slopen_hdf5()
+            return self.import_steep_slopen_hdf5(grid_to_domain)
 
     def import_steep_slopen_dat(self, grid_to_domain):
         try:
@@ -4621,7 +5748,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing STEEP_SLOPEN data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing STEEP_SLOPEN data from DATA failed!")
 
-    def import_steep_slopen_hdf5(self):
+    def import_steep_slopen_hdf5(self, grid_to_domain):
         try:
             steep_slopen_group = self.parser.read_groups("Input/Spatially Variable")
             if steep_slopen_group:
@@ -4629,22 +5756,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
 
-                self.clear_tables("steep_slope_n_cells")
-
-                # Process STEEP_SLOPEN_GLOBAL dataset
-                if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
-                    data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
-                    isteepn_global = int(data[0])
-                    if isteepn_global == 0:
-                        return
-                    elif isteepn_global == 1:
-                        self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
-                        return
-                    elif isteepn_global == 2:
-                        if "STEEP_SLOPEN" in steep_slopen_group.datasets:
-                            grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
-                            for i, grid in enumerate(grid_elems, start=1):
-                                cells_sql += [(0, i, int(grid))]
+                if not grid_to_domain:
+                    self.clear_tables("steep_slope_n_cells")
+                    if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                        data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                        isteepn_global = int(data[0])
+                        if isteepn_global == 0:
+                            return
+                        elif isteepn_global == 1:
+                            self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                            return
+                        elif isteepn_global == 2:
+                            if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                                grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                                for i, grid in enumerate(grid_elems, start=1):
+                                    cells_sql += [(0, i, int(grid))]
+                    else:
+                        if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                            data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                            isteepn_global = int(data[0])
+                            if isteepn_global == 0:
+                                return
+                            elif isteepn_global == 1:
+                                self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                                return
+                            elif isteepn_global == 2:
+                                if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                                    grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                                    for i, grid in enumerate(grid_elems, start=1):
+                                        cells_sql += [(0, i, grid_to_domain.get(int(grid)))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -4658,7 +5798,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_lid_volume_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_lid_volume_hdf5()
+            return self.import_lid_volume_hdf5(grid_to_domain)
 
     def import_lid_volume_dat(self,grid_to_domain):
         try:
@@ -4685,7 +5825,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing LID_VOLUME data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing LID_VOLUME data from DATA failed!")
 
-    def import_lid_volume_hdf5(self):
+    def import_lid_volume_hdf5(self, grid_to_domain):
         try:
             lid_volume_group = self.parser.read_groups("Input/Spatially Variable")
             if lid_volume_group:
@@ -4693,14 +5833,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, area_fid, volume) VALUES""", 3]
 
-                self.clear_tables("lid_volume_cells")
-
-                # Process LID_VOLUME dataset
-                if "LID_VOLUME" in lid_volume_group.datasets:
-                    data = lid_volume_group.datasets["LID_VOLUME"].data
-                    for i, row in enumerate(data, start=1):
-                        grid, lid_volume = row
-                        cells_sql += [(int(grid), i, lid_volume)]
+                if not grid_to_domain:
+                    self.clear_tables("lid_volume_cells")
+                    if "LID_VOLUME" in lid_volume_group.datasets:
+                        data = lid_volume_group.datasets["LID_VOLUME"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, lid_volume = row
+                            cells_sql += [(int(grid), i, lid_volume)]
+                else:
+                    if "LID_VOLUME" in lid_volume_group.datasets:
+                        data = lid_volume_group.datasets["LID_VOLUME"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, lid_volume = row
+                            global_fid = grid_to_domain.get(int(grid))
+                            cells_sql += [(global_fid, i, lid_volume)]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -6557,7 +7703,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_swmmflo_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_swmmflo_hdf5()
+            return self.import_swmmflo_hdf5(grid_to_domain)
 
     def import_swmmflo_dat(self, grid_to_domain):
 
@@ -6621,7 +7767,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(swmmflo_sql)
 
-    def import_swmmflo_hdf5(self):
+    def import_swmmflo_hdf5(self, grid_to_domain):
         try:
             stormdrain_group = self.parser.read_groups("Input/Storm Drain")
             if stormdrain_group:
@@ -6633,26 +7779,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     13,
                 ]
 
-                self.clear_tables("swmmflo")
+                if not grid_to_domain:
+                    self.clear_tables("swmmflo")
 
-                # Process SWMMFLO_DATA dataset
-                if "SWMMFLO_DATA" in stormdrain_group.datasets:
-                    data = stormdrain_group.datasets["SWMMFLO_DATA"].data
-                    name = stormdrain_group.datasets["SWMMFLO_NAME"].data
-                    node_id_to_name = {int(row[0]): row[1] for row in name}
-                    grid_group = self.parser.read_groups("Input/Grid")[0]
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for row in data:
-                        node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
-                        swmm_ident = node_id_to_name.get(int(node_id), None)
-                        if isinstance(swmm_ident, bytes):
-                            swmm_ident = swmm_ident.decode("utf-8")
-                        geom = self.build_point_xy(x_list[int(swmm_jt) - 1], y_list[int(swmm_jt) - 1])
-                        swmm_char = "D"
-                        swmmflo_sql += [
-                            (geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width,
-                             swmm_height, swmm_coeff, 0, curbheight, feature)]
+                    # Process SWMMFLO_DATA dataset
+                    if "SWMMFLO_DATA" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in data:
+                            node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
+                            swmm_ident = node_id_to_name.get(int(node_id), None)
+                            if isinstance(swmm_ident, bytes):
+                                swmm_ident = swmm_ident.decode("utf-8")
+                            geom = self.build_point_xy(x_list[int(swmm_jt) - 1], y_list[int(swmm_jt) - 1])
+                            swmm_char = "D"
+                            swmmflo_sql += [
+                                (geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width,
+                                 swmm_height, swmm_coeff, 0, curbheight, feature)]
+                else:
+                    # Process SWMMFLO_DATA dataset
+                    if "SWMMFLO_DATA" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in data:
+                            node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
+                            swmm_ident = node_id_to_name.get(int(node_id), None)
+                            if isinstance(swmm_ident, bytes):
+                                swmm_ident = swmm_ident.decode("utf-8")
+                            geom = self.build_point_xy(grid_to_domain.get(x_list[int(swmm_jt) - 1]), grid_to_domain.get(y_list[int(swmm_jt) - 1]))
+                            swmm_jt = grid_to_domain.get(int(swmm_jt))
+                            swmm_char = "D"
+                            swmmflo_sql += [
+                                (geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length,
+                                 swmm_width,
+                                 swmm_height, swmm_coeff, 0, curbheight, feature)]
 
                 if swmmflo_sql:
                     self.batch_execute(swmmflo_sql)
@@ -6666,7 +7834,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_swmmflodropbox_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_swmmflodropbox_hdf5()
+            return self.import_swmmflodropbox_hdf5(grid_to_domain)
 
     def import_swmmflodropbox_dat(self, grid_to_domain):
         """
@@ -6684,7 +7852,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             area = row[2]
             self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{area}' WHERE name = '{name}'")
 
-    def import_swmmflodropbox_hdf5(self):
+    def import_swmmflodropbox_hdf5(self, grid_to_domain):
         """
         Function to import the SWMMFLODROPBOX.DAT
         """
@@ -6715,7 +7883,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_sdclogging_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_sdclogging_hdf5()
+            return self.import_sdclogging_hdf5(grid_to_domain)
 
     def import_sdclogging_dat(self, grid_to_domain):
         """
@@ -6736,7 +7904,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                    SET swmm_clogging_factor = '{clog_fact}', swmm_time_for_clogging = '{clog_time}'
                                    WHERE name = '{name}'""")
 
-    def import_sdclogging_hdf5(self):
+    def import_sdclogging_hdf5(self, grid_to_domain):
         """
         Function to import the SDCLOGGING from hdf5 file
         """
@@ -6768,7 +7936,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_swmmflort_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_swmmflort_hdf5()
+            return self.import_swmmflort_hdf5(grid_to_domain)
 
     def import_swmmflort_dat(self, grid_to_domain):
         """
@@ -6892,85 +8060,117 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
 
-    def import_swmmflort_hdf5(self):
+    def import_swmmflort_hdf5(self, grid_to_domain):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
 
         Reads rating tables from SWMMFLORT.DAT and fills data of QGIS tables swmmflort and swmmflort_data.
 
         """
-        # try:
-        stormdrain_group = self.parser.read_groups("Input/Storm Drain")
-        if stormdrain_group:
-            stormdrain_group = stormdrain_group[0]
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
 
-            swmmflort_sql = [
-                """INSERT OR REPLACE INTO swmmflort (fid, grid_fid, name) VALUES""",
-                3,
-            ]
+                swmmflort_sql = [
+                    """INSERT OR REPLACE INTO swmmflort (fid, grid_fid, name) VALUES""",
+                    3,
+                ]
 
-            swmmflort_data_sql = [
-                """INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""",
-                3,
-            ]
+                swmmflort_data_sql = [
+                    """INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""",
+                    3,
+                ]
 
-            swmmflo_culvert_sql = [
-                """INSERT INTO swmmflo_culvert (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) VALUES""",
-                7,
-            ]
+                swmmflo_culvert_sql = [
+                    """INSERT INTO swmmflo_culvert (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) VALUES""",
+                    7,
+                ]
 
-            self.clear_tables("swmmflort", "swmmflort_data", "swmmflo_culvert")
+                if not grid_to_domain:
+                    self.clear_tables("swmmflort", "swmmflort_data", "swmmflo_culvert")
 
-            # Process RATING_TABLE dataset
-            if "RATING_TABLE" in stormdrain_group.datasets:
-                data = stormdrain_group.datasets["RATING_TABLE"].data
-                grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
-                node_id_to_grid = {int(row[0]): row[1] for row in grid}
-                name = stormdrain_group.datasets["SWMMFLO_NAME"].data
-                node_id_to_name = {int(row[0]): row[1] for row in name}
-                for i, row in enumerate(data, start=1):
-                    node_id, depth, q = row
-                    grid_fid = node_id_to_grid.get(int(node_id), None)
-                    rt_name = node_id_to_name.get(int(node_id), None)
-                    if isinstance(rt_name, bytes):
-                        rt_name = rt_name.decode("utf-8")
-                    swmmflort_sql += [(int(node_id), int(grid_fid), rt_name)]
-                    swmmflort_data_sql += [(int(node_id), depth, q)]
+                    # Process RATING_TABLE dataset
+                    if "RATING_TABLE" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["RATING_TABLE"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for i, row in enumerate(data, start=1):
+                            node_id, depth, q = row
+                            grid_fid = node_id_to_grid.get(int(node_id), None)
+                            rt_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(rt_name, bytes):
+                                rt_name = rt_name.decode("utf-8")
+                            swmmflort_sql += [(int(node_id), int(grid_fid), rt_name)]
+                            swmmflort_data_sql += [(int(node_id), depth, q)]
 
-            if "CULVERT_EQUATIONS" in stormdrain_group.datasets:
-                data = stormdrain_group.datasets["CULVERT_EQUATIONS"].data
-                grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
-                node_id_to_grid = {int(row[0]): row[1] for row in grid}
-                name = stormdrain_group.datasets["SWMMFLO_NAME"].data
-                node_id_to_name = {int(row[0]): row[1] for row in name}
-                for row in data:
-                    node_id, cdiameter, typec, typeen, cubase, multbarrels = row
-                    grid_fid = node_id_to_grid.get(int(node_id), None)
-                    culvert_name = node_id_to_name.get(int(node_id), None)
-                    if isinstance(culvert_name, bytes):
-                        culvert_name = culvert_name.decode("utf-8")
-                    swmmflo_culvert_sql += [
-                        (int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
+                    if "CULVERT_EQUATIONS" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["CULVERT_EQUATIONS"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for row in data:
+                            node_id, cdiameter, typec, typeen, cubase, multbarrels = row
+                            grid_fid = node_id_to_grid.get(int(node_id), None)
+                            culvert_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(culvert_name, bytes):
+                                culvert_name = culvert_name.decode("utf-8")
+                            swmmflo_culvert_sql += [
+                                (int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
+                else:
+                    # Process RATING_TABLE dataset
+                    if "RATING_TABLE" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["RATING_TABLE"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for i, row in enumerate(data, start=1):
+                            node_id, depth, q = row
+                            grid_fid = grid_to_domain.get(node_id_to_grid.get(int(node_id), None))
+                            rt_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(rt_name, bytes):
+                                rt_name = rt_name.decode("utf-8")
+                            swmmflort_sql += [(int(node_id), int(grid_fid), rt_name)]
+                            swmmflort_data_sql += [(int(node_id), depth, q)]
 
-            if swmmflort_sql:
-                self.batch_execute(swmmflort_sql)
+                    if "CULVERT_EQUATIONS" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["CULVERT_EQUATIONS"].data
+                        grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                        node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                        name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        for row in data:
+                            node_id, cdiameter, typec, typeen, cubase, multbarrels = row
+                            grid_fid = grid_to_domain.get(node_id_to_grid.get(int(node_id), None))
+                            culvert_name = node_id_to_name.get(int(node_id), None)
+                            if isinstance(culvert_name, bytes):
+                                culvert_name = culvert_name.decode("utf-8")
+                            swmmflo_culvert_sql += [
+                                (int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
 
-            if swmmflort_data_sql:
-                self.batch_execute(swmmflort_data_sql)
+                if swmmflort_sql:
+                    self.batch_execute(swmmflort_sql)
 
-            if swmmflo_culvert_sql:
-                self.batch_execute(swmmflo_culvert_sql)
+                if swmmflort_data_sql:
+                    self.batch_execute(swmmflort_data_sql)
 
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!.\n", e)
-        #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!")
+                if swmmflo_culvert_sql:
+                    self.batch_execute(swmmflo_culvert_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Importing SWMMFLORT from hdf5 failed!.\n", e)
+            self.uc.show_error("Importing SWMMFLORT from hdf5 failed!")
 
     def import_swmmoutf(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_swmmoutf_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_swmmoutf_hdf5()
+            return self.import_swmmoutf_hdf5(grid_to_domain)
 
     def import_swmmoutf_dat(self, grid_to_domain):
         swmmoutf_sql = [
@@ -7042,7 +8242,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if have_outside:
             self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
 
-    def import_swmmoutf_hdf5(self):
+    def import_swmmoutf_hdf5(self, grid_to_domain):
         try:
             stormdrain_group = self.parser.read_groups("Input/Storm Drain")
             if stormdrain_group:
@@ -7053,57 +8253,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     5,
                 ]
 
-                self.clear_tables("swmmoutf")
+                if not grid_to_domain:
+                    self.clear_tables("swmmoutf")
 
-                if "SWMMOUTF_DATA" in stormdrain_group.datasets:
-                    data = stormdrain_group.datasets["SWMMOUTF_DATA"].data
-                    name = stormdrain_group.datasets["SWMMOUTF_NAME"].data
-                    node_id_to_name = {int(row[0]): row[1] for row in name}
-                    grid_group = self.parser.read_groups("Input/Grid")[0]
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for row in data:
-                        outfall_id, outf_grid, outf_flo2dvol = row
-                        outf_name = node_id_to_name.get(int(outfall_id), None)
-                        if isinstance(outf_name, bytes):
-                            outf_name = outf_name.decode("utf-8")
-                        geom = self.build_point_xy(x_list[int(outf_grid) - 1], y_list[int(outf_grid) - 1])
-                        swmmoutf_sql += [(geom, int(outfall_id), outf_name, int(outf_grid), int(outf_flo2dvol))]
+                    if "SWMMOUTF_DATA" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["SWMMOUTF_DATA"].data
+                        name = stormdrain_group.datasets["SWMMOUTF_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in data:
+                            outfall_id, outf_grid, outf_flo2dvol = row
+                            outf_name = node_id_to_name.get(int(outfall_id), None)
+                            if isinstance(outf_name, bytes):
+                                outf_name = outf_name.decode("utf-8")
+                            geom = self.build_point_xy(x_list[int(outf_grid) - 1], y_list[int(outf_grid) - 1])
+                            swmmoutf_sql += [(geom, int(outfall_id), outf_name, int(outf_grid), int(outf_flo2dvol))]
+                else:
+                    if "SWMMOUTF_DATA" in stormdrain_group.datasets:
+                        data = stormdrain_group.datasets["SWMMOUTF_DATA"].data
+                        name = stormdrain_group.datasets["SWMMOUTF_NAME"].data
+                        node_id_to_name = {int(row[0]): row[1] for row in name}
+                        grid_group = self.parser.read_groups("Input/Grid")[0]
+                        x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                        y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                        for row in data:
+                            outfall_id, outf_grid, outf_flo2dvol = row
+                            outf_name = node_id_to_name.get(int(outfall_id), None)
+                            if isinstance(outf_name, bytes):
+                                outf_name = outf_name.decode("utf-8")
+                            geom = self.build_point_xy(grid_to_domain.get(x_list[int(outf_grid) - 1]), grid_to_domain.get(y_list[int(outf_grid) - 1]))
+                            outf_grid = grid_to_domain.get(int(outf_grid))
+                            swmmoutf_sql += [(geom, int(outfall_id), outf_name, outf_grid, int(outf_flo2dvol))]
 
                 if swmmoutf_sql:
                     self.batch_execute(swmmoutf_sql)
-
-                # data = self.parser.parse_swmmoutf()
-                # gids = []
-                # # Outfall outside the grid -> Don't look for the grid centroid
-                # for x in data:
-                #     if x[1] != '-9999':
-                #         gids.append(x[1])
-                # cells = self.grid_centroids(gids, buffers=True)
-                # have_outside = False
-                # for row in data:
-                #     outfall_name = row[0]
-                #     gid = row[1]
-                #     allow_q = row[2]
-                #     # Update the swmm_allow_discharge on the user_swmm_outlets
-                #     self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
-                #     # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
-                #     if gid == '-9999':
-                #         have_outside = True
-                #         geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
-                #         if geom_qry:
-                #             geom = geom_qry[0]
-                #         else:  # When there is no SWMM.INP
-                #             self.uc.log_info(f"{outfall_name} outside the grid!")
-                #             continue
-                #     else:
-                #         geom = cells[gid]
-                #     swmmoutf_sql += [(geom,) + tuple(row)]
-                #
-                # self.batch_execute(swmmoutf_sql)
-                #
-                # if have_outside:
-                #     self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -7114,7 +8299,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_tolspatial_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_tolspatial_hdf5()
+            return self.import_tolspatial_hdf5(grid_to_domain)
 
     def import_tolspatial_dat(self, grid_to_domain):
         try:
@@ -7141,27 +8326,38 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing LID_VOLUME data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing LID_VOLUME data from DATA failed!")
 
-    def import_tolspatial_hdf5(self):
+    def import_tolspatial_hdf5(self, grid_to_domain):
 
         cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid, tol) VALUES""", 3]
 
-        self.clear_tables("tolspatial_cells")
-
         try:
-            # Access the TOLSPATIAL dataset
-            spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
-            if spatially_variable_group:
-                spatially_variable_group = spatially_variable_group[0]
-                if "TOLSPATIAL" in spatially_variable_group.datasets:
-                    tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
 
-                    # Process each row in the dataset
-                    for i, row in enumerate(tolspatial_data, 1):
-                        gid, tol = row
-                        cells_sql += [(i, gid, float(tol))]
+            if not grid_to_domain:
+                self.clear_tables("tolspatial_cells")
+                # Access the TOLSPATIAL dataset
+                spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
+                if spatially_variable_group:
+                    spatially_variable_group = spatially_variable_group[0]
+                    if "TOLSPATIAL" in spatially_variable_group.datasets:
+                        tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
+                        # Process each row in the dataset
+                        for i, row in enumerate(tolspatial_data, 1):
+                            gid, tol = row
+                            cells_sql += [(i, gid, float(tol))]
+            else:
+                spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
+                if spatially_variable_group:
+                    spatially_variable_group = spatially_variable_group[0]
+                    if "TOLSPATIAL" in spatially_variable_group.datasets:
+                        tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
+                        # Process each row in the dataset
+                        for i, row in enumerate(tolspatial_data, 1):
+                            domain_gid, tol = row
+                            global_gid = grid_to_domain.get(int(domain_gid))
+                            cells_sql += [(i, global_gid, float(tol))]
 
-                    self.batch_execute(cells_sql)
-                    return True
+            self.batch_execute(cells_sql)
+            return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -7173,7 +8369,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_shallowNSpatial_dat(grid_to_domain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.import_shallowNSpatial_hdf5()
+            return self.import_shallowNSpatial_hdf5(grid_to_domain)
 
     def import_shallowNSpatial_dat(self, grid_to_domain):
         try:
@@ -7201,7 +8397,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR: Importing SHALLOWN_SPATIAL data from DATA failed!", e)
             self.uc.log_info("ERROR: Importing SHALLOWN_SPATIAL data from DATA failed!")
 
-    def import_shallowNSpatial_hdf5(self):
+    def import_shallowNSpatial_hdf5(self, grid_to_domain):
         try:
             shallowNSpatial_group = self.parser.read_groups("Input/Spatially Variable")
             if shallowNSpatial_group:
@@ -7209,14 +8405,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid, shallow_n) VALUES""", 3]
 
-                self.clear_tables("spatialshallow_cells")
-
-                # Process SHALLOWN_SPATIAL dataset
-                if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
-                    data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
-                    for i, row in enumerate(data, start=1):
-                        grid, shallowNSpatial = row
-                        cells_sql += [(i, int(grid), float(shallowNSpatial))]
+                if not grid_to_domain:
+                    self.clear_tables("spatialshallow_cells")
+                    if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
+                        data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, shallowNSpatial = row
+                            cells_sql += [(i, int(grid), float(shallowNSpatial))]
+                else:
+                    if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
+                        data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
+                        for i, row in enumerate(data, start=1):
+                            grid, shallowNSpatial = row
+                            global_gid = grid_to_domain.get(int(grid))
+                            cells_sql += [(i, global_gid, float(shallowNSpatial))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -8088,7 +9290,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         )
 
         if not subdomain:
-            inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
+            inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY grid_fid, inflow_fid;"""
         else:
             inflow_cells_sql = f"""
                                 SELECT DISTINCT
@@ -8100,7 +9302,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells md ON ic.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid = {subdomain}
-                                ORDER BY ic.inflow_fid, md.domain_cell;
+                                ORDER BY md.domain_cell, ic.inflow_fid;
                                 """
 
         # Divide inflow line hydrograph between grid elements
@@ -8547,7 +9749,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         JOIN 
                                             schema_md_cells md ON oc.grid_fid = md.grid_fid
                                         WHERE 
-                                            md.domain_fid = {subdomain};"""
+                                            md.domain_fid = {subdomain}
+                                        ORDER BY outflow_fid, md.domain_cell;"""
             qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
             qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
             ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
@@ -8780,7 +9983,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     JOIN 
                                         schema_md_cells md ON oc.grid_fid = md.grid_fid
                                     WHERE 
-                                        md.domain_fid = {subdomain};"""
+                                        md.domain_fid = {subdomain}
+                                    ORDER BY outflow_fid, md.domain_cell;"""
         qh_params_data_sql = """SELECT params_fid, hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
         qh_table_data_sql = """SELECT table_fid, depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
         ts_data_sql = """SELECT series_fid, time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
@@ -9317,7 +10521,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
         if not subdomain:
-            rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
+            rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY grid_fid;"""
         else:
             rain_cells_sql = f"""SELECT DISTINCT
                                     md.domain_cell, 
@@ -9423,7 +10627,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
 
             if not subdomain:
-                rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
+                rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY grid_fid;"""
             else:
                 rain_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell, 
@@ -10523,6 +11727,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         ISED = self.gutils.get_cont_par("ISED")
 
+        k = 1
         for i, row in enumerate(chan_rows, start=1):
             row = [x if x is not None else "0" for x in row]
             fid, depinitial, froudc, roughadj, isedn, ibaseflow = row
@@ -10532,9 +11737,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 create_array(segment, 6, np.float64, (i, depinitial, froudc, roughadj, ibaseflow, isedn)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
             # A single line for each channel segment.
-            for elems in self.execute(
-                    chan_elems_sql, (fid,)
-            ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+            for elems in self.execute(chan_elems_sql, (fid,)):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                 # 'chan_elems' table (the cross sections in the schematic layer),
                 #  that has the 'fid' value indicated (the channel segment id).
                 elems = [
@@ -10588,6 +11791,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     if typ == 'N':
                         data = ([i] + res)
+                        if subdomain:
+                            data[-1] = k
+                            k += 1
                         try:
                             channel_group.datasets["CHAN_NATURAL"].data.append(data)
                         except:
@@ -10935,7 +12141,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             else:
                 chan_n_sql = f"""
-                    SELECT 
+                    SELECT DISTINCT
                         cn.nxsecnum,
                         cn.xsecname
                     FROM 
@@ -11739,15 +12945,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
             else:
                 tbc_sql = f"""SELECT DISTINCT
-                                md.domain_cell, 
-                                area_fid 
-                            FROM 
-                                blocked_cells AS bc
-                            JOIN 
-                                schema_md_cells md ON bc.grid_fid = md.grid_fid
-                            WHERE 
-                                arf = 1 AND md.domain_fid = {subdomain}
-                            ORDER BY md.domain_cell;"""
+                                    CASE 
+                                        WHEN bc.grid_fid < 0 THEN -md.domain_cell
+                                        ELSE md.domain_cell
+                                    END AS signed_domain_cell,
+                                    area_fid
+                                FROM blocked_cells AS bc
+                                JOIN schema_md_cells md 
+                                  ON ABS(bc.grid_fid) = md.grid_fid
+                                WHERE arf = 1
+                                  AND md.domain_fid = {subdomain}
+                                ORDER BY signed_domain_cell;"""
 
                 pbc_sql = f"""SELECT DISTINCT
                                 md.domain_cell, 
@@ -11837,15 +13045,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
 
             else:
-                tbc_sql = f"""SELECT 
-                                md.domain_cell, 
-                                area_fid 
-                            FROM 
-                                blocked_cells AS bc
-                            JOIN 
-                                schema_md_cells md ON bc.grid_fid = md.grid_fid
-                            WHERE 
-                                arf = 1 AND md.domain_fid = {subdomain};"""
+                tbc_sql = f"""SELECT DISTINCT
+                                    CASE 
+                                        WHEN bc.grid_fid < 0 THEN -md.domain_cell
+                                        ELSE md.domain_cell
+                                    END AS signed_domain_cell,
+                                    area_fid
+                                FROM blocked_cells AS bc
+                                JOIN schema_md_cells md 
+                                  ON ABS(bc.grid_fid) = md.grid_fid
+                                WHERE arf = 1
+                                  AND md.domain_fid = {subdomain}
+                                ORDER BY signed_domain_cell;"""
 
                 pbc_sql = f"""SELECT 
                                 md.domain_cell, 
@@ -12183,7 +13394,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                tol_cells_sql = """SELECT grid_fid, tol FROM tolspatial_cells;"""
+                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
             else:
                 tol_cells_sql = f"""SELECT 
                                         md.domain_cell,
@@ -12193,7 +13404,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     JOIN 
                                         schema_md_cells md ON tc.grid_fid = md.grid_fid    
                                     WHERE 
-                                        md.domain_fid = {subdomain}"""
+                                        md.domain_fid = {subdomain}
+                                    ORDER BY md.domain_cell"""
 
             two_values = "{0}  {1}\n"
 
@@ -12224,7 +13436,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tolspatial_cells"):
                 return False
             if not subdomain:
-                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells;"""
+                tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
             else:
                 tol_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell,
@@ -12672,13 +13884,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             sed_p_sql = """SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid = ? ORDER BY sedpercent;"""
             areas_d_sql = """SELECT fid, debrisv FROM mud_areas ORDER BY fid;"""
             areas_s_sql = """SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;"""
-            data_n_sql = """SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
+            data_n_sql = """SELECT DISTINCT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
 
             if not subdomain:
                 cells_d_sql = """SELECT grid_fid FROM mud_cells WHERE area_fid = ? ORDER BY grid_fid;"""
                 cells_r_sql = """SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;"""
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
-                areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
+                areas_g_sql = """SELECT DISTINCT group_fid FROM sed_group_areas ORDER BY fid;"""
                 cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
                 check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
@@ -12796,11 +14008,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if not subdomain:
                         areas_g = self.execute(areas_g_sql)
                         if areas_g:
-                            for aid, group_fid in areas_g:
-                                gids = self.execute(cells_g_sql, (aid,)).fetchall()
+                            for (group_fid,) in areas_g:
+                                gids = self.execute(cells_g_sql, (group_fid,)).fetchall()
                                 if gids:
-                                    for g in gids[0]:
-                                        s.write(line10.format(g, group_fid))
+                                    for g in gids:
+                                        s.write(line10.format(g[0], group_fid))
                     else:
                         result = self.execute(group_sql).fetchall()
                         for grid_id, group_id in result:
@@ -12844,54 +14056,54 @@ class Flo2dGeoPackage(GeoPackageUtils):
             levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
         else:
             levee_data_sql = f"""
-                                     SELECT 
-                                        md.domain_cell, 
-                                        ld.ldir, 
-                                        ld.levcrest 
-                                     FROM 
-                                        levee_data AS ld
-                                     JOIN
-                                        schema_md_cells md ON ld.grid_fid = md.grid_fid
-                                     WHERE 
-                                        md.domain_fid = {subdomain}
-                                     ORDER BY 
-                                        md.domain_cell, ld.fid;
-                                     """
+                                 SELECT 
+                                    DISTINCT(md.domain_cell), 
+                                    ld.ldir, 
+                                    ld.levcrest 
+                                 FROM 
+                                    levee_data AS ld
+                                 JOIN
+                                    schema_md_cells md ON ld.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell, ld.fid;
+                                 """
 
             levee_fail_sql = f"""
-                                     SELECT 
-                                        md.domain_cell, 
-                                        lf.lfaildir, 
-                                        lf.failevel,
-                                        lf.failtime,
-                                        lf.levbase,
-                                        lf.failwidthmax,
-                                        lf.failrate,
-                                        lf.failwidrate
-                                     FROM 
-                                        levee_failure AS lf
-                                     JOIN
-                                        schema_md_cells md ON lf.grid_fid = md.grid_fid
-                                     WHERE 
-                                        md.domain_fid = {subdomain}
-                                     ORDER BY 
-                                        md.domain_cell, lf.fid;
-                                     """
+                                 SELECT 
+                                    DISTINCT(md.domain_cell), 
+                                    lf.lfaildir, 
+                                    lf.failevel,
+                                    lf.failtime,
+                                    lf.levbase,
+                                    lf.failwidthmax,
+                                    lf.failrate,
+                                    lf.failwidrate
+                                 FROM 
+                                    levee_failure AS lf
+                                 JOIN
+                                    schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell, lf.fid;
+                                 """
 
             levee_frag_sql = f"""
-                                     SELECT 
-                                        md.domain_cell, 
-                                        lf.levfragchar, 
-                                        lf.levfragprob 
-                                     FROM 
-                                        levee_fragility AS lf
-                                     JOIN
-                                        schema_md_cells md ON lf.grid_fid = md.grid_fid
-                                     WHERE 
-                                        md.domain_fid = {subdomain}
-                                     ORDER BY 
-                                        md.domain_cell;
-                                     """
+                                 SELECT 
+                                    DISTINCT(md.domain_cell), 
+                                    lf.levfragchar, 
+                                    lf.levfragprob 
+                                 FROM 
+                                    levee_fragility AS lf
+                                 JOIN
+                                    schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell;
+                                 """
 
         # line1 = "{0}  {1}\n"
         # line3 = "{0}  {1}  {2}\n"
@@ -12962,7 +14174,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
 
             if not subdomain:
-                levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
+                levee_data_sql = """SELECT DISTINCT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
                 levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
                 levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
             else:
@@ -13510,17 +14722,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                cell_sql = """SELECT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
+                cell_sql = """SELECT DISTINCT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
             else:
                 cell_sql = f"""SELECT 
-                                    md.domain_cell,
-                                    ss.shallow_n 
+                                    DISTINCT(md.domain_cell), 
+                                    ss.shallow_n
                                 FROM 
                                     spatialshallow_cells AS ss
                                 JOIN 
                                     schema_md_cells md ON ss.grid_fid = md.grid_fid
                                 WHERE 
-                                    md.domain_fid = {subdomain};"""
+                                    md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;"""
 
             line1 = "{0} {1}\n"
 
@@ -13553,7 +14766,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                cell_sql = """SELECT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
+                cell_sql = """SELECT DISTINCT grid_fid, shallow_n FROM spatialshallow_cells ORDER BY grid_fid;"""
             else:
                 cell_sql = f"""SELECT 
                                     DISTINCT(md.domain_cell), 
@@ -15454,7 +16667,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             if not subdomain:
-                qry = """SELECT name, grid, drboxarea  FROM user_swmm_inlets_junctions WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
+                qry = """SELECT name, grid, drboxarea  FROM user_swmm_inlets_junctions WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0 ORDER BY name;"""
             else:
                 qry = f"""SELECT 
                             usij.name, 
@@ -15465,7 +16678,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                          JOIN
                             schema_md_cells md ON usij.grid = md.grid_fid
                         WHERE 
-                            md.domain_fid = {subdomain} AND SUBSTR(usij.name, 1,1) NOT LIKE 'J%'  AND usij.drboxarea > 0.0;"""
+                            md.domain_fid = {subdomain} AND SUBSTR(usij.name, 1,1) NOT LIKE 'J%'  AND usij.drboxarea > 0.0 ORDER BY usij.name;"""
 
             rows = self.gutils.execute(qry).fetchall()
             if rows:
@@ -15550,7 +16763,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
                          FROM user_swmm_inlets_junctions 
-                         WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
+                         WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0 ORDER BY name;"""
             else:
                 qry = f"""
                         SELECT 
@@ -15566,7 +16779,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             (usij.sd_type = 'I' OR usij.sd_type = 'J') 
                             AND usij.swmm_clogging_factor > 0.0 
                             AND usij.swmm_time_for_clogging > 0.0
-                            AND md.domain_fid = {subdomain};
+                            AND md.domain_fid = {subdomain}
+                        ORDER BY usij.name;
                         """
 
             rows = self.gutils.execute(qry).fetchall()
