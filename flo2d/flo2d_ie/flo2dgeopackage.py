@@ -13132,7 +13132,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
             # collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
             if not subdomain:
-                tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
+                tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1) ORDER BY grid_fid;"""
                 pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
 
@@ -13150,7 +13150,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                   AND md.domain_fid = {subdomain}
                                 ORDER BY signed_domain_cell;"""
 
-                pbc_sql = f"""SELECT 
+                pbc_sql = f"""SELECT DISTINCT
                                 md.domain_cell, 
                                 area_fid,  
                                 arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
@@ -13159,7 +13159,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              JOIN 
                                 schema_md_cells md ON bc.grid_fid = md.grid_fid
                              WHERE 
-                                arf < 1 AND md.domain_fid = {subdomain};"""
+                                arf < 1 AND md.domain_fid = {subdomain}
+                             ORDER BY md.domain_cell;"""
 
             if self.execute(tbc_sql).fetchone() is None and self.execute(pbc_sql).fetchone() is None:
                 self.gutils.set_cont_par("IWRFS", 0)
@@ -13189,6 +13190,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 arfwrf_group.create_dataset('ARF_TOTALLY_BLOCKED', [])
                 for row in self.execute(tbc_sql):
                     cell = row[0]
+                    self.uc.log_info(str(row))
                     # collapse = self.execute(collapse_sql, (row[1],)).fetchone()
                     # Check for collapse data, sometimes there is no collapse data
                     # # if collapse:
