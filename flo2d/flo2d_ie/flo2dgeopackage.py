@@ -8789,7 +8789,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY grid_fid;"""
                     else:
                         # Write individual steep slope grid IDs
-                        sql = f"""SELECT 
+                        sql = f"""SELECT DISTINCT
                                     md.domain_cell
                                 FROM 
                                     steep_slope_n_cells AS ss
@@ -8844,7 +8844,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY grid_fid;"""
                 else:
                     # Write individual steep slope grid IDs
-                    sql = f"""SELECT 
+                    sql = f"""SELECT DISTINCT
                                 md.domain_cell
                             FROM 
                                 steep_slope_n_cells AS ss
@@ -13762,14 +13762,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             sed_p_sql = """SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid = ? ORDER BY sedpercent;"""
             areas_d_sql = """SELECT fid, debrisv FROM mud_areas ORDER BY fid;"""
             areas_s_sql = """SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;"""
-            data_n_sql = """SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
+            data_n_sql = """SELECT DISTINCT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
 
             if not subdomain:
                 cells_d_sql = """SELECT grid_fid FROM mud_cells WHERE area_fid = ? ORDER BY grid_fid;"""
                 cells_r_sql = """SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;"""
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
                 areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
-                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE fid = ? ORDER BY grid_fid;"""
                 check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
                 cells_d_sql = f"""SELECT 
@@ -13906,11 +13906,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         gid = result[0]
                         try:
                             sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
-                                create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
+                                create_array(five_values, 5, np.float64, aid, gid, *row[2:]))
                         except:
                             sed_group.create_dataset('SED_SUPPLY_AREAS', [])
                             sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
-                                create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
+                                create_array(five_values, 5, np.float64, aid, gid, *row[2:]))
 
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
                         try:
@@ -13981,7 +13981,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_r_sql = """SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;"""
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
                 areas_g_sql = """SELECT DISTINCT group_fid FROM sed_group_areas ORDER BY fid;"""
-                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE fid = ? ORDER BY grid_fid;"""
                 check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
                 cells_d_sql = f"""SELECT 
