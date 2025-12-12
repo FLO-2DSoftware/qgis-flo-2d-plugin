@@ -13981,7 +13981,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_r_sql = """SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;"""
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
                 areas_g_sql = """SELECT DISTINCT fid FROM sed_group_areas ORDER BY fid;"""
-                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                cells_g_sql = """SELECT DISTINCT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
                 check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
                 cells_d_sql = f"""SELECT 
