@@ -5802,7 +5802,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_steep_slopen_dat(self, grid_to_domain):
         try:
-            cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
+            cells_sql = ["""INSERT OR IGNORE INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
             data = self.parser.parse_steep_slopen()
             if not data:
                 return
@@ -5819,6 +5819,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for grid_id in grid_ids:
                         cells_sql += [(0, grid_id)]
             else:
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_steep_slope_n_cells_grid ON steep_slope_n_cells(grid_fid);")
                 first_value = int(data[0][0])  # Get the first value from the first line
                 if first_value == 0:
                     return
@@ -5842,7 +5844,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if steep_slopen_group:
                 steep_slopen_group = steep_slopen_group[0]
 
-                cells_sql = ["""INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
+                cells_sql = ["""INSERT OR IGNORE INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
 
                 if not grid_to_domain:
                     self.clear_tables("steep_slope_n_cells")
@@ -5860,6 +5862,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 for i, grid in enumerate(grid_elems, start=1):
                                     cells_sql += [(0, i, int(grid))]
                 else:
+                    self.gutils.execute(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS ux_steep_slope_n_cells_grid ON steep_slope_n_cells(grid_fid);")
                     if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
                         data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
                         isteepn_global = int(data[0])
@@ -8782,7 +8786,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     # Write individual steep slope grid IDs
                     if not subdomain:
-                        sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                        sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY grid_fid;"""
                     else:
                         # Write individual steep slope grid IDs
                         sql = f"""SELECT 
@@ -8793,7 +8797,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells md ON ss.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid =  {subdomain}
-                                ;"""
+                                ORDER BY md.domain_cell;"""
                     records = self.gutils.execute(sql).fetchall()
                     if records:
                         s.write("2\n")
@@ -8837,7 +8841,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
                     spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
                 if not subdomain:
-                    sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                    sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY grid_fid;"""
                 else:
                     # Write individual steep slope grid IDs
                     sql = f"""SELECT 
@@ -8848,7 +8852,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 schema_md_cells md ON ss.grid_fid = md.grid_fid
                             WHERE 
                                 md.domain_fid =  {subdomain}
-                            ;"""
+                            ORDER BY md.domain_cell;"""
                 records = self.gutils.execute(sql).fetchall()
                 if records:
                     for row in records:
