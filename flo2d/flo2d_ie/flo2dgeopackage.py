@@ -2950,7 +2950,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     params[0] = gid
                     if char == "N": # adjust the nxsecnum for channels crossing domains
                         params[1] = nxsecnum
-                        self.uc.log_info(str(params[2]))
                         # Check if the current gid is in the chan_n table, if so, skip increasing nxsecnum
                         if self.execute("SELECT COUNT(*) FROM chan_n WHERE elem_fid = ?;", (gid,)).fetchone()[0] == 0:
                             nxsecnum += 1
@@ -9206,24 +9205,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for data in inflow_global:
             bc_group.datasets["Inflow/INF_GLOBAL"].data.append(data)
 
-        # Create the TS_INF_DATA dataset
-        ts_fids = self.execute("SELECT DISTINCT time_series_fid FROM inflow;").fetchall()
-        for (ts_fid,) in ts_fids:
-            try:
-                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
-            except:
-                bc_group.create_dataset('Inflow/TS_INF_DATA', [])
-                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
-
-            #     ts_series_fid.append(ts_fid)
-            # ts_series_fid.append(ts_fid)
-
         max_ts_series_fid = self.execute("""SELECT MAX(series_fid) FROM inflow_time_series_data;""").fetchone()
         if max_ts_series_fid:
             max_ts_series_fid = max_ts_series_fid[0]
@@ -9303,6 +9284,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         bc_group.create_dataset('Inflow/INF_GRID', [])
                         bc_group.datasets["Inflow/INF_GRID"].data.append(
                             create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
+
+                ts_series_fid.append(ts_fid) if not ts_fid in ts_series_fid else None
+
+        # Create the TS_INF_DATA dataset
+        for ts_fid in ts_series_fid:
+            try:
+                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
+            except:
+                bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
 
         if not self.is_table_empty("tailing_reservoirs"):
 
@@ -9833,7 +9830,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
             else:
-                outflow_cells_sql = f"""SELECT 
+                outflow_cells_sql = f"""SELECT DISTINCT
                                             outflow_fid, 
                                             md.domain_cell 
                                         FROM 
@@ -10067,7 +10064,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not subdomain:
             outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
         else:
-            outflow_cells_sql = f"""SELECT 
+            outflow_cells_sql = f"""SELECT DISTINCT
                                         outflow_fid, 
                                         md.domain_cell 
                                     FROM 
@@ -10197,10 +10194,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
                             bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
                     data_written = True
-
-                    # ident = "O{0}".format(hydro_out)
-                    #
-                    # o.write(o_line.format(ident, gid))
 
                     if border is not None and gid in border:
                         border.remove(gid)
@@ -16463,7 +16456,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ini_file.write("\nCurrent=1")
 
             # Keep SWMM state set by flo2d.export_flo2d_files
-            current_swmm = int(self.gutils.get_cont_par("SWMM") or 0)
+            # current_swmm = int(self.gutils.get_cont_par("SWMM") or 0)
             # If there are NO storm-drain objects, remove files and set OFF.
             if not any((has_junctions, has_outfalls, has_storage, has_conduits, has_pumps, has_orifices, has_weirs)):
                 ini_file = outdir + "/SWMM.INI"
