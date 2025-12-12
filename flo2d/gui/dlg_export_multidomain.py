@@ -353,9 +353,12 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         QApplication.processEvents()
 
         # Remove connectivity grid inside channels
-        channel_interior_nodes = self.gutils.execute("""SELECT grid_fid FROM chan_interior_nodes;""").fetchall()
-        if channel_interior_nodes:
-            channel_interior_nodes = [item[0] for item in channel_interior_nodes]
+        channel_interior_nodes = [row[0] for row in
+                                  self.gutils.execute("SELECT grid_fid FROM chan_interior_nodes;").fetchall()]
+        if not channel_interior_nodes:
+            self.gutils.fill_chan_interior_nodes_table()
+            channel_interior_nodes = [row[0] for row in
+                                      self.gutils.execute("SELECT grid_fid FROM chan_interior_nodes;").fetchall()]
 
         for j, subdomain_name in enumerate(export_subdomains, start=1):
 

@@ -10011,8 +10011,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 data_written = True
                                 if border is not None and gid in border:
                                     border.remove(gid)
-                            else:
-                                o.write(k_line.format(gid))
 
                 # Write O1, O2, ... lines:
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
@@ -10187,12 +10185,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
                             bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
                                 create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                    else:
-                        try:
-                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
-                        except:
-                            bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
-                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
                     data_written = True
 
                     if border is not None and gid in border:
@@ -11372,7 +11364,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
         else:
             green_sql = f"""SELECT 
-                                md.domain_cell, 
+                                DISTINCT(md.domain_cell), 
                                 hydc, 
                                 soils, 
                                 dtheta, 
@@ -11384,20 +11376,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             JOIN 
                                 schema_md_cells md ON ga.grid_fid = md.grid_fid
                             WHERE 
-                                md.domain_fid = {subdomain}"""
+                                md.domain_fid = {subdomain}
+                            ORDER BY md.domain_cell"""
 
             scs_sql = f"""SELECT 
-                                md.domain_cell, 
+                                DISTINCT(md.domain_cell), 
                                 scsn 
                             FROM 
                                 infil_cells_scs AS scs
                             JOIN 
                                 schema_md_cells md ON scs.grid_fid = md.grid_fid
                             WHERE 
-                                md.domain_fid = {subdomain}"""
+                                md.domain_fid = {subdomain}
+                            ORDER BY md.domain_cell"""
 
             horton_sql = f"""SELECT 
-                                md.domain_cell, 
+                                DISTINCT(md.domain_cell), 
                                 fhorti, 
                                 fhortf, 
                                 deca 
@@ -11406,17 +11400,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             JOIN 
                                 schema_md_cells md ON ht.grid_fid = md.grid_fid
                             WHERE 
-                                md.domain_fid = {subdomain}"""
+                                md.domain_fid = {subdomain}
+                            ORDER BY md.domain_cell"""
 
             chan_sql = f"""SELECT 
-                            md.domain_cell, 
+                            DISTINCT(md.domain_cell), 
                             hydconch 
                           FROM 
                             infil_chan_elems AS ch
                           JOIN 
                             schema_md_cells md ON ch.grid_fid = md.grid_fid
                           WHERE 
-                            md.domain_fid = {subdomain}"""
+                            md.domain_fid = {subdomain}
+                          ORDER BY md.domain_cell"""
 
         # line1 = "{0}"
         # line2 = "\n" + "  {}" * 6
@@ -11690,7 +11686,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             placeholders = ",".join(str(fid) for fid in fid_list)
             chan_sql = f"""SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid IN ({placeholders}) ORDER BY fid;"""
             chan_elems_sql = f"""
-                       SELECT
+                       SELECT DISTINCT
                            left_grid_md.domain_cell AS left_grid,
                            right_grid_md.domain_cell AS right_grid,
                            ce.fcn,
@@ -13482,7 +13478,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
             else:
-                tol_cells_sql = f"""SELECT 
+                tol_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell,
                                         tc.tol
                                     FROM 
