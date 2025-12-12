@@ -1173,7 +1173,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 # Don't import the MD outflow cells (hydro_out!=0)
                 if hydro_out in [0, "0"]:
-                    self.uc.log_info(str(hydro_out))
                     outflow_sql += [
                         (
                             chan_out,
@@ -5736,7 +5735,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_fpfroude_dat(self, grid_to_domain):
         try:
-            cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
+            cells_sql = ["""INSERT OR IGNORE INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
             data = self.parser.parse_fpfroude()
             if not data:
                 return
@@ -5747,6 +5746,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gid, froudefp = row
                     cells_sql += [(i, gid, float(froudefp))]
             else:
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_fpfroude_cells_grid ON fpfroude_cells(grid_fid);")
                 for i, row in enumerate(data, 1):
                     domain_gid, froudefp = row
                     global_fid = grid_to_domain.get(int(domain_gid))
@@ -5765,7 +5766,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if fpfroude_group:
                 fpfroude_group = fpfroude_group[0]
 
-                cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
+                cells_sql = ["""INSERT OR IGNORE INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
 
                 if not grid_to_domain:
                     self.clear_tables("fpfroude_cells")
@@ -5776,6 +5777,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             grid, froudefp = row
                             cells_sql += [(i, int(grid), float(froudefp))]
                 else:
+                    self.gutils.execute(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS ux_fpfroude_cells_grid ON fpfroude_cells(grid_fid);")
                     if "FPFROUDE" in fpfroude_group.datasets:
                         data = fpfroude_group.datasets["FPFROUDE"].data
                         for i, row in enumerate(data, start=1):
@@ -5799,7 +5802,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_steep_slopen_dat(self, grid_to_domain):
         try:
-            cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
+            cells_sql = ["""INSERT OR IGNORE INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
             data = self.parser.parse_steep_slopen()
             if not data:
                 return
@@ -5816,6 +5819,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for grid_id in grid_ids:
                         cells_sql += [(0, grid_id)]
             else:
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_steep_slope_n_cells_grid ON steep_slope_n_cells(grid_fid);")
                 first_value = int(data[0][0])  # Get the first value from the first line
                 if first_value == 0:
                     return
@@ -5839,7 +5844,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if steep_slopen_group:
                 steep_slopen_group = steep_slopen_group[0]
 
-                cells_sql = ["""INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
+                cells_sql = ["""INSERT OR IGNORE INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
 
                 if not grid_to_domain:
                     self.clear_tables("steep_slope_n_cells")
@@ -5856,20 +5861,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
                                 for i, grid in enumerate(grid_elems, start=1):
                                     cells_sql += [(0, i, int(grid))]
-                    else:
-                        if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
-                            data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
-                            isteepn_global = int(data[0])
-                            if isteepn_global == 0:
-                                return
-                            elif isteepn_global == 1:
-                                self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
-                                return
-                            elif isteepn_global == 2:
-                                if "STEEP_SLOPEN" in steep_slopen_group.datasets:
-                                    grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
-                                    for i, grid in enumerate(grid_elems, start=1):
-                                        cells_sql += [(0, i, grid_to_domain.get(int(grid)))]
+                else:
+                    self.gutils.execute(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS ux_steep_slope_n_cells_grid ON steep_slope_n_cells(grid_fid);")
+                    if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                        data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                        isteepn_global = int(data[0])
+                        if isteepn_global == 0:
+                            return
+                        elif isteepn_global == 1:
+                            self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                            return
+                        elif isteepn_global == 2:
+                            if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                                grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                                for i, grid in enumerate(grid_elems, start=1):
+                                    cells_sql += [(0, i, grid_to_domain.get(int(grid)))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
@@ -8779,10 +8786,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     # Write individual steep slope grid IDs
                     if not subdomain:
-                        sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                        sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY grid_fid;"""
                     else:
                         # Write individual steep slope grid IDs
-                        sql = f"""SELECT 
+                        sql = f"""SELECT DISTINCT
                                     md.domain_cell
                                 FROM 
                                     steep_slope_n_cells AS ss
@@ -8790,7 +8797,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells md ON ss.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid =  {subdomain}
-                                ;"""
+                                ORDER BY md.domain_cell;"""
                     records = self.gutils.execute(sql).fetchall()
                     if records:
                         s.write("2\n")
@@ -8834,10 +8841,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
                     spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
                 if not subdomain:
-                    sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                    sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY grid_fid;"""
                 else:
                     # Write individual steep slope grid IDs
-                    sql = f"""SELECT 
+                    sql = f"""SELECT DISTINCT
                                 md.domain_cell
                             FROM 
                                 steep_slope_n_cells AS ss
@@ -8845,7 +8852,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 schema_md_cells md ON ss.grid_fid = md.grid_fid
                             WHERE 
                                 md.domain_fid =  {subdomain}
-                            ;"""
+                            ORDER BY md.domain_cell;"""
                 records = self.gutils.execute(sql).fetchall()
                 if records:
                     for row in records:
@@ -9156,35 +9163,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         # Create the INF_GLOBAL dataset
         ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
-        # Adjust the ideplt grid number to the multi domain cell
-        if subdomain:
-            ideplt = self.execute(f"""
-                                    SELECT
-                                        md.domain_cell 
-                                    FROM 
-                                        schema_md_cells AS md
-                                    JOIN 
-                                        grid g ON g.fid = md.grid_fid
-                                    WHERE 
-                                        g.fid = {ideplt[0]} AND md.domain_fid = {subdomain}
-                                    """).fetchone()
-        if ideplt is None:
-            if not subdomain:
-                first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
-            else:
-                first_gid = self.execute(f"""SELECT 
-                                                md.domain_cell 
-                                            FROM 
-                                                inflow_cells AS ic
-                                            JOIN
-                                                schema_md_cells md ON ic.grid_fid = md.grid_fid
-                                            WHERE 
-                                                md.domain_fid = {subdomain}
-                                            ORDER BY ic.fid LIMIT 1;""").fetchone()
-            ideplt = first_gid if first_gid is not None else (0,)
 
         if ideplt:
-            ideplt = ideplt[0]
+            ideplt = int(ideplt[0])
+
+        if ideplt != 0:
+
+            # Adjust the ideplt grid number to the multi domain cell
+            if subdomain:
+                ideplt = self.execute(f"""
+                                        SELECT
+                                            md.domain_cell 
+                                        FROM 
+                                            schema_md_cells AS md
+                                        JOIN 
+                                            grid g ON g.fid = md.grid_fid
+                                        WHERE 
+                                            g.fid = {ideplt} AND md.domain_fid = {subdomain}
+                                        """).fetchone()
+
+            if ideplt is None:
+                if not subdomain:
+                    first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
+                else:
+                    first_gid = self.execute(f"""SELECT 
+                                                    md.domain_cell 
+                                                FROM 
+                                                    inflow_cells AS ic
+                                                JOIN
+                                                    schema_md_cells md ON ic.grid_fid = md.grid_fid
+                                                WHERE 
+                                                    md.domain_fid = {subdomain}
+                                                ORDER BY ic.fid LIMIT 1;""").fetchone()
+                ideplt = first_gid if first_gid is not None else (0,)
 
         ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
         if ihourdaily:
@@ -9192,30 +9203,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             ihourdaily = 0
 
+        if isinstance(ideplt, tuple):
+            ideplt = ideplt[0]
+
         inflow_global = [float(ihourdaily), float(ideplt)]
 
         bc_group = self.parser.bc_group
         bc_group.create_dataset('Inflow/INF_GLOBAL', [])
         for data in inflow_global:
             bc_group.datasets["Inflow/INF_GLOBAL"].data.append(data)
-
-        # Create the TS_INF_DATA dataset
-        ts_fids = self.execute("SELECT DISTINCT time_series_fid FROM inflow;").fetchall()
-        for (ts_fid,) in ts_fids:
-            try:
-                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
-            except:
-                bc_group.create_dataset('Inflow/TS_INF_DATA', [])
-                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
-
-            #     ts_series_fid.append(ts_fid)
-            # ts_series_fid.append(ts_fid)
 
         max_ts_series_fid = self.execute("""SELECT MAX(series_fid) FROM inflow_time_series_data;""").fetchone()
         if max_ts_series_fid:
@@ -9296,6 +9292,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         bc_group.create_dataset('Inflow/INF_GRID', [])
                         bc_group.datasets["Inflow/INF_GRID"].data.append(
                             create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
+
+                ts_series_fid.append(ts_fid) if not ts_fid in ts_series_fid else None
+
+        # Create the TS_INF_DATA dataset
+        for ts_fid in ts_series_fid:
+            try:
+                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
+            except:
+                bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
 
         if not self.is_table_empty("tailing_reservoirs"):
 
@@ -9826,7 +9838,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
             else:
-                outflow_cells_sql = f"""SELECT 
+                outflow_cells_sql = f"""SELECT DISTINCT
                                             outflow_fid, 
                                             md.domain_cell 
                                         FROM 
@@ -10007,8 +10019,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 data_written = True
                                 if border is not None and gid in border:
                                     border.remove(gid)
-                            else:
-                                o.write(k_line.format(gid))
 
                 # Write O1, O2, ... lines:
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
@@ -10060,7 +10070,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not subdomain:
             outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
         else:
-            outflow_cells_sql = f"""SELECT 
+            outflow_cells_sql = f"""SELECT DISTINCT
                                         outflow_fid, 
                                         md.domain_cell 
                                     FROM 
@@ -10183,17 +10193,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
                             bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
                                 create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                    else:
-                        try:
-                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
-                        except:
-                            bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
-                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
                     data_written = True
-
-                    # ident = "O{0}".format(hydro_out)
-                    #
-                    # o.write(o_line.format(ident, gid))
 
                     if border is not None and gid in border:
                         border.remove(gid)
@@ -11372,7 +11372,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
         else:
             green_sql = f"""SELECT 
-                                md.domain_cell, 
+                                DISTINCT(md.domain_cell), 
                                 hydc, 
                                 soils, 
                                 dtheta, 
@@ -11384,20 +11384,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             JOIN 
                                 schema_md_cells md ON ga.grid_fid = md.grid_fid
                             WHERE 
-                                md.domain_fid = {subdomain}"""
+                                md.domain_fid = {subdomain}
+                            ORDER BY md.domain_cell"""
 
             scs_sql = f"""SELECT 
-                                md.domain_cell, 
+                                DISTINCT(md.domain_cell), 
                                 scsn 
                             FROM 
                                 infil_cells_scs AS scs
                             JOIN 
                                 schema_md_cells md ON scs.grid_fid = md.grid_fid
                             WHERE 
-                                md.domain_fid = {subdomain}"""
+                                md.domain_fid = {subdomain}
+                            ORDER BY md.domain_cell"""
 
             horton_sql = f"""SELECT 
-                                md.domain_cell, 
+                                DISTINCT(md.domain_cell), 
                                 fhorti, 
                                 fhortf, 
                                 deca 
@@ -11406,17 +11408,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             JOIN 
                                 schema_md_cells md ON ht.grid_fid = md.grid_fid
                             WHERE 
-                                md.domain_fid = {subdomain}"""
+                                md.domain_fid = {subdomain}
+                            ORDER BY md.domain_cell"""
 
             chan_sql = f"""SELECT 
-                            md.domain_cell, 
+                            DISTINCT(md.domain_cell), 
                             hydconch 
                           FROM 
                             infil_chan_elems AS ch
                           JOIN 
                             schema_md_cells md ON ch.grid_fid = md.grid_fid
                           WHERE 
-                            md.domain_fid = {subdomain}"""
+                            md.domain_fid = {subdomain}
+                          ORDER BY md.domain_cell"""
 
         # line1 = "{0}"
         # line2 = "\n" + "  {}" * 6
@@ -11690,7 +11694,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             placeholders = ",".join(str(fid) for fid in fid_list)
             chan_sql = f"""SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid IN ({placeholders}) ORDER BY fid;"""
             chan_elems_sql = f"""
-                       SELECT
+                       SELECT DISTINCT
                            left_grid_md.domain_cell AS left_grid,
                            right_grid_md.domain_cell AS right_grid,
                            ce.fcn,
@@ -13125,7 +13129,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
             # collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
             if not subdomain:
-                tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
+                tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1) ORDER BY grid_fid;"""
                 pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
 
@@ -13143,7 +13147,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                   AND md.domain_fid = {subdomain}
                                 ORDER BY signed_domain_cell;"""
 
-                pbc_sql = f"""SELECT 
+                pbc_sql = f"""SELECT DISTINCT
                                 md.domain_cell, 
                                 area_fid,  
                                 arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
@@ -13152,7 +13156,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              JOIN 
                                 schema_md_cells md ON bc.grid_fid = md.grid_fid
                              WHERE 
-                                arf < 1 AND md.domain_fid = {subdomain};"""
+                                arf < 1 AND md.domain_fid = {subdomain}
+                             ORDER BY md.domain_cell;"""
 
             if self.execute(tbc_sql).fetchone() is None and self.execute(pbc_sql).fetchone() is None:
                 self.gutils.set_cont_par("IWRFS", 0)
@@ -13481,7 +13486,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 tol_cells_sql = """SELECT DISTINCT grid_fid, tol FROM tolspatial_cells ORDER BY grid_fid;"""
             else:
-                tol_cells_sql = f"""SELECT 
+                tol_cells_sql = f"""SELECT DISTINCT
                                         md.domain_cell,
                                         tc.tol
                                     FROM 
@@ -13757,14 +13762,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             sed_p_sql = """SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid = ? ORDER BY sedpercent;"""
             areas_d_sql = """SELECT fid, debrisv FROM mud_areas ORDER BY fid;"""
             areas_s_sql = """SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;"""
-            data_n_sql = """SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
+            data_n_sql = """SELECT DISTINCT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
 
             if not subdomain:
                 cells_d_sql = """SELECT grid_fid FROM mud_cells WHERE area_fid = ? ORDER BY grid_fid;"""
                 cells_r_sql = """SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;"""
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
                 areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
-                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE fid = ? ORDER BY grid_fid;"""
                 check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
                 cells_d_sql = f"""SELECT 
@@ -13901,11 +13906,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         gid = result[0]
                         try:
                             sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
-                                create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
+                                create_array(five_values, 5, np.float64, aid, gid, *row[2:]))
                         except:
                             sed_group.create_dataset('SED_SUPPLY_AREAS', [])
                             sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
-                                create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
+                                create_array(five_values, 5, np.float64, aid, gid, *row[2:]))
 
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
                         try:
@@ -13975,8 +13980,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_d_sql = """SELECT grid_fid FROM mud_cells WHERE area_fid = ? ORDER BY grid_fid;"""
                 cells_r_sql = """SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;"""
                 cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
-                areas_g_sql = """SELECT DISTINCT group_fid FROM sed_group_areas ORDER BY fid;"""
-                cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+                areas_g_sql = """SELECT DISTINCT fid FROM sed_group_areas ORDER BY fid;"""
+                cells_g_sql = """SELECT DISTINCT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
                 check_idebrv = """SELECT grid_fid FROM mud_cells ORDER BY grid_fid;"""
             else:
                 cells_d_sql = f"""SELECT 
@@ -14708,11 +14713,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 fpfroude_sql = """
                     SELECT grid_fid, froudefp
-                    FROM fpfroude_cells;
+                    FROM fpfroude_cells
+                    ORDER BY grid_fid;
                 """
             else:
                 fpfroude_sql = f"""
-                                SELECT 
+                                SELECT DISTINCT
                                     md.domain_cell, 
                                     fc.froudefp
                                 FROM 
@@ -14721,6 +14727,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells AS md ON fc.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;
                                 """
 
             line1 = "{0} {1}\n"
@@ -14756,11 +14763,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 fpfroude_sql = """
                     SELECT grid_fid, froudefp
-                    FROM fpfroude_cells;
+                    FROM fpfroude_cells
+                    ORDER BY grid_fid;
                 """
             else:
                 fpfroude_sql = f"""
-                                SELECT 
+                                SELECT DISTINCT
                                     md.domain_cell, 
                                     fc.froudefp
                                 FROM 
@@ -14769,6 +14777,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells AS md ON fc.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;
                                 """
 
             # Fetch all rows at once
@@ -16455,7 +16464,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ini_file.write("\nCurrent=1")
 
             # Keep SWMM state set by flo2d.export_flo2d_files
-            current_swmm = int(self.gutils.get_cont_par("SWMM") or 0)
+            # current_swmm = int(self.gutils.get_cont_par("SWMM") or 0)
             # If there are NO storm-drain objects, remove files and set OFF.
             if not any((has_junctions, has_outfalls, has_storage, has_conduits, has_pumps, has_orifices, has_weirs)):
                 ini_file = outdir + "/SWMM.INI"
