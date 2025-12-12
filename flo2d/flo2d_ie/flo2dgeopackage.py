@@ -5855,20 +5855,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
                                 for i, grid in enumerate(grid_elems, start=1):
                                     cells_sql += [(0, i, int(grid))]
-                    else:
-                        if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
-                            data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
-                            isteepn_global = int(data[0])
-                            if isteepn_global == 0:
-                                return
-                            elif isteepn_global == 1:
-                                self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
-                                return
-                            elif isteepn_global == 2:
-                                if "STEEP_SLOPEN" in steep_slopen_group.datasets:
-                                    grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
-                                    for i, grid in enumerate(grid_elems, start=1):
-                                        cells_sql += [(0, i, grid_to_domain.get(int(grid)))]
+                else:
+                    if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                        data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                        isteepn_global = int(data[0])
+                        if isteepn_global == 0:
+                            return
+                        elif isteepn_global == 1:
+                            self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                            return
+                        elif isteepn_global == 2:
+                            if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                                grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                                for i, grid in enumerate(grid_elems, start=1):
+                                    cells_sql += [(0, i, grid_to_domain.get(int(grid)))]
 
                 if cells_sql:
                     self.batch_execute(cells_sql)
