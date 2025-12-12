@@ -482,14 +482,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             if use_prs == '1' and os.path.exists(processed_results_file):
                 dict_df = hycross_dataframe_from_hdf5_scenarios(processed_results_file, xs_no) # Replace fid with xs_no
                 if not dict_df:
-                    self.uc.bar_warn(
-                        "No scenario results found for this floodplain cross-section. \n"
-                        "The project and the results file may be out of sync."
-                    )
-                    self.uc.log_info(
-                        "No scenario results found for this floodplain cross-section. \n"
-                        "The project and the results file may be out of sync."
-                    )
+                    self.uc.bar_warn("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
+                    self.uc.log_info("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
                 # try:
                 # Clear the plots
                 self.plot.clear()
@@ -651,8 +645,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.log_info("Error while building table for floodplain cross section!")
                     return
         except Exception as e:
-            self.uc.bar_error("Error while building the plots!")
-            self.uc.log_info("Error while building the plots!")
+            self.uc.bar_error("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
+            self.uc.log_info("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
         finally:
             QApplication.restoreOverrideCursor()
 
