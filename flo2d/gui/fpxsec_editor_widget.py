@@ -433,6 +433,30 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         else:
             self.gutils.set_cont_par("NXPRT", "0")
 
+    def xs_number_from_fid(self, fid):
+        """
+        Map an fpxsec.fid (which can have gaps, e.g. 1,2,4,5) to the
+        sequential cross-section number (1...N) used by FLO-2D in HYCROSS.OUT.
+
+        The mapping is based on the position of the fid in the ordered fpxsec table
+        """
+        try:
+            if self.gutils is None:
+                return fid
+
+            rows = self.gutils.execute("SELECT fid FROM fpxsec ORDER BY fid").fetchall()
+            fids = [r[0] for r in rows] # Extract the integer fid values
+            if not fids:
+                return fid
+
+            try:
+                # find the position of the fid (Convert from zero-based index to 1-based FLO-2D XS number)
+                return fids.index(fid) + 1
+            except ValueError:
+                return fid
+        except Exception:
+            return fid
+
     def show_hydrograph(self, table, fid):
         """
         Function to load the hydrograph and flododplain hydraulics from HYCROSS.OUT
@@ -452,8 +476,14 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
             use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
+            # Map DB fid to sequential XS number as used in results
+            xs_no = self.xs_number_from_fid(fid)
+
             if use_prs == '1' and os.path.exists(processed_results_file):
-                dict_df = hycross_dataframe_from_hdf5_scenarios(processed_results_file, fid)
+                dict_df = hycross_dataframe_from_hdf5_scenarios(processed_results_file, xs_no) # Replace fid with xs_no
+                if not dict_df:
+                    self.uc.bar_warn("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
+                    self.uc.log_info("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
                 # try:
                 # Clear the plots
                 self.plot.clear()
@@ -545,7 +575,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                         wse_list = []
                         line = next(myfile)
                         if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
-                            if line.split()[6] == str(fid):
+                            if line.split()[6] == str(xs_no): # Replace fid with xs_no
                                 for _ in range(9):
                                     line = next(myfile)
                                 while True:
@@ -615,8 +645,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.log_info("Error while building table for floodplain cross section!")
                     return
         except Exception as e:
-            self.uc.bar_error("Error while building the plots!")
-            self.uc.log_info("Error while building the plots!")
+            self.uc.bar_error("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
+            self.uc.log_info("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
         finally:
             QApplication.restoreOverrideCursor()
 
