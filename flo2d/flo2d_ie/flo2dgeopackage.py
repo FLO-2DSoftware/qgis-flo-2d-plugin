@@ -5735,7 +5735,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_fpfroude_dat(self, grid_to_domain):
         try:
-            cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
+            cells_sql = ["""INSERT OR IGNORE INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
             data = self.parser.parse_fpfroude()
             if not data:
                 return
@@ -5746,6 +5746,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gid, froudefp = row
                     cells_sql += [(i, gid, float(froudefp))]
             else:
+                self.gutils.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ux_fpfroude_cells_grid ON fpfroude_cells(grid_fid);")
                 for i, row in enumerate(data, 1):
                     domain_gid, froudefp = row
                     global_fid = grid_to_domain.get(int(domain_gid))
@@ -5764,7 +5766,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if fpfroude_group:
                 fpfroude_group = fpfroude_group[0]
 
-                cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
+                cells_sql = ["""INSERT OR IGNORE INTO fpfroude_cells (area_fid, grid_fid, froudefp) VALUES""", 3]
 
                 if not grid_to_domain:
                     self.clear_tables("fpfroude_cells")
@@ -5775,6 +5777,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             grid, froudefp = row
                             cells_sql += [(i, int(grid), float(froudefp))]
                 else:
+                    self.gutils.execute(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS ux_fpfroude_cells_grid ON fpfroude_cells(grid_fid);")
                     if "FPFROUDE" in fpfroude_group.datasets:
                         data = fpfroude_group.datasets["FPFROUDE"].data
                         for i, row in enumerate(data, start=1):
@@ -14705,11 +14709,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 fpfroude_sql = """
                     SELECT grid_fid, froudefp
-                    FROM fpfroude_cells;
+                    FROM fpfroude_cells
+                    ORDER BY grid_fid;
                 """
             else:
                 fpfroude_sql = f"""
-                                SELECT 
+                                SELECT DISTINCT
                                     md.domain_cell, 
                                     fc.froudefp
                                 FROM 
@@ -14718,6 +14723,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells AS md ON fc.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;
                                 """
 
             line1 = "{0} {1}\n"
@@ -14753,11 +14759,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not subdomain:
                 fpfroude_sql = """
                     SELECT grid_fid, froudefp
-                    FROM fpfroude_cells;
+                    FROM fpfroude_cells
+                    ORDER BY grid_fid;
                 """
             else:
                 fpfroude_sql = f"""
-                                SELECT 
+                                SELECT DISTINCT
                                     md.domain_cell, 
                                     fc.froudefp
                                 FROM 
@@ -14766,6 +14773,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     schema_md_cells AS md ON fc.grid_fid = md.grid_fid
                                 WHERE 
                                     md.domain_fid = {subdomain}
+                                ORDER BY md.domain_cell;
                                 """
 
             # Fetch all rows at once
