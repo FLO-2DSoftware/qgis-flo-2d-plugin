@@ -31,8 +31,11 @@ changelog=
     Export Quick Run improvements
     Update export logic to conditionally update switches based on dialog components
     Add user preference handling for quick run export type
+	Improved how the switches are handled on the components
+	Added safe imports for external libraries
  - HDF5
     Import from HDF5 files
+	Check if file is open before exporting
  - Grid Tools
     Added a filter on create grid from external layer
     Added a filter on ARF & WRF from external layer
@@ -78,20 +81,38 @@ changelog=
     Changed the elevation correction processing to a SQL processing
  - Rain Editor
     Refined export logic to ensure 'export_raincell' is conditionally removed based on realtime rainfall group status
+	Editor enhanced
+	Added the RAINCELLRAW
+	Added support to ERA5-Land data
  - Multiple Domain Editor
     First stable version of the Multi Domain Editor for MULTIDOMAIN.DAT
     Add subdomain rendering functionality to grid info widget
     Export methods include CADPTS.DAT and CADPTS_DSx options
     Multiple domains 2D data
+	Multiple domains 1D data
+	Export multi domains to hdf5
  - Results Tool
     Refactor HYCHAN file parsing to handle clear water and mudflow simulations, updating peak data extraction and display logic
     Fix max_water_elev assignment to use bed_elev when zero
+	Improved HYDROSTRUCT file processing
+	Plot rain data
  - Unit tests
     Added hdf5 tests
+ - Render
+	Added renders to speed up data visualization
+ - Project Review
+	Added the project review & scenarios
  - Bug Fixes
-    Fixed a bug of the cell size being a float when importing DAT files
-    Fixed a bug of the Project Units for QGIS versions > 3.40
-    Fixed a bug of not updating correctly the PROJ_NAME on metadata
+    Cell size when importing DAT files
+    Project Units for QGIS versions > 3.40
+    PROJ_NAME on metadata
+	Wait cursor
+	Fixes on bridge routine
+	Levees enhancements 
+	Storm Drain animation fixes
+	ARF WRF improved
+	Improvements in data handling on the BC editor
+	
  <p>1.0.1
  - General
 	Added SWMM 5 GUI to the toolbar
