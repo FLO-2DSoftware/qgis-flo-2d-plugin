@@ -11,6 +11,7 @@
 import os
 import traceback
 
+import numpy as np
 from PyQt5.QtCore import QSettings, Qt, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices
 from PyQt5.QtWidgets import QApplication
@@ -18,6 +19,7 @@ from qgis._core import QgsPointXY, QgsGeometry
 from qgis.core import QgsFeatureRequest, QgsSpatialIndex
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
+from shapely.speedups import available
 
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2d_tools.schematic_tools import FloodplainXS
@@ -26,6 +28,8 @@ from ..misc.project_review_utils import hycross_dataframe_from_hdf5_scenarios, S
     crossq_dataframe_from_hdf5_scenarios
 from ..user_communication import UserCommunication
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
+
+from ..deps import safe_h5py as h5py
 
 uiDialog, qtBaseClass = load_ui("fpxsec_editor")
 
@@ -471,189 +475,178 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
 
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
-            use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
+        # try:
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
+        use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
-            # Map DB fid to sequential XS number as used in results
-            xs_no = self.xs_number_from_fid(fid)
+        # Map DB fid to sequential XS number as used in results
+        xs_no = self.xs_number_from_fid(fid)
 
-            if use_prs == '1' and os.path.exists(processed_results_file):
-                dict_df = hycross_dataframe_from_hdf5_scenarios(processed_results_file, xs_no) # Replace fid with xs_no
-                if not dict_df:
-                    self.uc.bar_warn("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
-                    self.uc.log_info("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
-                # try:
-                # Clear the plots
-                self.plot.clear()
-                if self.plot.plot.legend is not None:
-                    plot_scene = self.plot.plot.legend.scene()
-                    if plot_scene is not None:
-                        plot_scene.removeItem(self.plot.plot.legend)
+        if use_prs == '1' and os.path.exists(processed_results_file):
+            dict_df = hycross_dataframe_from_hdf5_scenarios(processed_results_file, xs_no) # Replace fid with xs_no
+            if not dict_df:
+                self.uc.bar_warn("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
+                self.uc.log_info("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
+            # try:
+            # Clear the plots
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
 
-                # Set up legend and plot title
-                self.plot.plot.legend = None
-                self.plot.plot.addLegend(offset=(0, 30))
-                self.plot.plot.setTitle(title=f"Floodplain XS - {fid}")
-                self.plot.plot.setLabel("bottom", text="Time (hrs)")
-                self.plot.plot.setLabel("left", text="")
+            # Set up legend and plot title
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend(offset=(0, 30))
+            self.plot.plot.setTitle(title=f"Floodplain XS - {fid}")
+            self.plot.plot.setLabel("bottom", text="Time (hrs)")
+            self.plot.plot.setLabel("left", text="")
 
-                # Create a new data model for the table view.
-                data_model = StandardItemModel()
-                self.tview.undoStack.clear()
-                self.tview.setModel(data_model)
-                data_model.clear()
-                headers = ["Time (hours)"]
+            # Create a new data model for the table view.
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+            headers = ["Time (hours)"]
 
-                # Create the plot items for each scenario and fill the table view.
-                for i, (key, value) in enumerate(dict_df.items(), start=0):
-                    self.plot.add_item(f"{key} - Discharge ({self.system_units[units][2]}) ",
-                                       [value['Time'], value['Discharge']],
-                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
-                    self.plot.add_item(f"{key} - Velocity ({self.system_units[units][1]})",
-                                       [value['Time'], value['Velocity']],
-                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
-                    self.plot.add_item(f"{key} - WSE ({self.system_units[units][0]})",
-                                       [value['Time'], value['WSE']],
-                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
-                    self.plot.add_item(f"{key} - Ave. Depth ({self.system_units[units][0]}) ",
-                                       [value['Time'], value['Ave. Depth']],
-                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
-                    self.plot.add_item(f"{key} - Flow Width ({self.system_units[units][0]})",
-                                       [value['Time'], value['Flow Width']],
-                                       col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[4], hide=True)
+            # Create the plot items for each scenario and fill the table view.
+            for i, (key, value) in enumerate(dict_df.items(), start=0):
+                self.plot.add_item(f"{key} - Discharge ({self.system_units[units][2]}) ",
+                                   [value['Time'], value['Discharge']],
+                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[0])
+                self.plot.add_item(f"{key} - Velocity ({self.system_units[units][1]})",
+                                   [value['Time'], value['Velocity']],
+                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
+                self.plot.add_item(f"{key} - WSE ({self.system_units[units][0]})",
+                                   [value['Time'], value['WSE']],
+                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[2], hide=True)
+                self.plot.add_item(f"{key} - Ave. Depth ({self.system_units[units][0]}) ",
+                                   [value['Time'], value['Ave. Depth']],
+                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[3], hide=True)
+                self.plot.add_item(f"{key} - Flow Width ({self.system_units[units][0]})",
+                                   [value['Time'], value['Flow Width']],
+                                   col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[4], hide=True)
 
-                    headers.extend([
-                        f"{key} - Discharge ({self.system_units[units][2]})",
-                        f"{key} - Velocity ({self.system_units[units][1]})",
-                        f"{key} - WSE ({self.system_units[units][0]})",
-                        f"{key} - Ave. Depth ({self.system_units[units][0]})",
-                        f"{key} - Flow Width ({self.system_units[units][0]})"
-                    ])
-                    data_model.setHorizontalHeaderLabels(headers)
+                headers.extend([
+                    f"{key} - Discharge ({self.system_units[units][2]})",
+                    f"{key} - Velocity ({self.system_units[units][1]})",
+                    f"{key} - WSE ({self.system_units[units][0]})",
+                    f"{key} - Ave. Depth ({self.system_units[units][0]})",
+                    f"{key} - Flow Width ({self.system_units[units][0]})"
+                ])
+                data_model.setHorizontalHeaderLabels(headers)
 
-                    for row_idx, row in enumerate(value):
-                        if i == 0:
-                            data_model.setItem(row_idx, 0,
-                                               StandardItem("{:.2f}".format(row[0]) if row[0] is not None else ""))
-                        data_model.setItem(row_idx, 1 + i * 5,
-                                           StandardItem("{:.2f}".format(row[5]) if row[5] is not None else ""))
-                        data_model.setItem(row_idx, 2 + i * 5,
-                                           StandardItem("{:.2f}".format(row[4]) if row[4] is not None else ""))
-                        data_model.setItem(row_idx, 3 + i * 5,
-                                           StandardItem("{:.2f}".format(row[3]) if row[3] is not None else ""))
-                        data_model.setItem(row_idx, 4 + i * 5,
-                                           StandardItem("{:.2f}".format(row[2]) if row[2] is not None else ""))
-                        data_model.setItem(row_idx, 5 + i * 5,
-                                           StandardItem("{:.2f}".format(row[1]) if row[1] is not None else ""))
-            else:
-                HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
-                GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-                TIMDEPNC_file = GDS_dir + r"/TIMDEPNC.hdf5"
-                # Check if there is an HYCROSS.OUT file on the FLO-2D QSettings
-                if not os.path.isfile(HYCROSS_file):
-                    HYCROSS_file = GDS_dir + r"/HYCROSS.OUT"
-                    # Check if there is an HYCROSS.OUT file on the export folder
-                    if not os.path.isfile(HYCROSS_file):
-                        self.uc.bar_warn(
-                            "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                        self.uc.log_info(
-                            "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
-                        return
+                for row_idx, row in enumerate(value):
+                    if i == 0:
+                        data_model.setItem(row_idx, 0,
+                                           StandardItem("{:.2f}".format(row[0]) if row[0] is not None else ""))
+                    data_model.setItem(row_idx, 1 + i * 5,
+                                       StandardItem("{:.2f}".format(row[5]) if row[5] is not None else ""))
+                    data_model.setItem(row_idx, 2 + i * 5,
+                                       StandardItem("{:.2f}".format(row[4]) if row[4] is not None else ""))
+                    data_model.setItem(row_idx, 3 + i * 5,
+                                       StandardItem("{:.2f}".format(row[3]) if row[3] is not None else ""))
+                    data_model.setItem(row_idx, 4 + i * 5,
+                                       StandardItem("{:.2f}".format(row[2]) if row[2] is not None else ""))
+                    data_model.setItem(row_idx, 5 + i * 5,
+                                       StandardItem("{:.2f}".format(row[1]) if row[1] is not None else ""))
+        else:
+            HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
+            GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+            if not os.path.isfile(HYCROSS_file):
+                HYCROSS_file = GDS_dir + r"/HYCROSS.OUT"
+            TIMDEPNC_file = GDS_dir + r"/TIMDEPNC.HDF5"
+            TIMDEP_file = GDS_dir + r"/TIMDEP.OUT"
+            self.uc.log_info(str(TIMDEPNC_file))
+            # Check if there is an HYCROSS.OUT file on the export folder
+            if os.path.isfile(HYCROSS_file):
                 # Check if the HYCROSS.OUT has data on it
                 if os.path.getsize(HYCROSS_file) == 0:
                     QApplication.restoreOverrideCursor()
                     self.uc.bar_warn("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
                     self.uc.log_info("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
                     return
+                else:
+                    time_list, discharge_list, flow_width_list, wse_list = self.process_hycross(HYCROSS_file, xs_no)
 
-                if os.path.isfile(HYCROSS_file):
-                    with open(HYCROSS_file, "r") as myfile:
-                        while True:
-                            time_list = []
-                            discharge_list = []
-                            flow_width_list = []
-                            wse_list = []
-                            line = next(myfile)
-                            if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
-                                if line.split()[6] == str(xs_no): # Replace fid with xs_no
-                                    for _ in range(9):
-                                        line = next(myfile)
-                                    while True:
-                                        try:
-                                            line = next(myfile)
-                                            if not line.strip():
-                                                break
-                                            line = line.split()
-                                            # If this line starts with the string "VELOCITY", it is a channel cross section
-                                            if line[0] == "VELOCITY":
-                                                for _ in range(5):
-                                                    line = next(myfile)
-                                                    line = line.split()
-                                            time_list.append(float(line[0]))
-                                            discharge_list.append(float(line[5]))
-                                            flow_width_list.append(float(line[1]))
-                                            wse_list.append(float(line[3]))
-                                        except StopIteration:
-                                            break
-                                    break
-                elif os.path.isfile(TIMDEPNC_file) and os.path.getsize(TIMDEPNC_file) != 0:
-
-                    pass
-
-                self.plot.clear()
-                if self.plot.plot.legend is not None:
-                    plot_scene = self.plot.plot.legend.scene()
-                    if plot_scene is not None:
-                        plot_scene.removeItem(self.plot.plot.legend)
-
-                self.plot.plot.legend = None
-                self.plot.plot.addLegend(offset=(0, 30))
-                self.plot.plot.setTitle(title=f"Floodplain Cross Section - {fid}")
-                self.plot.plot.setLabel("bottom", text="Time (hrs)")
-                self.plot.plot.setLabel("left", text="")
-                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-                self.plot.add_item(f"Flow Width ({self.system_units[units][0]})", [time_list, flow_width_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
-
-                try:  # Build table.
-                    discharge_data_model = StandardItemModel()
-                    self.tview.undoStack.clear()
-                    self.tview.setModel(discharge_data_model)
-                    discharge_data_model.clear()
-                    headers = ["Time (hours)",
-                                f"Discharge ({self.system_units[units][2]})",
-                                f"Flow Width ({self.system_units[units][0]})",
-                                f"Water Surface Elevation ({self.system_units[units][0]})"]
-                    discharge_data_model.setHorizontalHeaderLabels(headers)
-
-                    data = zip(time_list, discharge_list, flow_width_list, wse_list)
-                    for row, (time, discharge, flow, wse) in enumerate(data):
-                        time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-                        discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                        flow_item = StandardItem("{:.2f}".format(flow)) if flow is not None else StandardItem("")
-                        wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
-                        discharge_data_model.setItem(row, 0, time_item)
-                        discharge_data_model.setItem(row, 1, discharge_item)
-                        discharge_data_model.setItem(row, 2, flow_item)
-                        discharge_data_model.setItem(row, 3, wse_item)
-
-                    self.tview.horizontalHeader().setStretchLastSection(True)
-                    for col in range(3):
-                        self.tview.setColumnWidth(col, 100)
-                    for i in range(discharge_data_model.rowCount()):
-                        self.tview.setRowHeight(i, 20)
-                except:
+            elif os.path.isfile(TIMDEPNC_file):
+                if os.path.getsize(TIMDEPNC_file) == 0:
                     QApplication.restoreOverrideCursor()
-                    self.uc.bar_error("Error while building table for floodplain cross section!")
-                    self.uc.log_info("Error while building table for floodplain cross section!")
+                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEPNC_file) + "'  is empty!")
+                    self.uc.log_info("File  '" + os.path.basename(TIMDEPNC_file) + "'  is empty!")
                     return
-        except Exception as e:
-            self.uc.bar_error("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
-            self.uc.log_info("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
-        finally:
-            QApplication.restoreOverrideCursor()
+                else:
+                    time_list, discharge_list, flow_width_list, wse_list = self.process_timdepnc(TIMDEPNC_file, fid)
+
+            elif os.path.isfile(TIMDEP_file):
+                if os.path.getsize(TIMDEP_file) == 0:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
+                    self.uc.log_info("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
+                    return
+                else:
+                    time_list, depth_list, wse_list = self.process_timdep(TIMDEP_file, fid)
+            # else:
+            #     self.uc.bar_warn(
+            #         "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+            #     self.uc.log_info(
+            #         "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+            #     return
+
+
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
+
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend(offset=(0, 30))
+            self.plot.plot.setTitle(title=f"Floodplain Cross Section - {fid}")
+            self.plot.plot.setLabel("bottom", text="Time (hrs)")
+            self.plot.plot.setLabel("left", text="")
+            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.add_item(f"Flow Width ({self.system_units[units][0]})", [time_list, flow_width_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+
+            try:  # Build table.
+                discharge_data_model = StandardItemModel()
+                self.tview.undoStack.clear()
+                self.tview.setModel(discharge_data_model)
+                discharge_data_model.clear()
+                headers = ["Time (hours)",
+                            f"Discharge ({self.system_units[units][2]})",
+                            f"Flow Width ({self.system_units[units][0]})",
+                            f"Water Surface Elevation ({self.system_units[units][0]})"]
+                discharge_data_model.setHorizontalHeaderLabels(headers)
+
+                data = zip(time_list, discharge_list, flow_width_list, wse_list)
+                for row, (time, discharge, flow, wse) in enumerate(data):
+                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                    discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                    flow_item = StandardItem("{:.2f}".format(flow)) if flow is not None else StandardItem("")
+                    wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
+                    discharge_data_model.setItem(row, 0, time_item)
+                    discharge_data_model.setItem(row, 1, discharge_item)
+                    discharge_data_model.setItem(row, 2, flow_item)
+                    discharge_data_model.setItem(row, 3, wse_item)
+
+                self.tview.horizontalHeader().setStretchLastSection(True)
+                for col in range(3):
+                    self.tview.setColumnWidth(col, 100)
+                for i in range(discharge_data_model.rowCount()):
+                    self.tview.setRowHeight(i, 20)
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_error("Error while building table for floodplain cross section!")
+                self.uc.log_info("Error while building table for floodplain cross section!")
+                return
+        # except Exception as e:
+        #     self.uc.bar_error("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
+        #     self.uc.log_info("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
+        # finally:
+        #     QApplication.restoreOverrideCursor()
 
     def show_cells_hydrograph(self, table, fid):
         """
@@ -956,4 +949,170 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+
+    def process_hycross(self, HYCROSS_file, xs_no):
+
+        time_list = []
+        discharge_list = []
+        flow_width_list = []
+        wse_list = []
+
+        with open(HYCROSS_file, "r") as myfile:
+            while True:
+                line = next(myfile)
+                if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
+                    if line.split()[6] == str(xs_no):  # Replace fid with xs_no
+                        for _ in range(9):
+                            line = next(myfile)
+                        while True:
+                            try:
+                                line = next(myfile)
+                                if not line.strip():
+                                    break
+                                line = line.split()
+                                # If this line starts with the string "VELOCITY", it is a channel cross section
+                                if line[0] == "VELOCITY":
+                                    for _ in range(5):
+                                        line = next(myfile)
+                                        line = line.split()
+                                time_list.append(float(line[0]))
+                                discharge_list.append(float(line[5]))
+                                flow_width_list.append(float(line[1]))
+                                wse_list.append(float(line[3]))
+                            except StopIteration:
+                                break
+                        break
+
+        return time_list, discharge_list, flow_width_list, wse_list
+
+    def process_timdepnc(self, TIMDEPNC_file, fid):
+
+        grid_fids = self.gutils.execute(
+            f"SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = {fid}"
+        ).fetchall()
+        if not grid_fids:
+            return [], [], [], []
+
+        row = self.gutils.execute(f"SELECT iflo FROM fpxsec WHERE fid = {fid}").fetchone()
+        if not row:
+            return [], [], [], []
+        iflo = int(row[0])
+
+        available_directions = {
+            1: [1, 5, 8],
+            2: [2, 5, 6],
+            3: [3, 6, 7],
+            4: [4, 7, 8],
+            5: [5, 1, 2],
+            6: [6, 2, 3],
+            7: [7, 3, 4],
+            8: [8, 4, 1],
+        }
+        allowed = np.array(available_directions[iflo], dtype=np.int16)
+
+        cols = np.array([int(g[0]) - 1 for g in grid_fids], dtype=np.int64)  # 0-based
+
+        with h5py.File(TIMDEPNC_file, "r") as f:
+            time_list = f["/TIMDEP OUTPUT RESULTS/FLOW DEPTH/Times"][()]
+
+            discharge_all = f["/TIMDEP OUTPUT RESULTS/MAX Q RESOLVED/Values"][()]
+            direction_all = f["/TIMDEP OUTPUT RESULTS/MAX Q RES DIRECTION/Values"][()]
+            depth_all = f["/TIMDEP OUTPUT RESULTS/FLOW DEPTH/Values"][()]
+            wse_all = f["/TIMDEP OUTPUT RESULTS/WATER SURFACE ELEVATION/Values"][()]
+
+        # Extract only the cross section cells, keeping (ntimes, nCellsInXsec)
+        discharge_xs = discharge_all[:, cols]
+        direction_xs = direction_all[:, cols].astype(np.int16)
+        depth_xs = depth_all[:, cols]
+        wse_xs = wse_all[:, cols]
+
+        # Keep only timesteps where the max direction is compatible with the cross section
+        mask_dir = np.isin(direction_xs, allowed)
+        discharge_xs = np.where(mask_dir, discharge_xs, 0.0)
+
+        # Cross section discharge per timestep
+        discharge_sum = discharge_xs.sum(axis=1)
+
+        # # Average depth and WSE over "active" cells (similar spirit to AKK logic)
+        active = (np.abs(discharge_xs) > 0.001) & (depth_xs > 0.0001)
+        count = len(grid_fids)
+
+        depth_sum = np.where(active, depth_xs, 0.0).sum(axis=1)
+        wse_sum = np.where(active, wse_xs, 0.0).sum(axis=1)
+
+        avdep = np.divide(depth_sum, count, out=np.zeros_like(depth_sum), where=count > 0)
+        avwse = np.divide(wse_sum, count, out=np.zeros_like(wse_sum), where=count > 0)
+
+        self.uc.log_info(str(time_list))
+        self.uc.log_info(str(discharge_sum))
+        self.uc.log_info(str(avdep))
+        self.uc.log_info(str(avwse))
+
+        return time_list, discharge_sum, avdep, avwse
+
+    def process_timdep(self, TIMDEP_file, fid):
+
+        grid_fids = self.gutils.execute(
+            f"SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = {fid} ORDER BY grid_fid"
+        ).fetchall()
+
+        if not grid_fids:
+            return [], [], []
+
+        grid_fids = {int(g[0]) for g in grid_fids}
+
+        time_list = []
+        depth_list = []
+        wse_list = []
+
+        depth_ts_list = []
+        wse_ts_list = []
+
+        current_time = None
+
+        with open(TIMDEP_file, "r") as myfile:
+            for line in myfile:
+                parts = line.split()
+                if not parts:
+                    continue
+
+                # timestep line
+                if len(parts) == 1:
+                    # close previous timestep
+                    if current_time is not None and depth_ts_list and wse_ts_list:
+                        avg_depth = sum(depth_ts_list) / len(depth_ts_list)
+                        avg_wse = sum(wse_ts_list) / len(wse_ts_list)
+
+                        time_list.append(round(current_time, 2))
+                        depth_list.append(round(avg_depth, 2))
+                        wse_list.append(round(avg_wse,2))
+
+                    # start new timestep
+                    current_time = float(parts[0])
+                    depth_ts_list = []
+                    wse_ts_list = []
+
+                else:
+                    grid = int(parts[0])
+                    depth = float(parts[1])
+                    wse = float(parts[5])
+
+                    if grid in grid_fids:
+                        depth_ts_list.append(depth)
+                        wse_ts_list.append(wse)
+
+            # close last timestep at EOF
+            if current_time is not None and depth_ts_list and wse_ts_list:
+                avg_depth = sum(depth_ts_list) / len(depth_ts_list)
+                avg_wse = sum(wse_ts_list) / len(wse_ts_list)
+
+                time_list.append(round(current_time, 2))
+                depth_list.append(round(avg_depth, 2))
+                wse_list.append(round(avg_wse, 2))
+
+        self.uc.log_info(str(time_list))
+        self.uc.log_info(str(depth_list))
+        self.uc.log_info(str(wse_list))
+
+        return time_list, depth_list, wse_list
 
