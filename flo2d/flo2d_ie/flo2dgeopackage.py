@@ -14212,6 +14212,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if general is None:
             general = (0, 0, None, None)
         head = general[:2]
+        # Check the ILEVFAIL = 2 and check for breach data
+        if int(head[1]) == 2:
+            breach_data = self.execute("SELECT COUNT(fid) FROM breach_cells;").fetchone()
+            if not breach_data or breach_data[0] == 0:
+                self.uc.bar_error("Exporting LEVEE.DAT failed! Breach information is required.")
+                self.uc.log_info("Exporting LEVEE.DAT failed! Breach information is required.")
+                return False
         glob_frag = general[2:]
 
         levee_group = self.parser.levee_group
@@ -14337,6 +14344,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # TODO: Need to implement correct export for levee_general, levee_failure and levee_fragility
                 general = (0.0, 0, None, None)
             head = general[:2]
+            # Check the ILEVFAIL = 2 and check for breach data
+            if int(head[1]) == 2:
+                breach_data = self.execute("SELECT COUNT(fid) FROM breach_cells;").fetchone()
+                if not breach_data or breach_data[0] == 0:
+                    self.uc.bar_error("Exporting LEVEE.DAT failed! Breach information is required.")
+                    self.uc.log_info("Exporting LEVEE.DAT failed! Breach information is required.")
+                    return False
             glob_frag = general[2:]
             levee = os.path.join(outdir, "LEVEE.DAT")
             with open(levee, "w") as l:
@@ -14367,10 +14381,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return True
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             self.uc.bar_error("Exporting LEVEE.DAT failed!")
             self.uc.log_info("Exporting LEVEE.DAT failed!")
             return False
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def export_fpxsec(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
