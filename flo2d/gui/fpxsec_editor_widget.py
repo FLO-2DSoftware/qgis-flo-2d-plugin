@@ -550,6 +550,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             else:
                 HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
                 GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+                TIMDEPNC_file = GDS_dir + r"/TIMDEPNC.hdf5"
                 # Check if there is an HYCROSS.OUT file on the FLO-2D QSettings
                 if not os.path.isfile(HYCROSS_file):
                     HYCROSS_file = GDS_dir + r"/HYCROSS.OUT"
@@ -567,35 +568,39 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.log_info("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
                     return
 
-                with open(HYCROSS_file, "r") as myfile:
-                    while True:
-                        time_list = []
-                        discharge_list = []
-                        flow_width_list = []
-                        wse_list = []
-                        line = next(myfile)
-                        if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
-                            if line.split()[6] == str(xs_no): # Replace fid with xs_no
-                                for _ in range(9):
-                                    line = next(myfile)
-                                while True:
-                                    try:
+                if os.path.isfile(HYCROSS_file):
+                    with open(HYCROSS_file, "r") as myfile:
+                        while True:
+                            time_list = []
+                            discharge_list = []
+                            flow_width_list = []
+                            wse_list = []
+                            line = next(myfile)
+                            if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
+                                if line.split()[6] == str(xs_no): # Replace fid with xs_no
+                                    for _ in range(9):
                                         line = next(myfile)
-                                        if not line.strip():
+                                    while True:
+                                        try:
+                                            line = next(myfile)
+                                            if not line.strip():
+                                                break
+                                            line = line.split()
+                                            # If this line starts with the string "VELOCITY", it is a channel cross section
+                                            if line[0] == "VELOCITY":
+                                                for _ in range(5):
+                                                    line = next(myfile)
+                                                    line = line.split()
+                                            time_list.append(float(line[0]))
+                                            discharge_list.append(float(line[5]))
+                                            flow_width_list.append(float(line[1]))
+                                            wse_list.append(float(line[3]))
+                                        except StopIteration:
                                             break
-                                        line = line.split()
-                                        # If this line starts with the string "VELOCITY", it is a channel cross section
-                                        if line[0] == "VELOCITY":
-                                            for _ in range(5):
-                                                line = next(myfile)
-                                                line = line.split()
-                                        time_list.append(float(line[0]))
-                                        discharge_list.append(float(line[5]))
-                                        flow_width_list.append(float(line[1]))
-                                        wse_list.append(float(line[3]))
-                                    except StopIteration:
-                                        break
-                                break
+                                    break
+                elif os.path.isfile(TIMDEPNC_file) and os.path.getsize(TIMDEPNC_file) != 0:
+
+                    pass
 
                 self.plot.clear()
                 if self.plot.plot.legend is not None:
