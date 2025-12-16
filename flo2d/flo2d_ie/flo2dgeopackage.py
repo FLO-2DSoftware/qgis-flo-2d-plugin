@@ -11664,7 +11664,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
         chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+        chan_conf_sql = """SELECT conf_fid, type, chan_elem_fid FROM chan_confluences ORDER BY fid;"""
 
         if not subdomain:
             chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
@@ -11815,13 +11815,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
         channel_group.create_dataset('CHANBANK', [])
 
         ISED = self.gutils.get_cont_par("ISED")
+        MUD = self.gutils.get_cont_par("MUD")
 
         k = 1
         for i, row in enumerate(chan_rows, start=1):
             row = [x if x is not None else "0" for x in row]
             fid, depinitial, froudc, roughadj, isedn, ibaseflow = row
-            if float(ISED) == 0:
+            # Sediment transport/two phase
+            if float(ISED) == 1 or float(MUD) == 2:
+                if float(isedn) == 0:
+                    isedn = float(self.execute("SELECT isedeqg FROM sed;").fetchone()[0])
+            # No sediment transport/two phase
+            else:
                 isedn = -9999
+
             channel_group.datasets["CHAN_GLOBAL"].data.append(
                 create_array(segment, 6, np.float64, (i, depinitial, froudc, roughadj, ibaseflow, isedn)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
@@ -12116,13 +12123,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         with open(chan, "w") as c, open(bank, "w") as b:
             ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")
 
             i = 1
             previous_domain_chan_elems = None # Used for channels in between subdomains
             for row in chan_rows:
                 row = [x if x is not None else "0" for x in row]
                 fid = row[0]
-                if ISED == "0":
+                # Sediment transport/two phase
+                if ISED == "1" or MUD == "2":
+                    if row[4] == "0":
+                        row[4] =  self.execute("SELECT isedeqg FROM sed;").fetchone()[0]
+                # No sediment transport/two phase
+                else:
                     row[4] = ""
 
                 chan_elems = self.execute(chan_elems_sql, (fid,)).fetchall()
