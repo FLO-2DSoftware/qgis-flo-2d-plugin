@@ -556,9 +556,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             GDS_dir = s.value("FLO-2D/lastGdsDir", "")
             if not os.path.isfile(HYCROSS_file):
                 HYCROSS_file = GDS_dir + r"/HYCROSS.OUT"
-            TIMDEPNC_file = GDS_dir + r"/TIMDEPNC.HDF5"
-            TIMDEP_file = GDS_dir + r"/TIMDEP.OUT"
-            self.uc.log_info(str(TIMDEPNC_file))
+            TIMDEPFPXSEC_file = GDS_dir + r"/TIMDEPFPXSEC.HDF5"
+            # TIMDEP_file = GDS_dir + r"/TIMDEP.OUT"
             # Check if there is an HYCROSS.OUT file on the export folder
             if os.path.isfile(HYCROSS_file):
                 # Check if the HYCROSS.OUT has data on it
@@ -570,23 +569,23 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 else:
                     time_list, discharge_list, flow_width_list, wse_list = self.process_hycross(HYCROSS_file, xs_no)
 
-            elif os.path.isfile(TIMDEPNC_file):
-                if os.path.getsize(TIMDEPNC_file) == 0:
+            elif os.path.isfile(TIMDEPFPXSEC_file):
+                if os.path.getsize(TIMDEPFPXSEC_file) == 0:
                     QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEPNC_file) + "'  is empty!")
-                    self.uc.log_info("File  '" + os.path.basename(TIMDEPNC_file) + "'  is empty!")
+                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEPFPXSEC_file) + "'  is empty!")
+                    self.uc.log_info("File  '" + os.path.basename(TIMDEPFPXSEC_file) + "'  is empty!")
                     return
                 else:
-                    time_list, discharge_list, flow_width_list, wse_list = self.process_timdepnc(TIMDEPNC_file, fid)
-
-            elif os.path.isfile(TIMDEP_file):
-                if os.path.getsize(TIMDEP_file) == 0:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
-                    self.uc.log_info("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
+                    self.process_timdepfpxsec(TIMDEPFPXSEC_file, fid)
                     return
-                else:
-                    time_list, depth_list, wse_list = self.process_timdep(TIMDEP_file, fid)
+            # elif os.path.isfile(TIMDEP_file):
+            #     if os.path.getsize(TIMDEP_file) == 0:
+            #         QApplication.restoreOverrideCursor()
+            #         self.uc.bar_warn("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
+            #         self.uc.log_info("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
+            #         return
+            #     else:
+            #         time_list, depth_list, wse_list = self.process_timdep(TIMDEP_file, fid)
             # else:
             #     self.uc.bar_warn(
             #         "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
@@ -985,7 +984,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         return time_list, discharge_list, flow_width_list, wse_list
 
-    def process_timdepnc(self, TIMDEPNC_file, fid):
+    def process_timdepfpxsec(self, TIMDEPFPXSEC_file, fid):
 
         grid_fids = self.gutils.execute(
             f"SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = {fid}"
@@ -1008,47 +1007,58 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             7: [7, 3, 4],
             8: [8, 4, 1],
         }
-        allowed = np.array(available_directions[iflo], dtype=np.int16)
+
+        directions = available_directions.get(iflo, [])
+        # allowed = np.array(available_directions[iflo], dtype=np.int16)
 
         cols = np.array([int(g[0]) - 1 for g in grid_fids], dtype=np.int64)  # 0-based
 
-        with h5py.File(TIMDEPNC_file, "r") as f:
-            time_list = f["/TIMDEP OUTPUT RESULTS/FLOW DEPTH/Times"][()]
+        with h5py.File(TIMDEPFPXSEC_file, "r") as f:
 
-            discharge_all = f["/TIMDEP OUTPUT RESULTS/MAX Q RESOLVED/Values"][()]
-            direction_all = f["/TIMDEP OUTPUT RESULTS/MAX Q RES DIRECTION/Values"][()]
-            depth_all = f["/TIMDEP OUTPUT RESULTS/FLOW DEPTH/Values"][()]
-            wse_all = f["/TIMDEP OUTPUT RESULTS/WATER SURFACE ELEVATION/Values"][()]
+            qfpn_1 = f[f"/Flow_8directions/QFPN{directions[0]}"]
+            qfpn_2 = f[f"/Flow_8directions/QFPN{directions[1]}"]
+            qfpn_3 = f[f"/Flow_8directions/QFPN{directions[2]}"]
 
-        # Extract only the cross section cells, keeping (ntimes, nCellsInXsec)
-        discharge_xs = discharge_all[:, cols]
-        direction_xs = direction_all[:, cols].astype(np.int16)
-        depth_xs = depth_all[:, cols]
-        wse_xs = wse_all[:, cols]
+            q1_xs = qfpn_1[cols, :]
+            q2_xs = qfpn_2[cols, :]
+            q3_xs = qfpn_3[cols, :]
 
-        # Keep only timesteps where the max direction is compatible with the cross section
-        mask_dir = np.isin(direction_xs, allowed)
-        discharge_xs = np.where(mask_dir, discharge_xs, 0.0)
+        qt_xs = q1_xs + q2_xs + q3_xs
+        qstot = -qt_xs.sum(axis=0)
 
-        # Cross section discharge per timestep
-        discharge_sum = discharge_xs.sum(axis=1)
+        self.uc.log_info(str(qstot))
 
-        # # Average depth and WSE over "active" cells (similar spirit to AKK logic)
-        active = (np.abs(discharge_xs) > 0.001) & (depth_xs > 0.0001)
-        count = len(grid_fids)
+            # time_list = f["/TIMDEP OUTPUT RESULTS/FLOW DEPTH/Times"][()]
+            #
+            # discharge_all = f["/TIMDEP OUTPUT RESULTS/MAX Q RESOLVED/Values"][()]
+            # direction_all = f["/TIMDEP OUTPUT RESULTS/MAX Q RES DIRECTION/Values"][()]
+            # depth_all = f["/TIMDEP OUTPUT RESULTS/FLOW DEPTH/Values"][()]
+            # wse_all = f["/TIMDEP OUTPUT RESULTS/WATER SURFACE ELEVATION/Values"][()]
 
-        depth_sum = np.where(active, depth_xs, 0.0).sum(axis=1)
-        wse_sum = np.where(active, wse_xs, 0.0).sum(axis=1)
+        # # Extract only the cross section cells, keeping (ntimes, nCellsInXsec)
+        # discharge_xs = discharge_all[:, cols]
+        # direction_xs = direction_all[:, cols].astype(np.int16)
+        # depth_xs = depth_all[:, cols]
+        # wse_xs = wse_all[:, cols]
+        #
+        # # Keep only timesteps where the max direction is compatible with the cross section
+        # mask_dir = np.isin(direction_xs, allowed)
+        # discharge_xs = np.where(mask_dir, discharge_xs, 0.0)
+        #
+        # # Cross section discharge per timestep
+        # discharge_sum = discharge_xs.sum(axis=1)
+        #
+        # # # Average depth and WSE over "active" cells (similar spirit to AKK logic)
+        # active = (np.abs(discharge_xs) > 0.001) & (depth_xs > 0.0001)
+        # count = len(grid_fids)
+        #
+        # depth_sum = np.where(active, depth_xs, 0.0).sum(axis=1)
+        # wse_sum = np.where(active, wse_xs, 0.0).sum(axis=1)
+        #
+        # avdep = np.divide(depth_sum, count, out=np.zeros_like(depth_sum), where=count > 0)
+        # avwse = np.divide(wse_sum, count, out=np.zeros_like(wse_sum), where=count > 0)
 
-        avdep = np.divide(depth_sum, count, out=np.zeros_like(depth_sum), where=count > 0)
-        avwse = np.divide(wse_sum, count, out=np.zeros_like(wse_sum), where=count > 0)
-
-        self.uc.log_info(str(time_list))
-        self.uc.log_info(str(discharge_sum))
-        self.uc.log_info(str(avdep))
-        self.uc.log_info(str(avwse))
-
-        return time_list, discharge_sum, avdep, avwse
+        # return time_list, discharge_sum, avdep, avwse
 
     def process_timdep(self, TIMDEP_file, fid):
 
