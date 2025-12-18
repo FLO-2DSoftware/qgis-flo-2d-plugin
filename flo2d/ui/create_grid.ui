@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>495</width>
+    <width>531</width>
     <height>236</height>
    </rect>
   </property>
@@ -14,29 +14,6 @@
    <string>Create Grid</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
-    <widget class="QRadioButton" name="use_external_lyr_rb">
-     <property name="text">
-      <string>Use external polygon layer</string>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QRadioButton" name="use_user_layer_rb">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>Create grid from Computation Domain Layer</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="4" column="0">
     <widget class="QGroupBox" name="external_grp">
      <property name="enabled">
@@ -123,13 +100,13 @@
      </layout>
     </widget>
    </item>
-   <item row="9" column="0">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="1" column="0">
+    <widget class="QRadioButton" name="use_external_lyr_rb">
+     <property name="text">
+      <string>Use external polygon layer</string>
      </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     <property name="checked">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -145,6 +122,29 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="0" column="0">
+    <widget class="QRadioButton" name="use_user_layer_rb">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Create grid from Computation Domain Layer</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Help|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

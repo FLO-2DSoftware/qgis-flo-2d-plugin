@@ -15,6 +15,8 @@ from qgis._core import QgsWkbTypes
 from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 
 from .ui_utils import load_ui
 
@@ -23,6 +25,7 @@ uiDialog, qtBaseClass = load_ui("create_grid")
 
 class CreateGridDialog(qtBaseClass, uiDialog):
     def __init__(self, lyrs):
+        super().__init__()
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.lyrs = lyrs
@@ -31,6 +34,9 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         self.current_lyr = None
         self.method_changed()
 
+        # Connect Help button
+        self.buttonBox.helpRequested.connect(self.show_help)
+
         # connections
         self.setup_src_layer_cbo()
 
@@ -38,6 +44,10 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         self.use_external_lyr_rb.toggled.connect(self.method_changed)
         self.use_user_layer_rb.setChecked(True)
         self.browseBtn.clicked.connect(self.browse_raster_file)
+
+    def show_help(self):
+        # Open Create Grid dialog help page
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Plugin1000/widgets/grid-tools/Create%20a%20Grid.html"))
 
     def setup_src_layer_cbo(self):
         """
