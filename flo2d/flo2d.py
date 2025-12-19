@@ -462,6 +462,11 @@ class Flo2D(object):
                     "Run Rasterizor",
                     self.run_rasterizor,
                 ),
+                (
+                    os.path.join(self.plugin_dir, "img/FLOrunner.svg"),
+                    "Run FLORunner",
+                    self.run_florunner,
+                ),
             )
         )
 
@@ -1298,6 +1303,13 @@ class Flo2D(object):
             rasterizor = plugins['rasterizor']
             rasterizor.open()
 
+    def run_florunner(self):
+        """
+        Function to call FLORunner
+        """
+        self.uncheck_all_info_tools()
+        self.run_program("FLORunner.exe")
+
     def run_profiles(self):
         self.uncheck_all_info_tools()
 
@@ -1405,6 +1417,11 @@ class Flo2D(object):
             if os.path.isfile(flo2d_dir + "\\" + exe_name):
                 if exe_name == "Tailings Dam Breach.exe":
                     program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
+                    program.perform()
+                    self.uc.bar_info(exe_name + " started!", dur=3)
+                    self.uc.log_info(exe_name + " started!")
+                elif exe_name == "FLORunner.exe":
+                    program = ProgramExecutor(flo2d_dir, flo2d_dir, exe_name)
                     program.perform()
                     self.uc.bar_info(exe_name + " started!", dur=3)
                     self.uc.log_info(exe_name + " started!")
