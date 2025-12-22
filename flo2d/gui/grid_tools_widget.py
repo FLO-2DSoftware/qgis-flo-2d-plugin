@@ -162,8 +162,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return None
             self.gutils.set_cont_par("CELLSIZE", cs)
         else:
-            cs = self.gutils.get_cont_par("CELLSIZE")
-            cs = None if cs == "" else cs
+            try:
+                cs = int(self.gutils.get_cont_par("CELLSIZE")) # Get cell size from cont table convert to integer
+                units = "m" if self.gutils.get_cont_par("METRIC") == "1" else "ft" # Get project units
+                self.uc.bar_warn(f"Defaulted to cell size of {cs} {units} from Project Settings")
+                self.uc.log_info(f"Defaulted to cell size of {cs} {units} from Project Settings")
+            except (TypeError, ValueError):
+                cs = None
         if cs:
             if cs <= 0:
                 self.uc.show_warn(
@@ -186,6 +191,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if ok:
                 cs = r
                 self.gutils.set_cont_par("CELLSIZE", cs)
+                return cs
             else:
                 return None
 
