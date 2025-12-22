@@ -39,7 +39,7 @@ class PlotWidget(QWidget):
         button_layout = QHBoxLayout()
 
         self.hover_chbox = QCheckBox("Inspect values")
-        self.hover_chbox.setChecked(True)
+        self.hover_chbox.setChecked(False) # Start unchecked
         self.hover_chbox.stateChanged.connect(self.toggle_hover)
         button_layout.addWidget(self.hover_chbox)
 
@@ -59,7 +59,8 @@ class PlotWidget(QWidget):
 
         self.init_hover_items()
 
-        self.hover_enabled = True
+        self.hover_enabled = False # Disable hover by default
+        self.toggle_hover(Qt.Unchecked) # Enforce initial hidden state
 
     def init_hover_items(self):
         self.vb = self.plot.getViewBox()
