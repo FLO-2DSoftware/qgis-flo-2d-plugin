@@ -249,7 +249,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.label_3.setEnabled(False)
 
     def pre_processing_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/pre-processing-tools/Pre-Processing%20Tools.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/pre-processing-tools/Pre-Processing%20Tools.html"))
 
     def create_channel(self):
         """

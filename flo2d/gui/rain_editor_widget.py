@@ -721,7 +721,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.rain.set_row()
 
     def rain_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/rain-editor/Rain%20Editor.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/rain-editor/Rain%20Editor.html"))
 
     def set_arf(self):
         if not self.rain:

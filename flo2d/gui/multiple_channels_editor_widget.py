@@ -106,7 +106,7 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
         )
 
     def multiple_channels_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/multiple-channels-editor/Multiple%20Channel%20Editor.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/multiple-channels-editor/Multiple%20Channel%20Editor.html"))
 
     def show_individual_multiple_channels_dialog(self):
         """

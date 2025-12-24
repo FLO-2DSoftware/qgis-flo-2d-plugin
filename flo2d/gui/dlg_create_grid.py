@@ -47,7 +47,7 @@ class CreateGridDialog(qtBaseClass, uiDialog):
 
     def show_help(self):
         # Open Create Grid dialog help page
-        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Plugin1000/widgets/grid-tools/Create%20a%20Grid.html"))
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/grid-tools/Create%20a%20Grid.html"))
 
     def setup_src_layer_cbo(self):
         """

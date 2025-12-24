@@ -450,7 +450,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(f"{user_tal_res} schematized tailings deleted!")
             
     def help_res(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/initial-condition-editor/Initial%20Condition%20Editor.html#"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/initial-condition-editor/Initial%20Condition%20Editor.html"))
 
     def schematize_res(self):
         user_rsvs = self.gutils.execute("SELECT Count(*) FROM user_reservoirs").fetchone()[0]

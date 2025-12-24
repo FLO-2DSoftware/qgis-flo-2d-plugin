@@ -222,7 +222,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.populate_outflows()
 
     def bc_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/boundary-condition-editor/index.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/boundary-condition-editor/index.html"))
 
     def feature_added(self):
         """

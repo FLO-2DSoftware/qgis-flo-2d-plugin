@@ -498,7 +498,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             )
 
     def infiltration_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/infiltration-editor/index.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/infiltration-editor/index.html"))
 
     def calculate_green_ampt(self):
         dlg = GreenAmptDialog(self.iface, self.lyrs)
