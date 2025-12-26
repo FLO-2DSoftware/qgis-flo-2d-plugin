@@ -131,7 +131,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.first_time = False
             
     def schematized_channels_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))
 
     def show_channel_segments_dialog(self):
         """

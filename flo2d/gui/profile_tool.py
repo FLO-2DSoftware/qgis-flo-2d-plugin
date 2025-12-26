@@ -317,7 +317,7 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.plot_schema_data()
 
     def profile_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/profile-tool/Profile%20Tool.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/profile-tool/Profile%20Tool.html"))
 
     def populate_rasters(self):
         """

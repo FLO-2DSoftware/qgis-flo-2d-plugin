@@ -623,7 +623,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.populate_swmm()
     
     def sd_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/storm-drain-editor/index.html"))        
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/storm-drain-editor/index.html"))
 
     def save_attrs(self):
         swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)

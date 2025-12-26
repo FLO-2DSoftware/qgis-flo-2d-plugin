@@ -1591,7 +1591,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         """
         Function to show the grid widget help
         """
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/grid-tools/index.html"))
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/grid-tools/index.html"))
 
     def plot_2d_grid_data(self, grid_element):
         """

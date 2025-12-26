@@ -808,8 +808,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         """
         Function to show the fp xs widget help
         """
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets"
-                                      "/floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html"))
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html"))
 
     def fill_iflo_directions(self):
         """
