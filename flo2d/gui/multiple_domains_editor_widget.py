@@ -1,7 +1,8 @@
 #  -*- coding: utf-8 -*-
 import itertools
 import os
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
 from qgis.PyQt.QtCore import NULL
 from qgis._core import QgsFeatureRequest, QgsFeature
@@ -44,7 +45,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.create_md_polygon_btn.clicked.connect(self.create_md_polygon)
         self.rollback_md_btn.clicked.connect(self.cancel_mult_domains_edits)
         self.delete_md_schema_btn.clicked.connect(self.delete_schema_md)
-        # self.md_help_btn.clicked.connect()
+        self.md_help_btn.clicked.connect(self.multdomain_help)
         self.change_md_name_btn.clicked.connect(self.change_md_name)
         self.delete_md_btn.clicked.connect(self.delete_md)
         self.md_center_btn.clicked.connect(self.md_center)
@@ -72,6 +73,14 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def multdomain_help(self):
+        """
+        Function to call the documentation when the help button is pressed
+        :return:
+        """
+        QDesktopServices.openUrl(QUrl(
+            "https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/multiple-domains-editor/Multiple%20Domains%20Editor.html"))
 
     def populate_md_cbos(self, fid=None):
         """
