@@ -9,9 +9,9 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import QSize, Qt, QPoint
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtGui import QColor, QPainter
 from qgis.PyQt.QtWidgets import *
-from PyQt5.QtWidgets import QMenu, QCheckBox, QWidgetAction
+from PyQt5.QtWidgets import QMenu, QCheckBox, QWidgetAction, QGraphicsProxyWidget
 from qgis._core import QgsMessageLog
 
 from ..deps import safe_pyqtgraph as pg
@@ -21,19 +21,84 @@ pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 pg.setConfigOption("antialias", True)
 
+class LegendLine(QWidget):
+    def __init__(self, pen, parent=None):
+        super().__init__(parent)
+        self.pen = pen
+        self.setFixedSize(26, 10)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(self.pen)
+
+        y = self.height() // 2
+        painter.drawLine(2, y, self.width() - 2, y)
 
 class PlotWidget(QWidget):
-    _sizehint = None
+    sizehint = None
 
     def __init__(self):
         QWidget.__init__(self)
         self.items = {}
+        self.legend_checks = {}
         self.chbox = []
-        self.layout = QVBoxLayout()
+        self.layout = QHBoxLayout()
+        self.left_layout = QVBoxLayout()
         self.pw = pg.PlotWidget()
+
+        # Floating legend overlay (stays a child of the plot)
+        self.legend_panel = QFrame()
+        self.legend_panel.setObjectName("floatingLegend")
+        self.legend_panel.setFrameShape(QFrame.StyledPanel)
+
+        self.legend_panel.setStyleSheet("""
+        QFrame#floatingLegend {
+            background: rgba(255,255,255,230);
+            border: 1px solid #C0C0C0;
+            border-radius: 6px;
+        }
+        QCheckBox {
+            font-size: 10pt;
+        }
+        """)
+
+        self.drag_offset = None
+        self.legend_panel.mousePressEvent = self.legend_mouse_press
+        self.legend_panel.mouseMoveEvent = self.legend_mouse_move
+        self.legend_panel.mouseReleaseEvent = self.legend_mouse_release
+        self.legend_container = QWidget() # Container for legend rows
+        self.legend_panel.setAttribute(Qt.WA_TranslucentBackground)
+        self.legend_container.setAttribute(Qt.WA_TranslucentBackground)
+        self.legend_layout = QVBoxLayout(self.legend_container)
+        self.legend_layout.setContentsMargins(6, 6, 6, 6)
+        self.legend_layout.setSpacing(4)
+        self.legend_layout.addStretch(1)
+
+        # Layout for legend panel
+        panel_layout = QVBoxLayout(self.legend_panel)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.addWidget(self.legend_container)
+
+        # Initial size and position
+        self.legend_panel.resize(220, 300)
+        self.legend_panel.raise_()
+        self.legend_panel.hide()
+
+        # Create plot & ViewBox
         self.plot = self.pw.getPlotItem()
         self.plot.showGrid(True, True, 0.25)
-        self.layout.addWidget(self.pw)
+        self.plot.legend = None
+        self.left_layout.addWidget(self.pw)
+
+        self.vb = self.plot.getViewBox()
+
+        # Attach legend INSIDE ViewBox (clipped)
+        self.legend_proxy = QGraphicsProxyWidget(parent=self.vb)
+        self.legend_proxy.setWidget(self.legend_panel)
+
+        # Initial position (inside grid)
+        self.legend_proxy.setPos(350, 10)
 
         # Create a horizontal layout for the auto range button
         button_layout = QHBoxLayout()
@@ -49,8 +114,12 @@ class PlotWidget(QWidget):
 
         button_layout.setAlignment(Qt.AlignRight)
 
-        # Add the button layout to the main layout
-        self.layout.addLayout(button_layout)
+        # Add button layout under the plot
+        self.left_layout.addLayout(button_layout)
+
+        # Add LEFT layout to main layout
+        self.layout.addLayout(self.left_layout, 1)
+
         self.setLayout(self.layout)
 
         self.plot.scene().sigMouseClicked.connect(self.mouse_clicked)
@@ -61,6 +130,24 @@ class PlotWidget(QWidget):
 
         self.hover_enabled = False # Disable hover by default
         self.toggle_hover(Qt.Unchecked) # Enforce initial hidden state
+
+    def legend_mouse_press(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_offset = event.pos()
+            event.accept()
+
+    def legend_mouse_move(self, event):
+        if self.drag_offset is not None and (event.buttons() & Qt.LeftButton):
+            new_pos = self.legend_proxy.pos() + (event.pos() - self.drag_offset)
+            self.legend_proxy.setPos(new_pos)
+            event.accept()
+
+    def legend_mouse_release(self, event):
+        self.drag_offset = None
+        event.accept()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
 
     def init_hover_items(self):
         self.vb = self.plot.getViewBox()
@@ -199,28 +286,22 @@ class PlotWidget(QWidget):
         self.hover_label.show()
 
     def prepareForPaint(self):
-        """
-        Function to update the axis when changing the plots
-        """
-        # any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(0, len(self.plot.legend.items))) #Commented out on 21st June 2025
-        if self.plot.legend is None: # Change made on 21st June 2025
-            return   # Change made on 21st June 2025
+        # Function to update the axis when changing the plots
+        if self.plot.legend is None:
+            return
 
-        any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(len(self.plot.legend.items))) # Change made on 21st June 2025
+        any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(len(self.plot.legend.items)))
 
         for i in range(len(self.plot.legend.items)):
             data_tuple = self.items[self.plot.legend.items[i][1].text].getData()
             any_nan = any(np.isnan(data) for data in data_tuple[0])
 
-        # if any_checked and not any_nan:
-        #     self.plot.autoRange()
-
     def setSizeHint(self, width, height):
-        self._sizehint = QSize(width, height)
+        self.sizehint = QSize(width, height)
 
     def sizeHint(self):
-        if self._sizehint is not None:
-            return self._sizehint
+        if self.sizehint is not None:
+            return self.sizehint
         return super(PlotWidget, self).sizeHint()
 
     def clear(self):
@@ -231,10 +312,27 @@ class PlotWidget(QWidget):
         self.items = {}
         self.init_hover_items()
 
+        # Remove all legend row widgets except the final stretch
+        while self.legend_layout.count() > 1:
+            item = self.legend_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        self.legend_checks = {}
+
+        if self.plot.legend:
+            self.plot.legend.hide()
+
+        self.legend_panel.hide()
+
     def add_item(self, name, data, col=QColor("#0000aa"), sty=Qt.SolidLine, hide=False):
         x, y = data
-        pen = pg.mkPen(color=col, width=2, style=sty, cosmetic=True)
-        self.items[name] = self.plot.plot(x=x, y=y, connect="finite", pen=pen, name=name)
+        pen = pg.mkPen(color=col, width=1.5, style=sty, cosmetic=True)
+        self.items[name] = self.plot.plot(x=x, y=y, connect="finite", pen=pen)
+
+        self.items[name]._legend_pen = pen
+
+        self.items[name]._legend_color = col
 
         if not hide:
             self.items[name].show()
@@ -242,6 +340,30 @@ class PlotWidget(QWidget):
             self.items[name].hide()
 
         self.plot.autoRange()
+
+        # --- legend row widget ---
+        row = QWidget()
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(6)
+        row_layout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+        line_sample = LegendLine(self.items[name]._legend_pen)
+
+        # Checkbox
+        cb = QCheckBox(name)
+        cb.setChecked(not hide)
+        cb.stateChanged.connect(lambda state, n=name: self.checkboxChanged(state, n))
+
+        # Assemble row
+        row_layout.addWidget(line_sample)
+        row_layout.addWidget(cb)
+        # row_layout.addStretch(1)
+
+        # Insert into legend
+        self.legend_layout.insertWidget(self.legend_layout.count() - 1, row)
+        self.legend_checks[name] = cb
+        self.legend_panel.show()
 
     def mouse_clicked(self, mouseClickEvent):
 
