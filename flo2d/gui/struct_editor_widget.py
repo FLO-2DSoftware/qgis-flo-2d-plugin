@@ -331,6 +331,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 # Set Structures on the Control Parameters
                 self.gutils.set_cont_par("IHYDRSTRUCT", 1)
 
+                while QApplication.overrideCursor():
+                    QApplication.restoreOverrideCursor()
+
                 # Return False there are some errors
                 if self.check_structures():
                     self.uc.bar_info("Schematizing Hydraulic Structures finished with errors. Check the report!")
