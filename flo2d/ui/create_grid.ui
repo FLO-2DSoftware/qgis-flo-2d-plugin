@@ -29,6 +29,7 @@
       <property name="checked">
        <bool>true</bool>
       </property>
+      <buttongroup>methodGroup</buttongroup>
      </widget>
      <widget class="QLabel" name="label_2">
       <property name="text">
@@ -56,6 +57,7 @@
      <property name="checked">
       <bool>false</bool>
      </property>
+     <buttongroup>methodGroup</buttongroup>
     </widget>
    </item>
    <item row="2" column="0" colspan="2">
@@ -211,4 +213,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="methodGroup"/>
+</buttongroups>
 </ui>
