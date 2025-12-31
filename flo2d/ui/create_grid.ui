@@ -7,14 +7,58 @@
     <x>0</x>
     <y>0</y>
     <width>531</width>
-    <height>236</height>
+    <height>248</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Create Grid</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="4" column="0">
+  <layout class="QFormLayout" name="formLayout">
+   <item row="0" column="0" colspan="2">
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QRadioButton" name="use_user_layer_rb">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="text">
+       <string>Create grid from Computation Domain Layer</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>Cell size</string>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="cellSizeSpinBox">
+      <property name="maximumSize">
+       <size>
+        <width>70</width>
+        <height>22</height>
+       </size>
+      </property>
+      <property name="maximum">
+       <number>1000</number>
+      </property>
+     </widget>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QRadioButton" name="use_external_lyr_rb">
+     <property name="text">
+      <string>Use external polygon layer</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
     <widget class="QGroupBox" name="external_grp">
      <property name="enabled">
       <bool>true</bool>
@@ -100,17 +144,7 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QRadioButton" name="use_external_lyr_rb">
-     <property name="text">
-      <string>Use external polygon layer</string>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="0">
+   <item row="3" column="0">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -123,20 +157,7 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="0">
-    <widget class="QRadioButton" name="use_user_layer_rb">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>Create grid from Computation Domain Layer</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="0">
+   <item row="3" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
