@@ -191,7 +191,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="cell_size_spn">
+        <widget class="QDoubleSpinBox" name="cellSizeSpinBox">
          <property name="minimum">
           <double>0.000000</double>
          </property>
