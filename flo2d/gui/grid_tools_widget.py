@@ -142,64 +142,28 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def get_cell_size(self):
-        """
-        Get cell size from:
-            - Computational Domain attr table (if defined, will be written to cont table)
-            - cont table
-            - ask user
-        """
         bl = self.lyrs.data["user_model_boundary"]["qlyr"]
         bfeat = next(bl.getFeatures())
-        if bfeat["cell_size"]:
-            cs = int(bfeat["cell_size"])
-            if cs <= 0:
-                self.uc.show_warn(
-                    "WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
-                )
-                self.uc.log_info(
-                    "WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
-                )
-                return None
-            self.gutils.set_cont_par("CELLSIZE", cs)
-        else:
-            try:
-                cs = int(self.gutils.get_cont_par("CELLSIZE")) # Get cell size from cont table convert to integer
-                units = "m" if self.gutils.get_cont_par("METRIC") == "1" else "ft" # Get project units
-                self.uc.bar_warn(f"Defaulted to cell size of {cs} {units} from Project Settings")
-                self.uc.log_info(f"Defaulted to cell size of {cs} {units} from Project Settings")
-            except (TypeError, ValueError):
-                cs = None
-        if cs:
-            if cs <= 0:
-                self.uc.show_warn(
-                    "WARNING 060319.1707: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings."
-                )
-                self.uc.log_info(
-                    "WARNING 060319.1707: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings."
-                )
-                return None
-            return cs
-        else:
-            r, ok = QInputDialog.getInt(
-                None,
-                "Grid Cell Size",
-                "Enter grid element cell size",
-                value=100,
-                min=0,
-                max=99999,
-            )
-            if ok:
-                cs = r
-                self.gutils.set_cont_par("CELLSIZE", cs)
-                return cs
-            else:
-                return None
+        cs = bfeat["cell_size"]
+        if cs in (None, NULL):
+            return None
+        try:
+            cs = int(cs)
+        except Exception:
+            return None
+        if cs <= 0:
+            return None
+        return cs
 
     def create_grid(self):
         create_grid_dlg = CreateGridDialog(self.lyrs)
         ok = create_grid_dlg.exec_()
         if not ok:
             return
+
+        # get value from dialog spinbox
+        dlg_cell_size = create_grid_dlg.cell_size()
+
         try:
             if not self.lyrs.save_edits_and_proceed("Computational Domain"):
                 return
@@ -226,13 +190,36 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if not self.gutils.is_table_empty("grid"):
                 if not self.uc.question("There is a grid already saved in the database. Overwrite it?"):
                     return
-            if not self.get_cell_size():
+
+            # always prefer dialog value when using Computational Domain option
+            if not create_grid_dlg.use_external_layer():
+                cs = dlg_cell_size
+            else:
+                # external layer mode: get value from comp domain if present, else dialog
+                cs = self.get_cell_size()
+                if not cs:
+                    cs = dlg_cell_size
+
+            # validate
+            if not cs or cs <= 0:
+                self.uc.show_warn("WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer.")
+                self.uc.log_info("WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer.")
                 return
+
+            # store to project settings
+            self.gutils.set_cont_par("CELLSIZE", int(cs))
+
+            # update computational domain attribute
+            bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+            bfeat = next(bl.getFeatures())
+            bl.startEditing()
+            bfeat["cell_size"] = int(cs) if cs is not None else None
+            bl.updateFeature(bfeat)
+            bl.commitChanges()
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
             ini_time = time.time()
             boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
-
             upper_left_coords_override = None
 
             if create_grid_dlg.use_external_layer() and raster_file:

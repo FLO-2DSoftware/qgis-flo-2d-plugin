@@ -12,7 +12,7 @@
 import os
 
 from qgis._core import QgsWkbTypes
-from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
+from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel, NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
 from PyQt5.QtCore import QUrl
@@ -32,6 +32,11 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.cell_size_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)
         self.current_lyr = None
+
+        # Allow placeholder display when external mode is active
+        self.cellSizeSpinBox.setMinimum(0)
+        self.cellSizeSpinBox.setSpecialValueText("--")
+
         self.method_changed()
 
         # Connect Help button
@@ -44,6 +49,26 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         self.use_external_lyr_rb.toggled.connect(self.method_changed)
         self.use_user_layer_rb.setChecked(True)
         self.browseBtn.clicked.connect(self.browse_raster_file)
+
+        # Load the cell size from the Computational Domain feature (if available).
+        # If a valid value exists, display it in the spin box and inform the user
+        # that it may be changed here. If no value is stored, fall back to manual
+        # entry. In case of any retrieval error, default to allowing manual input.
+        try:
+            bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+            feat = next(bl.getFeatures())
+            cs = feat["cell_size"]
+            if cs not in (None, NULL, ""):
+                self.cellSizeSpinBox.setValue(int(cs))
+                self.cellSizeSpinBox.setToolTip("Cell size is already defined in the Computational Domain layer. You may change it.")
+            else:
+                self.cellSizeSpinBox.setToolTip("Cell size not found in the Computational Domain Layer. Please set it here.")
+        except Exception:
+            # fallback – allow manual entry
+            self.cellSizeSpinBox.setEnabled(True)
+
+    def cell_size(self):
+        return self.cellSizeSpinBox.value()
 
     def show_help(self):
         # Open Create Grid dialog help page
@@ -73,9 +98,29 @@ class CreateGridDialog(qtBaseClass, uiDialog):
 
     def method_changed(self):
         if self.use_external_lyr_rb.isChecked():
+            # EXTERNAL MODE
             self.external_grp.setEnabled(True)
+            self.cellSizeSpinBox.setValue(0) # force placeholder display ("0" will be displayed as "--" when external mode radio button is checked)
+            self.cellSizeSpinBox.setEnabled(False)
+            self.cellSizeSpinBox.setToolTip("Cell size will be defined from the attribute field of the selected external polygon layer.")
         else:
-            self.external_grp.setDisabled(True)
+            # COMPUTATIONAL DOMAIN MODE
+            self.external_grp.setEnabled(False)
+            self.cellSizeSpinBox.setEnabled(True)
+            try:
+                bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+                feat = next(bl.getFeatures())
+                cs = feat["cell_size"]
+                if cs not in (None, NULL, ""):
+                    # restore the real numeric value
+                    self.cellSizeSpinBox.setValue(int(cs))
+                    self.cellSizeSpinBox.setToolTip("Cell size is already defined in the Computational Domain layer. You may change it.")
+                else:
+                    self.cellSizeSpinBox.setValue(0)  # keep empty state
+                    self.cellSizeSpinBox.setToolTip("Cell size not found in the Computational Domain Layer. Please set it here.")
+            except Exception:
+                self.cellSizeSpinBox.setValue(0)
+                self.cellSizeSpinBox.setToolTip("Define the grid cell size.")
 
     def use_external_layer(self):
         return self.use_external_lyr_rb.isChecked()
