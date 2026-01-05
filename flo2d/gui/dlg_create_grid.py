@@ -46,6 +46,7 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         self.setup_src_layer_cbo()
 
         self.external_lyr_cbo.currentIndexChanged.connect(self.populate_src_field_cbo)
+        self.cell_size_cbo.currentIndexChanged.connect(self.populate_cell_size_from_ext_field)
         self.use_external_lyr_rb.toggled.connect(self.method_changed)
         self.use_user_layer_rb.setChecked(True)
         self.browseBtn.clicked.connect(self.browse_raster_file)
@@ -70,6 +71,32 @@ class CreateGridDialog(qtBaseClass, uiDialog):
     def cell_size(self):
         return self.cellSizeSpinBox.value()
 
+    def populate_cell_size_from_ext_field(self):
+        """
+        When a numeric field is selected from the combo box,
+        read the value from the single polygon feature and
+        display it in the (disabled) spinbox.
+        """
+        if not self.use_external_lyr_rb.isChecked():
+            return
+        if not self.current_lyr:
+            return
+        field_name = self.cell_size_cbo.currentField()
+        if not field_name:
+            return
+        try:
+            feat = next(self.current_lyr.getFeatures())
+            val = feat[field_name]
+            if val not in (None, NULL, ""):
+                self.cellSizeSpinBox.setValue(int(val))
+                self.cellSizeSpinBox.setToolTip(f"Cell size taken external layer field '{field_name}'.")
+            else:
+                self.cellSizeSpinBox.setValue(0)
+                self.cellSizeSpinBox.setToolTip("Cell size has no value. Please choose another field.")
+        except Exception:
+            self.cellSizeSpinBox.setValue(0)
+            self.cellSizeSpinBox.setToolTip("Unable to read value from selected field.")
+
     def show_help(self):
         # Open Create Grid dialog help page
         QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/grid-tools/Create%20a%20Grid.html"))
@@ -89,12 +116,41 @@ class CreateGridDialog(qtBaseClass, uiDialog):
                 pass
 
     def populate_src_field_cbo(self, idx):
+        # If "None" is selected, clear everything.
         if idx == 0:
+            self.current_lyr = None
+            self.cell_size_cbo.setLayer(None)
+            self.cell_size_cbo.setCurrentIndex(-1)
             return
+
+        # Load the selected layer
         uri = self.external_lyr_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
         self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
         self.cell_size_cbo.setLayer(self.current_lyr)
+
+        # Smart field auto-selection
+        fields = self.current_lyr.fields()
+        name_variants = ["cell_size", "cellsize", "cell-size", "cell size"]
+        target_index = -1
+        # Try matching preferred names
+        for i, f in enumerate(fields):
+            fname = f.name().lower().strip()
+            if fname in name_variants:
+                target_index = i
+                break
+        # If not target names not found, fallback to first numeric field
+        if target_index == -1:
+            for i, f in enumerate(fields):
+                if f.isNumeric():
+                    target_index = i
+                    break
+        # Apply field selection if found
+        if target_index >= 0:
+            self.cell_size_cbo.setField(f.name())
+        else:
+            # No numeric field, so leave empty
+            self.cell_size_cbo.setCurrentIndex(-1)
 
     def method_changed(self):
         if self.use_external_lyr_rb.isChecked():
@@ -106,6 +162,14 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         else:
             # COMPUTATIONAL DOMAIN MODE
             self.external_grp.setEnabled(False)
+
+            # Clear external selections
+            self.external_lyr_cbo.setCurrentIndex(0)
+            self.cell_size_cbo.setLayer(None)
+            self.cell_size_cbo.setCurrentIndex(-1)
+            self.current_lyr = None
+            self.raster_file_lab.clear()
+
             self.cellSizeSpinBox.setEnabled(True)
             try:
                 bl = self.lyrs.data["user_model_boundary"]["qlyr"]
