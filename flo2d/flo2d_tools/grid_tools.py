@@ -1218,23 +1218,32 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     polygons = list(build_grid(boundary, cellsize, upper_left_coords))
     total_polygons = len(polygons)
 
-    progDialog = QProgressDialog("Creating Grid. Please wait...", None, 0, total_polygons)
+    progDialog = QProgressDialog("Creating Grid. Please wait...", "Cancel", 0, total_polygons)
     progDialog.setModal(True)
     progDialog.setValue(0)
     progDialog.show()
     QApplication.processEvents()
     i = 0
 
+    success = True
+
     polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize, upper_left_coords))
     sql = ["""INSERT INTO grid (geom) VALUES""", 1]
     for g_tuple in polygons:
         sql.append(g_tuple)
         progDialog.setValue(i)
+        QApplication.processEvents()
+        if progDialog.wasCanceled():
+            success = False
+            break
         i += 1
-    if len(sql) > 2:
-        gutils.batch_execute(sql)
-    else:
-        pass
+    if success:
+        if len(sql) > 2:
+            gutils.batch_execute(sql)
+        else:
+            pass
+
+    return success
 
 
 def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None):
