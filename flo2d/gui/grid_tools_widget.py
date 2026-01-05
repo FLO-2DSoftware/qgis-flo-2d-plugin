@@ -234,6 +234,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
 
             upper_left_coords_override = None
+            was_grid_sucess = None
+            was_check_sucess = True
 
             if create_grid_dlg.use_external_layer() and raster_file:
                 # compute upper left coordinate aligning it with source raster pixel
@@ -270,97 +272,120 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
             if field_index == -1:
                 if add_new_colums == QMessageBox.No:
-                    square_grid(self.gutils, boundary, upper_left_coords_override)
+                    was_grid_sucess = square_grid(self.gutils, boundary, upper_left_coords_override)
                 else:
                     if add_col_and_row_fields(grid_lyr):
                         assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
                     else:
-                        square_grid(self.gutils, boundary, upper_left_coords_override)
+                        was_grid_sucess = square_grid(self.gutils, boundary, upper_left_coords_override)
             else:
-                square_grid(self.gutils, boundary, upper_left_coords_override)
+                was_grid_sucess = square_grid(self.gutils, boundary, upper_left_coords_override)
 
-            # Assign default manning value (as set in Control layer ('cont')
-            default = self.gutils.get_cont_par("MANNING")
-            self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
+            if was_grid_sucess:
 
-            n_cells = number_of_elements(self.gutils, grid_lyr)
+                # Assign default manning value (as set in Control layer ('cont')
+                default = self.gutils.get_cont_par("MANNING")
+                self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
 
-            progDialog = QProgressDialog("Checking grid elements. Please wait...", None, 0, n_cells)
-            progDialog.setModal(True)
-            progDialog.setValue(0)
-            progDialog.show()
-            QApplication.processEvents()
-            i = 0
+                n_cells = number_of_elements(self.gutils, grid_lyr)
 
-            dangling = False
-            for idx, row in enumerate(grid_compas_neighbors(self.gutils), start=1):
-                n = row[0]
-                e = row[1]
-                s = row[2]
-                w = row[3]
-                ne = row[4]
-                se = row[5]
-                sw = row[6]
-                nw = row[7]
-                cardinal_directions = sum(1 for var in [n, e, s, w] if var == 0)
-                ordinal_directions = sum(1 for var in [ne, se, sw, nw] if var == 0)
-                # Check if at least 3 directions are zero -> dangling grid element
-                if cardinal_directions >= 3 or (ordinal_directions >= 3 and cardinal_directions == 4):
-                    dangling = True
-                    delete_grid_elem_query = f"DELETE FROM grid WHERE fid = {idx};"
-                    self.gutils.execute(delete_grid_elem_query)
+                progDialog = QProgressDialog("Checking grid elements. Please wait...", "Cancel", 0, n_cells)
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                QApplication.processEvents()
+                i = 0
 
-                progDialog.setValue(i)
-                i += 1
+                dangling = False
+                for idx, row in enumerate(grid_compas_neighbors(self.gutils), start=1):
+                    n = row[0]
+                    e = row[1]
+                    s = row[2]
+                    w = row[3]
+                    ne = row[4]
+                    se = row[5]
+                    sw = row[6]
+                    nw = row[7]
+                    cardinal_directions = sum(1 for var in [n, e, s, w] if var == 0)
+                    ordinal_directions = sum(1 for var in [ne, se, sw, nw] if var == 0)
+                    # Check if at least 3 directions are zero -> dangling grid element
+                    if cardinal_directions >= 3 or (ordinal_directions >= 3 and cardinal_directions == 4):
+                        dangling = True
+                        delete_grid_elem_query = f"DELETE FROM grid WHERE fid = {idx};"
+                        self.gutils.execute(delete_grid_elem_query)
 
-            if dangling:
-                create_temp_table_query = """
-                CREATE TABLE temp_table AS
-                SELECT *, ROW_NUMBER() OVER () AS new_fid
-                FROM grid;
-                """
-                self.gutils.execute(create_temp_table_query)
+                    progDialog.setValue(i)
 
-                # Delete data from the original table
-                delete_data_query = "DELETE FROM grid;"
-                self.gutils.execute(delete_data_query)
+                    if progDialog.wasCanceled():
+                        was_check_sucess = False
+                        break
 
-                # Copy data from the temporary table back to the original table
-                copy_data_query = "INSERT INTO grid SELECT new_fid, col, row, n_value, elevation, water_elevation, " \
-                                  "flow_depth, geom FROM temp_table;"
-                self.gutils.execute(copy_data_query)
+                    i += 1
 
-                # Drop the temporary table
-                drop_temp_table_query = "DROP TABLE temp_table;"
-                self.gutils.execute(drop_temp_table_query)
+                if was_check_sucess:
 
-            # Update grid_lyr:
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            self.lyrs.update_layer_extents(grid_lyr)
-            if grid_lyr:
-                grid_lyr.triggerRepaint()
-            self.uc.clear_bar_messages()
+                    if dangling:
+                        create_temp_table_query = """
+                        CREATE TABLE temp_table AS
+                        SELECT *, ROW_NUMBER() OVER () AS new_fid
+                        FROM grid;
+                        """
+                        self.gutils.execute(create_temp_table_query)
 
-            n_cells = number_of_elements(self.gutils, grid_lyr)
-            cell_size = self.gutils.get_cont_par("CELLSIZE")
-            units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"
+                        # Delete data from the original table
+                        delete_data_query = "DELETE FROM grid;"
+                        self.gutils.execute(delete_data_query)
 
-            fin_time = time.time()
-            duration = time_taken(ini_time, fin_time)
+                        # Copy data from the temporary table back to the original table
+                        copy_data_query = "INSERT INTO grid SELECT new_fid, col, row, n_value, elevation, water_elevation, " \
+                                          "flow_depth, geom FROM temp_table;"
+                        self.gutils.execute(copy_data_query)
 
-            grid_summary = (
-                "Grid created.\n\nCell size:  "
-                + cell_size
-                + units
-                + "\n\nTotal number of cells:  "
-                + "{:,}".format(n_cells)
-                + "\n\n(Elapsed time: "
-                + duration
-                + ")"
-            )
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(grid_summary)
-            self.uc.show_info(grid_summary)
+                        # Drop the temporary table
+                        drop_temp_table_query = "DROP TABLE temp_table;"
+                        self.gutils.execute(drop_temp_table_query)
+
+                    # Update grid_lyr:
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    self.lyrs.update_layer_extents(grid_lyr)
+                    if grid_lyr:
+                        grid_lyr.triggerRepaint()
+                    self.uc.clear_bar_messages()
+
+                    n_cells = number_of_elements(self.gutils, grid_lyr)
+                    cell_size = self.gutils.get_cont_par("CELLSIZE")
+                    units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"
+
+                    fin_time = time.time()
+                    duration = time_taken(ini_time, fin_time)
+
+                    grid_summary = (
+                        "Grid created.\n\nCell size:  "
+                        + cell_size
+                        + units
+                        + "\n\nTotal number of cells:  "
+                        + "{:,}".format(n_cells)
+                        + "\n\n(Elapsed time: "
+                        + duration
+                        + ")"
+                    )
+                    QApplication.restoreOverrideCursor()
+                    self.uc.log_info(grid_summary)
+                    self.uc.show_info(grid_summary)
+
+                else:
+                    # Update grid_lyr:
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    self.lyrs.update_layer_extents(grid_lyr)
+                    if grid_lyr:
+                        grid_lyr.triggerRepaint()
+
+            else:
+                # Update grid_lyr:
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                self.lyrs.update_layer_extents(grid_lyr)
+                if grid_lyr:
+                    grid_lyr.triggerRepaint()
 
         except Exception as e:
             msg = "Creating grid aborted! Please check Computational Domain layer, cell size, and optional parameters."
