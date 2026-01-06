@@ -637,6 +637,7 @@ def divide_geom(geom, threshold=1000):
 def build_grid(boundary, cell_size, upper_left_coords=None):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
+    THIS IS AN OLD FUNCTION THAT WAS INTEGRATED TO THE square_grid FUNCTION
     """
     half_size = cell_size * 0.5
     biter = boundary.getFeatures()
@@ -647,10 +648,6 @@ def build_grid(boundary, cell_size, upper_left_coords=None):
     xmax = bbox.xMaximum()
     ymax = bbox.yMaximum()
     ymin = bbox.yMinimum()
-    #     xmin = math.floor(bbox.xMinimum())
-    #     xmax = math.ceil(bbox.xMaximum())
-    #     ymax = math.ceil(bbox.yMaximum())
-    #     ymin = math.floor(bbox.yMinimum())
     if upper_left_coords:
         xmin, ymax = upper_left_coords
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
@@ -1215,35 +1212,145 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     gutils.execute(update_cellsize, (cellsize,))
     gutils.clear_tables("grid")
 
-    polygons = list(build_grid(boundary, cellsize, upper_left_coords))
-    total_polygons = len(polygons)
+    half_size = cellsize * 0.5
+    biter = boundary.getFeatures()
+    feature = next(biter)
+    geom = feature.geometry()
+    bbox = geom.boundingBox()
+    xmin = bbox.xMinimum()
+    xmax = bbox.xMaximum()
+    ymax = bbox.yMaximum()
+    ymin = bbox.yMinimum()
+    if upper_left_coords:
+        xmin, ymax = upper_left_coords
 
-    progDialog = QProgressDialog("Creating Grid. Please wait...", "Cancel", 0, total_polygons)
-    progDialog.setModal(True)
-    progDialog.setValue(0)
-    progDialog.show()
+    cols = int(math.ceil(abs(xmax - xmin) / cellsize))
+    rows = int(math.ceil(abs(ymax - ymin) / cellsize))
+    x = xmin + half_size
+    y = ymax - half_size
+    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
+    geos_geom_engine.prepareGeometry()
+
+    total_candidates = cols * rows
+
+    prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100)
+    prog.setWindowTitle("FLO-2D")
+    prog.setWindowModality(Qt.WindowModal)
+    prog.setMinimumDuration(0)
+    prog.setValue(0)
     QApplication.processEvents()
-    i = 0
 
-    success = True
+    # Update UI about ~200 times max
+    update_every = max(1, total_candidates // 200)
 
-    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize, upper_left_coords))
     sql = ["""INSERT INTO grid (geom) VALUES""", 1]
-    for g_tuple in polygons:
-        sql.append(g_tuple)
-        progDialog.setValue(i)
-        QApplication.processEvents()
-        if progDialog.wasCanceled():
-            success = False
-            break
-        i += 1
-    if success:
-        if len(sql) > 2:
-            gutils.batch_execute(sql)
-        else:
-            pass
 
-    return success
+    step = 0
+
+    for col in range(cols):
+        y_tmp = y
+        for row in range(rows):
+            step += 1
+            if step % update_every == 0 or step == total_candidates:
+                pct = int(step * 100 / total_candidates)
+                prog.setValue(pct)
+                QApplication.processEvents()
+                if prog.wasCanceled():
+                    prog.close()
+                    return
+
+            pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
+            if geos_geom_engine.intersects(pnt.constGet()):
+                poly = (
+                    x - half_size,
+                    y_tmp - half_size,
+                    x + half_size,
+                    y_tmp - half_size,
+                    x + half_size,
+                    y_tmp + half_size,
+                    x - half_size,
+                    y_tmp + half_size,
+                    x - half_size,
+                    y_tmp - half_size,
+                )
+                sql.append((gutils.build_square_from_polygon(poly),))
+            else:
+                pass
+            y_tmp -= cellsize
+        x += cellsize
+    prog.setValue(100)
+
+
+    # Reuse the SAME progress dialog, just change message
+    prog.setLabelText("Writing grid elements (2/3)...")
+    prog.setValue(50)
+    QApplication.processEvents()
+
+    if len(sql) > 2:
+        gutils.batch_execute(sql)
+
+    prog.setValue(100)
+
+    prog.setLabelText("Cleaning dangling grid elements (3/3)...")
+    prog.setValue(0)
+    QApplication.processEvents()
+
+    total_grid = gutils.execute("SELECT COUNT(*) FROM grid;").fetchone()[0]
+    update_every = max(1, total_grid // 200)
+
+    # Check for dangling grid elements
+    dangling = False
+    for idx, row in enumerate(grid_compas_neighbors(gutils), start=1):
+
+        if idx % update_every == 0 or idx == total_grid:
+            pct = int(idx * 100 / total_grid) if total_grid else 100
+            prog.setValue(pct)
+            QApplication.processEvents()
+            if prog.wasCanceled():
+                prog.close()
+                return
+
+        n = row[0]
+        e = row[1]
+        s = row[2]
+        w = row[3]
+        ne = row[4]
+        se = row[5]
+        sw = row[6]
+        nw = row[7]
+
+        cardinal_directions = sum(1 for var in [n, e, s, w] if var == 0)
+        ordinal_directions = sum(1 for var in [ne, se, sw, nw] if var == 0)
+
+        # Check if at least 3 directions are zero -> dangling grid element
+        if cardinal_directions >= 3 or (ordinal_directions >= 3 and cardinal_directions == 4):
+            dangling = True
+            delete_grid_elem_query = f"DELETE FROM grid WHERE fid = {idx};"
+            gutils.execute(delete_grid_elem_query)
+
+    if dangling:
+        create_temp_table_query = """
+                    CREATE TABLE temp_table AS
+                    SELECT *, ROW_NUMBER() OVER () AS new_fid
+                    FROM grid;
+                    """
+        gutils.execute(create_temp_table_query)
+
+        # Delete data from the original table
+        delete_data_query = "DELETE FROM grid;"
+        gutils.execute(delete_data_query)
+
+        # Copy data from the temporary table back to the original table
+        copy_data_query = "INSERT INTO grid SELECT new_fid, col, row, n_value, elevation, water_elevation, " \
+                          "flow_depth, geom FROM temp_table;"
+        gutils.execute(copy_data_query)
+
+        # Drop the temporary table
+        drop_temp_table_query = "DROP TABLE temp_table;"
+        gutils.execute(drop_temp_table_query)
+
+    prog.setValue(100)
+    prog.close()
 
 
 def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None):
