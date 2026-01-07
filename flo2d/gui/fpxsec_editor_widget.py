@@ -967,8 +967,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         # Check if the grid elements match the CROSSMAX grid elements
         crossmax_grid_fids = crossmax_dict[xs_no]
-        self.uc.log_info(str(crossmax_grid_fids))
-        self.uc.log_info(str(grid_fid_list))
         if sorted(grid_fid_list) != sorted(crossmax_grid_fids):
             return None, None, None, None
 
