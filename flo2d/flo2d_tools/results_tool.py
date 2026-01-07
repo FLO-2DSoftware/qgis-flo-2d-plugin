@@ -133,6 +133,20 @@ class ResultsTool(QgsMapToolIdentify):
                     end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
                     end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
                     ssm.addAction(end_action)
+            elif ln  == "Floodplain Cross Sections":
+                for j, fid in enumerate(lyrs_found[ln]["fids"]):
+                    ssm = QMenu(str(fid))
+                    sm[i].addMenu(ssm)
+
+                    hycross_action = QAction("Read from HYCROSS.OUT", None)
+                    hycross_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    hycross_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "HYCROSS"))
+                    ssm.addAction(hycross_action)
+
+                    timdep_action = QAction("Read from TIMDEPFPXSEC.HDF5", None)
+                    timdep_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    timdep_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "TIMDEPFPXSEC"))
+                    ssm.addAction(timdep_action)
             else:
                 for j, fid in enumerate(lyrs_found[ln]["fids"]):
                     if ln == "Storm Drain Conduits":

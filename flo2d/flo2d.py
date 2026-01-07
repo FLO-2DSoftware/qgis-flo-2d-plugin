@@ -3431,11 +3431,12 @@ class Flo2D(object):
         self.cur_profile_table = None
 
     @connection_required
-    def show_fpxsec_hydrograph(self, fid=None):
+    def show_fpxsec_hydrograph(self, fid=None, extra=""):
         """
         Show the floodplain cross-section hydrograph from HYCROSS.OUT
         """
-        self.f2d_widget.fpxsec_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.uc.bar_info("Reading Floodplain Cross Section data from " + extra)
+        self.f2d_widget.fpxsec_editor.show_hydrograph(self.cur_profile_table, fid, extra)
         self.cur_profile_table = None
 
     @connection_required
@@ -4395,7 +4396,7 @@ class Flo2D(object):
             self.show_xsec_hydrograph(fid)
         if table == 'fpxsec':
             self.cur_profile_table = table
-            self.show_fpxsec_hydrograph(fid)
+            self.show_fpxsec_hydrograph(fid, extra)
         if table == 'fpxsec_cells':
             self.cur_profile_table = table
             self.show_fpxsec_cells_hydrograph(fid)
