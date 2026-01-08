@@ -9,8 +9,12 @@
 # of the License, or (at your option) any later version
 
 import os
+import re
+import struct
 import traceback
+from collections import defaultdict
 
+import numpy as np
 from PyQt5.QtCore import QSettings, Qt, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices
 from PyQt5.QtWidgets import QApplication
@@ -18,6 +22,7 @@ from qgis._core import QgsPointXY, QgsGeometry
 from qgis.core import QgsFeatureRequest, QgsSpatialIndex
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
+from shapely.speedups import available
 
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2d_tools.schematic_tools import FloodplainXS
@@ -26,6 +31,8 @@ from ..misc.project_review_utils import hycross_dataframe_from_hdf5_scenarios, S
     crossq_dataframe_from_hdf5_scenarios
 from ..user_communication import UserCommunication
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
+
+from ..deps import safe_h5py as h5py
 
 uiDialog, qtBaseClass = load_ui("fpxsec_editor")
 
@@ -433,31 +440,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         else:
             self.gutils.set_cont_par("NXPRT", "0")
 
-    def xs_number_from_fid(self, fid):
-        """
-        Map an fpxsec.fid (which can have gaps, e.g. 1,2,4,5) to the
-        sequential cross-section number (1...N) used by FLO-2D in HYCROSS.OUT.
-
-        The mapping is based on the position of the fid in the ordered fpxsec table
-        """
-        try:
-            if self.gutils is None:
-                return fid
-
-            rows = self.gutils.execute("SELECT fid FROM fpxsec ORDER BY fid").fetchall()
-            fids = [r[0] for r in rows] # Extract the integer fid values
-            if not fids:
-                return fid
-
-            try:
-                # find the position of the fid (Convert from zero-based index to 1-based FLO-2D XS number)
-                return fids.index(fid) + 1
-            except ValueError:
-                return fid
-        except Exception:
-            return fid
-
-    def show_hydrograph(self, table, fid):
+    def show_hydrograph(self, table, fid, extra):
         """
         Function to load the hydrograph and flododplain hydraulics from HYCROSS.OUT
         """
@@ -476,15 +459,14 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
             use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
-            # Map DB fid to sequential XS number as used in results
-            xs_no = self.xs_number_from_fid(fid)
+            xs_no = fid
 
             if use_prs == '1' and os.path.exists(processed_results_file):
                 dict_df = hycross_dataframe_from_hdf5_scenarios(processed_results_file, xs_no) # Replace fid with xs_no
                 if not dict_df:
                     self.uc.bar_warn("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
                     self.uc.log_info("No scenario results found for this floodplain cross-section. The project and the results file may be out of sync.")
-                # try:
+
                 # Clear the plots
                 self.plot.clear()
                 if self.plot.plot.legend is not None:
@@ -548,54 +530,63 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                         data_model.setItem(row_idx, 5 + i * 5,
                                            StandardItem("{:.2f}".format(row[1]) if row[1] is not None else ""))
             else:
-                HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
+
                 GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-                # Check if there is an HYCROSS.OUT file on the FLO-2D QSettings
-                if not os.path.isfile(HYCROSS_file):
-                    HYCROSS_file = GDS_dir + r"/HYCROSS.OUT"
-                    # Check if there is an HYCROSS.OUT file on the export folder
+                if extra == "HYCROSS":
+                    HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
+                    CROSSMAX_file = GDS_dir + r"/CROSSMAX.OUT"
                     if not os.path.isfile(HYCROSS_file):
+                        HYCROSS_file = GDS_dir + r"/HYCROSS.OUT"
+
+                    # Check if there is an HYCROSS.OUT file on the export folder
+                    if os.path.isfile(HYCROSS_file):
+                        # Check if the HYCROSS.OUT has data on it
+                        if os.path.getsize(HYCROSS_file) == 0:
+                            self.uc.bar_warn("No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                            self.uc.log_info("No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                            return
+                        else:
+                            self.uc.bar_info("Reading floodplain cross section results from HYCROSS.OUT!")
+                            self.uc.log_info("Reading floodplain cross section results from HYCROSS.OUT!")
+                            time_list, discharge_list, flow_width_list, wse_list = self.process_hycross(
+                                HYCROSS_file, CROSSMAX_file, xs_no)
+                            if not time_list:
+                                self.uc.bar_error("Unable to read Floodplain Cross Section data!")
+                                self.uc.log_info("Unable to read Floodplain Cross Section data!")
+                                return
+                    else:
                         self.uc.bar_warn(
                             "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
                         self.uc.log_info(
                             "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
                         return
-                # Check if the HYCROSS.OUT has data on it
-                if os.path.getsize(HYCROSS_file) == 0:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
-                    self.uc.log_info("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
-                    return
 
-                with open(HYCROSS_file, "r") as myfile:
-                    while True:
-                        time_list = []
-                        discharge_list = []
-                        flow_width_list = []
-                        wse_list = []
-                        line = next(myfile)
-                        if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
-                            if line.split()[6] == str(xs_no): # Replace fid with xs_no
-                                for _ in range(9):
-                                    line = next(myfile)
-                                while True:
-                                    try:
-                                        line = next(myfile)
-                                        if not line.strip():
-                                            break
-                                        line = line.split()
-                                        # If this line starts with the string "VELOCITY", it is a channel cross section
-                                        if line[0] == "VELOCITY":
-                                            for _ in range(5):
-                                                line = next(myfile)
-                                                line = line.split()
-                                        time_list.append(float(line[0]))
-                                        discharge_list.append(float(line[5]))
-                                        flow_width_list.append(float(line[1]))
-                                        wse_list.append(float(line[3]))
-                                    except StopIteration:
-                                        break
-                                break
+                if extra == "TIMDEPFPXSEC":
+                    TIMDEPFPXSEC_file = GDS_dir + r"/TIMDEPFPXSEC.HDF5"
+
+                    if os.path.isfile(TIMDEPFPXSEC_file):
+                        # Check if the TIMDEPFPXSEC.HDF5 has data on it
+                        if os.path.getsize(TIMDEPFPXSEC_file) == 0:
+                            self.uc.bar_error("Unable to read Floodplain Cross Section data!")
+                            self.uc.log_info("Unable to read Floodplain Cross Section data!")
+                            return
+                        else:
+                            self.uc.bar_info("Reading floodplain cross section results from TIMDEPFPXSEC.HDF5!")
+                            self.uc.log_info("Reading floodplain cross section results from TIMDEPFPXSEC.HDF5!")
+                            time_list, discharge_list, flow_width_list, wse_list = self.process_timdepfpxsec(
+                                TIMDEPFPXSEC_file, fid)
+                            if not time_list:
+                                self.uc.bar_warn(
+                                    "No TIMDEPFPXSEC.HDF5 file found. Please ensure the simulation has completed and verify the project export folder.")
+                                self.uc.log_info(
+                                    "No TIMDEPFPXSEC.HDF5 file found. Please ensure the simulation has completed and verify the project export folder.")
+                                return
+                    else:
+                        self.uc.bar_warn(
+                            "No TIMDEPFPXSEC.HDF5 file found. Please ensure the simulation has completed and verify the project export folder.")
+                        self.uc.log_info(
+                            "No TIMDEPFPXSEC.HDF5 file found. Please ensure the simulation has completed and verify the project export folder.")
+                        return
 
                 self.plot.clear()
                 if self.plot.plot.legend is not None:
@@ -644,6 +635,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.bar_error("Error while building table for floodplain cross section!")
                     self.uc.log_info("Error while building table for floodplain cross section!")
                     return
+
         except Exception as e:
             self.uc.bar_error("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
             self.uc.log_info("Error while building the plots! Check if the number of floodplain cross sections are consistent with HYCROSS.OUT or scenarios data.")
@@ -950,4 +942,222 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def process_hycross(self, HYCROSS_file, CROSSMAX_file, xs_no):
+
+        time_list = []
+        discharge_list = []
+        flow_width_list = []
+        wse_list = []
+
+        found = False
+
+        # Parse the CROSSMAX to identify correctly the fp cross section being selected by the user
+        crossmax_dict = self.process_crossmax(CROSSMAX_file)
+
+        # Get the grid elements associated with the fp cross section
+        grid_elements = self.gutils.execute(f"SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = {xs_no};").fetchall()
+        if not grid_elements:
+            return None, None, None, None
+        grid_fid_list = [g[0] for g in grid_elements]
+
+        # Check if the cross section fid is in the CROSSMAX dict
+        if xs_no not in crossmax_dict:
+            return None, None, None, None
+
+        # Check if the grid elements match the CROSSMAX grid elements
+        crossmax_grid_fids = crossmax_dict[xs_no]
+        if sorted(grid_fid_list) != sorted(crossmax_grid_fids):
+            return None, None, None, None
+
+        with open(HYCROSS_file, "r") as myfile:
+            while True:
+                try:
+                    line = next(myfile)
+                except StopIteration:
+                    # Reached EOF without finding the section
+                    return None, None, None, None
+
+                if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
+                    parts = line.split()
+
+                    if len(parts) <= 6:
+                        return None, None, None, None
+
+                    if parts[6] == str(xs_no):
+                        found = True
+
+                        # Skip header block
+                        for _ in range(9):
+                            try:
+                                line = next(myfile)
+                            except StopIteration:
+                                return None, None, None, None
+
+                        # Read table
+                        while True:
+                            try:
+                                line = next(myfile)
+                            except StopIteration:
+                                break  # EOF ends table
+
+                            if not line.strip():
+                                break
+
+                            parts = line.split()
+
+                            # If this line starts with the string "VELOCITY", it is a channel cross section
+                            if parts and parts[0] == "VELOCITY":
+                                for _ in range(5):
+                                    try:
+                                        line = next(myfile)
+                                    except StopIteration:
+                                        return None, None, None, None
+                                parts = line.split()
+
+                            # Need at least 6 columns: time, width, depth, wse, velocity, discharge
+                            if len(parts) < 6:
+                                return None, None, None, None
+
+                            time_list.append(float(parts[0]))
+                            discharge_list.append(float(parts[5]))
+                            flow_width_list.append(float(parts[1]))
+                            wse_list.append(float(parts[3]))
+
+                        break  # stop scanning file once xs_no block is processed
+
+        # If xs section wasn't found, or found but no data rows parsed, return None tuple
+        if (not found) or (not time_list):
+            return None, None, None, None
+
+        return time_list, discharge_list, flow_width_list, wse_list
+
+    def process_crossmax(self, CROSSMAX_file):
+        """
+        Parse CROSSMAX.OUT and return a dictionary
+        with {cross_section_no: [node1, node2, ...]}.
+        """
+
+        xs_nodes = defaultdict(list)
+        current_xs = None
+
+        # Regular expression to capture cross section number
+        xs_pattern = re.compile(r"FROM CROSS SECTION\s+(\d+)")
+        # Regular expression to capture node id
+        node_pattern = re.compile(r"FROM NODE\s+(\d+)")
+
+        with open(CROSSMAX_file, "r", errors="ignore") as f:
+            for line in f:
+
+                # ---- Check for new cross section header ----
+                xs_match = xs_pattern.search(line)
+                if xs_match:
+                    current_xs = int(xs_match.group(1))
+                    # Ensure key exists
+                    if current_xs not in xs_nodes:
+                        xs_nodes[current_xs] = []
+                    continue
+
+                # ---- Check for node line ----
+                node_match = node_pattern.search(line)
+                if node_match and current_xs is not None:
+                    node_id = int(node_match.group(1))
+                    xs_nodes[current_xs].append(node_id)
+
+        return dict(xs_nodes)
+
+    def process_timdepfpxsec(self, TIMDEPFPXSEC_file, fid):
+
+        grid_fids = self.gutils.execute(
+            f"SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = {fid} ORDER BY grid_fid"
+        ).fetchall()
+        if not grid_fids:
+            return [], [], [], []
+
+        row = self.gutils.execute(f"SELECT iflo FROM fpxsec WHERE fid = {fid}").fetchone()
+        if not row:
+            return [], [], [], []
+        iflo = int(row[0])
+
+        path = os.path.join(os.path.dirname(TIMDEPFPXSEC_file), "NEIGHBORS.DAT")
+        if not os.path.isfile(path):
+            return [], [], [], []
+
+        neighbors_list = []
+        with open(path, "rb") as f:
+            while True:
+                len_bytes = f.read(4)
+                if not len_bytes:
+                    break
+                reclen = struct.unpack("<i", len_bytes)[0]
+                rec = f.read(reclen)
+                endlen = struct.unpack("<i", f.read(4))[0]
+                if endlen != reclen:
+                    return [], [], [], []
+                neighbors_list.append(struct.unpack("<8i", rec))
+
+        neighbors = np.zeros((len(neighbors_list) + 1, 8), dtype=np.int32)
+        neighbors[1:, :] = np.array(neighbors_list, dtype=np.int32)
+
+        available_directions = {
+            1: [1, 5, 8],
+            2: [2, 5, 6],
+            3: [3, 6, 7],
+            4: [4, 7, 8],
+            5: [5, 1, 2],
+            6: [6, 2, 3],
+            7: [7, 3, 4],
+            8: [8, 4, 1],
+        }
+
+        directions = available_directions.get(iflo, [])
+
+        cols0 = np.array([int(g[0]) - 1 for g in grid_fids], dtype=np.int64)  # 0-based
+        cols1 = cols0 + 1  # 1-based, for neighbors lookup
+
+        with h5py.File(TIMDEPFPXSEC_file, "r") as f:
+
+            timtep_time = f["/TIMTEP_TIME/TTIMTEFPXSEC"][:].tolist()
+
+            qfpn_1 = f[f"/AvgFlow_8directions/AvgQFPN{directions[0]}"]
+            qfpn_2 = f[f"/AvgFlow_8directions/AvgQFPN{directions[1]}"]
+            qfpn_3 = f[f"/AvgFlow_8directions/AvgQFPN{directions[2]}"]
+
+            q1_xs = qfpn_1[cols0, :]
+            q2_xs = qfpn_2[cols0, :]
+            q3_xs = qfpn_3[cols0, :]
+
+            qt_xs = q1_xs + q2_xs + q3_xs
+
+            # Extra diagonal neighbor term only for IFLO 5..8 (diagonals)
+            if iflo in (5, 6, 7, 8):
+                # neighbors[JJ] = [N,E,S,W,NE,SE,SW,NW]
+                # IFLO=5: NQ = IFPNQ(JJ,3) -> S neighbor
+                # IFLO=6: NQ = IFPNQ(JJ,4) -> W neighbor
+                # IFLO=7: NQ = IFPNQ(JJ,2) -> E neighbor
+                # IFLO=8: NQ = IFPNQ(JJ,3) -> S neighbor
+                if iflo == 5:
+                    nq = neighbors[cols1, 2]  # S
+                elif iflo == 6:
+                    nq = neighbors[cols1, 3]  # W
+                elif iflo == 7:
+                    nq = neighbors[cols1, 1]  # E
+                else:  # iflo == 8
+                    nq = neighbors[cols1, 2]  # S
+
+                mask = nq > 0
+                if np.any(mask):
+                    nq0 = (nq[mask] - 1).astype(np.int64)  # convert to 0-based HDF5 rows
+                    q_diag_nq = f[f"/AvgFlow_8directions/AvgQFPN{directions[0]}"][nq0, :]
+                    qt_xs[mask, :] = qt_xs[mask, :] + q_diag_nq
+
+        qstot = qt_xs.sum(axis=0)
+
+        n_steps = qstot.shape[0] + 1
+
+        time_list = [0.0] + timtep_time
+        discharge_list = [0.0] + qstot.tolist()
+        flow_width_list = [0.0] * n_steps
+        wse_list = [0.0] * n_steps
+
+        return time_list, discharge_list, flow_width_list, wse_list
 
