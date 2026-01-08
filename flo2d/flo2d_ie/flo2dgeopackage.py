@@ -11884,6 +11884,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             bankell = self.execute(f"SELECT elevation FROM grid WHERE fid = {eid};").fetchone()
                             if bankell is not None:
                                 data[2] = bankell[0]
+                        # right bank elevation
+                        if rbank != 0 and data[3] == 0:
+                            bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {rbank};").fetchone()
+                            if bankelr is not None:
+                                data[3] = bankelr[0]
                         try:
                             channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
                         except:
