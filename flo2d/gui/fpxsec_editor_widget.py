@@ -1117,6 +1117,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         with h5py.File(TIMDEPFPXSEC_file, "r") as f:
 
+            timtep_time = f["/TIMTEP_TIME/TTIMTEFPXSEC"][:].tolist()
+
             qfpn_1 = f[f"/AvgFlow_8directions/AvgQFPN{directions[0]}"]
             qfpn_2 = f[f"/AvgFlow_8directions/AvgQFPN{directions[1]}"]
             qfpn_3 = f[f"/AvgFlow_8directions/AvgQFPN{directions[2]}"]
@@ -1153,7 +1155,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         n_steps = qstot.shape[0] + 1
 
-        time_list = list(range(n_steps))
+        time_list = [0.0] + timtep_time
         discharge_list = [0.0] + qstot.tolist()
         flow_width_list = [0.0] * n_steps
         wse_list = [0.0] * n_steps
