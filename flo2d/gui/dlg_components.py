@@ -395,7 +395,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         ("Streets", "streets_chbox", "streets", "MSTREET"),
         ("Reduction Factors", "reduction_factors_chbox", "blocked_cells", "IWRFS"),
         ("Storm Drain", "storm_drain_chbox", "swmmflo", "SWMM"),
-        ("Multiple Channel", "multiple_channels_chbox", ("mult_cells", "simple_mult_cells"), "IMULTC"),
+        ("Multiple Channels", "multiple_channels_chbox", ("mult_cells", "simple_mult_cells"), "IMULTC"),
     ]
 
     def select_components(self):
