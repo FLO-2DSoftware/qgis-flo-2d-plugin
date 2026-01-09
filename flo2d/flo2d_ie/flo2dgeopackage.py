@@ -11863,7 +11863,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     if typ == 'R':
                         data = ([i] + res)
-                        self.uc.log_info(str(data))
                         try:
                             channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
                         except:
