@@ -11837,7 +11837,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # 'chan_elems' table (the cross sections in the schematic layer),
                 #  that has the 'fid' value indicated (the channel segment id).
                 elems = [
-                    x if x is not None else "" for x in elems
+                    x if x is not None else 0 for x in elems
                 ]  # If 'elems' has a None in any of above values of list, replace it by ''
                 (
                     eid,
@@ -11863,6 +11863,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     if typ == 'R':
                         data = ([i] + res)
+                        self.uc.log_info(str(data))
                         try:
                             channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
                         except:
