@@ -33,12 +33,16 @@ changelog=
     Add user preference handling for quick run export type
 	Improved how the switches are handled on the components
 	Added safe imports for external libraries
+    Added help buttons
+    Added FLORunner functionality on the FLO-2D Toolbar
  - HDF5
     Import from HDF5 files
 	Check if file is open before exporting
  - Grid Tools
     Added a filter on create grid from external layer
     Added a filter on ARF & WRF from external layer
+    Use project default cell size from cont table to create grid when no cell size value is provided by the user
+    Add cancel functionality to grid creation and element checking processes
  - Pre-processing Tools
     Added a raster converter to quickly convert raster units
     Initialize GeoPackage connection in pre-processing widget 
@@ -54,9 +58,12 @@ changelog=
     Fixed the bug of setting the iflo direction as the extension of the cross sections instead of a perpendicular direction
     Populate data on the comboboxes based on the signal of layer edited
     Improved the IFLO directions combobox
+    Read the FPXSEC results from TIMDEPFPXSEC.HDF5
  - Channel Editor
     Update channel SQL queries to include 'ibaseflow' and adjust data handling in CHAN_GLOBAL
     Handle None values in channel geometry construction to prevent errors
+    Update channel confluences query 
+    Enhance sediment transport logic
  - Hydraulic Structures
     Changed the number to the name of the structure and clicking on the map and on the plot
  - Boundary Condition Editor
@@ -79,6 +86,7 @@ changelog=
     Fixed the SSURGO and improved messages
  - Levees and Breach Editor
     Changed the elevation correction processing to a SQL processing
+    Add a breach data validation for ILEVFAIL = 2
  - Rain Editor
     Refined export logic to ensure 'export_raincell' is conditionally removed based on realtime rainfall group status
 	Editor enhanced
@@ -112,6 +120,8 @@ changelog=
 	Storm Drain animation fixes
 	ARF WRF improved
 	Improvements in data handling on the BC editor
+    Fixed the right and left bank elevation for hdf5 export
+    Added the missing storm drain layers to the clear geopackage function
 	
  <p>1.0.1
  - General
