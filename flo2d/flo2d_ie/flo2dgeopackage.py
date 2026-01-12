@@ -11867,7 +11867,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     if typ == 'R':
                         data = ([i] + res)
-                        self.uc.log_info(str(data))
+
+                        # left bank elevation
+                        if data[2] == 0:
+                            bankell = self.execute(f"SELECT elevation FROM grid WHERE fid = {eid};").fetchone()
+                            if bankell is not None:
+                                data[2] = bankell[0]
+
+                        # right bank elevation
+                        if data[3] == 0:
+
+                            # If there is a right bank, get elevation from the right bank grid cell
+                            if rbank != 0:
+                                bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {rbank};").fetchone()
+                            # If there is not a right bank, get elevation from the left bank grid cell
+                            else:
+                                bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {eid};").fetchone()
+
+                            if bankelr is not None:
+                                data[3] = bankelr[0]
+
                         try:
                             channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
                         except:
@@ -11876,6 +11895,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     if typ == 'V':
                         data = ([i] + res)
+
+                        # left bank elevation
+                        if data[2] == 0:
+                            bankell = self.execute(f"SELECT elevation FROM grid WHERE fid = {eid};").fetchone()
+                            if bankell is not None:
+                                data[2] = bankell[0]
+
+                        # right bank elevation
+                        if data[3] == 0:
+
+                            # If there is a right bank, get elevation from the right bank grid cell
+                            if rbank != 0:
+                                bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {rbank};").fetchone()
+                            # If there is not a right bank, get elevation from the left bank grid cell
+                            else:
+                                bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {eid};").fetchone()
+
+                            if bankelr is not None:
+                                data[3] = bankelr[0]
+
                         try:
                             channel_group.datasets["CHAN_VARIABLE"].data.append(data)
                         except:
@@ -11884,16 +11923,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     if typ == 'T':
                         data = ([i] + res)
+
                         # left bank elevation
                         if data[2] == 0:
                             bankell = self.execute(f"SELECT elevation FROM grid WHERE fid = {eid};").fetchone()
                             if bankell is not None:
                                 data[2] = bankell[0]
+
                         # right bank elevation
-                        if rbank != 0 and data[3] == 0:
-                            bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {rbank};").fetchone()
+                        if data[3] == 0:
+
+                            # If there is a right bank, get elevation from the right bank grid cell
+                            if rbank != 0:
+                                bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {rbank};").fetchone()
+                            # If there is not a right bank, get elevation from the left bank grid cell
+                            else:
+                                bankelr = self.execute(f"SELECT elevation FROM grid WHERE fid = {eid};").fetchone()
+
                             if bankelr is not None:
                                 data[3] = bankelr[0]
+
                         try:
                             channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
                         except:
