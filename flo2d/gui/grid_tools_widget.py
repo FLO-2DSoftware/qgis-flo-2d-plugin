@@ -164,222 +164,155 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         # get value from dialog spinbox
         dlg_cell_size = create_grid_dlg.cell_size()
 
-        try:
-            if not self.lyrs.save_edits_and_proceed("Computational Domain"):
+        # try:
+        if not self.lyrs.save_edits_and_proceed("Computational Domain"):
+            return
+        if create_grid_dlg.use_external_layer():
+            (
+                external_layer,
+                cell_size_field,
+                raster_file,
+            ) = create_grid_dlg.external_layer_parameters()
+            if not self.import_comp_domain(external_layer, cell_size_field):
                 return
-            if create_grid_dlg.use_external_layer():
-                (
-                    external_layer,
-                    cell_size_field,
-                    raster_file,
-                ) = create_grid_dlg.external_layer_parameters()
-                if not self.import_comp_domain(external_layer, cell_size_field):
-                    return
 
-            if self.gutils.count("user_model_boundary") > 1:
-                warn = "WARNING 060319.1708: There are multiple features in Computational Domain layer.\n"
-            if self.gutils.is_table_empty("user_model_boundary"):
-                self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
-                self.uc.log_info("There is no Computational Domain! Please digitize it before running tool.")
+        if self.gutils.count("user_model_boundary") > 1:
+            warn = "WARNING 060319.1708: There are multiple features in Computational Domain layer.\n"
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no Computational Domain! Please digitize it before running tool.")
+            return
+        if self.gutils.count("user_model_boundary") > 1:
+            warn = "WARNING 060319.1708: There are multiple features created on Computational Domain layer.\n"
+            warn += "Only ONE will be used with the lowest fid (first created)."
+            self.uc.show_warn(warn)
+            self.uc.log_info(warn)
+        if not self.gutils.is_table_empty("grid"):
+            if not self.uc.question("There is a grid already saved in the database. Overwrite it?"):
                 return
-            if self.gutils.count("user_model_boundary") > 1:
-                warn = "WARNING 060319.1708: There are multiple features created on Computational Domain layer.\n"
-                warn += "Only ONE will be used with the lowest fid (first created)."
-                self.uc.show_warn(warn)
-                self.uc.log_info(warn)
-            if not self.gutils.is_table_empty("grid"):
-                if not self.uc.question("There is a grid already saved in the database. Overwrite it?"):
-                    return
 
-            # always prefer dialog value when using Computational Domain option
-            if not create_grid_dlg.use_external_layer():
+        # always prefer dialog value when using Computational Domain option
+        if not create_grid_dlg.use_external_layer():
+            cs = dlg_cell_size
+        else:
+            # external layer mode: get value from comp domain if present, else dialog
+            cs = self.get_cell_size()
+            if not cs:
                 cs = dlg_cell_size
-            else:
-                # external layer mode: get value from comp domain if present, else dialog
-                cs = self.get_cell_size()
-                if not cs:
-                    cs = dlg_cell_size
 
-            # validate
-            if not cs or cs <= 0:
-                self.uc.show_warn("WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer.")
-                self.uc.log_info("WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer.")
+        # validate
+        if not cs or cs <= 0:
+            self.uc.show_warn("WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer.")
+            self.uc.log_info("WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer.")
+            return
+
+        # store to project settings
+        self.gutils.set_cont_par("CELLSIZE", int(cs))
+
+        # update computational domain attribute
+        bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+        bfeat = next(bl.getFeatures())
+        bl.startEditing()
+        bfeat["cell_size"] = int(cs) if cs is not None else None
+        bl.updateFeature(bfeat)
+        bl.commitChanges()
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        ini_time = time.time()
+        boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
+        upper_left_coords_override = None
+        was_grid_sucess = None
+        was_check_sucess = True
+
+        if create_grid_dlg.use_external_layer() and raster_file:
+            # compute upper left coordinate aligning it with source raster pixel
+            feat = next(boundary.getFeatures())
+            geom = feat.geometry()
+            bbox = geom.boundingBox()
+            xmin = bbox.xMinimum()
+            ymax = bbox.yMaximum()
+            from ..misc.gdal_utils import GDALRasterLayer
+
+            gdal_layer = GDALRasterLayer(raster_file)
+            # get pixel corresponding to xmin, ymax
+            row, col = gdal_layer.index(xmin, ymax)
+            # get coordinate of upper left corner of pixel
+            xmin_new, ymax_new = gdal_layer.xy(row, col, offset="ul")
+            upper_left_coords_override = (xmin_new, ymax_new)
+
+        grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        field_index = grid_lyr.fields().indexFromName("col")
+        if field_index == -1:
+            QApplication.restoreOverrideCursor()
+
+            add_new_colums = self.uc.customized_question(
+                "FLO-2D",
+                "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
+                + "Some functionality will be unavailable.\n\n"
+                + "Would you like to add the 'col' and 'row' fields to the grid table?",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Cancel,
+            )
+
+            if add_new_colums == QMessageBox.Cancel:
                 return
 
-            # store to project settings
-            self.gutils.set_cont_par("CELLSIZE", int(cs))
-
-            # update computational domain attribute
-            bl = self.lyrs.data["user_model_boundary"]["qlyr"]
-            bfeat = next(bl.getFeatures())
-            bl.startEditing()
-            bfeat["cell_size"] = int(cs) if cs is not None else None
-            bl.updateFeature(bfeat)
-            bl.commitChanges()
-
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            ini_time = time.time()
-            boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
-            upper_left_coords_override = None
-            was_grid_sucess = None
-            was_check_sucess = True
-
-            if create_grid_dlg.use_external_layer() and raster_file:
-                # compute upper left coordinate aligning it with source raster pixel
-                feat = next(boundary.getFeatures())
-                geom = feat.geometry()
-                bbox = geom.boundingBox()
-                xmin = bbox.xMinimum()
-                ymax = bbox.yMaximum()
-                from ..misc.gdal_utils import GDALRasterLayer
-
-                gdal_layer = GDALRasterLayer(raster_file)
-                # get pixel corresponding to xmin, ymax
-                row, col = gdal_layer.index(xmin, ymax)
-                # get coordinate of upper left corner of pixel
-                xmin_new, ymax_new = gdal_layer.xy(row, col, offset="ul")
-                upper_left_coords_override = (xmin_new, ymax_new)
-
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            field_index = grid_lyr.fields().indexFromName("col")
-            if field_index == -1:
-                QApplication.restoreOverrideCursor()
-
-                add_new_colums = self.uc.customized_question(
-                    "FLO-2D",
-                    "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
-                    + "Some functionality will be unavailable.\n\n"
-                    + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-                    QMessageBox.Cancel,
-                )
-
-                if add_new_colums == QMessageBox.Cancel:
-                    return
-
-            if field_index == -1:
-                if add_new_colums == QMessageBox.No:
-                    was_grid_sucess = square_grid(self.gutils, boundary, upper_left_coords_override)
-                else:
-                    if add_col_and_row_fields(grid_lyr):
-                        assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
-                    else:
-                        was_grid_sucess = square_grid(self.gutils, boundary, upper_left_coords_override)
+        if field_index == -1:
+            if add_new_colums == QMessageBox.No:
+                square_grid(self.gutils, boundary, upper_left_coords_override)
             else:
-                was_grid_sucess = square_grid(self.gutils, boundary, upper_left_coords_override)
-
-            if was_grid_sucess:
-
-                # Assign default manning value (as set in Control layer ('cont')
-                default = self.gutils.get_cont_par("MANNING")
-                self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
-
-                n_cells = number_of_elements(self.gutils, grid_lyr)
-
-                progDialog = QProgressDialog("Checking grid elements. Please wait...", "Cancel", 0, n_cells)
-                progDialog.setModal(True)
-                progDialog.setValue(0)
-                progDialog.show()
-                QApplication.processEvents()
-                i = 0
-
-                dangling = False
-                for idx, row in enumerate(grid_compas_neighbors(self.gutils), start=1):
-                    n = row[0]
-                    e = row[1]
-                    s = row[2]
-                    w = row[3]
-                    ne = row[4]
-                    se = row[5]
-                    sw = row[6]
-                    nw = row[7]
-                    cardinal_directions = sum(1 for var in [n, e, s, w] if var == 0)
-                    ordinal_directions = sum(1 for var in [ne, se, sw, nw] if var == 0)
-                    # Check if at least 3 directions are zero -> dangling grid element
-                    if cardinal_directions >= 3 or (ordinal_directions >= 3 and cardinal_directions == 4):
-                        dangling = True
-                        delete_grid_elem_query = f"DELETE FROM grid WHERE fid = {idx};"
-                        self.gutils.execute(delete_grid_elem_query)
-
-                    progDialog.setValue(i)
-
-                    if progDialog.wasCanceled():
-                        was_check_sucess = False
-                        break
-
-                    i += 1
-
-                if was_check_sucess:
-
-                    if dangling:
-                        create_temp_table_query = """
-                        CREATE TABLE temp_table AS
-                        SELECT *, ROW_NUMBER() OVER () AS new_fid
-                        FROM grid;
-                        """
-                        self.gutils.execute(create_temp_table_query)
-
-                        # Delete data from the original table
-                        delete_data_query = "DELETE FROM grid;"
-                        self.gutils.execute(delete_data_query)
-
-                        # Copy data from the temporary table back to the original table
-                        copy_data_query = "INSERT INTO grid SELECT new_fid, col, row, n_value, elevation, water_elevation, " \
-                                          "flow_depth, geom FROM temp_table;"
-                        self.gutils.execute(copy_data_query)
-
-                        # Drop the temporary table
-                        drop_temp_table_query = "DROP TABLE temp_table;"
-                        self.gutils.execute(drop_temp_table_query)
-
-                    # Update grid_lyr:
-                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                    self.lyrs.update_layer_extents(grid_lyr)
-                    if grid_lyr:
-                        grid_lyr.triggerRepaint()
-                    self.uc.clear_bar_messages()
-
-                    n_cells = number_of_elements(self.gutils, grid_lyr)
-                    cell_size = self.gutils.get_cont_par("CELLSIZE")
-                    units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"
-
-                    fin_time = time.time()
-                    duration = time_taken(ini_time, fin_time)
-
-                    grid_summary = (
-                        "Grid created.\n\nCell size:  "
-                        + cell_size
-                        + units
-                        + "\n\nTotal number of cells:  "
-                        + "{:,}".format(n_cells)
-                        + "\n\n(Elapsed time: "
-                        + duration
-                        + ")"
-                    )
-                    QApplication.restoreOverrideCursor()
-                    self.uc.log_info(grid_summary)
-                    self.uc.show_info(grid_summary)
-
+                if add_col_and_row_fields(grid_lyr):
+                    assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
                 else:
-                    # Update grid_lyr:
-                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                    self.lyrs.update_layer_extents(grid_lyr)
-                    if grid_lyr:
-                        grid_lyr.triggerRepaint()
+                    square_grid(self.gutils, boundary, upper_left_coords_override)
+        else:
+            square_grid(self.gutils, boundary, upper_left_coords_override)
 
-            else:
-                # Update grid_lyr:
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                self.lyrs.update_layer_extents(grid_lyr)
-                if grid_lyr:
-                    grid_lyr.triggerRepaint()
+        # Assign default manning value (as set in Control layer ('cont')
+        default = self.gutils.get_cont_par("MANNING")
+        self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
 
-        except Exception as e:
-            msg = "Creating grid aborted! Please check Computational Domain layer, cell size, and optional parameters."
-            self.uc.log_info(msg)
-            self.uc.bar_error(msg)
-        finally:
-            QApplication.restoreOverrideCursor()
+        # Update grid_lyr:
+        grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        self.lyrs.update_layer_extents(grid_lyr)
+        if grid_lyr:
+            grid_lyr.triggerRepaint()
+        self.uc.clear_bar_messages()
+
+        n_cells = number_of_elements(self.gutils, grid_lyr)
+        cell_size = self.gutils.get_cont_par("CELLSIZE")
+        units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"
+
+        fin_time = time.time()
+        duration = time_taken(ini_time, fin_time)
+
+        grid_summary = (
+            "Grid created.\n\nCell size:  "
+            + cell_size
+            + units
+            + "\n\nTotal number of cells:  "
+            + "{:,}".format(n_cells)
+            + "\n\n(Elapsed time: "
+            + duration
+            + ")"
+        )
+        QApplication.restoreOverrideCursor()
+        self.uc.log_info(grid_summary)
+        self.uc.show_info(grid_summary)
+
+        # else:
+        #     # Update grid_lyr:
+        #     grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        #     self.lyrs.update_layer_extents(grid_lyr)
+        #     if grid_lyr:
+        #         grid_lyr.triggerRepaint()
+
+        # except Exception as e:
+        #     msg = "Creating grid aborted! Please check Computational Domain layer, cell size, and optional parameters."
+        #     self.uc.log_info(msg)
+        #     self.uc.bar_error(msg)
+        # finally:
+        #     QApplication.restoreOverrideCursor()
 
     def raster_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):

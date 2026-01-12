@@ -2967,8 +2967,8 @@ class Flo2D(object):
         else:
             self.gutils.set_cont_par("LEVEE", 1)
 
-        mult_channels_action = dlg_components.component_actions.get("Multiple Channel")
-        if ("Multiple Channel" not in dlg_components.components) or (mult_channels_action == "cancel"):
+        mult_channels_action = dlg_components.component_actions.get("Multiple Channels")
+        if ("Multiple Channels" not in dlg_components.components) or (mult_channels_action == "cancel"):
             self.gutils.set_cont_par("IMULTC", 0)
             if "export_mult" in export_calls:
                 export_calls.remove("export_mult")
