@@ -671,7 +671,22 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
                 self.spin_satf.setValue(infil_glob[3] if infil_glob[3] is not None else 1.0)
                 self.spin_poros.setValue(infil_glob[4] if infil_glob[4] is not None else 0.0)
                 self.spin_soild.setValue(infil_glob[5] if infil_glob[5] is not None else 10.0)
-                self.cb_infchan.setChecked(infil_glob[6] if infil_glob[6] is not None else 0)
+
+                # Determine if any channel rows exist and set the checkbox with an explicit boolean.
+                has_lbank = self.gutils.execute("SELECT COUNT(*) FROM chan;").fetchone()
+                has_channel = bool(has_lbank and has_lbank[0] > 0)
+                infchan = bool(infil_glob[6])
+                if has_channel:
+                    self.cb_infchan.setEnabled(has_channel)
+                    if infchan:
+                        self.cb_infchan.setChecked(True)
+                    else:
+                        self.cb_infchan.setChecked(False)
+                else:
+                    self.gutils.execute("UPDATE infil SET infchan = 0;")
+                    self.cb_infchan.setEnabled(False)
+                    self.cb_infchan.setChecked(False)
+
                 self.spin_hydcall.setValue(infil_glob[7] if infil_glob[7] is not None else 0.1)
                 self.spin_soilall.setValue(infil_glob[8] if infil_glob[8] is not None else 4.3)
                 self.spin_hydcadj.setValue(infil_glob[9] if infil_glob[9] is not None else 0.0)
