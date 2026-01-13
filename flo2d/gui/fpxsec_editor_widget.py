@@ -960,14 +960,10 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return None, None, None, None
         grid_fid_list = [g[0] for g in grid_elements]
 
-        # Check if the cross section fid is in the CROSSMAX dict
-        if xs_no not in crossmax_dict:
-            return None, None, None, None
-
-        # Check if the grid elements match the CROSSMAX grid elements
-        crossmax_grid_fids = crossmax_dict[xs_no]
-        if sorted(grid_fid_list) != sorted(crossmax_grid_fids):
-            return None, None, None, None
+        for cross_section_no, grid_fids in crossmax_dict.items():
+            if sorted(grid_fid_list) == sorted(grid_fids):
+                xs_no = cross_section_no
+                break
 
         with open(HYCROSS_file, "r") as myfile:
             while True:
