@@ -13248,10 +13248,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 option = ("IARFBLOCKMOD", 0)
 
             arfwrf_group = self.parser.arfwrf_group
-            arfwrf_group.create_dataset('ARF_GLOBAL', [])
 
             head = option[-1]
             if head is not None:
+                arfwrf_group.create_dataset('ARF_GLOBAL', [])
                 arfwrf_group.datasets["ARF_GLOBAL"].data.append(float(head))
             else:
                 pass
