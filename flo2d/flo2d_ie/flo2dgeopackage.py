@@ -13250,13 +13250,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             arfwrf_group = self.parser.arfwrf_group
 
             head = option[-1]
-            if head is not None:
+            if head not in [None, 0, '0']:
                 arfwrf_group.create_dataset('ARF_GLOBAL', [])
                 arfwrf_group.datasets["ARF_GLOBAL"].data.append(float(head))
             else:
                 pass
-
-            # arfwrf_group.create_dataset('COLLAPSE_CELLS', [])
 
             # Totally blocked grid elements:
             totally_blocked_grid = self.execute(tbc_sql).fetchone()
