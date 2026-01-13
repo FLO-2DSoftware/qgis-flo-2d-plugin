@@ -827,7 +827,7 @@ class ParseDAT(object):
                 segments.append(row)
                 segments[-1].append([])  # Appends an empty list at end of 'segments' list.
             elif char in shape:
-                fix_index = 2 if char == "T" else None
+                fix_index = 2 if char in ["T", "R", "V"] else None
                 self.fix_row_size(row, shape[char], index=fix_index)
 
                 try:
