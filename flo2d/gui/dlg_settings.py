@@ -190,9 +190,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             pd = "----"
         self.proj_lab.setText(pd)
-        if self.si_units == True:
+        if self.si_units:
             mu = "Metric (International System)"
-        elif self.si_units == False:
+        elif not self.si_units:
             mu = "English (Imperial System)"
         else:
             mu = "Unknown System"
@@ -299,29 +299,40 @@ class SettingsDialog(qtBaseClass, uiDialog):
                     return
 
             auth, crsid = self.crs.authid().split(":")
+
+            # If srs_id is not an integer, reject the CRS
+            if not crsid.isdigit():
+                answer = self.uc.customized_question("WARNING 060319.1655",
+                    "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
+                )
+                if answer == QMessageBox.Yes:
+                    continue
+                else:
+                    self.proj_lab.setText("----")
+                    self.gpkgPathEdit.setText("")
+                    return
+
             self.proj_lab.setText(self.crs.description())
 
-            map_units = QgsUnitTypes.toString(self.crs.mapUnits()).lower()
+            unit = self.crs.mapUnits()
 
-            metric_keywords = {
-                "meter", "meters", "metre", "metres", "metro", "metros",  # EN, ES, PT
-                "mètre", "mètres",  # FR
-                "metro", "metri"  # IT
-            }
-            imperial_keywords = {
-                "foot", "feet", "pie", "pies", "pé", "pés",  # EN, ES, PT
-                "pied", "pieds",  # FR
-                "piede", "piedi"  # IT
-            }
+            # Compatible feet unit detection (safe for QGIS < 3.40)
+            ft_units = {QgsUnitTypes.DistanceFeet}
+            if hasattr(QgsUnitTypes, "FeetUSSurvey"):
+                ft_units.add(QgsUnitTypes.FeetUSSurvey)
 
-            if any(k in map_units for k in metric_keywords):
+            if unit == QgsUnitTypes.DistanceMeters:
                 self.si_units = True
+                metric = 1
                 mu = "Metric (International System)"
-                break  # Exit loop if valid CRS with meters is selected
-            elif any(k in map_units for k in imperial_keywords):
+                break
+
+            elif unit in ft_units:
                 self.si_units = False
+                metric = 0
                 mu = "English (Imperial System)"
-                break  # Exit loop if valid CRS with feet is selected
+                break
+
             else:
                 answer = self.uc.customized_question("WARNING 060319.1655",
                     "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
@@ -545,31 +556,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 pass
             self.gutils.set_cont_par(name, value)
         self.gutils.set_cont_par("PROJ", self.crs.toProj())
-
-        map_units = QgsUnitTypes.toString(self.crs.mapUnits()).lower()
-
-        metric_keywords = {
-            "meter", "meters", "metre", "metres", "metro", "metros",  # EN, ES, PT
-            "mètre", "mètres",  # FR
-            "metro", "metri"  # IT
-        }
-        imperial_keywords = {
-            "foot", "feet", "pie", "pies", "pé", "pés",  # EN, ES, PT
-            "pied", "pieds",  # FR
-            "piede", "piedi"  # IT
-        }
-
-        if any(k in map_units for k in metric_keywords):
-            metric = 1
-        elif any(k in map_units for k in imperial_keywords):
-            self.si_units = False
-            metric = 0
-        else:
-            msg = "WARNING 060319.1654: Unknown map units."
-            self.uc.show_warn(msg)
-            self.uc.log_info(msg)
-        self.gutils.set_cont_par("METRIC", metric)
-        self.gutils.fill_empty_mult_globals()
 
     def select_all_modules(self):
         for cbx in self.modulesGrp.findChildren(QCheckBox):
