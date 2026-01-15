@@ -192,7 +192,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.proj_lab.setText(pd)
         if self.si_units:
             mu = "Metric (International System)"
-        elif self.si_units:
+        elif not self.si_units:
             mu = "English (Imperial System)"
         else:
             mu = "Unknown System"
