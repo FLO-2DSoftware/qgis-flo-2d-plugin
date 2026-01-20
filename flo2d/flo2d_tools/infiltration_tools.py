@@ -22,7 +22,7 @@ from qgis.core import (
     QgsRectangle,
     QgsSpatialIndex,
 )
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.utils import iface
 
@@ -201,11 +201,11 @@ class InfiltrationCalculator(object):
                 land_soil_features = {}
                 land_soil_index = QgsSpatialIndex()
                 land_soil_fields = QgsFields()
-                land_soil_fields.append(QgsField("rtimp", QVariant.Double))
-                land_soil_fields.append(QgsField("dthetan", QVariant.Double))
-                land_soil_fields.append(QgsField("dthetad", QVariant.Double))
-                land_soil_fields.append(QgsField("psif", QVariant.Double))
-                land_soil_fields.append(QgsField("saturation", QVariant.String))
+                land_soil_fields.append(QgsField("rtimp", QMetaType.Double))
+                land_soil_fields.append(QgsField("dthetan", QMetaType.Double))
+                land_soil_fields.append(QgsField("dthetad", QMetaType.Double))
+                land_soil_fields.append(QgsField("psif", QMetaType.Double))
+                land_soil_fields.append(QgsField("saturation", QMetaType.QString))
 
                 land_soil_fid = 0
 

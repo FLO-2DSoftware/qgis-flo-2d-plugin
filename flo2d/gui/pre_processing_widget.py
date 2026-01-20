@@ -9,7 +9,7 @@ import os.path
 # of the License, or (at your option) any later version
 
 import processing
-from PyQt5.QtCore import QVariant, QUrl, Qt
+from PyQt5.QtCore import QMetaType, QUrl, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication
 from PyQt5.QtGui import QDesktopServices
 from qgis._analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
@@ -275,7 +275,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         # adjust the elevations
         channel_pv = self.channel_layer.dataProvider()
-        channel_pv.addAttributes([QgsField("Elevation", QVariant.Double)])
+        channel_pv.addAttributes([QgsField("Elevation", QMetaType.Double)])
         self.channel_layer.updateFields()
         self.channel_layer.commitChanges()
 
@@ -396,7 +396,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         # adjust the elevations
         reservoir_pv = reservoir.dataProvider()
-        reservoir_pv.addAttributes([QgsField("Elevation", QVariant.Double)])
+        reservoir_pv.addAttributes([QgsField("Elevation", QMetaType.Double)])
         reservoir.updateFields()
 
         QgsProject.instance().addMapLayers([reservoir])

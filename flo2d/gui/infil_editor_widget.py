@@ -12,7 +12,7 @@ from collections import OrderedDict
 from itertools import chain
 from math import isnan
 
-from PyQt5.QtCore import QVariant, QUrl
+from PyQt5.QtCore import QMetaType, QUrl
 from PyQt5.QtWidgets import QFileDialog
 from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsLayerTreeRegistryBridge, \
     QgsMapLayer, QgsVectorFileWriter
@@ -1400,11 +1400,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
                 # adding the fields
                 layer_provider = land_cover_vector.dataProvider()
-                layer_provider.addAttributes([QgsField("landuse_category", QVariant.String)])
-                layer_provider.addAttributes([QgsField("InitAbs", QVariant.Double)])
-                layer_provider.addAttributes([QgsField("RTIMP", QVariant.Double)])
-                layer_provider.addAttributes([QgsField("VegCov", QVariant.Double)])
-                layer_provider.addAttributes([QgsField("Sat", QVariant.String)])
+                layer_provider.addAttributes([QgsField("landuse_category", QMetaType.QString)])
+                layer_provider.addAttributes([QgsField("InitAbs", QMetaType.Double)])
+                layer_provider.addAttributes([QgsField("RTIMP", QMetaType.Double)])
+                layer_provider.addAttributes([QgsField("VegCov", QMetaType.Double)])
+                layer_provider.addAttributes([QgsField("Sat", QMetaType.QString)])
                 land_cover_vector.updateFields()
 
                 # Check model's unit

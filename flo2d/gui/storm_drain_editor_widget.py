@@ -43,7 +43,7 @@ try:
 except ImportError:
     pass
 
-from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, QUrl
+from qgis.PyQt.QtCore import QSettings, Qt, QTime, QMetaType, QUrl
 from qgis.PyQt.QtGui import QColor, QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -928,25 +928,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             # define fields for feature attributes. A QgsFields object is needed
             fields = QgsFields()
-            fields.append(QgsField("name", QVariant.String))
-            fields.append(QgsField("inlet", QVariant.String))
-            fields.append(QgsField("outlet", QVariant.String))
-            fields.append(QgsField("length", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("manning", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("inlet_off", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("outlet_off", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("init_flow", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("max_flow", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("inletLoss", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("outletLoss", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("meanLoss", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("flapLoss", QVariant.Bool))
-            fields.append(QgsField("XSshape", QVariant.String))
-            fields.append(QgsField("XSMaxDepth", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom2", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom3", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom4", QVariant.Double, "double", 10, 4))
-            fields.append(QgsField("XSbarrels", QVariant.Int, "int", 10, 4))
+            fields.append(QgsField("name", QMetaType.QString))
+            fields.append(QgsField("inlet", QMetaType.QString))
+            fields.append(QgsField("outlet", QMetaType.QString))
+            fields.append(QgsField("length", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("manning", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("inlet_off", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("outlet_off", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("init_flow", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("max_flow", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("inletLoss", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("outletLoss", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("meanLoss", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("flapLoss", QMetaType.Bool))
+            fields.append(QgsField("XSshape", QMetaType.QString))
+            fields.append(QgsField("XSMaxDepth", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("XSgeom2", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("XSgeom3", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("XSgeom4", QMetaType.Double, "double", 10, 4))
+            fields.append(QgsField("XSbarrels", QMetaType.Int, "int", 10, 4))
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
@@ -6642,7 +6642,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
 
             fields = QgsFields()
-            fields.append(QgsField(name='name', type=QVariant.String))
+            fields.append(QgsField(name='name', type=QMetaType.QString))
 
             pr = SD_all_nodes_layer.dataProvider()
 

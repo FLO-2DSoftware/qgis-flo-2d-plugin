@@ -17,7 +17,7 @@ from operator import itemgetter
 from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
-from PyQt5.QtCore import QVariant
+from PyQt5.QtCore import QMetaType
 from qgis._core import QgsField, QgsVectorDataProvider, QgsMessageLog
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from qgis.core import (
@@ -1412,7 +1412,7 @@ def add_col_and_row_fields(grid):
     try:
         caps = grid.dataProvider().capabilities()
         if caps & QgsVectorDataProvider.AddAttributes:
-            grid.dataProvider().addAttributes([QgsField("col", QVariant.Int), QgsField("row", QVariant.Int)])
+            grid.dataProvider().addAttributes([QgsField("col", QMetaType.Int), QgsField("row", QMetaType.Int)])
             grid.updateFields()
         return True
     except:

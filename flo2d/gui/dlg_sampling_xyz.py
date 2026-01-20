@@ -21,7 +21,7 @@ from qgis.core import (
     QgsWkbTypes,
 )
 from qgis.PyQt import QtCore
-from qgis.PyQt.QtCore import QObject, QSettings, Qt, QVariant
+from qgis.PyQt.QtCore import QObject, QSettings, Qt, QMetaType
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -365,8 +365,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         # add fields
                         pr.addAttributes(
                             [
-                                QgsField("elevation", QVariant.Double),
-                                QgsField("grid", QVariant.Int),
+                                QgsField("elevation", QMetaType.Double),
+                                QgsField("grid", QMetaType.Int),
                             ]
                         )
                         vl.updateFields()  # tell the vector layer to fetch changes from the provider

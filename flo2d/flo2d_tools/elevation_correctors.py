@@ -19,12 +19,13 @@ from qgis.core import (
     QgsVectorLayer,
     QgsWkbTypes,
 )
+from PyQt5.QtCore import QMetaType
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from qgis.PyQt.QtCore import QVariant
+
 
 from .grid_tools import (
     TINInterpolator,
@@ -90,7 +91,7 @@ class ElevationCorrector(object):
 
     def add_virtual_sum(self, layer):
         expr = self.field_expression.format(self.ELEVATION_FIELD, self.CORRECTION_FIELD)
-        field = QgsField(self.VIRTUAL_SUM, QVariant.Double)
+        field = QgsField(self.VIRTUAL_SUM, QMetaType.Double)
         layer.addExpressionField(expr, field)
 
     def remove_virtual_sum(self, layer):
