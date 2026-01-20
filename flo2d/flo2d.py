@@ -61,7 +61,7 @@ from .flo2d_tools.schematic_tools import (
 )
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect, database_connect
 from .gui.dlg_components import ComponentsDialog
-from .gui.dlg_cont_toler_jj import ContToler_JJ
+from .gui.dlg_cont_toler import ContToler
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_export_multidomain import ExportMultipleDomainsDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
@@ -3288,7 +3288,7 @@ class Flo2D(object):
     def show_cont_toler(self):
         self.uncheck_all_info_tools()
         try:
-            dlg_control = ContToler_JJ(self.con, self.iface, self.lyrs)
+            dlg_control = ContToler(self.con, self.iface, self.lyrs)
             while True:
                 save = dlg_control.exec_()
                 if save:

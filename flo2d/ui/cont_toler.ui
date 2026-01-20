@@ -96,7 +96,7 @@
         <x>0</x>
         <y>0</y>
         <width>952</width>
-        <height>527</height>
+        <height>528</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -846,7 +846,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No time series output is written.&lt;/p&gt;&lt;p&gt;1 = TIMDEP.OUT and TIMDEP_NC4.out are written.&lt;/p&gt;&lt;p&gt;2 = TIMDEP.HDF5 files is written.&lt;/p&gt;&lt;p&gt;3 = TIMDEPNC.HDF5 file is written.&lt;/p&gt;&lt;p&gt;4 = All time series output is written.&lt;/p&gt;&lt;p&gt;5 = Extract a time series for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;p&gt;11 = TIMDEP.OUT and TIMDEP_NC4.OUT are written for the time interval.&lt;/p&gt;&lt;p&gt;21 = TIMDEP.HDF5 files is written for the time interval.&lt;/p&gt;&lt;p&gt;31 = TIMDEPNC.HDF5 file is written for the time interval.&lt;/p&gt;&lt;p&gt;41 = All time series output is written for the time interval.&lt;/p&gt;&lt;p&gt;51 = Extract a time series during the time interval for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1, 2, 3, 4, 5, and 6 = on&lt;/p&gt;&lt;p&gt;11, 21, 31, 41, 51 = on for an interval&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No time series output is written.&lt;/p&gt;&lt;p&gt;1 = TIMDEP.OUT is written.&lt;/p&gt;&lt;p&gt;2 = TIMDEP.HDF5 is written.&lt;/p&gt;&lt;p&gt;3 = TIMDEPNC.HDF5 and TIMDEPXSEC.HDF5 (25) files are written.&lt;/p&gt;&lt;p&gt;4 = All time series output is written.&lt;/p&gt;&lt;p&gt;5 = Extract a time series for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;p&gt;11 = TIMDEP.OUT is written for the time interval.&lt;/p&gt;&lt;p&gt;21 = TIMDEP.HDF5 file is written for the time interval.&lt;/p&gt;&lt;p&gt;31 = TIMDEPNC.HDF5 and TIMDEPXSEC.HDF5 (25) files are written for the time interval.&lt;/p&gt;&lt;p&gt;41 = All time series output is written for the time interval.&lt;/p&gt;&lt;p&gt;51 = Extract a time series during the time interval for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1, 2, 3, 4, 5, and 6 = on&lt;/p&gt;&lt;p&gt;11, 21, 31, 41, 51 = on for an interval&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Time Series Output</string>
@@ -879,6 +879,12 @@
                       <property name="toolTip">
                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ITIMTEP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
+                      <property name="editable">
+                       <bool>false</bool>
+                      </property>
+                      <property name="sizeAdjustPolicy">
+                       <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+                      </property>
                       <item>
                        <property name="text">
                         <string>0. No time series</string>
@@ -886,17 +892,17 @@
                       </item>
                       <item>
                        <property name="text">
-                        <string>1.TIMEDEP.OUT written</string>
+                        <string>1. TIMEDEP.OUT</string>
                        </property>
                       </item>
                       <item>
                        <property name="text">
-                        <string>2. TIMEDEP.OUT and HDF5</string>
+                        <string>2. TIMEDEP.HDF5</string>
                        </property>
                       </item>
                       <item>
                        <property name="text">
-                        <string>3. NETCDF4 written</string>
+                        <string>3. NETCDF4 and TIMDEP.HDF5</string>
                        </property>
                       </item>
                       <item>
@@ -906,7 +912,7 @@
                       </item>
                       <item>
                        <property name="text">
-                        <string>5. Extract time series</string>
+                        <string>5. TIMDEPCELL.OUT</string>
                        </property>
                       </item>
                      </widget>
