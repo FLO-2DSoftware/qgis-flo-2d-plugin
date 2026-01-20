@@ -95,7 +95,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.simulate_rain_grp.toggled.connect(self.set_rain)
         self.realtime_rainfall_grp.toggled.connect(self.set_realtime)
-        self.building_chbox.stateChanged.connect(self.set_building)
+        self.building_chbox.setTristate(False)
+        self.building_chbox.toggled.connect(self.set_building)
         self.rain_help_btn.clicked.connect(self.rain_help)
         self.spatial_variation_grp.toggled.connect(self.set_arf)
         self.moving_storm_grp.toggled.connect(self.set_moving_storm)
@@ -704,21 +705,20 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.rain.irainreal = False
                 self.rain.set_row()
 
-    def set_building(self):
+    def set_building(self, checked):
+
+        if checked and self.gutils.is_table_empty("blocked_cells"):
+            self.uc.bar_warn("There are no ARF_WRF defined in the database!")
+            self.uc.log_info("There are no ARF_WRF defined in the database!")
+
+            self.building_chbox.setChecked(False)
+            return
+
         if not self.rain:
             return
 
-        irainbuilding = self.building_chbox.isChecked()
-        if irainbuilding:
-            if self.gutils.is_table_empty("blocked_cells"):
-                self.uc.bar_warn("There are no ARF_WRF defined in the database!")
-                self.uc.bar_warn("There are no ARF_WRF defined in the database!")
-                self.rain.irainbuilding = False
-                self.building_chbox.setChecked(False)
-            else:
-                self.rain.irainbuilding = True
-                self.building_chbox.setChecked(True)
-            self.rain.set_row()
+        self.rain.irainbuilding = checked
+        self.rain.set_row()
 
     def rain_help(self):
         QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/rain-editor/Rain%20Editor.html"))

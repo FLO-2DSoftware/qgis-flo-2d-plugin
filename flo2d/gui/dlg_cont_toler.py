@@ -20,7 +20,7 @@ from ..user_communication import UserCommunication
 from ..utils import float_or_zero
 from .ui_utils import load_ui
 
-uiDialog, qtBaseClass = load_ui("cont_toler_jj")
+uiDialog, qtBaseClass = load_ui("cont_toler")
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -42,7 +42,7 @@ except AttributeError:
         return QApplication.translate(context, text, disambig)
 
 
-class ContToler_JJ(qtBaseClass, uiDialog):
+class ContToler(qtBaseClass, uiDialog):
     PARAMS = OrderedDict(
         [
             [
