@@ -3,7 +3,7 @@ import processing
 from qgis._core import QgsVectorFileWriter
 from qgis.core import (QgsDistanceArea, QgsFeature, QgsField,
                        QgsGeometry, QgsProcessing, QgsVectorLayer, QgsProject)
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import QMetaType
 from ..user_communication import UserCommunication
 import math
 from ..geopackage_utils import GeoPackageUtils
@@ -87,9 +87,9 @@ class SsurgoSoil(object):
         # Initialize soil fields
         for field in self.soil_att_dict:
             if field["type"] == "double":
-                self.soil_att.append(QgsField(field["name"], QVariant.Double))
+                self.soil_att.append(QgsField(field["name"], QMetaType.Double))
             else:
-                self.soil_att.append(QgsField(field["name"], QVariant.String))
+                self.soil_att.append(QgsField(field["name"], QMetaType.QString))
             self.soil_prov.addAttributes(self.soil_att)
             self.soil_layer.updateFields()
 
@@ -112,9 +112,9 @@ class SsurgoSoil(object):
         # Initialize chorizon fields
         for field in self.chorizon_att_dict:
             if field["type"] == "double":
-                self.chorizon_att.append(QgsField(field["name"], QVariant.Double))
+                self.chorizon_att.append(QgsField(field["name"], QMetaType.Double))
             else:
-                self.chorizon_att.append(QgsField(field["name"], QVariant.String))
+                self.chorizon_att.append(QgsField(field["name"], QMetaType.QString))
             self.chorizon_prov.addAttributes(self.chorizon_att)
             self.soil_chorizon.updateFields()
 
@@ -132,9 +132,9 @@ class SsurgoSoil(object):
         # Initialize chfrags fields
         for field in self.chfrags_att_dict:
             if field["type"] == "double":
-                self.chfrags_att.append(QgsField(field["name"], QVariant.Double))
+                self.chfrags_att.append(QgsField(field["name"], QMetaType.Double))
             else:
-                self.chfrags_att.append(QgsField(field["name"], QVariant.String))
+                self.chfrags_att.append(QgsField(field["name"], QMetaType.QString))
             self.chfrags_prov.addAttributes(self.chfrags_att)
             self.soil_chfrags.updateFields()
 
@@ -152,9 +152,9 @@ class SsurgoSoil(object):
         # Initialize component fields
         for field in self.comp_att_dict:
             if field["type"] == "double":
-                self.comp_att.append(QgsField(field["name"], QVariant.Double))
+                self.comp_att.append(QgsField(field["name"], QMetaType.Double))
             else:
-                self.comp_att.append(QgsField(field["name"], QVariant.String))
+                self.comp_att.append(QgsField(field["name"], QMetaType.QString))
             self.comp_prov.addAttributes(self.comp_att)
             self.soil_comp.updateFields()
 

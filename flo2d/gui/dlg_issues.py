@@ -22,7 +22,7 @@ from qgis.core import (
     QgsVectorFileWriter,
     QgsVectorLayer,
 )
-from qgis.PyQt.QtCore import QSettings, Qt, QVariant
+from qgis.PyQt.QtCore import QSettings, Qt, QMetaType
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -1222,7 +1222,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 f.append(
                     QgsField(
                         field[0],
-                        QVariant.Int if field[1] == "I" else QVariant.Double if field[1] == "D" else QVariant.String,
+                        QMetaType.Int if field[1] == "I" else QMetaType.Double if field[1] == "D" else QMetaType.QString,
                     )
                 )
 
@@ -2164,8 +2164,8 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
-            f.append(QgsField(fields[2][0], QVariant.Int))
-            f.append(QgsField(fields[3][0], QVariant.String))
+            f.append(QgsField(fields[2][0], QMetaType.Int))
+            f.append(QgsField(fields[3][0], QMetaType.QString))
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
@@ -2873,12 +2873,12 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
 
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
-            f.append(QgsField(fields[2][0], QVariant.Int))
-            f.append(QgsField(fields[3][0], QVariant.Int))
-            f.append(QgsField(fields[4][0], QVariant.Double))
-            f.append(QgsField(fields[5][0], QVariant.Double))
-            f.append(QgsField(fields[6][0], QVariant.Int))
-            f.append(QgsField(fields[7][0], QVariant.Double))
+            f.append(QgsField(fields[2][0], QMetaType.Int))
+            f.append(QgsField(fields[3][0], QMetaType.Int))
+            f.append(QgsField(fields[4][0], QMetaType.Double))
+            f.append(QgsField(fields[5][0], QMetaType.Double))
+            f.append(QgsField(fields[6][0], QMetaType.Int))
+            f.append(QgsField(fields[7][0], QMetaType.Double))
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
