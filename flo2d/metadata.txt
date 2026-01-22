@@ -52,6 +52,7 @@ changelog=
     Added the Areas Editor
     Added the Steep Slope n file creation
     Added the LID volume file creation
+    Fixed ARF_GLOBAL dataset creation
  - Initial Condition Editor
     Populate data on the comboboxes based on the signal of layer edited   
  - Floodplain Cross-Section Editor
@@ -59,6 +60,7 @@ changelog=
     Populate data on the comboboxes based on the signal of layer edited
     Improved the IFLO directions combobox
     Read the FPXSEC results from TIMDEPFPXSEC.HDF5
+    Improved the floodplain cross section identification
  - Channel Editor
     Update channel SQL queries to include 'ibaseflow' and adjust data handling in CHAN_GLOBAL
     Handle None values in channel geometry construction to prevent errors
@@ -84,6 +86,7 @@ changelog=
     Connect afterCommitChanges signals to populate profile plot
  - Infiltration Editor
     Fixed the SSURGO and improved messages
+    Fixed a bug on the channel infiltration
  - Levees and Breach Editor
     Changed the elevation correction processing to a SQL processing
     Add a breach data validation for ILEVFAIL = 2
@@ -92,6 +95,7 @@ changelog=
 	Editor enhanced
 	Added the RAINCELLRAW
 	Added support to ERA5-Land data
+    Fixed a bug on the Buildings checkbox
  - Multiple Domain Editor
     First stable version of the Multi Domain Editor for MULTIDOMAIN.DAT
     Add subdomain rendering functionality to grid info widget
@@ -122,6 +126,7 @@ changelog=
 	Improvements in data handling on the BC editor
     Fixed the right and left bank elevation for hdf5 export
     Added the missing storm drain layers to the clear geopackage function
+    Export channel to hdf5 fix
 	
  <p>1.0.1
  - General
