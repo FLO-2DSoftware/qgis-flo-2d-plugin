@@ -4428,8 +4428,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             try:
                 mult_sql = [
                     """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-                                                 xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""",
-                    9,
+                                                 xnmultall, sslopemin, sslopemax, avuld50) VALUES""",
+                    8,
                 ]
                 mult_area_sql = [
                     """INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""",
@@ -4446,9 +4446,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if "MULT_GLOBAL" in mult_group.datasets:
                     data = mult_group.datasets["MULT_GLOBAL"].data
                     for row in data:
-                        wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n = row
+                        wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50 = row
                         mult_sql += [
-                            (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n)]
+                            (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50)]
 
                 # Process MULT dataset
                 if "MULT" in mult_group.datasets:
@@ -13349,14 +13349,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if self.execute(mult_cell_sql).fetchone() is not None:
                     has_mult = True
 
-                global_data_values = " {}" * 9 + "\n"
+                global_data_values = " {}" * 8 + "\n"
                 five_values = " {}" * 5 + "\n"
 
                 mult_group.create_dataset('MULT_GLOBAL', [])
                 mult_group.create_dataset('MULT', [])
 
                 mult_group.datasets["MULT_GLOBAL"].data.append(
-                    create_array(global_data_values, 9, np.float64, head[1:]))
+                    create_array(global_data_values, 8, np.float64, head[1:-1]))
 
                 mult_cells = self.execute(mult_cell_sql).fetchall()
 
