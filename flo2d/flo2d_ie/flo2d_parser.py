@@ -985,6 +985,8 @@ class ParseDAT(object):
 
     def parse_mult(self):
         mult = self.dat_files["MULT.DAT"]
+        if not mult:
+            return None, None
         par = self.single_parser(mult)
         head = next(par)
         data = []
