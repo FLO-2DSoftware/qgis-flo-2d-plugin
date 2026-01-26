@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import math
 
+from PyQt5.Qsci import QsciLexerHTML
+
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -12,6 +14,8 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 
 uiDialog, qtBaseClass = load_ui("breach_hydrograph_tool")
@@ -176,6 +180,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         Function to generate breach hydrograph based on the calculated parameters.
         """
 
+        t_hr, Qt = None, None
+
         peak_discharge = float(self.peak_discharge_le.text())
         time_to_peak = float(self.time_to_peak_le.text())
         baseflow = float(self.baseflow_dsb.value())
@@ -184,14 +190,11 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         if self.tr66_rb.isChecked():
             t_hr, Qt = self.tr66_hydrograph(peak_discharge, time_to_peak, dam_volume, baseflow)
-            self.uc.log_info(str(t_hr))
-            self.uc.log_info(str(Qt))
 
         if self.parabolic_rb.isChecked():
             t_hr, Qt = self.ana_lnec_hydrograph(peak_discharge, time_to_peak, dam_volume, baseflow)
-            self.uc.log_info(str(t_hr))
-            self.uc.log_info(str(Qt))
-            pass
+
+
 
     def tr66_hydrograph(self, Qp, Tf, V, Qbase=0.0, dt_hr = 0.1):
         """
@@ -256,7 +259,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         return t_hr, Qt
 
-    def ana_lnec_hydrograph(self, Qp, Tf, V, Qbase=0.0, dt_hr = 0.1):
+    def ana_lnec_hydrograph(self, Qp, Tf, V, Qbase=0.0, dt_hr=0.1, beta=10):
         """
         ANA LNEC Adaptado (Petry et al., 2018) hydrograph as in your table.
 
@@ -289,8 +292,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         t_s = np.arange(n_steps, dtype=float) * dt_s
         t_hr = t_s / 3600.0
-
-        beta = -0.2004 * (V + 25000.0) ** (-0.5979)
 
         x = t_s / Tf_s
         core = x * np.exp(1.0 - x)
