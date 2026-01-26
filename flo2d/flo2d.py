@@ -2539,6 +2539,7 @@ class Flo2D(object):
             "STREET.DAT": "import_street",
             "ARF.DAT": "import_arf",
             "MULT.DAT": "import_mult",
+            "SIMPLE_MULT.DAT": "import_mult",
             "SED.DAT": "import_sed",
             "LEVEE.DAT": "import_levee",
             "FPXSEC.DAT": "import_fpxsec",
