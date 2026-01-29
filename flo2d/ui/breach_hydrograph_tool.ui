@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -599,8 +602,34 @@
             <bool>false</bool>
            </property>
            <layout class="QGridLayout" name="gridLayout_9">
-            <item row="0" column="2">
-             <spacer name="horizontalSpacer_4">
+            <item row="3" column="1">
+             <widget class="QDoubleSpinBox" name="baseflow_dsb">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="3">
+             <widget class="QLabel" name="label_56">
+              <property name="text">
+               <string>Roughness</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <spacer name="horizontalSpacer_9">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -611,6 +640,165 @@
                </size>
               </property>
              </spacer>
+            </item>
+            <item row="2" column="3">
+             <widget class="QLabel" name="label_55">
+              <property name="text">
+               <string>Elevation</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="dam_height_dsb">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="maximum">
+               <double>9999.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QComboBox" name="user_channel_cb">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="1" column="3">
+             <widget class="QLabel" name="label_50">
+              <property name="text">
+               <string>Buffer</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QDoubleSpinBox" name="buffer_dsb">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="maximum">
+               <double>9999999.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="failure_mechanism_cb">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <item>
+               <property name="text">
+                <string>Overtopping</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Piping</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_21">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>185</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Dam Height</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_52">
+              <property name="text">
+               <string>Baseflow</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QLabel" name="label_24">
+              <property name="text">
+               <string>Centerline</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="dam_volume_dsb">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="maximum">
+               <double>100000000000000000.000000000000000</double>
+              </property>
+             </widget>
             </item>
             <item row="1" column="2">
              <spacer name="horizontalSpacer_3">
@@ -644,38 +832,6 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_21">
-              <property name="minimumSize">
-               <size>
-                <width>185</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>185</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Dam Height</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="2">
-             <spacer name="horizontalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_23">
               <property name="minimumSize">
@@ -695,79 +851,28 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QDoubleSpinBox" name="dam_height_dsb">
-              <property name="minimumSize">
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
                <size>
-                <width>100</width>
-                <height>0</height>
+                <width>40</width>
+                <height>20</height>
                </size>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>9999.000000000000000</double>
-              </property>
-             </widget>
+             </spacer>
             </item>
-            <item row="1" column="1">
-             <widget class="QDoubleSpinBox" name="dam_volume_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>100000000000000000.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QComboBox" name="failure_mechanism_cb">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <item>
-               <property name="text">
-                <string>Overtopping</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Piping</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="0" column="3">
-             <widget class="QLabel" name="label_52">
+            <item row="4" column="4">
+             <widget class="QPushButton" name="create_cd_btn">
               <property name="text">
-               <string>Baseflow</string>
+               <string>Create Com. Dom.</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="4">
-             <widget class="QDoubleSpinBox" name="baseflow_dsb">
+            <item row="2" column="4">
+             <widget class="QComboBox" name="comboBox_12">
               <property name="minimumSize">
                <size>
                 <width>100</width>
@@ -780,8 +885,21 @@
                 <height>16777215</height>
                </size>
               </property>
-              <property name="maximum">
-               <double>999999.000000000000000</double>
+             </widget>
+            </item>
+            <item row="3" column="4">
+             <widget class="QComboBox" name="comboBox_13">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
               </property>
              </widget>
             </item>
@@ -1618,6 +1736,19 @@
       <layout class="QGridLayout" name="gridLayout_16">
        <item row="0" column="0">
         <layout class="QGridLayout" name="gridLayout_15">
+         <item row="4" column="0" rowspan="2" colspan="2">
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
          <item row="1" column="0" colspan="2">
           <widget class="QGroupBox" name="groupBox_8">
            <property name="sizePolicy">
@@ -1630,6 +1761,39 @@
             <string>Peak discharge, failure time and average beach width method</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_17">
+            <item row="1" column="2">
+             <widget class="QRadioButton" name="froehlich_2008_rb">
+              <property name="text">
+               <string>Froehlich (2008)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="5">
+             <widget class="QPushButton" name="generate_breach_parameters_btn">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Generate</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QRadioButton" name="mmc_rb">
+              <property name="text">
+               <string>MMC</string>
+              </property>
+             </widget>
+            </item>
             <item row="1" column="1">
              <widget class="QRadioButton" name="froehlich_1995_rb">
               <property name="text">
@@ -1638,52 +1802,50 @@
              </widget>
             </item>
             <item row="3" column="1" colspan="5">
-             <widget class="Line" name="line_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+             <layout class="QGridLayout" name="gridLayout_19">
+              <property name="spacing">
+               <number>6</number>
               </property>
-             </widget>
-            </item>
-            <item row="2" column="1" colspan="5">
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
-              <item>
-               <spacer name="horizontalSpacer_19">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="generate_breach_parameters_btn">
+              <item row="0" column="4">
+               <widget class="QLineEdit" name="ave_breach_width_le">
                 <property name="minimumSize">
                  <size>
-                  <width>0</width>
+                  <width>100</width>
                   <height>0</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>16777215</width>
+                  <width>100</width>
                   <height>16777215</height>
                  </size>
                 </property>
-                <property name="text">
-                 <string>Generate</string>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="time_to_peak_le">
+                <property name="maximumSize">
+                 <size>
+                  <width>100</width>
+                  <height>100</height>
+                 </size>
                 </property>
                </widget>
               </item>
-             </layout>
-            </item>
-            <item row="4" column="1" colspan="5">
-             <layout class="QGridLayout" name="gridLayout_19">
-              <item row="0" column="2">
+              <item row="0" column="3">
                <widget class="QLabel" name="label_51">
+                <property name="minimumSize">
+                 <size>
+                  <width>175</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>175</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="text">
                  <string>Average Breach</string>
                 </property>
@@ -1707,13 +1869,77 @@
               </item>
               <item row="0" column="0">
                <widget class="QLabel" name="label_49">
+                <property name="minimumSize">
+                 <size>
+                  <width>175</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>175</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="text">
                  <string>Peak Discharge</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="3">
-               <widget class="QLineEdit" name="ave_breach_width_le">
+              <item row="1" column="0">
+               <widget class="QLabel" name="time_peak_le">
+                <property name="minimumSize">
+                 <size>
+                  <width>175</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>175</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Time to Peak</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <spacer name="horizontalSpacer_18">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="2">
+               <spacer name="horizontalSpacer_19">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="3">
+               <widget class="QLabel" name="label_54">
+                <property name="text">
+                 <string>Estimated Hydrograph Length</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="4">
+               <widget class="QLineEdit" name="hyd_length_le">
                 <property name="minimumSize">
                  <size>
                   <width>100</width>
@@ -1728,49 +1954,12 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="time_peak_le">
-                <property name="text">
-                 <string>Time to Peak</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QLineEdit" name="time_to_peak_le">
-                <property name="maximumSize">
-                 <size>
-                  <width>100</width>
-                  <height>100</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="2" colspan="2">
-               <spacer name="horizontalSpacer_9">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
              </layout>
             </item>
-            <item row="1" column="2">
-             <widget class="QRadioButton" name="froehlich_2008_rb">
-              <property name="text">
-               <string>Froehlich (2008)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QRadioButton" name="mmc_rb">
-              <property name="text">
-               <string>MMC</string>
+            <item row="2" column="1" colspan="5">
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
@@ -1784,19 +1973,6 @@
            </layout>
           </widget>
          </item>
-         <item row="3" column="0" colspan="2">
-          <spacer name="verticalSpacer">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
          <item row="2" column="0" colspan="2">
           <widget class="QGroupBox" name="groupBox_9">
            <property name="sizePolicy">
@@ -1809,28 +1985,11 @@
             <string>Hidrograph Generation</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_18">
-            <item row="2" column="0" colspan="5">
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
+            <item row="2" column="0" colspan="4">
+             <layout class="QVBoxLayout" name="verticalLayout"/>
             </item>
-            <item row="0" column="4">
-             <spacer name="horizontalSpacer_18">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="0" column="3">
-             <spacer name="horizontalSpacer_23">
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_21">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -1849,6 +2008,25 @@
               </property>
              </widget>
             </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="generate_hydrograph_btn">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Generate</string>
+              </property>
+             </widget>
+            </item>
             <item row="0" column="1">
              <widget class="QRadioButton" name="parabolic_rb">
               <property name="text">
@@ -1856,45 +2034,12 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <spacer name="horizontalSpacer_22">
+            <item row="1" column="0" colspan="4">
+             <widget class="Line" name="line">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="1" column="0" colspan="5">
-             <layout class="QHBoxLayout" name="horizontalLayout_5">
-              <item>
-               <spacer name="horizontalSpacer_21">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="generate_hydrograph_btn">
-                <property name="text">
-                 <string>Generate</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="3" column="0" colspan="5">
-             <widget class="QGraphicsView" name="graphicsView"/>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -1910,6 +2055,88 @@
            <property name="text">
             <string>Breach parameters and hidrograph estimation</string>
            </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="2">
+          <widget class="QGroupBox" name="groupBox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="title">
+            <string>FLO-2D Save Options</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_20">
+            <item row="0" column="1">
+             <widget class="QComboBox" name="water_inflow_cbo">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QPushButton" name="water_add_btn">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Add</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_16">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_53">
+              <property name="minimumSize">
+               <size>
+                <width>175</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>175</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Inflow Name</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
         </layout>
@@ -1987,7 +2214,7 @@
             </sizepolicy>
            </property>
            <property name="title">
-            <string>Save options</string>
+            <string>FLO-2D Save Options</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_13">
             <item row="1" column="5">
@@ -2071,6 +2298,79 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>water_group</tabstop>
+  <tabstop>dam_height_dsb</tabstop>
+  <tabstop>dam_volume_dsb</tabstop>
+  <tabstop>failure_mechanism_cb</tabstop>
+  <tabstop>tailings_group</tabstop>
+  <tabstop>doubleSpinBox_5</tabstop>
+  <tabstop>doubleSpinBox_6</tabstop>
+  <tabstop>doubleSpinBox_7</tabstop>
+  <tabstop>doubleSpinBox_8</tabstop>
+  <tabstop>doubleSpinBox_9</tabstop>
+  <tabstop>comboBox</tabstop>
+  <tabstop>doubleSpinBox_10</tabstop>
+  <tabstop>doubleSpinBox_11</tabstop>
+  <tabstop>comboBox_2</tabstop>
+  <tabstop>doubleSpinBox_12</tabstop>
+  <tabstop>comboBox_3</tabstop>
+  <tabstop>comboBox_4</tabstop>
+  <tabstop>comboBox_5</tabstop>
+  <tabstop>doubleSpinBox_13</tabstop>
+  <tabstop>doubleSpinBox_14</tabstop>
+  <tabstop>doubleSpinBox_15</tabstop>
+  <tabstop>comboBox_11</tabstop>
+  <tabstop>toolButton</tabstop>
+  <tabstop>groupBox_5</tabstop>
+  <tabstop>doubleSpinBox_24</tabstop>
+  <tabstop>doubleSpinBox_23</tabstop>
+  <tabstop>doubleSpinBox_22</tabstop>
+  <tabstop>radioButton_2</tabstop>
+  <tabstop>radioButton</tabstop>
+  <tabstop>checkBox_2</tabstop>
+  <tabstop>comboBox_8</tabstop>
+  <tabstop>doubleSpinBox_25</tabstop>
+  <tabstop>groupBox_3</tabstop>
+  <tabstop>checkBox</tabstop>
+  <tabstop>doubleSpinBox_17</tabstop>
+  <tabstop>doubleSpinBox_19</tabstop>
+  <tabstop>doubleSpinBox_16</tabstop>
+  <tabstop>doubleSpinBox_18</tabstop>
+  <tabstop>groupBox_4</tabstop>
+  <tabstop>comboBox_7</tabstop>
+  <tabstop>comboBox_6</tabstop>
+  <tabstop>doubleSpinBox_20</tabstop>
+  <tabstop>doubleSpinBox_21</tabstop>
+  <tabstop>froehlich_1995_rb</tabstop>
+  <tabstop>generate_breach_parameters_btn</tabstop>
+  <tabstop>peak_discharge_le</tabstop>
+  <tabstop>ave_breach_width_le</tabstop>
+  <tabstop>time_to_peak_le</tabstop>
+  <tabstop>froehlich_2008_rb</tabstop>
+  <tabstop>mmc_rb</tabstop>
+  <tabstop>analnec_rb</tabstop>
+  <tabstop>tr66_rb</tabstop>
+  <tabstop>parabolic_rb</tabstop>
+  <tabstop>generate_hydrograph_btn</tabstop>
+  <tabstop>lineEdit_30</tabstop>
+  <tabstop>graphicsView_2</tabstop>
+  <tabstop>lineEdit_29</tabstop>
+  <tabstop>comboBox_10</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>pushButton_2</tabstop>
+  <tabstop>comboBox_9</tabstop>
+  <tabstop>listView</tabstop>
+  <tabstop>lineEdit_28</tabstop>
+  <tabstop>lineEdit_32</tabstop>
+  <tabstop>lineEdit_31</tabstop>
+  <tabstop>lineEdit_27</tabstop>
+  <tabstop>cancel_btn</tabstop>
+  <tabstop>previous_btn</tabstop>
+  <tabstop>next_btn</tabstop>
+  <tabstop>water_inflow_cbo</tabstop>
+  <tabstop>water_add_btn</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

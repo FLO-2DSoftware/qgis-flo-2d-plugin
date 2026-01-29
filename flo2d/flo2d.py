@@ -4212,7 +4212,7 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
 
         # show the dialog
-        dlg_breach_hydrograph_tool = BreachHydrographToolDialog(self.con, self.iface, self.lyrs)
+        dlg_breach_hydrograph_tool = BreachHydrographToolDialog(self.con, self.iface, self.lyrs, self.f2d_widget.bc_editor_new)
         dlg_breach_hydrograph_tool.show()
 
         while True:
