@@ -111,13 +111,13 @@
              <widget class="QComboBox" name="comboBox_3">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -150,13 +150,13 @@
              <widget class="QComboBox" name="comboBox_5">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -166,13 +166,13 @@
              <widget class="QComboBox" name="comboBox_4">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -189,13 +189,13 @@
              <widget class="QComboBox" name="comboBox_2">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -326,13 +326,13 @@
              <widget class="QComboBox" name="comboBox">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -370,6 +370,18 @@
             </item>
             <item row="7" column="4">
              <widget class="QComboBox" name="comboBox_11">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>125</width>
+                <height>16777215</height>
+               </size>
+              </property>
               <item>
                <property name="text">
                 <string>1.5:1</string>
@@ -406,13 +418,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -422,13 +434,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -438,13 +450,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_7">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -454,13 +466,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_8">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -470,13 +482,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_9">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -486,13 +498,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_10">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -502,13 +514,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_11">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -518,13 +530,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_12">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -534,13 +546,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_13">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -550,13 +562,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_14">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -566,13 +578,13 @@
              <widget class="QDoubleSpinBox" name="doubleSpinBox_15">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -606,13 +618,13 @@
              <widget class="QDoubleSpinBox" name="baseflow_dsb">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -652,13 +664,13 @@
              <widget class="QDoubleSpinBox" name="dam_height_dsb">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -671,13 +683,13 @@
              <widget class="QComboBox" name="user_channel_cb">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -707,13 +719,13 @@
              <widget class="QDoubleSpinBox" name="buffer_dsb">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -726,13 +738,13 @@
              <widget class="QComboBox" name="failure_mechanism_cb">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -785,13 +797,13 @@
              <widget class="QDoubleSpinBox" name="dam_volume_dsb">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -866,38 +878,50 @@
             </item>
             <item row="4" column="4">
              <widget class="QPushButton" name="create_cd_btn">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>125</width>
+                <height>16777215</height>
+               </size>
+              </property>
               <property name="text">
                <string>Create Com. Dom.</string>
               </property>
              </widget>
             </item>
             <item row="2" column="4">
-             <widget class="QComboBox" name="comboBox_12">
+             <widget class="QComboBox" name="elevation_cbo">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>
              </widget>
             </item>
             <item row="3" column="4">
-             <widget class="QComboBox" name="comboBox_13">
+             <widget class="QComboBox" name="roughness_cbo">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>125</width>
                 <height>16777215</height>
                </size>
               </property>

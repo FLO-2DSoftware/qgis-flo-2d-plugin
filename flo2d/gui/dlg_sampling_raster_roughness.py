@@ -143,11 +143,15 @@ class SamplingRoughnessDialog(qtBaseClass, uiDialog):
         if und:
             self.src_nodata = int(und)
 
-    def probe_roughness(self):
+    def probe_roughness(self, raster=None):
         """
         Resample raster to be aligned with the grid, then probe values and update elements n_value attr.
         """
-        self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
+        if not raster:
+            self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
+        else:
+            self.src_raster = raster
+
         self.get_worp_opts_data()
         opts = [
             "-of GTiff",

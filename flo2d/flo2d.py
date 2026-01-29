@@ -4204,7 +4204,7 @@ class Flo2D(object):
         #         e,
         #     )
 
-    #@connection_required
+    @connection_required
     def show_breach_hydrograph_tool(self):
         """
         Show breach elevation tool

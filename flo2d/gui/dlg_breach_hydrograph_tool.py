@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import QListWidgetItem
 from qgis._core import QgsProject, QgsWkbTypes, QgsVectorLayer, QgsFeature
 from qgis.core import QgsMapLayerType
 
+from .dlg_sampling_elev import SamplingElevDialog
+from .dlg_sampling_raster_roughness import SamplingRoughnessDialog
+from ..flo2d_tools.grid_tools import square_grid
 from ..flo2dobjects import Inflow
 # FLO-2D Preprocessor tools for QGIS
 
@@ -100,6 +103,29 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         """
         self.populate_user_channel()
         self.populate_user_inflow()
+        self.populate_rasters()
+
+    def populate_rasters(self):
+        """
+        Function to populate raster layers in the combo boxes
+        """
+        self.elevation_cbo.clear()
+        self.roughness_cbo.clear()
+
+        user_layers = []
+        gpkg_path = self.gutils.get_gpkg_path()
+        gpkg_path_adj = gpkg_path.replace("\\", "/")
+
+        for l in QgsProject.instance().mapLayers().values():
+            layer_source_adj = l.source().replace("\\", "/")
+            if gpkg_path_adj not in layer_source_adj:
+                if l.type() == QgsMapLayerType.RasterLayer:
+                    user_layers.append(l)
+
+        for s in user_layers:
+            self.roughness_cbo.addItem(s.name(), s.dataProvider().dataSourceUri())
+            self.elevation_cbo.addItem(s.name(), s.dataProvider().dataSourceUri())
+
 
     def populate_user_inflow(self):
         """
@@ -163,6 +189,9 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         tmp = processing.run("native:buffer", params)["OUTPUT"]
 
         bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+        grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        elev_raster = self.elevation_cbo.itemData(self.elevation_cbo.currentIndex())
+        roughness_raster = self.roughness_cbo.itemData(self.roughness_cbo.currentIndex())
 
         bl.startEditing()
 
@@ -176,7 +205,16 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
         self.gutils.execute("UPDATE user_model_boundary SET cell_size = ?", (cellSize,))
 
+        # TODO add a cellsize check
+        # Create the grid
+        square_grid(self.gutils, bl, None)
+        sample_elev = SamplingElevDialog(self.con, self.iface, self.lyrs, cellSize)
+        sample_elev.probe_elevation(elev_raster)
+        sample_roughness = SamplingRoughnessDialog(self.con, self.iface, self.lyrs, cellSize)
+        sample_roughness.probe_roughness(roughness_raster)
+
         bl.triggerRepaint()
+        grid_lyr.triggerRepaint()
 
     def populate_user_channel(self):
         """
