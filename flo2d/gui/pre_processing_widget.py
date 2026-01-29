@@ -130,6 +130,9 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         # Define the raster calculator expression
         expression = f"raster@1 * {conversion_factor}"
 
+        # Define transform context
+        transform_context = QgsProject.instance().transformContext()
+
         # Perform the calculation
         calculator = QgsRasterCalculator(
             expression,
@@ -138,7 +141,8 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
             raster_layer.extent(),
             raster_layer.width(),
             raster_layer.height(),
-            [raster_entry]
+            [raster_entry],
+            transform_context
         )
 
         result = calculator.processCalculation()
@@ -146,7 +150,18 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
         if result == 0:
-            QgsProject.instance().addMapLayer(QgsRasterLayer(output_raster, output_raster_name))
+            out_layer = QgsRasterLayer(output_raster, output_raster_name)
+
+            if not out_layer.isValid():
+                self.uc.bar_error(f"Raster created but cannot be loaded: {output_raster}")
+                self.uc.log_info(f"Raster created but cannot be loaded: {output_raster}")
+                return
+
+            if not out_layer.crs().isValid() and raster_layer.crs().isValid():
+                out_layer.setCrs(raster_layer.crs()) # Necessary for QGIS versions < 3.40
+
+            QgsProject.instance().addMapLayer(out_layer)
+
             self.uc.bar_info(f"Raster converted successfully and saved to {output_raster}")
             self.uc.log_info(f"Raster converted successfully and saved to {output_raster}")
         else:
