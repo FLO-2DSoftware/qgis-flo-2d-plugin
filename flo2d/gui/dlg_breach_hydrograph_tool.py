@@ -3,7 +3,7 @@ import math
 
 import processing
 from PyQt5.QtWidgets import QListWidgetItem
-from qgis._core import QgsProject, QgsWkbTypes, QgsVectorLayer, QgsFeature
+from qgis._core import QgsProject, QgsWkbTypes, QgsVectorLayer, QgsFeature, QgsGeometry
 from qgis.core import QgsMapLayerType
 
 from .dlg_sampling_elev import SamplingElevDialog
@@ -56,6 +56,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.generate_breach_parameters_btn.clicked.connect(self.generate_breach_parameters)
         self.generate_hydrograph_btn.clicked.connect(self.generate_hydrograph)
         self.create_cd_btn.clicked.connect(self.create_computational_domain)
+        self.refresh_btn.clicked.connect(self.populate_user_inflow)
 
         self.water_add_btn.clicked.connect(self.add_ts_to_inflow)
 
@@ -131,6 +132,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         """
         Function to populate user inflow combo box
         """
+        self.water_inflow_cbo.clear()
+
         all_inflows = self.gutils.get_inflows_list()
         if not all_inflows:
             return
@@ -147,6 +150,31 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         """
         selected_layer_name = self.user_channel_cb.currentText()
         selected_layer = None
+
+        bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+        grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        elev_raster = self.elevation_cbo.itemData(self.elevation_cbo.currentIndex())
+        roughness_raster = self.roughness_cbo.itemData(self.roughness_cbo.currentIndex())
+
+        for l in QgsProject.instance().mapLayers().values():
+            if l.name() == selected_layer_name:
+                selected_layer = l
+                break
+
+        if selected_layer is None:
+            self.uc.bar_error("Selected layer not found.")
+            self.uc.log_info("Selected layer not found.")
+            return
+
+        if selected_layer.featureCount() < 1:
+            self.uc.bar_warn("Selected layer has no features.")
+            self.uc.log_info("Selected layer has no features.")
+            return
+
+        if selected_layer.crs().authid() != bl.crs().authid():
+            self.uc.bar_warn("Selected layer CRS does not match project CRS.")
+            self.uc.log_info("Selected layer CRS does not match project CRS.")
+            return
 
         buffer = self.buffer_dsb.value()
         if buffer <= 0:
@@ -165,15 +193,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
                 self.uc.log_info("Creation of computational domain canceled!")
                 return
 
-        for l in QgsProject.instance().mapLayers().values():
-            if l.name() == selected_layer_name:
-                selected_layer = l
-                break
-
-        if selected_layer is None:
-            self.uc.bar_error("Selected layer not found.")
-            self.uc.log_info("Selected layer not found.")
-            return
 
         params = {
             "INPUT": selected_layer,
@@ -188,10 +207,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         }
         tmp = processing.run("native:buffer", params)["OUTPUT"]
 
-        bl = self.lyrs.data["user_model_boundary"]["qlyr"]
-        grid_lyr = self.lyrs.data["grid"]["qlyr"]
-        elev_raster = self.elevation_cbo.itemData(self.elevation_cbo.currentIndex())
-        roughness_raster = self.roughness_cbo.itemData(self.roughness_cbo.currentIndex())
+
 
         bl.startEditing()
 
@@ -216,6 +232,9 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         bl.triggerRepaint()
         grid_lyr.triggerRepaint()
 
+        self.uc.show_info("The grid was successfully created.")
+        self.uc.log_info("The grid was successfully created.")
+
     def populate_user_channel(self):
         """
         Function to populate user channel combo box
@@ -236,9 +255,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
                     if geom_type == QgsWkbTypes.LineGeometry:
                         user_layers.append(l)
 
-        items = [f'{i.name()}' for i in user_layers]
-        for s in items:
-            self.user_channel_cb.addItem(s)
+        for s in user_layers:
+            self.user_channel_cb.addItem(s.name(), s.dataProvider().dataSourceUri())
 
     def next_page(self):
         """
@@ -325,6 +343,20 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         dam_volume = self.dam_volume_dsb.value()
         failure_mechanism = self.failure_mechanism_cb.currentIndex()
         baseflow = self.baseflow_dsb.value()
+        buffer = self.buffer_dsb.value()
+
+        if dam_height <= 0:
+            self.uc.log_info("Dam Height must be greater than 0.")
+            self.uc.bar_warn("Dam Height must be greater than 0.")
+            return
+        if dam_volume <= 0:
+            self.uc.log_info("Total Impoundment Volume must be greater than 0.")
+            self.uc.bar_warn("Total Impoundment Volume must be greater than 0.")
+            return
+        if baseflow < 0:
+            self.uc.log_info("Baseflow must be positive or equal to 0.")
+            self.uc.bar_warn("Baseflow must be positive or equal to 0.")
+            return
 
         # if self.gutils.get_cont_par("METRIC") == "1":
         #     g = 9.81  # m/s2
@@ -340,7 +372,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
                 k = 1.0
             ave_breach_width = 0.1803 * k * pow(dam_volume, 0.32) * pow(dam_height, 0.19)
 
-        if self.froehlich_2008_rb.isChecked():
+        elif self.froehlich_2008_rb.isChecked():
             peak_discharge = 0.607 * pow(dam_volume, 0.295) * pow(dam_height, 1.24)
             time_to_peak = 0.0176 * pow((dam_volume / (g * pow(dam_height, 2))), 0.5)
             if failure_mechanism == 0:
@@ -349,12 +381,12 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
                 k = 1.0
             ave_breach_width = 0.27 * k * pow(dam_volume, 0.5)
 
-        if self.mmc_rb.isChecked():
+        elif self.mmc_rb.isChecked():
             peak_discharge = 0.0039042 * pow(dam_volume, 0.8122)
             ave_breach_width = 3 * dam_height
             time_to_peak = 0.011 * ave_breach_width
 
-        if self.analnec_rb.isChecked():
+        elif self.analnec_rb.isChecked():
             peak_discharge_1 = 0.607 * pow(dam_volume, 0.295) * pow(dam_height, 1.24)
             peak_discharge_2 = 0.0039 * pow(dam_volume, 0.8122)
             peak_discharge = max(peak_discharge_1, peak_discharge_2)
@@ -364,6 +396,11 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             else:
                 k = 1.0
             ave_breach_width = 0.1803 * k * pow(dam_volume, 0.32) * pow(dam_height, 0.19)
+
+        else:
+            self.uc.log_info("No breach parameter method selected.")
+            self.uc.bar_warn("No breach parameter method selected.")
+            return
 
         hydrograph_length = 2.0 * dam_volume / peak_discharge / 3600.0  # hours
 
@@ -390,8 +427,13 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         if self.tr66_rb.isChecked():
             self.t_hr, self.Qt = self.tr66_hydrograph(peak_discharge, time_to_peak, dam_volume, T_total, baseflow)
 
-        if self.parabolic_rb.isChecked():
+        elif self.parabolic_rb.isChecked():
             self.t_hr, self.Qt = self.ana_lnec_hydrograph(peak_discharge, time_to_peak, T_total, baseflow)
+
+        else:
+            self.uc.log_info("No hydrograph method selected.")
+            self.uc.bar_warn("No hydrograph method selected.")
+            return
 
         # --------------------------------------------------
         # Compute total volume under the hydrograph
@@ -449,14 +491,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
        Qt : np.ndarray
            Discharge vector (m3/s).
        """
-        if Qp <= 0:
-            raise ValueError("Qp must be > 0.")
-        if Tf <= 0:
-            raise ValueError("Tf must be > 0.")
-        if V <= 0:
-            raise ValueError("V must be > 0.")
-        if dt_hr <= 0:
-            raise ValueError("dt_hr must be > 0.")
 
         # Convert hours to seconds internally to match V/Qp units (m3)/(m3/s) = s
         Tf_s = Tf * 3600.0
