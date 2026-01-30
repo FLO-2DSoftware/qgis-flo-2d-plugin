@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>679</width>
-    <height>543</height>
+    <width>782</width>
+    <height>529</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1787,8 +1787,77 @@
            <layout class="QGridLayout" name="gridLayout_17">
             <item row="1" column="2">
              <widget class="QRadioButton" name="froehlich_2008_rb">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
               <property name="text">
                <string>Froehlich (2008)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QRadioButton" name="froehlich_1995_rb">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Froehlich (1995)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QRadioButton" name="mmc_rb">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>MMC</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QRadioButton" name="analnec_rb">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>ANA-LNEC</string>
               </property>
              </widget>
             </item>
@@ -1808,20 +1877,6 @@
               </property>
               <property name="text">
                <string>Generate</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QRadioButton" name="mmc_rb">
-              <property name="text">
-               <string>MMC</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QRadioButton" name="froehlich_1995_rb">
-              <property name="text">
-               <string>Froehlich (1995)</string>
               </property>
              </widget>
             </item>
@@ -1848,35 +1903,6 @@
               </item>
               <item row="1" column="1">
                <widget class="QLineEdit" name="time_to_peak_le">
-                <property name="maximumSize">
-                 <size>
-                  <width>100</width>
-                  <height>100</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3">
-               <widget class="QLabel" name="label_51">
-                <property name="minimumSize">
-                 <size>
-                  <width>175</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>175</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Average Breach</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QLineEdit" name="peak_discharge_le">
                 <property name="minimumSize">
                  <size>
                   <width>100</width>
@@ -1886,46 +1912,8 @@
                 <property name="maximumSize">
                  <size>
                   <width>100</width>
-                  <height>16777215</height>
+                  <height>150</height>
                  </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_49">
-                <property name="minimumSize">
-                 <size>
-                  <width>175</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>175</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Peak Discharge</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="time_peak_le">
-                <property name="minimumSize">
-                 <size>
-                  <width>175</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>175</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Time to Peak</string>
                 </property>
                </widget>
               </item>
@@ -1955,10 +1943,98 @@
                 </property>
                </spacer>
               </item>
+              <item row="0" column="3">
+               <widget class="QLabel" name="label_51">
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Average Breach</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="peak_discharge_le">
+                <property name="minimumSize">
+                 <size>
+                  <width>100</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>100</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_49">
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Peak Discharge</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="time_peak_le">
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Time to Peak</string>
+                </property>
+               </widget>
+              </item>
               <item row="1" column="3">
                <widget class="QLabel" name="label_54">
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="text">
                  <string>Estimated Hydrograph Length</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1980,20 +2056,6 @@
               </item>
              </layout>
             </item>
-            <item row="2" column="1" colspan="5">
-             <widget class="Line" name="line_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="4">
-             <widget class="QRadioButton" name="analnec_rb">
-              <property name="text">
-               <string>ANA-LNEC</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </widget>
          </item>
@@ -2009,11 +2071,11 @@
             <string>Hidrograph Generation</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_18">
-            <item row="2" column="0" colspan="4">
+            <item row="1" column="0" colspan="10">
              <layout class="QVBoxLayout" name="verticalLayout"/>
             </item>
-            <item row="0" column="2">
-             <spacer name="horizontalSpacer_21">
+            <item row="0" column="8">
+             <spacer name="horizontalSpacer_16">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -2025,14 +2087,7 @@
               </property>
              </spacer>
             </item>
-            <item row="0" column="0">
-             <widget class="QRadioButton" name="tr66_rb">
-              <property name="text">
-               <string>TR66 (1981)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
+            <item row="0" column="9">
              <widget class="QPushButton" name="generate_hydrograph_btn">
               <property name="minimumSize">
                <size>
@@ -2051,17 +2106,61 @@
               </property>
              </widget>
             </item>
+            <item row="0" column="7">
+             <spacer name="horizontalSpacer_21">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
             <item row="0" column="1">
              <widget class="QRadioButton" name="parabolic_rb">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
               <property name="text">
                <string>Parabolic - Barfield (1981)</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="0" colspan="4">
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+            <item row="0" column="2">
+             <widget class="QRadioButton" name="tr66_rb">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>150</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>TR66 (1981)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QRadioButton" name="triangular_rb">
+              <property name="text">
+               <string>Triangular</string>
               </property>
              </widget>
             </item>
@@ -2382,16 +2481,10 @@
   <tabstop>doubleSpinBox_20</tabstop>
   <tabstop>doubleSpinBox_21</tabstop>
   <tabstop>froehlich_1995_rb</tabstop>
-  <tabstop>generate_breach_parameters_btn</tabstop>
   <tabstop>peak_discharge_le</tabstop>
   <tabstop>ave_breach_width_le</tabstop>
   <tabstop>time_to_peak_le</tabstop>
   <tabstop>froehlich_2008_rb</tabstop>
-  <tabstop>mmc_rb</tabstop>
-  <tabstop>analnec_rb</tabstop>
-  <tabstop>tr66_rb</tabstop>
-  <tabstop>parabolic_rb</tabstop>
-  <tabstop>generate_hydrograph_btn</tabstop>
   <tabstop>lineEdit_30</tabstop>
   <tabstop>graphicsView_2</tabstop>
   <tabstop>lineEdit_29</tabstop>

@@ -2,7 +2,7 @@
 import math
 
 import processing
-from PyQt5.QtWidgets import QListWidgetItem
+from PyQt5.QtWidgets import QListWidgetItem, QSizePolicy
 from qgis._core import QgsProject, QgsWkbTypes, QgsVectorLayer, QgsFeature, QgsGeometry
 from qgis.core import QgsMapLayerType
 
@@ -105,6 +105,48 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.populate_user_channel()
         self.populate_user_inflow()
         self.populate_rasters()
+        self.populate_blank_graph()
+
+    def populate_blank_graph(self):
+        """
+        Function to populate a blank graph area
+        """
+        # Clear previous plot
+        while self.verticalLayout.count():
+            item = self.verticalLayout.takeAt(0)
+            w = item.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+
+        fig = Figure(figsize=(6, 3.5), dpi=100)
+        ax = fig.add_subplot(111)
+
+        ax.set_xlabel("Time (hrs)")
+        ax.set_ylabel("Discharge (m³/s)")
+        ax.set_title("")
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.grid(False)
+
+        # Explicit margins for Qt dialogs
+        fig.subplots_adjust(
+            left=0.09,
+            right=0.97,
+            top=0.87,
+            bottom=0.18
+        )
+
+        fig.patch.set_edgecolor("#b0b0b0")
+        fig.patch.set_linewidth(0.8)
+
+        canvas = FigureCanvas(fig)
+        canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        canvas.setMinimumHeight(220)
+
+        self.verticalLayout.addWidget(canvas, stretch=1)
+        canvas.draw()
 
     def populate_rasters(self):
         """
@@ -206,8 +248,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             "OUTPUT": "TEMPORARY_OUTPUT",
         }
         tmp = processing.run("native:buffer", params)["OUTPUT"]
-
-
 
         bl.startEditing()
 
@@ -332,18 +372,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         Function to generate breach parameters based on the selected method.
         """
 
-        peak_discharge = None
-        time_to_peak = None
-        ave_breach_width = None
-        hydrograph_length = None
-        k = None
-        g = 9.81 # TODO AJUSTAR
-
         dam_height = self.dam_height_dsb.value()
         dam_volume = self.dam_volume_dsb.value()
         failure_mechanism = self.failure_mechanism_cb.currentIndex()
         baseflow = self.baseflow_dsb.value()
-        buffer = self.buffer_dsb.value()
 
         if dam_height <= 0:
             self.uc.log_info("Dam Height must be greater than 0.")
@@ -358,10 +390,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Baseflow must be positive or equal to 0.")
             return
 
-        # if self.gutils.get_cont_par("METRIC") == "1":
-        #     g = 9.81  # m/s2
-        # else:
-        #     g = 32.2  # ft/s2
+        if self.gutils.get_cont_par("METRIC") == "1":
+            g = 9.81  # m/s2
+        else:
+            g = 32.2  # ft/s2
 
         if self.froehlich_1995_rb.isChecked():
             peak_discharge = 0.607 * pow(dam_volume, 0.295) * pow(dam_height, 1.24)
@@ -430,6 +462,9 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         elif self.parabolic_rb.isChecked():
             self.t_hr, self.Qt = self.ana_lnec_hydrograph(peak_discharge, time_to_peak, T_total, baseflow)
 
+        elif self.triangular_rb.isChecked():
+            self.t_hr, self.Qt = self.triangular_hydrograph(peak_discharge, time_to_peak, T_total, baseflow)
+
         else:
             self.uc.log_info("No hydrograph method selected.")
             self.uc.bar_warn("No hydrograph method selected.")
@@ -445,27 +480,43 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         ratio = round(total_volume / dam_volume, 2)
         # --------------------------------------------------
 
-        fig = Figure()
+        fig = Figure(figsize=(6, 3.5), dpi=100)
         ax = fig.add_subplot(111)
+
         ax.plot(self.t_hr, self.Qt)
-        ax.set_xlabel('Time (hrs)')
-        ax.set_ylabel('Discharge (m³/s)')
-        ax.set_title(f'Total Volume = {total_volume:,.1f} m³ ({ratio})')
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
+        ax.set_xlabel("Time (hrs)")
+        ax.set_ylabel("Discharge (m³/s)")
+        ax.set_title(f"Total Volume = {total_volume:,.1f} m³ ({ratio})")
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
         ax.grid(False)
 
-        canvas = FigureCanvas(fig)
+        # Explicit margins for Qt dialogs
+        fig.subplots_adjust(
+            left=0.09,
+            right=0.97,
+            top=0.87,
+            bottom=0.18
+        )
 
-        # Clear previous plot and add new one
+        fig.patch.set_edgecolor("#b0b0b0")
+        fig.patch.set_linewidth(0.8)
+
+        canvas = FigureCanvas(fig)
+        canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        canvas.setMinimumHeight(220)
+
+        # Clear previous plot
         while self.verticalLayout.count():
             item = self.verticalLayout.takeAt(0)
             w = item.widget()
-            if w is not None:
+            if w:
                 w.setParent(None)
                 w.deleteLater()
 
-        self.verticalLayout.addWidget(canvas)
+        self.verticalLayout.addWidget(canvas, stretch=1)
+        canvas.draw()
 
     def tr66_hydrograph(self, Qp, Tf, V, T_total, Qbase=0.0, dt_hr = 0.1):
         """
@@ -564,11 +615,20 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         return t_hr, Qt
 
+    def triangular_hydrograph(self, Qp, Tf, T_total, Qbase=0.0):
+        """
+        Triangular hydrograph method.
+        """
+        # Convert hours to seconds internally to match V/Qp units (m3)/(m3/s) = s
+        Tf_s = Tf * 3600.0
+        T_total_s = T_total * 3600.0
 
 
+        Q_ini = Qbase
+        Q_end = Qbase
 
+        Qt = [Q_ini, (Qp + Qbase), Q_end]
+        t_hr = [0.0, Tf, T_total]
 
-
-
-
+        return t_hr, Qt
 
