@@ -4622,8 +4622,6 @@ class Flo2D(object):
         if not uri.startswith("geopackage:"):
             return
 
-        self.con = database_connect(gpkg)
-        self.gutils = GeoPackageUtils(self.con, self.iface)
         try:
             for layer_id in layer_ids:
                 layer = QgsProject.instance().mapLayer(layer_id)

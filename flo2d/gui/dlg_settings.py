@@ -514,6 +514,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.lyrs.load_all_layers(self.gutils)
             self.uc.log_info("{0:.3f} seconds => loading layers".format(time.time() - start_time))
             self.lyrs.zoom_to_all()
+            self.gutils.check_qgis_project()
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gutils.path))
             self.uc.log_info("{} is NOT a GeoPackage!".format(self.gutils.path))

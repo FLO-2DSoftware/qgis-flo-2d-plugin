@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import re
 import shutil
 import zipfile
 import traceback
@@ -402,6 +403,155 @@ class GeoPackageUtils(object):
             self.uc.bar_warn(f"No QGZ file found for project {current_gpkg_name}.")
             return
 
+    def check_qgis_project(self):
+        """
+        Function to check and update the qgis project in a gpkg. This is used everytime a geopackage is open.
+        """
+
+        gpkg_path = self.get_gpkg_path()
+        gpkg_dir = os.path.dirname(gpkg_path)
+        gpkg_name = os.path.splitext(os.path.basename(gpkg_path))[0]
+        current_qgz = os.path.join(gpkg_dir, f"{gpkg_name}.qgz")
+        tmp_qgz = current_qgz + ".tmp"
+
+        # Query to retrieve the content (hexadecimal QGZ data) for the selected project
+        query_content = "SELECT content FROM qgis_projects WHERE name = ?"
+        row = self.execute(query_content, (gpkg_name,)).fetchone()
+
+        if not row or not row[0]:
+            self.uc.log_info(f"No QGZ content found for project {gpkg_name}.")
+            self.uc.bar_error(f"No QGZ content found for project {gpkg_name}.")
+            return
+
+        # Hexadecimal QGZ data
+        qgz_data = row[0]
+
+        # Convert the hex string to bytes
+        try:
+            # Convert hex to bytes
+            qgz_data_bytes = bytes.fromhex(qgz_data)
+        except ValueError as e:
+            self.uc.log_info(f"Error converting QGZ hex to bytes: {e}")
+            self.uc.bar_error(f"Error converting QGZ hex to bytes: {e}")
+            return
+
+        # Save the QGZ file
+        with open(current_qgz, "wb") as qgz_file:
+            qgz_file.write(qgz_data_bytes)
+
+        # Extract the current qgz file to have access to the qgs xml file
+        extract_dir = os.path.join(gpkg_dir, "extracted_project")
+        if not os.path.exists(extract_dir):
+            os.makedirs(extract_dir)
+
+        try:
+            with zipfile.ZipFile(current_qgz, "r") as zip_ref:
+                zip_ref.extractall(extract_dir)
+        except Exception as e:
+            self.uc.log_info(f"Error extracting QGZ: {e}")
+            self.uc.bar_error(f"Error extracting QGZ: {e}")
+            return
+
+        # List all files in the folder and filter for the .qgs file
+        new_qgs_file = None
+        for filename in os.listdir(extract_dir):
+            if filename.endswith(".qgs"):
+                new_qgs_file = os.path.join(extract_dir, filename)
+                break
+
+        if not new_qgs_file:
+            self.uc.log_info(f"Error extracting QGZ: {e}")
+            self.uc.bar_error("No .qgs file found inside extracted QGZ.")
+            return
+
+        # Update the current gpkg data with the new gpkg data
+        with open(new_qgs_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        changed_any = False
+        out_lines = []
+
+        for line in lines:
+            updated_line, changed = self.fix_gpkg_reference_in_line(line, gpkg_path)
+            if changed:
+                changed_any = True
+            out_lines.append(updated_line)
+
+        if changed_any:
+            with open(new_qgs_file, "w", encoding="utf-8") as f:
+                f.writelines(out_lines)
+
+            # 5) Rezip to tmp, then replace
+            with zipfile.ZipFile(tmp_qgz, "w", zipfile.ZIP_DEFLATED) as zip_ref:
+                for root_dir, _, files in os.walk(extract_dir):
+                    for fn in files:
+                        file_path = os.path.join(root_dir, fn)
+                        arcname = os.path.relpath(file_path, extract_dir)
+                        zip_ref.write(file_path, arcname)
+
+            os.replace(tmp_qgz, current_qgz)
+
+            # 6) Write back to DB (content only)
+            with open(current_qgz, "rb") as f:
+                new_hex = f.read().hex()
+
+            query_update = "UPDATE qgis_projects SET content = ? WHERE name = ?"
+            self.execute(query_update, (new_hex, gpkg_name))
+            self.con.commit()
+
+            self.uc.log_info("QGZ references updated to match the opened GeoPackage.")
+
+        # 7) Cleanup
+        try:
+            shutil.rmtree(extract_dir)
+            os.remove(current_qgz)
+            if os.path.exists(tmp_qgz):
+                os.remove(tmp_qgz)
+        except OSError:
+            pass
+
+    def fix_gpkg_reference_in_line(self, line, opened_gpkg_path):
+        """
+        Returns (updated_line, changed_bool)
+
+        Strategy:
+          - If the line contains an explicit FLO-2D <gpkg>...</gpkg>, overwrite the content with opened_gpkg_path.
+          - If the line contains a .gpkg path in a datasource-like string, replace only the path portion ending in .gpkg
+            when the filename matches opened_gpkg_name (so we do not rewrite other geopackages).
+        """
+        opened_gpkg_path_n = os.path.normpath(opened_gpkg_path).replace("\\", "/")
+        opened_gpkg_file = os.path.basename(opened_gpkg_path_n).lower()
+
+        # 1) FLO-2D gpkg tag, direct and safe
+        if "<gpkg" in line and ".gpkg" in line and "</gpkg>" in line:
+            # Replace the text between > and </gpkg>
+            updated = re.sub(
+                r"(<gpkg[^>]*>)(.*?\.gpkg)(</gpkg>)",
+                rf"\1{opened_gpkg_path_n}\3",
+                line,
+                flags=re.IGNORECASE,
+            )
+            return updated, (updated != line)
+
+        # 2) Generic .gpkg path inside the line (datasource, custom properties, etc.)
+        if ".gpkg" not in line.lower():
+            return line, False
+
+        # Find a .gpkg path candidate. This is conservative: stops at .gpkg and does not eat layername parameters.
+        m = re.search(r"([A-Za-z]:[/\\].*?\.gpkg)", line, flags=re.IGNORECASE)
+        if not m:
+            return line, False
+
+        old_path = m.group(1)
+        old_path_n = os.path.normpath(old_path).replace("\\", "/")
+        old_file = os.path.basename(old_path_n).lower()
+
+        # Only fix if it's the same filename as the opened gpkg (user moved folders)
+        if old_file == opened_gpkg_file and old_path_n != opened_gpkg_path_n:
+            updated = line.replace(old_path, opened_gpkg_path_n)
+            return updated, True
+
+        return line, False
 
     def copy_from_other(self, other_gpkg):
         """
