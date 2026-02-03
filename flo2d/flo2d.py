@@ -3204,6 +3204,8 @@ class Flo2D(object):
 
             self.lyrs.refresh_layers()
 
+            self.f2d_widget.storm_drain_editor.populate_profile_plot()
+
             self.uc.bar_info("Import from INP completed! Check log messages for more information. ")
             self.uc.log_info("Import from INP completed!")
 
