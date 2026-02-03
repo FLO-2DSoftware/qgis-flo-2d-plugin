@@ -2830,8 +2830,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ]
         chan_n_sql = ["""INSERT OR IGNORE INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""", 3]
         chan_wsel_sql = [
-            """INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES""",
-            4,
+            """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES""",
+            5,
         ]
         chan_conf_sql = [
             """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
@@ -2893,8 +2893,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 geom = self.build_linestring(gids)
                 chan_sql += [(geom,) + tuple(options + [bLine])]
 
-            for row in wsel:
-                chan_wsel_sql += [tuple(row)]
+                for row in wsel[:]:
+                    if row[0] in gids and row[2] in gids:
+                        row_with_i = [i] + row
+                        chan_wsel_sql += [(tuple(row_with_i))]
+                        wsel.remove(row)
 
             for i, row in enumerate(confluence, 1):
                 gid1, gid2 = row[1], row[2]
@@ -2964,10 +2967,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 options = seg[:-1]
                 geom = self.build_linestring(gids)
                 chan_sql += [(geom,) + tuple(options + [bLine])]
-                i += 1
 
-            for row in wsel:
-                chan_wsel_sql += [tuple(row)]
+                for row in wsel[:]:
+                    if row[0] in gids and row[2] in gids:
+                        row_with_i = [i] + row
+                        chan_wsel_sql += [(tuple(row_with_i))]
+                        wsel.remove(row)
+
+                i += 1
 
             # Confluences
             con_fid = self.execute("SELECT MAX(fid) FROM chan_confluences;").fetchone()
@@ -11667,7 +11674,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty("chan"):
             return False
 
-        chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
+        chan_wsel_sql = """SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
         chan_conf_sql = """SELECT conf_fid, type, chan_elem_fid FROM chan_confluences ORDER BY fid;"""
 
         if not subdomain:

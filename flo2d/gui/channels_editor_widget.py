@@ -155,24 +155,50 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         #         return
 
     def fill_starting_and_ending_water_elevations(self):
-        sql_in = """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES (?,?,?,?,?);"""
-        sql_out = """DELETE from chan_wsel WHERE seg_fid = ?;"""
+        sql_exists = "SELECT 1 FROM chan_wsel WHERE seg_fid = ?;"
+        sql_insert = """
+            INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend)
+            VALUES (?, ?, ?, ?, ?);
+        """
+        sql_update = """
+            UPDATE chan_wsel
+            SET istart = ?, wselstart = ?, iend = ?, wselend = ?
+            WHERE seg_fid = ?;
+        """
+        sql_delete = "DELETE FROM chan_wsel WHERE seg_fid = ?;"
+
         idx = self.channel_segment_cbo.currentIndex() + 1
+
         if self.initial_flow_elements_grp.isChecked():
             self.initial_flow_for_all_dbox.setEnabled(False)
-            self.gutils.execute(
-                sql_in,
-                (
-                    idx,
-                    self.first_element_box.value(),
-                    self.starting_water_elev_dbox.value(),
-                    self.last_element_box.value(),
-                    self.ending_water_elev_dbox.value(),
-                ),
-            )
+
+            exists = self.gutils.execute(sql_exists, (idx,)).fetchone()
+
+            if exists:
+                self.gutils.execute(
+                    sql_update,
+                    (
+                        self.first_element_box.value(),
+                        self.starting_water_elev_dbox.value(),
+                        self.last_element_box.value(),
+                        self.ending_water_elev_dbox.value(),
+                        idx,
+                    ),
+                )
+            else:
+                self.gutils.execute(
+                    sql_insert,
+                    (
+                        idx,
+                        self.first_element_box.value(),
+                        self.starting_water_elev_dbox.value(),
+                        self.last_element_box.value(),
+                        self.ending_water_elev_dbox.value(),
+                    ),
+                )
         else:
             self.initial_flow_for_all_dbox.setEnabled(True)
-            self.gutils.execute(sql_out, (idx,))
+            self.gutils.execute(sql_delete, (idx,))
 
     def update_transport_eq(self):
         qry = """UPDATE chan SET isedn = ? WHERE fid = ?;"""
