@@ -107,6 +107,9 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.populate_rasters()
         self.populate_blank_graph()
 
+        if self.tailings_group.isChecked():
+            self.populate_tailings_breach_volume()
+
     def populate_blank_graph(self):
         """
         Function to populate a blank graph area
@@ -297,6 +300,54 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         for s in user_layers:
             self.user_channel_cb.addItem(s.name(), s.dataProvider().dataSourceUri())
+
+    def populate_tailings_breach_volume(self):
+        """
+        Function to calculate breach parameters for tailings dams.
+        """
+        dam_height = self.dam_height_2_dsb.value()
+        tot_imp_vol = self.tot_imp_vol_dsb.value()
+        imp_tal_vol = self.imp_tal_vol_dsb.value()
+
+        if dam_height <= 0:
+            self.uc.log_info("Dam Height must be greater than 0.")
+            self.uc.bar_warn("Dam Height must be greater than 0.")
+            return
+
+        if tot_imp_vol <= 0:
+            self.uc.log_info("Total Impoundment Volume must be greater than 0.")
+            self.uc.bar_warn("Total Impoundment Volume must be greater than 0.")
+            return
+
+        if imp_tal_vol < 0:
+            self.uc.log_info("Impounded Tailings Volume must be positive.")
+            self.uc.bar_warn("Impounded Tailings Volume must be positive.")
+            return
+
+        if self.gutils.get_cont_par("METRIC") == "1":
+            m3_to_cy = 1.30795
+            g = 9.81  # m/s2
+        else:
+            m3_to_cy = 1
+            g = 32.2  # ft/s2
+
+        Vrmin = min(1052 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
+        Vrave = min(3604 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
+        Vrmax = min(20419 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
+
+        self.vrmin_le.setText(str(int(Vrmin)))
+        self.vrave_le.setText(str(int(Vrave)))
+        self.vrmax_le.setText(str(int(Vrmax)))
+
+        larrauri = min(0.332 * (tot_imp_vol / 1000000) ** 0.95, 0.95 * imp_tal_vol)
+        rico = min(0.354 * (tot_imp_vol/ 1000000) ** 1.01, 0.95 * imp_tal_vol)
+        piciullo1 = min(0.214 * (tot_imp_vol/ 1000000) ** 0.35, 0.95 * imp_tal_vol)
+        piciullo2 = min((10 ** 0.33) * (tot_imp_vol ** 0.611) * (dam_height ** 0.994), 0.95 * imp_tal_vol)
+
+        self.larrauri_dsb.setText(str(int(larrauri * 1000000)))
+        self.rico_dsb.setText(str(int(rico * 1000000)))
+        self.piciullo1_dsb.setText(str(int(piciullo1 * 1000000)))
+        self.piciullo2_dsb.setText(str(int(piciullo2)))
 
     def next_page(self):
         """
@@ -622,7 +673,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         # Convert hours to seconds internally to match V/Qp units (m3)/(m3/s) = s
         Tf_s = Tf * 3600.0
         T_total_s = T_total * 3600.0
-
 
         Q_ini = Qbase
         Q_end = Qbase
