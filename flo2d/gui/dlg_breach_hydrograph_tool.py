@@ -331,6 +331,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             m3_to_cy = 1
             g = 32.2  # ft/s2
 
+        # Estimate the volumes
+
         Vrmin = min(1052 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
         Vrave = min(3604 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
         Vrmax = min(20419 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
@@ -348,6 +350,12 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.rico_dsb.setText(str(int(rico * 1000000)))
         self.piciullo1_dsb.setText(str(int(piciullo1 * 1000000)))
         self.piciullo2_dsb.setText(str(int(piciullo2)))
+
+        # Hydrologic parameters
+
+        available_storage = tot_imp_vol - imp_tal_vol  # m³
+        self.available_storage_dsb.setValue(int(available_storage))
+
 
     def next_page(self):
         """
