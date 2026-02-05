@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
-import traceback
-
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QApplication
-# -*- coding: utf-8 -*-
-
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -15,6 +8,8 @@ from qgis.PyQt.QtWidgets import QApplication
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+
+import os
 from qgis.gui import QgsFileWidget
 
 from .ui_utils import load_ui
@@ -23,10 +18,9 @@ from .ui_utils import load_ui
 uiDialog, qtBaseClass = load_ui("rgh")
 
 
-class SamplingRGHDialog(qtBaseClass, uiDialog):
+class RGHDialog(qtBaseClass, uiDialog):
     """
     Dialog that loads rgh.ui and updates grid.n_value using MANNINGS_N.RGH.
-    groupBox is checkable and controls enabling of QgsFileWidget.
     """
 
     def __init__(self, con, iface, lyrs, parent=None):
@@ -43,7 +37,7 @@ class SamplingRGHDialog(qtBaseClass, uiDialog):
 
         # configure file widget
         self.fw.setStorageMode(QgsFileWidget.GetFile)
-        self.fw.setFilter("RGH files (*.RGH *.rgh);;All files (*.*)")
+        self.fw.setFilter("MANNINGS_N.RGH")
 
         # initial state
         self.gb.setChecked(False)
@@ -56,4 +50,14 @@ class SamplingRGHDialog(qtBaseClass, uiDialog):
         return self.gb.isChecked()
 
     def rgh_path(self):
-        return self.fw.filePath()
+        path = self.fw.filePath()
+        if not path:
+            return ""
+
+        filename = os.path.basename(path)
+        if filename.lower() != "mannings_n.rgh":
+            self.uc.bar_warn("Invalid file. The file must be MANNINGS_N.RGH.")
+            self.uc.log_info("Invalid file. The file must be MANNINGS_N.RGH.")
+            return ""
+
+        return path
