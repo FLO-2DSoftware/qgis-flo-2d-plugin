@@ -38,12 +38,12 @@
      <property name="checked">
       <bool>false</bool>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
-        <x>40</x>
+        <x>10</x>
         <y>30</y>
-        <width>461</width>
+        <width>491</width>
         <height>26</height>
        </rect>
       </property>
