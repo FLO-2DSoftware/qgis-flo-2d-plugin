@@ -2545,6 +2545,7 @@ class Flo2D(object):
             "STREET.DAT": "import_street",
             "ARF.DAT": "import_arf",
             "MULT.DAT": "import_mult",
+            "SIMPLE_MULT.DAT": "import_mult",
             "SED.DAT": "import_sed",
             "LEVEE.DAT": "import_levee",
             "FPXSEC.DAT": "import_fpxsec",
@@ -3208,6 +3209,8 @@ class Flo2D(object):
                     self.f2g.import_swmminp(swmm_file=fname)
 
             self.lyrs.refresh_layers()
+
+            self.f2d_widget.storm_drain_editor.populate_profile_plot()
 
             self.uc.bar_info("Import from INP completed! Check log messages for more information. ")
             self.uc.log_info("Import from INP completed!")
@@ -4645,8 +4648,6 @@ class Flo2D(object):
         if not uri.startswith("geopackage:"):
             return
 
-        self.con = database_connect(gpkg)
-        self.gutils = GeoPackageUtils(self.con, self.iface)
         try:
             for layer_id in layer_ids:
                 layer = QgsProject.instance().mapLayer(layer_id)
