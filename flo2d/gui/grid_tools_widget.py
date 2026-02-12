@@ -1765,21 +1765,26 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         """
         Function to get the data from hdf5 using numpy arrays.
         """
-        file = h5py.File(hdf5_file)
 
-        time_series = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Times'])
-        time_series = time_series.flatten()
+        with h5py.File(hdf5_file, "r") as f:
 
-        flow_depth = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Values'])
-        flow_depth = flow_depth[:, grid_element - 1].flatten()
+            if "/TIMDEP NETCDF OUTPUT RESULTS" in f:
+                base = "/TIMDEP NETCDF OUTPUT RESULTS"
+            elif "/TIMDEP OUTPUT RESULTS" in f:
+                base = "/TIMDEP OUTPUT RESULTS"
+            else:
+                self.uc.log_info("No recognized TIMDEP output group found in HDF5 file.")
+                self.uc.bar_warn("No recognized TIMDEP output group found in HDF5 file.")
+                return None
 
-        wse = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/Floodplain Water Surface Elevation/Values'])
-        wse = wse[:, grid_element - 1].flatten()
+            time_series = np.array(f[f"{base}/FLOW DEPTH/Times"]).flatten()
 
-        velocity = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/Velocity MAG/Values'])
-        velocity = velocity[:, grid_element - 1].flatten()
+            flow_depth = np.array(f[f"{base}/FLOW DEPTH/Values"][:, grid_element - 1]).flatten()
 
-        # Combine arrays into a structured numpy array
+            wse = np.array(f[f"{base}/Floodplain Water Surface Elevation/Values"][:, grid_element - 1]).flatten()
+
+            velocity = np.array(f[f"{base}/Velocity MAG/Values"][:, grid_element - 1]).flatten()
+
         data = np.core.records.fromarrays([time_series, flow_depth, velocity, wse],
                                           names='Time, Depth, Velocity, Water_Surface_Elevation')
 
