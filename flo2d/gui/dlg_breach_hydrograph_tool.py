@@ -63,6 +63,39 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.populate_information()
         self.stackedWidget.currentChanged.connect(self.populate_information)
 
+        self.input_flood_volume_dsb.valueChanged.connect(self.check_hydrologic_failure)
+        self.spillway_chbox.stateChanged.connect(self.check_hydrologic_failure)
+        self.max_allow_head_dsb.valueChanged.connect(self.check_hydrologic_failure)
+        self.pmf_wse_dsb.valueChanged.connect(self.check_hydrologic_failure)
+
+        self.reservoir_lvl_cbo.currentIndexChanged.connect(self.check_static_failure)
+
+        self.slope_lvl_table = {
+            (0, 0): (-0.0048, 0.140),
+            (1, 0): (-0.0041, 0.140),
+            (2, 0): (-0.0034, 0.140),
+
+            (0, 1): (-0.0051, 0.120),
+            (1, 1): (-0.0042, 0.120),
+            (2, 1): (-0.0033, 0.120),
+
+            (0, 2): (-0.0055, 0.110),
+            (1, 2): (-0.0043, 0.110),
+            (2, 2): (-0.0032, 0.110),
+
+            (0, 3): (-0.0061, 0.100),
+            (1, 3): (-0.0046, 0.100),
+            (2, 3): (-0.0031, 0.100),
+
+            (0, 4): (-0.0062, 0.090),
+            (1, 4): (-0.0047, 0.090),
+            (2, 4): (-0.0031, 0.090),
+
+            (0, 5): (-0.0065, 0.085),
+            (1, 5): (-0.0048, 0.085),
+            (2, 5): (-0.0031, 0.085),
+        }
+
     def add_ts_to_inflow(self):
         """
         Function to add time series to selected inflow
@@ -309,6 +342,14 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         tot_imp_vol = self.tot_imp_vol_dsb.value()
         imp_tal_vol = self.imp_tal_vol_dsb.value()
 
+        # hydrologic parameters
+        available_storage = tot_imp_vol - imp_tal_vol  # m³
+        self.available_storage_le.setText(str(available_storage))
+
+        # static parameters
+        cohesion_dam_material = self.cohesion_dam_material_dsb.value()
+        unit_weight_dam =  self.unit_weight_dam_dsb.value()
+
         if dam_height <= 0:
             self.uc.log_info("Dam Height must be greater than 0.")
             self.uc.bar_warn("Dam Height must be greater than 0.")
@@ -324,6 +365,11 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Impounded Tailings Volume must be positive.")
             return
 
+        if unit_weight_dam <= 0:
+            self.uc.log_info("Unit Weight of Dam Material must be positive and greater than 0.")
+            self.uc.bar_warn("Unit Weight of Dam Material must be positive and greater than 0.")
+            return
+
         if self.gutils.get_cont_par("METRIC") == "1":
             m3_to_cy = 1.30795
             g = 9.81  # m/s2
@@ -331,8 +377,20 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             m3_to_cy = 1
             g = 32.2  # ft/s2
 
-        # Estimate the volumes
+        cydamh = cohesion_dam_material / (unit_weight_dam * dam_height)
+        self.cydamh_le.setText(str(round(cydamh, 4)))
 
+        friction_angle_dam_material = self.friction_angle_dam_material_dsb.value()
+        reservoir_lvl = self.reservoir_lvl_cbo.currentIndex()
+        tailings_dam_slope = self.tailings_dam_slope_cbo.currentIndex()
+
+        slope, level = self.slope_lvl_table[(reservoir_lvl, tailings_dam_slope)]
+
+        slope_failure = slope * friction_angle_dam_material + level
+
+        self.slope_failure_le.setText(str(round(slope_failure, 4)))
+
+        # Estimate the volumes
         Vrmin = min(1052 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
         Vrave = min(3604 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
         Vrmax = min(20419 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
@@ -351,11 +409,61 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.piciullo1_dsb.setText(str(int(piciullo1 * 1000000)))
         self.piciullo2_dsb.setText(str(int(piciullo2)))
 
-        # Hydrologic parameters
 
-        available_storage = tot_imp_vol - imp_tal_vol  # m³
-        self.available_storage_dsb.setValue(int(available_storage))
 
+        # Hydrologic Failure Check
+        self.check_hydrologic_failure()
+
+        # Static Failure Check
+        self.check_static_failure()
+
+    def check_static_failure(self):
+        """
+        Function to check for static failure of tailings dams.
+        """
+        foundation_soil = self.soil_bellow_base_cbo.currentIndex()
+        spt_count = self.spt_count_sb.value()
+        cydamh = float(self.cydamh_le.text())
+        slope_failure = float(self.slope_failure_le.text())
+
+        breach_type = "No Breach"
+
+        if foundation_soil == 0:  # Granular
+            if spt_count < 10:
+                breach_type = "Dam Breach by Foundation Failure"
+        elif foundation_soil == 1: # Cohesive
+            if spt_count < 8:
+                breach_type = "Dam Breach by Foundation Failure"
+
+        if cydamh < slope_failure:
+            breach_type = "Dam Breach by Slope Instability"
+
+        self.static_breach_type_lbl.setText(breach_type)
+
+
+    def check_hydrologic_failure(self):
+        """
+        Function to check for hydrologic failure of tailings dams.
+        """
+
+        tot_imp_vol = self.tot_imp_vol_dsb.value()
+        imp_tal_vol = self.imp_tal_vol_dsb.value()
+        available_storage = tot_imp_vol - imp_tal_vol
+        input_flood_volume = self.input_flood_volume_dsb.value()
+        spillway = self.spillway_chbox.isChecked()
+        max_allow_head = self.max_allow_head_dsb.value()
+        pmf_wse = self.pmf_wse_dsb.value()
+
+        breach_type = "No Breach"
+
+        if input_flood_volume > available_storage:
+            if spillway:
+                if pmf_wse > max_allow_head:
+                    breach_type = "Dam Breach by Erosion"
+            else:
+                breach_type = "Dam Breach"
+
+        self.hyd_breach_type_lbl.setText(str(breach_type))
 
     def next_page(self):
         """
