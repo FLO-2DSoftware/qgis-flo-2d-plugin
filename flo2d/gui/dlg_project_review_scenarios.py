@@ -528,26 +528,36 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 with h5py.File(processed_results_file, read_type) as hdf:
                     time_dependent = hdf.create_group(f"Scenario {i + 1}/Time Dependent")
                     with h5py.File(timdep_file, "r") as timdep_hdf:
-                        time_series = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Times'])
+
+                        if "/TIMDEP NETCDF OUTPUT RESULTS" in timdep_hdf:
+                            base = "/TIMDEP NETCDF OUTPUT RESULTS"
+                        elif "/TIMDEP OUTPUT RESULTS" in timdep_hdf:
+                            base = "/TIMDEP OUTPUT RESULTS"
+                        else:
+                            self.uc.log_info("No recognized TIMDEP output group found in HDF5 file.")
+                            self.uc.bar_warn("No recognized TIMDEP output group found in HDF5 file.")
+                            return None
+
+                        time_series = np.array(timdep_hdf[f'{base}/FLOW DEPTH/Times'])
                         time_series = time_series.flatten()
                         time_dependent.create_dataset("Time Series",
                                 data=time_series,
                                 compression="gzip",
                                 compression_opts=9)
 
-                        flow_depth = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Values'])
+                        flow_depth = np.array(timdep_hdf[f'{base}/FLOW DEPTH/Values'])
                         time_dependent.create_dataset("Depth",
                                 data=flow_depth,
                                 compression="gzip",
                                 compression_opts=9)
 
-                        wse = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/Floodplain Water Surface Elevation/Values'])
+                        wse = np.array(timdep_hdf[f'{base}/Floodplain Water Surface Elevation/Values'])
                         time_dependent.create_dataset("WSE",
                                                    data=wse,
                                                    compression="gzip",
                                                    compression_opts=9)
 
-                        velocity = np.array(timdep_hdf['/TIMDEP NETCDF OUTPUT RESULTS/Velocity MAG/Values'])
+                        velocity = np.array(timdep_hdf[f'{base}/Velocity MAG/Values'])
                         time_dependent.create_dataset("Velocity",
                                                    data=velocity,
                                                    compression="gzip",
