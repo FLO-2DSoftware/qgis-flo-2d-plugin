@@ -13,8 +13,24 @@
     <height>624</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>100</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>782</width>
+    <height>16777215</height>
+   </size>
+  </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Breach Hydrograph Tool</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../img/breach_hydrograph_tool.png</normaloff>../img/breach_hydrograph_tool.png</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="2" column="0">
@@ -71,22 +87,206 @@
      </property>
      <widget class="QWidget" name="page_0">
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0" colspan="4">
+       <item row="0" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_3">
-         <item row="0" column="0" colspan="3">
-          <widget class="QLabel" name="label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+         <item row="0" column="0" colspan="2">
+          <widget class="QGroupBox" name="groupBox_11">
+           <property name="title">
+            <string>Computational Domain</string>
            </property>
-           <property name="text">
-            <string>Parameters</string>
-           </property>
+           <layout class="QGridLayout" name="gridLayout_23">
+            <item row="1" column="3">
+             <widget class="QLabel" name="label_56">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>185</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Roughness</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <spacer name="horizontalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="user_channel_cb">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>125</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_50">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>185</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Buffer</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QComboBox" name="elevation_cbo">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>125</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QLabel" name="label_55">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>185</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Elevation</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="buffer_dsb">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>125</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="maximum">
+               <double>9999999.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_24">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>185</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Centerline</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QComboBox" name="roughness_cbo">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>125</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="4">
+             <widget class="QPushButton" name="create_cd_btn">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>125</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Create Com. Dom.</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
-         <item row="2" column="0" colspan="3">
+         <item row="2" column="0" colspan="2">
           <widget class="QGroupBox" name="tailings_group">
            <property name="enabled">
             <bool>true</bool>
@@ -231,9 +431,35 @@
                </spacer>
               </item>
               <item>
+               <widget class="QToolButton" name="open_tailings_data_btn">
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../img/mActionOpenFile.svg</normaloff>../img/mActionOpenFile.svg</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="save_tailings_data">
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QToolButton" name="toolButton">
                 <property name="text">
                  <string>?</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../img/help.svg</normaloff>../img/help.svg</iconset>
                 </property>
                </widget>
               </item>
@@ -623,10 +849,101 @@
               </property>
              </widget>
             </item>
+            <item row="1" column="2">
+             <spacer name="horizontalSpacer_28">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="2" column="2">
+             <spacer name="horizontalSpacer_29">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="3" column="2">
+             <spacer name="horizontalSpacer_30">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="4" column="2">
+             <spacer name="horizontalSpacer_31">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="5" column="2">
+             <spacer name="horizontalSpacer_32">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="6" column="2">
+             <spacer name="horizontalSpacer_33">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="7" column="2">
+             <spacer name="horizontalSpacer_34">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </widget>
          </item>
-         <item row="1" column="0" colspan="3">
+         <item row="1" column="0" colspan="2">
           <widget class="QGroupBox" name="water_group">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -647,52 +964,6 @@
             <bool>false</bool>
            </property>
            <layout class="QGridLayout" name="gridLayout_9">
-            <item row="3" column="1">
-             <widget class="QDoubleSpinBox" name="baseflow_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="3">
-             <widget class="QLabel" name="label_56">
-              <property name="text">
-               <string>Roughness</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
-             <spacer name="horizontalSpacer_9">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="2" column="3">
-             <widget class="QLabel" name="label_55">
-              <property name="text">
-               <string>Elevation</string>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="dam_height_dsb">
               <property name="minimumSize">
@@ -712,87 +983,6 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="4">
-             <widget class="QComboBox" name="user_channel_cb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="2">
-             <spacer name="horizontalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="1" column="3">
-             <widget class="QLabel" name="label_50">
-              <property name="text">
-               <string>Buffer</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="4">
-             <widget class="QDoubleSpinBox" name="buffer_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>9999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QComboBox" name="failure_mechanism_cb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <item>
-               <property name="text">
-                <string>Overtopping</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Piping</string>
-               </property>
-              </item>
-             </widget>
-            </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label_21">
               <property name="minimumSize">
@@ -809,20 +999,6 @@
               </property>
               <property name="text">
                <string>Dam Height</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_52">
-              <property name="text">
-               <string>Baseflow</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
-             <widget class="QLabel" name="label_24">
-              <property name="text">
-               <string>Centerline</string>
               </property>
              </widget>
             </item>
@@ -877,7 +1053,20 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="3">
              <widget class="QLabel" name="label_23">
               <property name="minimumSize">
                <size>
@@ -896,21 +1085,8 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <spacer name="horizontalSpacer_4">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="4" column="4">
-             <widget class="QPushButton" name="create_cd_btn">
+            <item row="0" column="4">
+             <widget class="QComboBox" name="failure_mechanism_cb">
               <property name="minimumSize">
                <size>
                 <width>125</width>
@@ -923,13 +1099,27 @@
                 <height>16777215</height>
                </size>
               </property>
+              <item>
+               <property name="text">
+                <string>Overtopping</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Piping</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QLabel" name="label_52">
               <property name="text">
-               <string>Create Com. Dom.</string>
+               <string>Baseflow</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="4">
-             <widget class="QComboBox" name="elevation_cbo">
+            <item row="1" column="4">
+             <widget class="QDoubleSpinBox" name="baseflow_dsb">
               <property name="minimumSize">
                <size>
                 <width>125</width>
@@ -942,21 +1132,8 @@
                 <height>16777215</height>
                </size>
               </property>
-             </widget>
-            </item>
-            <item row="3" column="4">
-             <widget class="QComboBox" name="roughness_cbo">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -965,7 +1142,7 @@
          </item>
         </layout>
        </item>
-       <item row="1" column="0" colspan="4">
+       <item row="1" column="0" colspan="2">
         <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1263,7 +1440,7 @@
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QLineEdit" name="lineEdit_5">
+             <widget class="QLineEdit" name="user_volume_le">
               <property name="minimumSize">
                <size>
                 <width>100</width>
@@ -1362,7 +1539,7 @@
            </property>
            <layout class="QGridLayout" name="gridLayout_21">
             <item row="0" column="0">
-             <widget class="QGroupBox" name="groupBox_3">
+             <widget class="QGroupBox" name="hydrologic_grp">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                 <horstretch>0</horstretch>
@@ -1576,6 +1753,18 @@
                </item>
                <item row="2" column="4">
                 <widget class="QLabel" name="hyd_breach_type_lbl">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
                    <weight>75</weight>
@@ -1623,7 +1812,7 @@
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QGroupBox" name="groupBox_4">
+             <widget class="QGroupBox" name="static_grp">
               <property name="enabled">
                <bool>true</bool>
               </property>
@@ -1791,6 +1980,18 @@
                </item>
                <item row="2" column="4">
                 <widget class="QLabel" name="static_breach_type_lbl">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
                    <weight>75</weight>
@@ -1824,7 +2025,7 @@
                <item row="0" column="1">
                 <widget class="QComboBox" name="reservoir_lvl_cbo">
                  <property name="enabled">
-                  <bool>false</bool>
+                  <bool>true</bool>
                  </property>
                  <property name="minimumSize">
                   <size>
@@ -1882,7 +2083,7 @@
              </widget>
             </item>
             <item row="2" column="0">
-             <widget class="QGroupBox" name="groupBox_5">
+             <widget class="QGroupBox" name="seismic_grp">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                 <horstretch>0</horstretch>
@@ -1899,88 +2100,35 @@
                <bool>false</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout_12">
-               <item row="3" column="1">
-                <widget class="QDoubleSpinBox" name="doubleSpinBox_24">
+               <item row="1" column="2">
+                <spacer name="horizontalSpacer_25">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_27">
                  <property name="minimumSize">
                   <size>
-                   <width>100</width>
+                   <width>185</width>
                    <height>0</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>185</width>
                    <height>16777215</height>
                   </size>
-                 </property>
-                 <property name="maximum">
-                  <double>99999999.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QDoubleSpinBox" name="doubleSpinBox_23">
-                 <property name="minimumSize">
-                  <size>
-                   <width>100</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>100</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="maximum">
-                  <double>99999999.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QDoubleSpinBox" name="doubleSpinBox_22">
-                 <property name="minimumSize">
-                  <size>
-                   <width>100</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>100</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="maximum">
-                  <double>99999999.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="4" colspan="3">
-                <layout class="QHBoxLayout" name="horizontalLayout_2">
-                 <item>
-                  <widget class="QRadioButton" name="radioButton_2">
-                   <property name="text">
-                    <string>Drop</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="radioButton">
-                   <property name="text">
-                    <string>Automatic</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item row="2" column="1">
-                <widget class="QCheckBox" name="checkBox_2">
-                 <property name="layoutDirection">
-                  <enum>Qt::LeftToRight</enum>
                  </property>
                  <property name="text">
-                  <string/>
+                  <string>Earthquake Magnitude</string>
                  </property>
                 </widget>
                </item>
@@ -1997,8 +2145,37 @@
                  </property>
                 </spacer>
                </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label_35">
+                 <property name="minimumSize">
+                  <size>
+                   <width>185</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>185</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Depth to Layer from Crest of Dam</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QCheckBox" name="soft_lyr_chbox">
+                 <property name="layoutDirection">
+                  <enum>Qt::LeftToRight</enum>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
                <item row="1" column="0">
-                <widget class="QLabel" name="label_34">
+                <widget class="QLabel" name="peak_ground_acc_lbl">
                  <property name="minimumSize">
                   <size>
                    <width>185</width>
@@ -2016,8 +2193,43 @@
                  </property>
                 </widget>
                </item>
-               <item row="4" column="2">
-                <spacer name="horizontalSpacer_15">
+               <item row="0" column="1">
+                <widget class="QDoubleSpinBox" name="eq_mag_dsb">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="maximum">
+                  <double>99999999.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="2">
+                <spacer name="horizontalSpacer_6">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Expanding</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="3" column="2">
+                <spacer name="horizontalSpacer_14">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
@@ -2048,8 +2260,59 @@
                  </property>
                 </widget>
                </item>
+               <item row="1" column="1">
+                <widget class="QDoubleSpinBox" name="peak_ground_acc_dsb">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="maximum">
+                  <double>99999999.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="2">
+                <spacer name="horizontalSpacer_15">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="3" column="1">
+                <widget class="QDoubleSpinBox" name="depth_to_layer_dsb">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="maximum">
+                  <double>99999999.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
                <item row="4" column="1">
-                <widget class="QDoubleSpinBox" name="doubleSpinBox_25">
+                <widget class="QDoubleSpinBox" name="blow_continuous_dsb">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -2089,125 +2352,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_27">
-                 <property name="minimumSize">
-                  <size>
-                   <width>185</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>185</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Earthquake Magniture</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="2">
-                <spacer name="horizontalSpacer_6">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Expanding</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="3" column="0">
-                <widget class="QLabel" name="label_35">
-                 <property name="minimumSize">
-                  <size>
-                   <width>185</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>185</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Depth to Layer from Crest of Dam</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="2">
-                <spacer name="horizontalSpacer_14">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="0" column="3">
-                <widget class="QLabel" name="label_40">
-                 <property name="minimumSize">
-                  <size>
-                   <width>185</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>185</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Hammer Type</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="3">
-                <widget class="QLabel" name="label_68">
-                 <property name="minimumSize">
-                  <size>
-                   <width>185</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>185</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Breach Type</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="4" colspan="3">
-                <widget class="QLabel" name="label_69">
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>---</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="3">
+               <item row="2" column="3">
                 <widget class="QLabel" name="label_37">
                  <property name="minimumSize">
                   <size>
@@ -2224,10 +2369,13 @@
                  <property name="text">
                   <string>Fines Content of Continuous Layer</string>
                  </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
                 </widget>
                </item>
-               <item row="1" column="6">
-                <widget class="QComboBox" name="comboBox_8">
+               <item row="2" column="5">
+                <widget class="QComboBox" name="fine_content_cbo">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -2273,18 +2421,97 @@
                  </item>
                 </widget>
                </item>
-               <item row="1" column="2">
-                <spacer name="horizontalSpacer_25">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
+               <item row="1" column="5">
+                <widget class="QRadioButton" name="automatic_rb">
+                 <property name="minimumSize">
                   <size>
-                   <width>40</width>
-                   <height>20</height>
+                   <width>100</width>
+                   <height>0</height>
                   </size>
                  </property>
-                </spacer>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Automatic</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="5">
+                <widget class="QRadioButton" name="drop_rb">
+                 <property name="text">
+                  <string>Drop</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="4" rowspan="2" colspan="3">
+                <widget class="QLabel" name="seismic_breach_type_lbl">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>---</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="3" rowspan="2">
+                <widget class="QLabel" name="label_68">
+                 <property name="minimumSize">
+                  <size>
+                   <width>185</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>185</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Breach Type</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="3" rowspan="2">
+                <widget class="QLabel" name="label_40">
+                 <property name="minimumSize">
+                  <size>
+                   <width>185</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>185</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Hammer Type</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -2993,7 +3220,6 @@
   <tabstop>water_group</tabstop>
   <tabstop>dam_height_dsb</tabstop>
   <tabstop>dam_volume_dsb</tabstop>
-  <tabstop>failure_mechanism_cb</tabstop>
   <tabstop>tailings_group</tabstop>
   <tabstop>dam_height_2_dsb</tabstop>
   <tabstop>tot_imp_vol_dsb</tabstop>
@@ -3013,13 +3239,11 @@
   <tabstop>friction_angle_dam_material_dsb</tabstop>
   <tabstop>tailings_dam_slope_cbo</tabstop>
   <tabstop>toolButton</tabstop>
-  <tabstop>doubleSpinBox_24</tabstop>
-  <tabstop>doubleSpinBox_23</tabstop>
-  <tabstop>doubleSpinBox_22</tabstop>
-  <tabstop>radioButton_2</tabstop>
-  <tabstop>radioButton</tabstop>
-  <tabstop>checkBox_2</tabstop>
-  <tabstop>doubleSpinBox_25</tabstop>
+  <tabstop>depth_to_layer_dsb</tabstop>
+  <tabstop>peak_ground_acc_dsb</tabstop>
+  <tabstop>eq_mag_dsb</tabstop>
+  <tabstop>soft_lyr_chbox</tabstop>
+  <tabstop>blow_continuous_dsb</tabstop>
   <tabstop>spillway_chbox</tabstop>
   <tabstop>input_flood_volume_dsb</tabstop>
   <tabstop>max_allow_head_dsb</tabstop>
