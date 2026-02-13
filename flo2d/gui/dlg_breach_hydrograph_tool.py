@@ -383,6 +383,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         Function to populate user inflow combo box
         """
         self.water_inflow_cbo.clear()
+        self.tailings_inflow_cbo.clear()
 
         all_inflows = self.gutils.get_inflows_list()
         if not all_inflows:
@@ -393,6 +394,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             if not name:
                 name = "Inflow {}".format(fid)
             self.water_inflow_cbo.addItem(name)
+            self.tailings_inflow_cbo.addItem(name)
 
     def create_computational_domain(self):
         """
