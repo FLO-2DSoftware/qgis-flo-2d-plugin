@@ -62,6 +62,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.refresh_btn.clicked.connect(self.populate_user_inflow)
 
         self.open_tailings_data_btn.clicked.connect(self.open_tailings_data)
+        self.save_tailings_data_btn.clicked.connect(self.save_tailings_data)
 
         self.water_add_btn.clicked.connect(self.add_ts_to_inflow)
 
@@ -1000,6 +1001,31 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         elif slope_idx == 5:
             slope = "DSR_401"
 
+        if self.reservoir_lvl_cbo.currentIndex() == 0:
+            reservoir_lvl = "High"
+        elif self.reservoir_lvl_cbo.currentIndex() == 1 :
+            reservoir_lvl = "Medium"
+        else:
+            reservoir_lvl = "Low"
+
+        if self.pore_pressure_cbo.currentIndex() == 0:
+            pore_pressure = "HighHigh"
+        elif self.pore_pressure_cbo.currentIndex() == 1:
+            pore_pressure = "High"
+        else:
+            pore_pressure = "Low"
+
+        if self.fine_content_cbo.currentIndex() == 0:
+            fine_contents = "eFC_0"
+        elif self.fine_content_cbo.currentIndex() == 1:
+            fine_contents = "eFC_10"
+        elif self.fine_content_cbo.currentIndex() == 2:
+            fine_contents = "eFC_25"
+        elif self.fine_content_cbo.currentIndex() == 3:
+            fine_contents = "eFC_50"
+        else:
+            fine_contents = "eFC_75"
+
         params = {
             "m_units": crs_system,
             "m_fDamHeight": self.dam_height_2_dsb.value(),
@@ -1038,15 +1064,15 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             "m_bHaveSpillway": spillway,
             "m_FoundationSoil": foundation_soil,
             "m_DownstreamSlopeRatio": slope,
-            "m_ReservoirLevel": self.water_surface_freeboard_dsb.value(),
-            # "m_PorePressure": self.water_surface_freeboard_dsb.value(),
-            # "m_FinesContent": self.water_surface_freeboard_dsb.value(),
-            # "m_bContinuosSoftLayer": self.water_surface_freeboard_dsb.value(),
-            # "m_bDropHammer": self.water_surface_freeboard_dsb.value(),
-            # "m_RecalculateReleaseVolumes": self.water_surface_freeboard_dsb.value(),
-            # "m_InflowCells": self.water_surface_freeboard_dsb.value(),
-            # "m_fEventTime": self.water_surface_freeboard_dsb.value(),
-            # "m_fMaxSedContr": self.water_surface_freeboard_dsb.value()
+            "m_ReservoirLevel": reservoir_lvl,
+            "m_PorePressure": pore_pressure,
+            "m_FinesContent": fine_contents,
+            "m_bContinuosSoftLayer": self.soft_lyr_chbox.isChecked(),
+            "m_bDropHammer": True if self.drop_rb.isChecked() else False,
+            "m_RecalculateReleaseVolumes": "", # TODO Check these later
+            "m_InflowCells": "",
+            "m_fEventTime": "",
+            "m_fMaxSedContr": ""
         }
 
         # Root element must match exactly
@@ -1063,6 +1089,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             else:
                 element.text = str(value)
 
+        self.indent_xml(root)
+
         tree = ET.ElementTree(root)
 
         tree.write(
@@ -1070,6 +1098,25 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             encoding="utf-8",
             xml_declaration=True
         )
+
+        self.uc.log_info(f"Tailings breach data saved to {tailings_data_path}")
+        self.uc.bar_info(f"Tailings breach data saved to {tailings_data_path}")
+
+    def indent_xml(self, elem, level=0):
+        i = "\n" + level * "    "
+
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "    "
+
+            for child in elem:
+                self.indent_xml(child, level + 1)
+
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
 
     def open_tailings_data(self):
         """
