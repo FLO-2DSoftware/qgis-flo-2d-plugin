@@ -9,14 +9,9 @@ from qgis.core import QgsMapLayerType
 
 from .dlg_sampling_elev import SamplingElevDialog
 from .dlg_sampling_raster_roughness import SamplingRoughnessDialog
+from ..flo2d_ie.breach_hydrographs import TAILINGS_HYDROGRAPHS, TAILINGS_SEDIMENT_CV
 from ..flo2d_tools.grid_tools import square_grid
 from ..flo2dobjects import Inflow
-# FLO-2D Preprocessor tools for QGIS
-
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -46,6 +41,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
 
         self.t_hr, self.Qt = None, None
+        self.hyd_map = {}
+        self.sed_map = {}
 
         self.check_dam_type()
 
@@ -160,12 +157,14 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.populate_user_channel()
         self.populate_user_inflow()
         self.populate_rasters()
-        self.populate_blank_graph()
+        self.populate_water_blank_graph()
+        self.populate_tailings_hyd_graphs()
+        self.populate_tailings_sed_graphs()
 
         if self.tailings_group.isChecked():
             self.populate_tailings_breach_volume()
 
-    def populate_blank_graph(self):
+    def populate_water_blank_graph(self):
         """
         Function to populate a blank graph area
         """
@@ -205,6 +204,157 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         self.verticalLayout.addWidget(canvas, stretch=1)
         canvas.draw()
+
+    def populate_tailings_sed_graphs(self):
+        """
+        Create 3x2 selectable plots
+        """
+
+        if self.sediment_grid.count() > 0:
+            return
+
+        fig = Figure(figsize=(7, 6), dpi=100)
+        axes = fig.subplots(3, 2).flatten()
+
+        for i, ax in enumerate(axes):
+            ax.set_xlabel("Time/Duration")
+            ax.set_ylabel("Cv/Cvmax")
+            ax.set_ylim([0, 1.1])
+
+            sed = TAILINGS_SEDIMENT_CV[f"S{i + 1}"]
+
+            line, = ax.plot(sed["time"], sed["cv"],
+                            label="Cv/Cvmax",
+                            color="orange")
+
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+            ax.legend([line], [line.get_label()],
+                      loc="lower right",
+                      fontsize=6,
+                      frameon=False)
+
+            self.sed_map[ax] = f"Scenario {i + 1}"
+
+        fig.subplots_adjust(
+            left=0.08,
+            right=0.98,
+            top=0.94,
+            bottom=0.08,
+            hspace=0.35,
+            wspace=0.25
+        )
+
+        fig.tight_layout()
+
+        canvas = FigureCanvas(fig)
+        canvas.setMinimumHeight(450)
+
+        canvas.mpl_connect("button_press_event", self.on_sed_plot_clicked)
+
+        self.sediment_grid.addWidget(canvas)
+        canvas.draw()
+
+
+    def on_sed_plot_clicked(self, event):
+        """
+        Highlight selected subplot
+        """
+
+        if event.inaxes is None:
+            return
+
+        # reset all borders
+        for ax in self.sed_map:
+            ax.patch.set_edgecolor("white")
+            ax.patch.set_linewidth(1)
+
+        # highlight clicked one
+        event.inaxes.patch.set_edgecolor("red")
+        event.inaxes.patch.set_linewidth(3)
+
+        event.canvas.draw()
+
+    def populate_tailings_hyd_graphs(self):
+        """
+        Create 3x2 selectable plots
+        """
+
+        if self.hydrographs_grid.count() > 0:
+            return
+
+        fig = Figure(figsize=(7, 6), dpi=100)
+        axes = fig.subplots(3, 2).flatten()
+
+        for i, ax in enumerate(axes):
+            ax.set_xlabel("Time/Duration")
+            ax.set_ylabel("Q/Qpeak")
+            ax.set_ylim([0, 1.1])
+
+            hg = TAILINGS_HYDROGRAPHS[f"H{i + 1}"]
+
+            # --- Primary axis ---
+            line1, = ax.plot(hg["time"], hg["qqp"], label="Q/Qp", color="blue")
+
+            # --- Secondary axis ---
+            ax2 = ax.twinx()
+            ax2.set_axis_off()
+            ax2.set_ylim([0, 1.1])
+            ax2._parent_ax = ax
+
+            line2, = ax2.plot(hg["time"], hg["mass"], label="Mass Curve", color="gold")
+
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax2.spines["top"].set_visible(False)
+            ax2.spines["right"].set_visible(False)
+
+            lines = [line1, line2]
+            labels = [l.get_label() for l in lines]
+            ax.legend(lines, labels, loc="right", fontsize=6, frameon=False)
+
+            self.hyd_map[ax] = f"Scenario {i + 1}"
+
+        fig.subplots_adjust(
+            left=0.08,
+            right=0.98,
+            top=0.94,
+            bottom=0.08,
+            hspace=0.35,
+            wspace=0.25
+        )
+
+        fig.tight_layout()
+
+        canvas = FigureCanvas(fig)
+        canvas.setMinimumHeight(450)
+
+        canvas.mpl_connect("button_press_event", self.on_hyd_plot_clicked)
+
+        self.hydrographs_grid.addWidget(canvas)
+        canvas.draw()
+
+    def on_hyd_plot_clicked(self, event):
+        """
+        Highlight selected subplot
+        """
+
+        if event.inaxes is None:
+            return
+
+        ax_clicked = getattr(event.inaxes, "_parent_ax", event.inaxes)
+
+        # reset all borders
+        for ax in self.hyd_map:
+            ax.patch.set_edgecolor("white")
+            ax.patch.set_linewidth(1)
+
+        # highlight clicked one
+        ax_clicked.patch.set_edgecolor("red")
+        ax_clicked.patch.set_linewidth(3)
+
+        event.canvas.draw()
 
     def populate_rasters(self):
         """
