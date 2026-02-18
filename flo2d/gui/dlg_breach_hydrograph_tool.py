@@ -40,7 +40,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
 
-        self.t_hr, self.Qt = None, None
+        self.t_hr, self.Qt, self.Cv, self.Vs = None, None, None, None
         self.hyd_map = {}
         self.sed_map = {}
 
@@ -61,7 +61,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.open_tailings_data_btn.clicked.connect(self.open_tailings_data)
         self.save_tailings_data_btn.clicked.connect(self.save_tailings_data)
 
-        self.water_add_btn.clicked.connect(self.add_ts_to_inflow)
+        self.water_add_btn.clicked.connect(self.add_water_ts_to_inflow)
+        self.tailings_add_btn.clicked.connect(self.add_tailings_ts_to_inflow)
 
         self.populate_information()
         self.stackedWidget.currentChanged.connect(self.populate_information)
@@ -115,9 +116,40 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             (2, 5): (-0.0031, 0.085),
         }
 
-    def add_ts_to_inflow(self):
+    def add_water_ts_to_inflow(self):
         """
-        Function to add time series to selected inflow
+        Function to add water time series to selected inflow
+        """
+
+        selected_inflow_name = self.tailings_inflow_cbo.currentText()
+
+        inflow_qry = self.gutils.execute("SELECT fid, time_series_fid FROM inflow WHERE name = ?", (selected_inflow_name,)).fetchone()
+        if inflow_qry:
+            inflow_fid = inflow_qry[0]
+            inflow = Inflow(inflow_fid, self.iface.f2d["con"], self.iface)
+
+            time_series_fid = inflow_qry[1]
+            if time_series_fid is None:
+                ts_name = f"Time Series {inflow_fid}"
+                inflow.add_time_series(name=ts_name)
+                time_series_fid = self.gutils.execute("SELECT fid FROM inflow_time_series WHERE name = ?", (ts_name,)).fetchone()[0]
+            else:
+                ts_name = self.gutils.execute("SELECT name FROM inflow_time_series WHERE fid = ?", (time_series_fid,)).fetchone()[0]
+        else:
+            return
+
+        ts_data = []
+        for t, q in zip(self.t_hr, self.Qt):
+            ts_data.append((time_series_fid, round(float(t), 2), round(float(q), 2), None))
+
+        inflow.time_series_fid = time_series_fid
+        inflow.set_time_series_data(ts_name, ts_data)
+
+        self.bc_editor.inflow_changed()
+
+    def add_tailings_ts_to_inflow(self):
+        """
+        Function to add tailings time series to selected inflow
         """
         if self.t_hr is None or self.Qt is None or len(self.t_hr) == 0 or len(self.Qt) == 0:
             self.uc.bar_warn("No hydrograph data to add. Please generate a hydrograph first.")
@@ -142,8 +174,12 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             return
 
         ts_data = []
-        for t, q in zip(self.t_hr, self.Qt):
-            ts_data.append((time_series_fid, round(float(t), 2), round(float(q), 2), None))
+        if self.tal_out_format_cbo.currentIndex() == 0:
+            for t, q, cv in zip(self.t_hr, self.Qt, self.Cv):
+                ts_data.append((time_series_fid, round(float(t), 2), round(float(q), 2), round(float(cv), 2)))
+        else:
+            for t, q, vs in zip(self.t_hr, self.Qt, self.Vs):
+                ts_data.append((time_series_fid, round(float(t), 2), round(float(q), 2), round(float(vs), 2)))
 
         inflow.time_series_fid = time_series_fid
         inflow.set_time_series_data(ts_name, ts_data)
@@ -362,6 +398,66 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         max_cv = float(self.tal_max_sed_con_le.text())
         hyd_sed_vol = self.estimate_hyd_sed_vol(idx, peak_discharge, max_cv, total_duration)
         self.tal_hyd_sed_vol_le.setText(f"{round(hyd_sed_vol, 2)}")
+
+        self.build_tailings_timeseries(idx, peak_discharge, max_cv, total_duration)
+
+    def build_tailings_timeseries(self, idx, qpeak, max_cv, total_duration_hours):
+        """
+        Build FLO-2D hydrograph with sediment.
+        """
+
+        hg = TAILINGS_HYDROGRAPHS[f"H{idx + 1}"]
+        sed = TAILINGS_SEDIMENT_CV[f"S{idx + 1}"]
+
+        # --- align sediment curve to hydrograph grid ---
+        cv_interp = np.interp(
+            hg["time"],
+            sed["time"],
+            sed["cv"],
+            left=0.0,
+            right=sed["cv"][-1]
+        )
+
+        total_duration_sec = total_duration_hours * 3600.0
+
+        t_hr = []
+        Qw = []
+        Cv = []
+        Vs = []
+
+        for i in range(len(hg["time"])):
+
+            t = hg["time"][i] * total_duration_hours
+
+            cv = max_cv * cv_interp[i]
+            cv = min(cv, 0.999)
+
+            q_water = hg["qqp"][i] * (1 - cv) * qpeak
+
+            self.uc.log_info(str(cv))
+            self.uc.log_info(str(q_water))
+
+            if i > 0:
+                t0 = hg["time"][i - 1] * total_duration_sec
+                t1 = hg["time"][i] * total_duration_sec
+
+                q0 = hg["qqp"][i - 1] * qpeak
+                q1 = hg["qqp"][i] * qpeak
+
+                water_vol = 0.5 * (t1 - t0) * (q0 + q1)
+                sed_vol = water_vol * cv / (1 - cv)
+            else:
+                sed_vol = 0.0
+
+            t_hr.append(round(t, 2))
+            Qw.append(round(q_water, 2))
+            Cv.append(round(cv, 2))
+            Vs.append(round(sed_vol, 2))
+
+        self.t_hr = t_hr
+        self.Qt = Qw
+        self.Cv = Cv
+        self.Vs = Vs
 
     def estimate_hyd_sed_vol(self, idx, qpeak, max_cv, total_duration_hours):
         """

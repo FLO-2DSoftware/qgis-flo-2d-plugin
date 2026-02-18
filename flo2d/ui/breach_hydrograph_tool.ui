@@ -3477,7 +3477,7 @@
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QPushButton" name="tal_add_hydrograph_btn">
+             <widget class="QPushButton" name="tailings_add_btn">
               <property name="minimumSize">
                <size>
                 <width>100</width>
