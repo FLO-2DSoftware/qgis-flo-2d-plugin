@@ -83,7 +83,7 @@
       <enum>QFrame::Plain</enum>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="page_0">
       <layout class="QGridLayout" name="gridLayout_4">
@@ -3116,7 +3116,7 @@
              </widget>
             </item>
             <item row="6" column="1">
-             <widget class="QLineEdit" name="lineEdit_29">
+             <widget class="QLineEdit" name="tal_peak_q_le">
               <property name="minimumSize">
                <size>
                 <width>100</width>
@@ -3150,57 +3150,6 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit_31">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_43">
-              <property name="minimumSize">
-               <size>
-                <width>185</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>185</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Porosity</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="4">
-             <widget class="QComboBox" name="comboBox_10">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="2">
              <spacer name="horizontalSpacer_36">
               <property name="orientation">
@@ -3215,23 +3164,23 @@
              </spacer>
             </item>
             <item row="0" column="1">
-             <widget class="QComboBox" name="comboBox_9">
+             <widget class="QComboBox" name="tal_select_volume_cbo">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>200</width>
                 <height>0</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>100</width>
+                <width>200</width>
                 <height>16777215</height>
                </size>
               </property>
              </widget>
             </item>
             <item row="6" column="4">
-             <widget class="QLineEdit" name="lineEdit_30">
+             <widget class="QLineEdit" name="tal_hyd_sed_vol_le">
               <property name="minimumSize">
                <size>
                 <width>100</width>
@@ -3287,23 +3236,7 @@
              </spacer>
             </item>
             <item row="0" column="4">
-             <widget class="QLineEdit" name="lineEdit_28">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="lineEdit_32">
+             <widget class="QLineEdit" name="tal_max_sed_con_le">
               <property name="minimumSize">
                <size>
                 <width>100</width>
@@ -3330,25 +3263,6 @@
                </size>
               </property>
              </spacer>
-            </item>
-            <item row="1" column="3">
-             <widget class="QLabel" name="label_44">
-              <property name="minimumSize">
-               <size>
-                <width>185</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>185</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Sed. Output Format</string>
-              </property>
-             </widget>
             </item>
             <item row="1" column="2">
              <spacer name="horizontalSpacer_37">
@@ -3382,7 +3296,42 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
+            <item row="2" column="3">
+             <widget class="QLabel" name="label_43">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>185</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Porosity</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="4">
+             <widget class="QLineEdit" name="tal_porosity_le">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
              <widget class="QLabel" name="label_42">
               <property name="minimumSize">
                <size>
@@ -3399,6 +3348,67 @@
               <property name="text">
                <string>Event Time</string>
               </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QLineEdit" name="tal_event_time_le">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_44">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>185</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Sed. Output Format</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="tal_out_format_cbo">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>200</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <item>
+               <property name="text">
+                <string>Sediment Concentration by Volume</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Sediment Volume</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -3435,7 +3445,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="toolButton_2">
+               <widget class="QToolButton" name="tal_refresh_btn">
                 <property name="text">
                  <string>...</string>
                 </property>
@@ -3467,7 +3477,7 @@
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QPushButton" name="pushButton">
+             <widget class="QPushButton" name="tal_add_hydrograph_btn">
               <property name="minimumSize">
                <size>
                 <width>100</width>
@@ -3561,11 +3571,8 @@
   <tabstop>ave_breach_width_le</tabstop>
   <tabstop>time_to_peak_le</tabstop>
   <tabstop>froehlich_2008_rb</tabstop>
-  <tabstop>comboBox_10</tabstop>
-  <tabstop>comboBox_9</tabstop>
-  <tabstop>lineEdit_28</tabstop>
-  <tabstop>lineEdit_32</tabstop>
-  <tabstop>lineEdit_31</tabstop>
+  <tabstop>tal_select_volume_cbo</tabstop>
+  <tabstop>tal_max_sed_con_le</tabstop>
   <tabstop>cancel_btn</tabstop>
   <tabstop>previous_btn</tabstop>
   <tabstop>next_btn</tabstop>

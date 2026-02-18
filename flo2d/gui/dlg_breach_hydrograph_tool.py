@@ -221,6 +221,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             ax.set_ylabel("Cv/Cvmax")
             ax.set_ylim([0, 1.1])
 
+            ax._plot_index = i
+
             sed = TAILINGS_SEDIMENT_CV[f"S{i + 1}"]
 
             line, = ax.plot(sed["time"], sed["cv"],
@@ -251,30 +253,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         canvas = FigureCanvas(fig)
         canvas.setMinimumHeight(450)
 
-        canvas.mpl_connect("button_press_event", self.on_sed_plot_clicked)
+        canvas.mpl_connect("button_press_event", self.on_plot_clicked)
 
         self.sediment_grid.addWidget(canvas)
         canvas.draw()
-
-
-    def on_sed_plot_clicked(self, event):
-        """
-        Highlight selected subplot
-        """
-
-        if event.inaxes is None:
-            return
-
-        # reset all borders
-        for ax in self.sed_map:
-            ax.patch.set_edgecolor("white")
-            ax.patch.set_linewidth(1)
-
-        # highlight clicked one
-        event.inaxes.patch.set_edgecolor("red")
-        event.inaxes.patch.set_linewidth(3)
-
-        event.canvas.draw()
 
     def populate_tailings_hyd_graphs(self):
         """
@@ -291,6 +273,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             ax.set_xlabel("Time/Duration")
             ax.set_ylabel("Q/Qpeak")
             ax.set_ylim([0, 1.1])
+            ax._plot_index = i
 
             hg = TAILINGS_HYDROGRAPHS[f"H{i + 1}"]
 
@@ -330,31 +313,129 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         canvas = FigureCanvas(fig)
         canvas.setMinimumHeight(450)
 
-        canvas.mpl_connect("button_press_event", self.on_hyd_plot_clicked)
+        canvas.mpl_connect("button_press_event", self.on_plot_clicked)
 
         self.hydrographs_grid.addWidget(canvas)
         canvas.draw()
 
-    def on_hyd_plot_clicked(self, event):
-        """
-        Highlight selected subplot
-        """
+    def on_plot_clicked(self, event):
 
         if event.inaxes is None:
             return
 
         ax_clicked = getattr(event.inaxes, "_parent_ax", event.inaxes)
+        idx = getattr(ax_clicked, "_plot_index", None)
 
-        # reset all borders
+        if idx is None:
+            return
+
         for ax in self.hyd_map:
             ax.patch.set_edgecolor("white")
             ax.patch.set_linewidth(1)
 
-        # highlight clicked one
-        ax_clicked.patch.set_edgecolor("red")
-        ax_clicked.patch.set_linewidth(3)
+        for ax in self.sed_map:
+            ax.patch.set_edgecolor("white")
+            ax.patch.set_linewidth(1)
 
-        event.canvas.draw()
+        for ax in self.hyd_map:
+            if getattr(ax, "_plot_index", None) == idx:
+                ax.patch.set_edgecolor("red")
+                ax.patch.set_linewidth(3)
+
+        for ax in self.sed_map:
+            if getattr(ax, "_plot_index", None) == idx:
+                ax.patch.set_edgecolor("red")
+                ax.patch.set_linewidth(3)
+
+        if self.hydrographs_grid.count():
+            self.hydrographs_grid.itemAt(0).widget().draw()
+
+        if self.sediment_grid.count():
+            self.sediment_grid.itemAt(0).widget().draw()
+
+        volume = float(self.tal_select_volume_cbo.currentData()[0])
+        total_duration = float(self.tal_event_time_le.text())
+
+        peak_discharge = self.estimate_peak_discharge(idx, volume, total_duration)
+        self.tal_peak_q_le.setText(f"{round(peak_discharge, 2)}")
+
+        max_cv = float(self.tal_max_sed_con_le.text())
+        hyd_sed_vol = self.estimate_hyd_sed_vol(idx, peak_discharge, max_cv, total_duration)
+        self.tal_hyd_sed_vol_le.setText(f"{round(hyd_sed_vol, 2)}")
+
+    def estimate_hyd_sed_vol(self, idx, qpeak, max_cv, total_duration_hours):
+        """
+        Find peak Hydrograph Sediment Volume
+        """
+
+        hg = TAILINGS_HYDROGRAPHS[f"H{idx + 1}"]
+        sed = TAILINGS_SEDIMENT_CV[f"S{idx + 1}"]
+
+        total_duration_sec = total_duration_hours * 3600.0
+
+        cv_interp = np.interp(
+            hg["time"],
+            sed["time"],
+            sed["cv"],
+            left=0.0,
+            right=sed["cv"][-1]
+        )
+
+        final_sediment = 0.0
+
+        for i in range(1, len(hg["time"])):
+            t0 = hg["time"][i - 1] * total_duration_sec
+            t1 = hg["time"][i] * total_duration_sec
+
+            q0 = hg["qqp"][i - 1] * qpeak
+            q1 = hg["qqp"][i] * qpeak
+
+            water_volume = 0.5 * (t1 - t0) * (q0 + q1)
+
+            cv = max_cv * cv_interp[i]
+            cv = min(cv, 0.999)
+
+            sediment_volume = water_volume * cv / (1.0 - cv)
+            final_sediment += sediment_volume
+
+        return final_sediment
+
+    def estimate_peak_discharge(self, idx, target_volume, total_duration, tol=0.01, max_iter=100):
+        """
+        Find peak discharge so hydrograph volume matches target volume.
+        """
+
+        # convert duration to seconds
+        total_duration_sec = total_duration * 3600.0
+
+        hg = TAILINGS_HYDROGRAPHS[f"H{idx + 1}"]
+
+        lower = 0.0
+        upper = target_volume / total_duration_sec * 10.0
+
+        for _ in range(max_iter):
+
+            qpeak = 0.5 * (lower + upper)
+            volume = 0.0
+
+            for i in range(1, len(hg["time"])):
+                t0 = hg["time"][i - 1] * total_duration_sec
+                t1 = hg["time"][i] * total_duration_sec
+
+                q0 = hg["qqp"][i - 1] * qpeak
+                q1 = hg["qqp"][i] * qpeak
+
+                volume += 0.5 * (t1 - t0) * (q0 + q1)
+
+            if abs(volume - target_volume) < tol:
+                return qpeak
+
+            if volume > target_volume:
+                upper = qpeak
+            else:
+                lower = qpeak
+
+        return qpeak
 
     def populate_rasters(self):
         """
@@ -591,6 +672,24 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         # Seismic Failure Check
         self.check_seismic_failure()
+
+        # Save Options
+        self.tal_select_volume_cbo.clear()
+        user_volume = float(self.user_volume_le.text()) if self.user_volume_le.text() != "" else 0
+        volumes = {
+            "User Volume": user_volume,
+            "Minimum Volume": Vrmin,
+            "Average Volume": Vrave,
+            "Maximum Volume": Vrmax,
+            "Larrauri and Lall (2018)": larrauri * 1000000,
+            "Rico et al. (2008)": rico * 1000000,
+            "Piciullo et al. (2022)": piciullo1 * 1000000,
+            "Piciullo et al. (updated eq.)": piciullo2
+        }
+
+        for name, volume in volumes.items():
+            item = f"{name} - {round(volume, 2)}"
+            self.tal_select_volume_cbo.addItem(item, [str(volume)])
 
     def check_static_failure(self):
         """
@@ -1391,6 +1490,9 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.static_grp.setChecked(False)
             self.seismic_grp.setChecked(True)
 
+        # Save Options
+        self.tal_event_time_le.setText(str(tailings_data["m_fEventTime"]))
+        self.tal_max_sed_con_le.setText(str(tailings_data["m_fMaxSedContr"]))
 
 
 
