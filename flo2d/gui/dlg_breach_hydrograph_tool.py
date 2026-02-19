@@ -193,6 +193,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         """
         Function to populate information based on the current page
         """
+        self.populate_units_lbls()
         self.populate_user_channel()
         self.populate_user_inflow()
         self.populate_rasters()
@@ -202,6 +203,86 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         if self.tailings_group.isChecked():
             self.populate_tailings_breach_volume()
+
+    def populate_units_lbls(self):
+        """
+        Function to populate the units labels based on the metric/imperial setting
+        """
+
+        if self.gutils.get_cont_par("METRIC") == "1":
+            self.water_dam_height_unit_lbl.setText("m")
+            self.water_tot_imp_vol_unit_lbl.setText("m³")
+            self.baseflow_unit_lbl.setText("cms")
+            self.tailings_dam_height_unit_lbl.setText("m")
+            self.tailings_tot_imp_vol_unit_lbl.setText("m³")
+            self.tailings_imp_vol_unit_lbl.setText("m³")
+            self.wsf_unit_lbl.setText("m")
+            self.depth_bedrock_unit_lbl.setText("m")
+            self.found_uw_unit_lbl.setText("KN/m³")
+            self.depth_to_sat_unit_lbl.setText("m")
+            self.dam_uw_unit_lbl.setText("KN/m³")
+            self.cohesion_unit_lbl.setText("KN/m²")
+            self.friction_angle_unit_lbl.setText("°")
+
+            self.min_vol_unit_lbl.setText("m³")
+            self.ave_vol_unit_lbl.setText("m³")
+            self.max_vol_unit_lbl.setText("m³")
+            self.user_vol_unit_lbl.setText("m³")
+            self.larrauri_unit_lbl.setText("m³")
+            self.rico_unit_lbl.setText("m³")
+            self.piciullo_unit_lbl.setText("m³")
+            self.piciullo_unit_lbl_2.setText("m³")
+            self.aval_sto_unit_lbl.setText("m³")
+            self.input_vol_unit_lbl.setText("m³")
+            self.max_allow_head_unit_lbl.setText("m")
+            self.pmf_unit_lbl.setText("m")
+            self.depth_to_crest_unit_lbl.setText("m")
+
+            self.pd_unit_lbl.setText("cms")
+            self.ttp_unit_lbl.setText("hrs")
+            self.ave_breach_unit_lbl.setText("m")
+            self.hyd_len_unit_lbl.setText("hrs")
+
+            self.pd_unit_lbl_2.setText("cms")
+            self.hyd_sed_vol_unit_lbl.setText("m³")
+
+        else:
+            self.water_dam_height_unit_lbl.setText("ft")
+            self.water_tot_imp_vol_unit_lbl.setText("yd³")
+            self.baseflow_unit_lbl.setText("cfs")
+            self.tailings_dam_height_unit_lbl.setText("ft")
+            self.tailings_tot_imp_vol_unit_lbl.setText("yd³")
+            self.tailings_imp_vol_unit_lbl.setText("yd³")
+            self.wsf_unit_lbl.setText("ft")
+            self.depth_bedrock_unit_lbl.setText("ft")
+            self.found_uw_unit_lbl.setText("lb/ft³")
+            self.depth_to_sat_unit_lbl.setText("ft")
+            self.dam_uw_unit_lbl.setText("lb/ft³")
+            self.cohesion_unit_lbl.setText("lb/ft²")
+            self.friction_angle_unit_lbl.setText("°")
+
+            self.min_vol_unit_lbl.setText("yd³")
+            self.ave_vol_unit_lbl.setText("yd³")
+            self.max_vol_unit_lbl.setText("yd³")
+            self.user_vol_unit_lbl.setText("yd³")
+            self.larrauri_unit_lbl.setText("yd³")
+            self.rico_unit_lbl.setText("yd³")
+            self.piciullo_unit_lbl.setText("yd³")
+            self.piciullo_unit_lbl_2.setText("yd³")
+            self.aval_sto_unit_lbl.setText("yd³")
+            self.input_vol_unit_lbl.setText("yd³")
+            self.max_allow_head_unit_lbl.setText("ft")
+            self.pmf_unit_lbl.setText("ft")
+            self.depth_to_crest_unit_lbl.setText("ft")
+
+            self.pd_unit_lbl.setText("cfs")
+            self.ttp_unit_lbl.setText("hrs")
+            self.ave_breach_unit_lbl.setText("ft")
+            self.hyd_len_unit_lbl.setText("hrs")
+
+            self.pd_unit_lbl_2.setText("cfs")
+            self.hyd_sed_vol_unit_lbl.setText("ac-ft")
+
 
     def populate_water_blank_graph(self):
         """
