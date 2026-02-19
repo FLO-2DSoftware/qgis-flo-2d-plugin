@@ -283,7 +283,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.pd_unit_lbl_2.setText("cfs")
             self.hyd_sed_vol_unit_lbl.setText("ac-ft")
 
-
     def populate_water_blank_graph(self):
         """
         Function to populate a blank graph area
@@ -476,12 +475,23 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         volume = float(self.tal_select_volume_cbo.currentData()[0])
         total_duration = float(self.tal_event_time_le.text())
 
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            volume = volume * 0.764555
+
         peak_discharge = self.estimate_peak_discharge(idx, volume, total_duration)
-        self.tal_peak_q_le.setText(f"{round(peak_discharge, 2)}")
+
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            self.tal_peak_q_le.setText(f"{round(peak_discharge * 35.3147, 2)}")
+        else:
+            self.tal_peak_q_le.setText(f"{round(peak_discharge, 2)}")
 
         max_cv = float(self.tal_max_sed_con_le.text())
         hyd_sed_vol = self.estimate_hyd_sed_vol(idx, peak_discharge, max_cv, total_duration)
-        self.tal_hyd_sed_vol_le.setText(f"{round(hyd_sed_vol, 2)}")
+
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            self.tal_hyd_sed_vol_le.setText(f"{round(hyd_sed_vol * 0.000810714, 2)}")
+        else:
+            self.tal_hyd_sed_vol_le.setText(f"{round(hyd_sed_vol, 2)}")
 
         self.build_tailings_timeseries(idx, peak_discharge, max_cv, total_duration)
 
@@ -518,9 +528,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
             q_water = hg["qqp"][i] * (1 - cv) * qpeak
 
-            self.uc.log_info(str(cv))
-            self.uc.log_info(str(q_water))
-
             if i > 0:
                 t0 = hg["time"][i - 1] * total_duration_sec
                 t1 = hg["time"][i] * total_duration_sec
@@ -534,9 +541,13 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
                 sed_vol = 0.0
 
             t_hr.append(round(t, 2))
-            Qw.append(round(q_water, 2))
             Cv.append(round(cv, 2))
-            Vs.append(round(sed_vol, 2))
+            if not self.gutils.get_cont_par("METRIC") == "1":
+                Qw.append(round(q_water * 35.3147, 2))
+                Vs.append(round(sed_vol * 35.3147, 2))
+            else:
+                Qw.append(round(q_water, 2))
+                Vs.append(round(sed_vol, 2))
 
         self.t_hr = t_hr
         self.Qt = Qw
@@ -778,8 +789,15 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         imp_tal_vol = self.imp_tal_vol_dsb.value()
 
         # hydrologic parameters
-        available_storage = tot_imp_vol - imp_tal_vol  # m³
+        available_storage = tot_imp_vol - imp_tal_vol
         self.available_storage_le.setText(str(available_storage))
+
+        # Convert to metric
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            dam_height = dam_height * 0.3048
+            tot_imp_vol = tot_imp_vol * 0.764555
+            imp_tal_vol = imp_tal_vol * 0.764555
+            available_storage = available_storage * 0.764555
 
         # static parameters
         cohesion_dam_material = self.cohesion_dam_material_dsb.value()
@@ -805,13 +823,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Unit Weight of Dam Material must be positive and greater than 0.")
             return
 
-        if self.gutils.get_cont_par("METRIC") == "1":
-            m3_to_cy = 1.30795
-            g = 9.81  # m/s2
-        else:
-            m3_to_cy = 1
-            g = 32.2  # ft/s2
-
         cydamh = cohesion_dam_material / (unit_weight_dam * dam_height)
         self.cydamh_le.setText(str(round(cydamh, 4)))
 
@@ -830,19 +841,30 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         Vrave = min(3604 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
         Vrmax = min(20419 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
 
-        self.vrmin_le.setText(str(int(Vrmin)))
-        self.vrave_le.setText(str(int(Vrave)))
-        self.vrmax_le.setText(str(int(Vrmax)))
+        if self.gutils.get_cont_par("METRIC") == "1":
+            self.vrmin_le.setText(str(int(Vrmin)))
+            self.vrave_le.setText(str(int(Vrave)))
+            self.vrmax_le.setText(str(int(Vrmax)))
+        else:
+            self.vrmin_le.setText(str(int(Vrmin * 1.30795)))
+            self.vrave_le.setText(str(int(Vrave * 1.30795)))
+            self.vrmax_le.setText(str(int(Vrmax * 1.30795)))
 
         larrauri = min(0.332 * (tot_imp_vol / 1000000) ** 0.95, 0.95 * imp_tal_vol)
         rico = min(0.354 * (tot_imp_vol/ 1000000) ** 1.01, 0.95 * imp_tal_vol)
         piciullo1 = min(0.214 * (tot_imp_vol/ 1000000) ** 0.35, 0.95 * imp_tal_vol)
         piciullo2 = min((10 ** 0.33) * (tot_imp_vol ** 0.611) * (dam_height ** 0.994), 0.95 * imp_tal_vol)
 
-        self.larrauri_dsb.setText(str(int(larrauri * 1000000)))
-        self.rico_dsb.setText(str(int(rico * 1000000)))
-        self.piciullo1_dsb.setText(str(int(piciullo1 * 1000000)))
-        self.piciullo2_dsb.setText(str(int(piciullo2)))
+        if self.gutils.get_cont_par("METRIC") == "1":
+            self.larrauri_dsb.setText(str(int(larrauri * 1000000)))
+            self.rico_dsb.setText(str(int(rico * 1000000)))
+            self.piciullo1_dsb.setText(str(int(piciullo1 * 1000000)))
+            self.piciullo2_dsb.setText(str(int(piciullo2)))
+        else:
+            self.larrauri_dsb.setText(str(int(larrauri * 1307950)))
+            self.rico_dsb.setText(str(int(rico * 1307950)))
+            self.piciullo1_dsb.setText(str(int(piciullo1 * 1307950)))
+            self.piciullo2_dsb.setText(str(int(piciullo2 * 1.30795)))
 
         # Hydrologic Failure Check
         self.check_hydrologic_failure()
@@ -868,6 +890,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         }
 
         for name, volume in volumes.items():
+            if not self.gutils.get_cont_par("METRIC") == "1":
+                volume = volume * 1.30795
             item = f"{name} - {round(volume, 2)}"
             self.tal_select_volume_cbo.addItem(item, [str(volume)])
 
@@ -902,7 +926,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             breach_type = "Dam Breach by Slope Instability"
 
         self.static_breach_type_lbl.setText(breach_type)
-
 
     def check_hydrologic_failure(self):
         """
