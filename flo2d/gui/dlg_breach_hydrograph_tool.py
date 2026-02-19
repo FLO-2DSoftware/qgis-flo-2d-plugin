@@ -58,6 +58,9 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.create_cd_btn.clicked.connect(self.create_computational_domain)
         self.refresh_btn.clicked.connect(self.populate_user_inflow)
 
+        self.open_water_data_btn.clicked.connect(self.open_water_data)
+        self.save_water_data_btn.clicked.connect(self.save_water_data)
+
         self.open_tailings_data_btn.clicked.connect(self.open_tailings_data)
         self.save_tailings_data_btn.clicked.connect(self.save_tailings_data)
 
@@ -1262,7 +1265,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         return t_hr, Qt
 
-    def parse_tailings_data_xml(self, xml_path):
+    def parse_data_xml(self, xml_path):
         """
         Parse the Dataset1_HydrologicFailure XML file into a Python dictionary.
         """
@@ -1297,6 +1300,85 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             data[key] = value
 
         return data
+
+    def save_water_data(self):
+        """
+        Function to save the water breach data into an XML file following the structure of Dataset1_HydrologicFailure.xml.
+        """
+        s = QSettings()
+        last_gpkg_dir = s.value("FLO-2D/lastGpkgDir", "")
+        water_data_path, __ = QFileDialog.getSaveFileName(
+            None, "Save water breach file as...", directory=last_gpkg_dir, filter="*.xml"
+        )
+        if not water_data_path:
+            return
+
+        if self.gutils.get_cont_par("METRIC") == "1":
+            crs_system = "Metric"
+        else:
+            crs_system = "English"
+
+        if self.froehlich_1995_rb.isChecked():
+            breach_parameters_method = "Froehlich (1995)"
+        elif self.froehlich_2008_rb.isChecked():
+            breach_parameters_method = "Froehlich (2008)"
+        elif self.mmc_rb.isChecked():
+            breach_parameters_method = "MMC"
+        elif self.analnec_rb.isChecked():
+            breach_parameters_method = "ANA-LNEC"
+        else:
+            breach_parameters_method = ""
+
+        if self.parabolic_rb.isChecked():
+            hydrograph_method = "Parabolic - Barfield (1981)"
+        elif self.tr66_rb.isChecked():
+            hydrograph_method = "TR66 (1981)"
+        elif self.triangular_rb.isChecked():
+            hydrograph_method = "Triangular"
+        else:
+            hydrograph_method = ""
+
+        params = {
+            "m_units": crs_system,
+            "m_fDamHeight": self.dam_height_dsb.value(),
+            "m_TotalImpoundmentVolume": self.dam_volume_dsb.value(),
+            "m_FailureMechanism": self.failure_mechanism_cb.currentText(),
+            "m_Baseflow": self.baseflow_dsb.value(),
+            "m_BreachParametersMethod": breach_parameters_method,
+            "m_PeakDischarge": self.peak_discharge_le.text(),
+            "m_TimeToPeak": self.time_to_peak_le.text(),
+            "m_AveBreachWidth": self.ave_breach_width_le.text(),
+            "m_HydrographLength": self.hyd_length_le.text(),
+            "m_HydrographMethod": hydrograph_method
+        }
+
+        # Root element must match exactly
+        root = ET.Element("WaterDamModelPrivate")
+
+        for key, value in params.items():
+            element = ET.SubElement(root, key)
+
+            # Convert Python types back to XML text
+            if value is None:
+                element.text = ""
+            elif isinstance(value, bool):
+                element.text = "true" if value else "false"
+            else:
+                element.text = str(value)
+
+        self.indent_xml(root)
+
+        tree = ET.ElementTree(root)
+
+        tree.write(
+            water_data_path,
+            encoding="utf-8",
+            xml_declaration=True
+        )
+
+        self.uc.log_info(f"Water breach data saved to {water_data_path}")
+        self.uc.bar_info(f"Water breach data saved to {water_data_path}")
+
 
     def save_tailings_data(self):
         """
@@ -1465,6 +1547,64 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
 
+    def open_water_data(self):
+        """
+        Function to open the water breach data XML file and populate the fields accordingly.
+        The XML file should follow the structure of Dataset1_HydrologicFailure.xml as provided in the FLO-2D Preprocessor documentation.
+        """
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGpkgDir", "")
+        water_data_path, __ = QFileDialog.getOpenFileName(
+            None,
+            "Select a water breach file with data to import",
+            directory=last_dir,
+            filter="*.xml",
+        )
+        if not water_data_path:
+            return
+
+        water_data = self.parse_data_xml(water_data_path)
+        if self.gutils.get_cont_par("METRIC") == "1":
+            crs_system = "Metric"
+        else:
+            crs_system = "English"
+
+        if water_data["m_units"] != crs_system:
+            self.uc.log_info(
+                f"Units in the XML file ({water_data['m_units']}) do not match the project's CRS system ({crs_system}). Please check the units and try again.")
+            self.uc.bar_error(
+                f"Units in the XML file ({water_data['m_units']}) do not match the project's CRS system ({crs_system}). Please check the units and try again.")
+            return
+
+        self.dam_height_dsb.setValue(water_data["m_fDamHeight"])
+        self.dam_volume_dsb.setValue(water_data["m_TotalImpoundmentVolume"])
+        if water_data["m_FailureMechanism"] == "Overtopping":
+            self.failure_mechanism_cb.setCurrentIndex(0)
+        else:
+            self.failure_mechanism_cb.setCurrentIndex(1)
+        self.baseflow_dsb.setValue(water_data["m_Baseflow"])
+
+        if water_data["m_BreachParametersMethod"] == "Froehlich (1995)":
+            self.froehlich_1995_rb.setChecked(True)
+        elif water_data["m_BreachParametersMethod"] == "Froehlich (2008)":
+            self.froehlich_2008_rb.setChecked(True)
+        elif water_data["m_BreachParametersMethod"] == "MMC":
+            self.mmc_rb.setChecked(True)
+        elif water_data["m_BreachParametersMethod"] == "ANA-LNEC":
+            self.analnec_rb.setChecked(True)
+
+        self.peak_discharge_le.setText(str(water_data["m_PeakDischarge"]))
+        self.time_to_peak_le.setText(str(water_data["m_TimeToPeak"]))
+        self.ave_breach_width_le.setText(str(water_data["m_AveBreachWidth"]))
+        self.hyd_length_le.setText(str(water_data["m_HydrographLength"]))
+
+        if water_data["m_HydrographMethod"] == "Parabolic - Barfield (1981)":
+            self.parabolic_rb.setChecked(True)
+        elif water_data["m_HydrographMethod"] == "TR66 (1981)":
+            self.tr66_rb.setChecked(True)
+        elif water_data["m_HydrographMethod"] == "Triangular":
+            self.triangular_rb.setChecked(True)
+
     def open_tailings_data(self):
         """
         Function to open the tailings breach data XML file and populate the fields accordingly.
@@ -1481,7 +1621,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         if not tailings_data_path:
             return
 
-        tailings_data = self.parse_tailings_data_xml(tailings_data_path)
+        tailings_data = self.parse_data_xml(tailings_data_path)
         if self.gutils.get_cont_par("METRIC") == "1":
             crs_system = "Metric"
         else:
