@@ -35,7 +35,7 @@ from ..flo2d_tools.grid_tools import (
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero
-from .ui_utils import center_canvas, load_ui, set_icon, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
 
 def timer(func):
@@ -1620,7 +1620,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                         x, y = feat.geometry().centroid().asPoint()
                         self.lyrs.zoom_to_all()
                         center_canvas(self.iface, x, y)
-                        zoom(self.iface, 0.45)
+                        cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+                        zoom_cell_buffer(self.iface, x, y, cellsize)
 
                     else:
                         self.uc.bar_warn("WARNING 221219.1140: Cell " + str(cell) + " not found.")

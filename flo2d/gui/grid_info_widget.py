@@ -24,7 +24,7 @@ from ..utils import (
     second_smallest,
     set_min_max_elevs, set_min_max_n_values,
 )
-from .ui_utils import center_canvas, load_ui, set_icon, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
 
@@ -709,7 +709,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                                 feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                                 x, y = feat.geometry().centroid().asPoint()
                                 center_canvas(self.iface, x, y)
-                                zoom(self.iface, 0.4)
+                                cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+                                zoom_cell_buffer(self.iface, x, y, cellsize)
                                 self.mannEdit.setText(str(feat["n_value"]))
                                 self.elevEdit.setText(str(feat["elevation"]).strip())
                                 self.cellEdit.setText(str(self.gutils.get_cont_par("CELLSIZE")))

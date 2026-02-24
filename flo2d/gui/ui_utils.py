@@ -58,6 +58,24 @@ def zoom(iface, porcentage):
     canvas.setExtent(rect)
     canvas.refresh()
 
+def zoom_cell_buffer(iface, x, y, grid_size, n_cells=6):
+    """
+    Zoom to a selected grid cell with a buffer based on grid size.
+    """
+    canvas = iface.mapCanvas()
+
+    half_size = grid_size * n_cells
+
+    rect = QgsRectangle(
+        x - half_size,
+        y - half_size,
+        x + half_size,
+        y + half_size
+    )
+
+    canvas.setExtent(rect)
+    canvas.refresh()
+
 def center_feature(iface, feat, factor=4):
     iface.mapCanvas().setExtent(feat.geometry().boundingBox())
     iface.mapCanvas().zoomByFactor(factor)

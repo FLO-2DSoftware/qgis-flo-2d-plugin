@@ -9,7 +9,7 @@ from qgis._core import QgsFeatureRequest
 # of the License, or (at your option) any later version
 
 
-from .ui_utils import load_ui, set_icon, center_canvas, zoom
+from .ui_utils import load_ui, set_icon, center_canvas, zoom, zoom_cell_buffer
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import TimeSeriesDelegate, is_true, FloatDelegate
@@ -582,7 +582,8 @@ class InletAttributes(qtBaseClass, uiDialog):
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.4)
+                    cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+                    zoom_cell_buffer(self.iface, x, y, cellsize)
                     self.populate_attributes(self.current_node)
 
         except Exception:
@@ -1308,7 +1309,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.4)
+                    cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+                    zoom_cell_buffer(self.iface, x, y, cellsize)
                     self.populate_attributes(self.current_node)
 
         except Exception:
@@ -1517,7 +1519,8 @@ class PumpAttributes(qtBaseClass, uiDialog):
             feat = next(self.user_swmm_pumps_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-            zoom(self.iface, 0.4)
+            cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+            zoom_cell_buffer(self.iface, x, y, cellsize)
             self.populate_attributes(fid)
 
         except Exception:
@@ -1739,7 +1742,8 @@ class OrificeAttributes(qtBaseClass, uiDialog):
             feat = next(self.user_swmm_orifices_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-            zoom(self.iface, 0.4)
+            cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+            zoom_cell_buffer(self.iface, x, y, cellsize)
             self.populate_attributes(fid)
 
         except Exception:
@@ -1977,7 +1981,8 @@ class WeirAttributes(qtBaseClass, uiDialog):
             feat = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-            zoom(self.iface, 0.4)
+            cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+            zoom_cell_buffer(self.iface, x, y, cellsize)
             self.populate_attributes(fid)
 
         except Exception:
@@ -2270,7 +2275,8 @@ class ConduitAttributes(qtBaseClass, uiDialog):
             feat = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-            zoom(self.iface, 0.4)
+            cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+            zoom_cell_buffer(self.iface, x, y, cellsize)
             self.populate_attributes(fid)
 
         except Exception:
@@ -2865,7 +2871,8 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.4)
+                    cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+                    zoom_cell_buffer(self.iface, x, y, cellsize)
                     self.populate_attributes(self.current_node)
 
         except Exception:
