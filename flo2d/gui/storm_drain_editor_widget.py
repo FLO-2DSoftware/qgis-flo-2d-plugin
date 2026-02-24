@@ -74,7 +74,7 @@ from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom
+from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
 
 import matplotlib.pyplot as plt
@@ -7640,7 +7640,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if currentCell:
                     x, y = currentCell.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.4)
+                    cellsize = int(float(self.gutils.get_cont_par("CELLSIZE")))
+                    zoom_cell_buffer(self.iface, x, y, cellsize)
 
                 # Avoid opening multiple dialogs
                 dock_widget_name = dock_widgets.get(table)
