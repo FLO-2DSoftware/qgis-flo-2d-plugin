@@ -2,7 +2,8 @@
 import math
 
 import processing
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QUrl
+from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QListWidgetItem, QSizePolicy, QFileDialog
 from qgis._core import QgsProject, QgsWkbTypes, QgsVectorLayer, QgsFeature, QgsGeometry
 from qgis.core import QgsMapLayerType
@@ -60,9 +61,11 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         self.open_water_data_btn.clicked.connect(self.open_water_data)
         self.save_water_data_btn.clicked.connect(self.save_water_data)
+        self.water_help_btn.clicked.connect(self.water_help)
 
         self.open_tailings_data_btn.clicked.connect(self.open_tailings_data)
         self.save_tailings_data_btn.clicked.connect(self.save_tailings_data)
+        self.tal_help_btn.clicked.connect(self.tailings_help)
 
         self.water_add_btn.clicked.connect(self.add_water_ts_to_inflow)
         self.tailings_add_btn.clicked.connect(self.add_tailings_ts_to_inflow)
@@ -118,6 +121,12 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             (1, 5): (-0.0048, 0.085),
             (2, 5): (-0.0031, 0.085),
         }
+
+    def water_help(self):
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/toolbar/flo-2d-parameters/Breach%20Hydrograph%20Tool.html#water-dams"))
+
+    def tailings_help(self):
+        QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/toolbar/flo-2d-parameters/Breach%20Hydrograph%20Tool.html#tailings-dams"))
 
     def add_water_ts_to_inflow(self):
         """
