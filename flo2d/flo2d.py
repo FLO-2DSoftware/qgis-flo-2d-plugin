@@ -60,6 +60,7 @@ from .flo2d_tools.schematic_tools import (
     generate_schematic_levees,
 )
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect, database_connect
+from .gui.dlg_breach_hydrograph_tool import BreachHydrographToolDialog
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler import ContToler
 from .gui.dlg_evap_editor import EvapEditorDialog
@@ -500,6 +501,11 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
                     "Levee Elevation Tool",
                     lambda: self.show_levee_elev_tool(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/breach_hydrograph_tool.png"),
+                    "Breach Hydrograph Tool",
+                    lambda: self.show_breach_hydrograph_tool(),
                 ),
             )
         )
@@ -4200,6 +4206,24 @@ class Flo2D(object):
         #         "ERROR 060319.1806: Assigning values aborted! Please check your crest elevation source layers.\n",
         #         e,
         #     )
+
+    @connection_required
+    def show_breach_hydrograph_tool(self):
+        """
+        Show breach elevation tool
+        """
+        self.uncheck_all_info_tools()
+
+        # show the dialog
+        dlg_breach_hydrograph_tool = BreachHydrographToolDialog(self.con, self.iface, self.lyrs, self.f2d_widget.bc_editor_new)
+        dlg_breach_hydrograph_tool.show()
+
+        while True:
+            ok = dlg_breach_hydrograph_tool.exec_()
+            if ok:
+                break
+            else:
+                return
 
     @connection_required
     def show_project_review_dialog(self):
