@@ -1062,8 +1062,6 @@ class Flo2D(object):
                 self.project.setCrs(self.crs)
                 gpkg_path_adj = gpkg_path.replace("\\", "/")
                 self.write_proj_entry("gpkg", gpkg_path_adj)
-                # uri = f'geopackage:{gpkg_path_adj}?projectName={proj_name + "_v1.0.0"}'
-                # # self.project.write(uri)
                 self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_info("Project created into the Geopackage!")

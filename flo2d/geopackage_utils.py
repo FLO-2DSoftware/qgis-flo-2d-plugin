@@ -415,12 +415,10 @@ class GeoPackageUtils(object):
         tmp_qgz = current_qgz + ".tmp"
 
         # Query to retrieve the content (hexadecimal QGZ data) for the selected project
-        query_content = "SELECT content FROM qgis_projects WHERE name = ?"
-        row = self.execute(query_content, (gpkg_name,)).fetchone()
-
-        if not row or not row[0]:
-            self.uc.log_info(f"No QGZ content found for project {gpkg_name}.")
-            self.uc.bar_error(f"No QGZ content found for project {gpkg_name}.")
+        try:
+            query_content = "SELECT content FROM qgis_projects WHERE name = ?"
+            row = self.execute(query_content, (gpkg_name,)).fetchone()
+        except:
             return
 
         # Hexadecimal QGZ data
