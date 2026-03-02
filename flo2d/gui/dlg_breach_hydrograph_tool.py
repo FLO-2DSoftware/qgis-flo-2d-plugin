@@ -1232,8 +1232,12 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         ax.plot(self.t_hr, self.Qt)
         ax.set_xlabel("Time (hrs)")
-        ax.set_ylabel("Discharge (m³/s)")
-        ax.set_title(f"Total Volume = {total_volume:,.1f} m³ ({ratio})")
+        if self.gutils.get_cont_par("METRIC") == "1":
+            ax.set_ylabel("Discharge (m³/s)")
+            ax.set_title(f"Total Volume = {total_volume:,.1f} m³ ({ratio})")
+        else:
+            ax.set_ylabel("Discharge (cfs)")
+            ax.set_title(f"Total Volume = {total_volume:,.1f} yd³ ({ratio})")
 
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
