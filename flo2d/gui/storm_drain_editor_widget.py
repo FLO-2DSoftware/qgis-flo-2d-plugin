@@ -6747,6 +6747,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Function to delete Rating Tables and Culvert Equations
         """
+        if not self.SD_type4_cbo.count():
+            return
 
         if not self.inletRT:
             return
