@@ -446,7 +446,7 @@ class ContToler(qtBaseClass, uiDialog):
             self.use_time_interval_grp.setChecked(False)
             self.use_time_interval_grp.setDisabled(True)
         else:
-            self.use_time_interval_grp.setChecked(True)
+            self.use_time_interval_grp.setChecked(False)
             self.use_time_interval_grp.setDisabled(False)
 
     def ISED_currentIndexChanged(self):
