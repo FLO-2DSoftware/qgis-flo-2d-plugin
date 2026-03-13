@@ -225,6 +225,23 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         """
         Save the dam area shapefile
         """
+        if self.dam_layer is None:
+            self.uc.bar_warn("Please create a Dam Area before saving!")
+            return
+        try:
+            layer_id = self.dam_layer.id()
+        except RuntimeError:
+            self.uc.bar_warn("Dam layer was deleted. Please create again.")
+            self.dam_layer = None
+            return
+        if layer_id not in QgsProject.instance().mapLayers():
+            self.uc.bar_warn("Dam layer no longer exists. Please create it again.")
+            self.dam_layer = None
+            return
+        if not self.dam_layer.isEditable():
+            self.uc.bar_warn("Dam layer is not in edit mode!")
+            return
+
         self.dam_layer.commitChanges()
         self.populate_dam_cbo()
 
