@@ -225,6 +225,22 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         """
         Save the dam area shapefile
         """
+        if self.dam_layer is None:
+            self.uc.bar_warn("Please create a Dam Area before saving!")
+            self.uc.log_info("Please create a Dam Area before saving!")
+            return
+        layer_id = self.dam_layer.id() if self.dam_layer else None
+        layer = QgsProject.instance().mapLayer(layer_id) if layer_id else None
+        if layer is None:
+            self.uc.bar_warn("Dam layer no longer exists. Please create it again.")
+            self.uc.log_info("Dam layer no longer exists. Please create it again.")
+            self.dam_layer = None
+            return
+        if not self.dam_layer.isEditable():
+            self.uc.bar_warn("Dam layer is not in edit mode!")
+            self.uc.log_info("Dam layer is not in edit mode!")
+            return
+
         self.dam_layer.commitChanges()
         self.populate_dam_cbo()
 
@@ -243,6 +259,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
                 layer_id = self.dam_layer.id()
                 if QgsProject.instance().mapLayers().get(layer_id) is not None:
                     QgsProject.instance().removeMapLayer(layer_id)
+                    self.dam_layer = None
             except Exception as e:
                 self.uc.show_warn(f"Error deleting dam layer: {str(e)}")
 
@@ -251,6 +268,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
                 layer_id = self.reservoir.id()
                 if QgsProject.instance().mapLayers().get(layer_id) is not None:
                     QgsProject.instance().removeMapLayer(layer_id)
+                    self.dam_layer = None
             except Exception as e:
                 self.uc.show_warn(f"Error deleting reservoir layer: {str(e)}")
 
