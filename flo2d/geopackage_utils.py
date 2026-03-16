@@ -1405,7 +1405,7 @@ class GeoPackageUtils(object):
         return self.execute(qry).fetchall()
 
     def get_structs_list(self):
-        qry = "SELECT fid, structname, type, notes FROM struct ORDER BY LOWER(structname);"
+        qry = "SELECT fid, structname, type, notes FROM struct ORDER BY fid;"
         return self.execute(qry).fetchall()
 
     def disable_geom_triggers(self):
