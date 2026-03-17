@@ -10,16 +10,40 @@ $qgisProfileRoot = Join-Path $env:APPDATA "QGIS\QGIS3\profiles\$profile"
 $pluginParent = Join-Path $qgisProfileRoot "python\plugins"
 $pluginDst = Join-Path $pluginParent $pluginName
 
-$qgisBin = Join-Path $qgisRoot "bin\qgis-ltr-bin.exe"
-$o4wEnv  = Join-Path $qgisRoot "bin\o4w_env.bat"
-$qtEnv   = Join-Path $qgisRoot "bin\qt5_env.bat"
-$pyEnv   = Join-Path $qgisRoot "bin\py3_env.bat"
+$qgisBinCandidates = @(
+    (Join-Path $qgisRoot "bin\qgis-ltr-bin.exe"),
+    (Join-Path $qgisRoot "bin\qgis-bin.exe")
+)
+$qgisBin = $qgisBinCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+$o4wEnv = Join-Path $qgisRoot "bin\o4w_env.bat"
+
+$qtEnvCandidates = @(
+    (Join-Path $qgisRoot "bin\qt6_env.bat"),
+    (Join-Path $qgisRoot "bin\qt5_env.bat")
+)
+$qtEnv = $qtEnvCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+$pyEnv = Join-Path $qgisRoot "bin\py3_env.bat"
 
 if (!(Test-Path $pluginSrc)) {
     throw "Plugin source folder not found: $pluginSrc"
 }
-if (!(Test-Path $qgisBin)) {
-    throw "QGIS binary not found: $qgisBin"
+if (-not $qgisBin) {
+    Write-Host "[WARN] Could not find QGIS binary. Contents of $qgisRoot\bin:"
+    Get-ChildItem (Join-Path $qgisRoot "bin") | Select-Object Name
+    throw "QGIS binary not found in expected locations."
+}
+if (!(Test-Path $o4wEnv)) {
+    throw "OSGeo4W environment script not found: $o4wEnv"
+}
+if (-not $qtEnv) {
+    Write-Host "[WARN] Could not find Qt environment script. Contents of $qgisRoot\bin:"
+    Get-ChildItem (Join-Path $qgisRoot "bin") | Select-Object Name
+    throw "Qt environment script not found in expected locations."
+}
+if (!(Test-Path $pyEnv)) {
+    throw "Python environment script not found: $pyEnv"
 }
 
 New-Item -ItemType Directory -Force -Path $pluginParent | Out-Null
