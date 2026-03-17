@@ -18,7 +18,6 @@ Write-Host "[INFO] Installing OSGeo4W packages to $root"
 Write-Host "[INFO] Site: $site"
 Write-Host "[INFO] Packages: $packages"
 
-# Silent install
 Start-Process -FilePath $installer -ArgumentList @(
     "-q",
     "-A",
@@ -37,24 +36,17 @@ $qgisBinCandidates = @(
 
 $qgisBin = $qgisBinCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 $o4wEnv = Join-Path $root "bin\o4w_env.bat"
-$pyEnv = Join-Path $root "bin\py3_env.bat"
+
+Write-Host "[INFO] Contents of $root\bin:"
+Get-ChildItem (Join-Path $root "bin") | Select-Object Name
 
 if (-not $qgisBin) {
-    Write-Host "[WARN] Could not find QGIS binary. Contents of $root\bin:"
-    Get-ChildItem (Join-Path $root "bin") | Select-Object Name
     throw "QGIS binary not found in expected locations."
 }
 if (!(Test-Path $o4wEnv)) {
     throw "OSGeo4W environment script not found: $o4wEnv"
 }
-if (!(Test-Path $pyEnv)) {
-    Write-Host "[WARN] Could not find py3_env.bat. Contents of $root\bin:"
-    Get-ChildItem (Join-Path $root "bin") | Select-Object Name
-    throw "Python environment script not found: $pyEnv"
-}
 
 Write-Host "[INFO] QGIS binary: $qgisBin"
 Write-Host "[INFO] o4w_env: $o4wEnv"
-Write-Host "[INFO] py3_env: $pyEnv"
-
 Write-Host "[INFO] OSGeo4W QGIS install completed."
