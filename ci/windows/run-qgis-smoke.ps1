@@ -17,7 +17,6 @@ $qgisBinCandidates = @(
 $qgisBin = $qgisBinCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 $o4wEnv = Join-Path $qgisRoot "bin\o4w_env.bat"
-$pyEnv = Join-Path $qgisRoot "bin\py3_env.bat"
 
 if (!(Test-Path $pluginSrc)) {
     throw "Plugin source folder not found: $pluginSrc"
@@ -29,11 +28,6 @@ if (-not $qgisBin) {
 }
 if (!(Test-Path $o4wEnv)) {
     throw "OSGeo4W environment script not found: $o4wEnv"
-}
-if (!(Test-Path $pyEnv)) {
-    Write-Host "[WARN] Could not find py3_env.bat. Contents of $qgisRoot\bin:"
-    Get-ChildItem (Join-Path $qgisRoot "bin") | Select-Object Name
-    throw "Python environment script not found: $pyEnv"
 }
 
 New-Item -ItemType Directory -Force -Path $pluginParent | Out-Null
@@ -51,7 +45,6 @@ $codePath = Join-Path $repoRoot "ci\windows\check_plugin_load.py"
 $bat = @"
 @echo off
 call "$o4wEnv"
-call "$pyEnv"
 
 set QGIS_DEBUG=0
 set QT_QPA_PLATFORM=offscreen
