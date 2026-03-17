@@ -8,14 +8,35 @@ on:
 jobs:
   qgis-windows-smoke:
     runs-on: windows-2022
-    timeout-minutes: 45
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - qgis_series: "3.28"
+            qgis_label: "3.28 LTR"
+            installer_url: "https://qgis.org/downloads/windows/QGIS-OSGeo4W-3.28.9-1.msi"
+            install_dir: "C:\\Program Files\\QGIS 3.28"
+          - qgis_series: "3.34"
+            qgis_label: "3.34 LTR"
+            installer_url: "https://qgis.org/downloads/windows/QGIS-OSGeo4W-3.34.9-1.msi"
+            install_dir: "C:\\Program Files\\QGIS 3.34"
+          - qgis_series: "3.40"
+            qgis_label: "3.40 LTR"
+            installer_url: "https://qgis.org/downloads/QGISQT6-OSGeo4W-3.40.9-1.msi"
+            install_dir: "C:\\Program Files\\QGIS 3.40"
+          - qgis_series: "3.44"
+            qgis_label: "3.44 LTR"
+            installer_url: "https://qgis.org/downloads/QGIS-OSGeo4W-3.44.8-1.msi"
+            install_dir: "C:\\Program Files\\QGIS 3.44"
 
     env:
       PLUGIN_NAME: flo2d
-      QGIS_ROOT: C:\OSGeo4W
       QGIS_PROFILE: default
-      OSGEO4W_SITE: https://download.osgeo.org/osgeo4w/v2
-      OSGEO4W_PACKAGES: qgis-ltr
+      EXPECTED_QGIS_MAJOR_MINOR: ${{ matrix.qgis_series }}
+      QGIS_INSTALL_DIR: ${{ matrix.install_dir }}
+      QGIS_INSTALLER_URL: ${{ matrix.installer_url }}
 
     steps:
       - name: Checkout
@@ -28,21 +49,19 @@ jobs:
           Write-Host "ImageOS:" $env:ImageOS
           python --version
 
-      - name: Install QGIS LTR with OSGeo4W
+      - name: Install ${{ matrix.qgis_label }}
         shell: pwsh
-        run: |
-          ./ci/windows/install-qgis-osgeo4w.ps1
+        run: ./ci/windows/install-qgis-standalone.ps1
 
-      - name: Run QGIS plugin smoke test
+      - name: Run smoke test on ${{ matrix.qgis_label }}
         shell: pwsh
-        run: |
-          ./ci/windows/run-qgis-smoke.ps1
+        run: ./ci/windows/run-qgis-smoke.ps1
 
-      - name: Upload smoke logs
+      - name: Upload logs for ${{ matrix.qgis_label }}
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qgis-windows-smoke-logs
+          name: smoke-logs-${{ matrix.qgis_series }}
           path: |
             smoke-test.log
             smoke-test-python.log
