@@ -36,6 +36,7 @@ jobs:
       QGIS_PROFILE: default
       EXPECTED_QGIS_MAJOR_MINOR: ${{ matrix.qgis_series }}
       QGIS_INSTALLER_URL: ${{ matrix.installer_url }}
+      QGIS_INSTALL_DIR: ${{ matrix.install_dir }}
 
     steps:
       - name: Checkout
