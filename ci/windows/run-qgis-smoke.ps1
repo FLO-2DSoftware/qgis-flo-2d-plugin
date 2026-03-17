@@ -1,51 +1,71 @@
 $ErrorActionPreference = "Stop"
 
-$installerUrl = $env:QGIS_INSTALLER_URL
-$installDir = $env:QGIS_INSTALL_DIR
-$installerName = Split-Path $installerUrl -Leaf
-$installerPath = Join-Path $env:RUNNER_TEMP $installerName
+$pluginName = $env:PLUGIN_NAME
+$profile = $env:QGIS_PROFILE
+$repoRoot = (Get-Location).Path
 
-Write-Host "[INFO] QGIS_INSTALLER_URL: $installerUrl"
-Write-Host "[INFO] QGIS_INSTALL_DIR: $installDir"
+$pluginSrc = Join-Path $repoRoot $pluginName
+$qgisProfileRoot = Join-Path $env:APPDATA "QGIS\QGIS3\profiles\$profile"
+$pluginParent = Join-Path $qgisProfileRoot "python\plugins"
+$pluginDst = Join-Path $pluginParent $pluginName
 
-if ([string]::IsNullOrWhiteSpace($installerUrl)) {
-    throw "QGIS_INSTALLER_URL is empty."
+if (!(Test-Path $pluginSrc)) {
+    throw "Plugin source folder not found: $pluginSrc"
 }
 
-Write-Host "[INFO] Downloading QGIS installer..."
-Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
-
-if (!(Test-Path $installerPath)) {
-    throw "Installer download failed: $installerPath"
+if (!(Test-Path "qgis-bin-path.txt")) {
+    throw "qgis-bin-path.txt not found. Install step may have failed."
 }
 
-Write-Host "[INFO] Installer downloaded to: $installerPath"
+$qgisBin = (Get-Content "qgis-bin-path.txt" | Select-Object -First 1).Trim()
 
-Write-Host "[INFO] Installing QGIS silently..."
-Start-Process msiexec.exe -ArgumentList @(
-    "/i", "`"$installerPath`"",
-    "/qn",
-    "/norestart",
-    "INSTALLDIR=`"$installDir`""
-) -Wait -NoNewWindow
-
-Write-Host "[INFO] Verifying installation..."
-
-if (!(Test-Path $installDir)) {
-    throw "Install directory was not created: $installDir"
+if ([string]::IsNullOrWhiteSpace($qgisBin) -or !(Test-Path $qgisBin)) {
+    throw "QGIS executable path is invalid: $qgisBin"
 }
 
-$qgisExeCandidates = Get-ChildItem $installDir -Recurse -Filter "qgis-bin.exe" -ErrorAction SilentlyContinue |
-    Select-Object -ExpandProperty FullName
+New-Item -ItemType Directory -Force -Path $pluginParent | Out-Null
 
-if (-not $qgisExeCandidates) {
-    Write-Host "[WARN] Could not find qgis-bin.exe under $installDir"
-    Write-Host "[INFO] Dumping install tree (depth 3)..."
-    Get-ChildItem $installDir -Recurse -Depth 3 | Select-Object FullName | Out-String | Write-Host
-    throw "QGIS executable not found after installation."
+if (Test-Path $pluginDst) {
+    Remove-Item -Recurse -Force $pluginDst
 }
 
-$qgisBin = $qgisExeCandidates | Select-Object -First 1
-Write-Host "[INFO] Found QGIS executable: $qgisBin"
+Copy-Item -Recurse -Force $pluginSrc $pluginDst
 
-Write-Host "[INFO] Installation verification passed."
+Write-Host "[INFO] Plugin copied to $pluginDst"
+Write-Host "[INFO] Using qgis-bin: $qgisBin"
+
+$codePath = Join-Path $repoRoot "ci\windows\check_plugin_load.py"
+
+$bat = @"
+@echo off
+set QT_QPA_PLATFORM=offscreen
+set PLUGIN_NAME=$pluginName
+set EXPECTED_QGIS_MAJOR_MINOR=$env:EXPECTED_QGIS_MAJOR_MINOR
+
+echo [INFO] Using qgis-bin: "$qgisBin"
+echo [INFO] Using plugin path: "$pluginDst"
+echo [INFO] Using code path: "$codePath"
+echo [INFO] EXPECTED_QGIS_MAJOR_MINOR=%EXPECTED_QGIS_MAJOR_MINOR%
+
+"$qgisBin" --nologo --noversioncheck --code "$codePath" > smoke-test-python.log 2>&1
+exit /b %ERRORLEVEL%
+"@
+
+Set-Content -Path smoke-runner.bat -Value $bat -Encoding ASCII
+
+cmd.exe /c smoke-runner.bat | Tee-Object -FilePath smoke-test.log
+$exitCode = $LASTEXITCODE
+
+Write-Host "[INFO] QGIS process exit code: $exitCode"
+
+if (Test-Path "smoke-test-python.log") {
+    Write-Host "========== smoke-test-python.log =========="
+    Get-Content "smoke-test-python.log"
+    Write-Host "==========================================="
+} else {
+    Write-Host "[WARN] smoke-test-python.log was not created."
+}
+
+if ($exitCode -ne 0) {
+    throw "QGIS smoke test failed with exit code $exitCode"
+}
