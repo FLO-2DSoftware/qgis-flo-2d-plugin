@@ -10,7 +10,7 @@ $qgisProfileRoot = Join-Path $env:APPDATA "QGIS\QGIS3\profiles\$profile"
 $pluginParent = Join-Path $qgisProfileRoot "python\plugins"
 $pluginDst = Join-Path $pluginParent $pluginName
 
-$qgisBin = Join-Path $qgisRoot "bin\qgis-bin.exe"
+$qgisBin = Join-Path $qgisRoot "bin\qgis-ltr-bin.exe"
 $o4wEnv  = Join-Path $qgisRoot "bin\o4w_env.bat"
 $qtEnv   = Join-Path $qgisRoot "bin\qt5_env.bat"
 $pyEnv   = Join-Path $qgisRoot "bin\py3_env.bat"

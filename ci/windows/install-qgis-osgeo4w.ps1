@@ -30,7 +30,7 @@ Start-Process -FilePath $installer -ArgumentList @(
 
 Write-Host "[INFO] Verifying installation..."
 
-$qgisBin = Join-Path $root "bin\qgis-bin.exe"
+$qgisBin = Join-Path $root "bin\qgis-ltr-bin.exe"
 $o4wEnv  = Join-Path $root "bin\o4w_env.bat"
 $qtEnv   = Join-Path $root "bin\qt5_env.bat"
 $pyEnv   = Join-Path $root "bin\py3_env.bat"
