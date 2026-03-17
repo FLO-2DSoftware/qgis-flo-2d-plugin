@@ -8,6 +8,7 @@ from qgis.core import Qgis
 import qgis.utils
 
 PLUGIN_NAME = os.environ.get("PLUGIN_NAME", "flo2d")
+EXPECTED_QGIS_MAJOR_MINOR = os.environ.get("EXPECTED_QGIS_MAJOR_MINOR")
 
 
 def log(msg):
@@ -23,10 +24,18 @@ def main():
     log("[INFO] check_plugin_load.py started")
 
     try:
+        actual_version = Qgis.QGIS_VERSION.split("-")[0]
+
         log(f"[INFO] QGIS version: {Qgis.QGIS_VERSION}")
         log(f"[INFO] Python version: {sys.version}")
         log(f"[INFO] Plugin name: {PLUGIN_NAME}")
         log(f"[INFO] Plugin paths: {qgis.utils.plugin_paths}")
+        log(f"[INFO] EXPECTED_QGIS_MAJOR_MINOR: {EXPECTED_QGIS_MAJOR_MINOR}")
+
+        if EXPECTED_QGIS_MAJOR_MINOR and not actual_version.startswith(EXPECTED_QGIS_MAJOR_MINOR):
+            raise RuntimeError(
+                f"Expected QGIS {EXPECTED_QGIS_MAJOR_MINOR}.x but got {actual_version}"
+            )
 
         plugin_path = os.path.join(qgis.utils.plugin_paths[0], PLUGIN_NAME)
         log(f"[INFO] Does plugin package exist? {os.path.exists(plugin_path)}")
