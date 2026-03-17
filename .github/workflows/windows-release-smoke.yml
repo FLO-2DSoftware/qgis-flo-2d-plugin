@@ -1,0 +1,49 @@
+name: Windows QGIS Release Smoke Test
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  qgis-windows-smoke:
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    env:
+      PLUGIN_NAME: flo2d
+      QGIS_ROOT: C:\OSGeo4W
+      QGIS_PROFILE: default
+      OSGEO4W_SITE: https://download.osgeo.org/osgeo4w/v2
+      OSGEO4W_PACKAGES: qgis-ltr
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner info
+        shell: pwsh
+        run: |
+          Write-Host "Runner OS:" $env:RUNNER_OS
+          Write-Host "ImageOS:" $env:ImageOS
+          python --version
+
+      - name: Install QGIS LTR with OSGeo4W
+        shell: pwsh
+        run: |
+          ./ci/windows/install-qgis-osgeo4w.ps1
+
+      - name: Run QGIS plugin smoke test
+        shell: pwsh
+        run: |
+          ./ci/windows/run-qgis-smoke.ps1
+
+      - name: Upload smoke logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qgis-windows-smoke-logs
+          path: |
+            smoke-test.log
+            smoke-test-python.log
+            smoke-runner.bat
