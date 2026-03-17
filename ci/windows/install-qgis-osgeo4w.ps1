@@ -36,16 +36,7 @@ $qgisBinCandidates = @(
 )
 
 $qgisBin = $qgisBinCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-
 $o4wEnv = Join-Path $root "bin\o4w_env.bat"
-
-$qtEnvCandidates = @(
-    (Join-Path $root "bin\qt6_env.bat"),
-    (Join-Path $root "bin\qt5_env.bat")
-)
-
-$qtEnv = $qtEnvCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-
 $pyEnv = Join-Path $root "bin\py3_env.bat"
 
 if (-not $qgisBin) {
@@ -56,18 +47,14 @@ if (-not $qgisBin) {
 if (!(Test-Path $o4wEnv)) {
     throw "OSGeo4W environment script not found: $o4wEnv"
 }
-if (-not $qtEnv) {
-    Write-Host "[WARN] Could not find Qt environment script. Contents of $root\bin:"
-    Get-ChildItem (Join-Path $root "bin") | Select-Object Name
-    throw "Qt environment script not found in expected locations."
-}
 if (!(Test-Path $pyEnv)) {
+    Write-Host "[WARN] Could not find py3_env.bat. Contents of $root\bin:"
+    Get-ChildItem (Join-Path $root "bin") | Select-Object Name
     throw "Python environment script not found: $pyEnv"
 }
 
 Write-Host "[INFO] QGIS binary: $qgisBin"
 Write-Host "[INFO] o4w_env: $o4wEnv"
-Write-Host "[INFO] qt_env: $qtEnv"
 Write-Host "[INFO] py3_env: $pyEnv"
 
 Write-Host "[INFO] OSGeo4W QGIS install completed."
