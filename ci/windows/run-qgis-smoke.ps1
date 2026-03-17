@@ -60,7 +60,18 @@ exit /b %ERRORLEVEL%
 Set-Content -Path smoke-runner.bat -Value $bat -Encoding ASCII
 
 cmd.exe /c smoke-runner.bat | Tee-Object -FilePath smoke-test.log
+$exitCode = $LASTEXITCODE
 
-if ($LASTEXITCODE -ne 0) {
-    throw "QGIS smoke test failed with exit code $LASTEXITCODE"
+Write-Host "[INFO] QGIS process exit code: $exitCode"
+
+if (Test-Path "smoke-test-python.log") {
+    Write-Host "========== smoke-test-python.log =========="
+    Get-Content "smoke-test-python.log"
+    Write-Host "==========================================="
+} else {
+    Write-Host "[WARN] smoke-test-python.log was not created."
+}
+
+if ($exitCode -ne 0) {
+    throw "QGIS smoke test failed with exit code $exitCode"
 }
