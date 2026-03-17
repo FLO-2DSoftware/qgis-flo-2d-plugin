@@ -1,12 +1,12 @@
 $ErrorActionPreference = "Stop"
 
 $installerUrl = $env:QGIS_INSTALLER_URL
-$installDir = $env:QGIS_INSTALL_DIR
+$expectedSeries = $env:EXPECTED_QGIS_MAJOR_MINOR
 $installerName = Split-Path $installerUrl -Leaf
 $installerPath = Join-Path $env:RUNNER_TEMP $installerName
 
 Write-Host "[INFO] QGIS_INSTALLER_URL: $installerUrl"
-Write-Host "[INFO] QGIS_INSTALL_DIR: $installDir"
+Write-Host "[INFO] EXPECTED_QGIS_MAJOR_MINOR: $expectedSeries"
 
 if ([string]::IsNullOrWhiteSpace($installerUrl)) {
     throw "QGIS_INSTALLER_URL is empty."
@@ -25,27 +25,56 @@ Write-Host "[INFO] Installing QGIS silently..."
 Start-Process msiexec.exe -ArgumentList @(
     "/i", "`"$installerPath`"",
     "/qn",
-    "/norestart",
-    "INSTALLDIR=`"$installDir`""
+    "/norestart"
 ) -Wait -NoNewWindow
 
 Write-Host "[INFO] Verifying installation..."
 
-if (!(Test-Path $installDir)) {
-    throw "Install directory was not created: $installDir"
+$programFilesRoots = @(
+    "C:\Program Files",
+    "C:\Program Files (x86)"
+) | Where-Object { Test-Path $_ }
+
+$qgisDirCandidates = foreach ($root in $programFilesRoots) {
+    Get-ChildItem $root -Directory -Filter "QGIS*" -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty FullName
 }
 
-$qgisExeCandidates = Get-ChildItem $installDir -Recurse -Filter "qgis-bin.exe" -ErrorAction SilentlyContinue |
-    Select-Object -ExpandProperty FullName
+$qgisDirCandidates = $qgisDirCandidates | Select-Object -Unique
+
+Write-Host "[INFO] QGIS directory candidates:"
+$qgisDirCandidates | ForEach-Object { Write-Host "  $_" }
+
+$qgisExeCandidates = foreach ($dir in $qgisDirCandidates) {
+    Get-ChildItem $dir -Recurse -Include "qgis-ltr-bin.exe","qgis-bin.exe" -File -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty FullName
+}
+
+$qgisExeCandidates = $qgisExeCandidates | Select-Object -Unique
 
 if (-not $qgisExeCandidates) {
-    Write-Host "[WARN] Could not find qgis-bin.exe under $installDir"
-    Write-Host "[INFO] Dumping install tree (depth 3)..."
-    Get-ChildItem $installDir -Recurse -Depth 3 | Select-Object FullName | Out-String | Write-Host
+    Write-Host "[WARN] Could not find qgis-ltr-bin.exe or qgis-bin.exe"
+    foreach ($dir in $qgisDirCandidates) {
+        Write-Host "[INFO] Dumping install tree under $dir (depth 4)..."
+        Get-ChildItem $dir -Recurse -Depth 4 | Select-Object FullName | Out-String | Write-Host
+    }
     throw "QGIS executable not found after installation."
 }
 
-$qgisBin = $qgisExeCandidates | Select-Object -First 1
-Write-Host "[INFO] Found QGIS executable: $qgisBin"
+Write-Host "[INFO] QGIS executable candidates:"
+$qgisExeCandidates | ForEach-Object { Write-Host "  $_" }
+
+$qgisBin = $qgisExeCandidates |
+    Where-Object { $_ -match [regex]::Escape($expectedSeries) } |
+    Select-Object -First 1
+
+if (-not $qgisBin) {
+    $qgisBin = $qgisExeCandidates | Select-Object -First 1
+    Write-Host "[WARN] No executable matched expected series $expectedSeries. Falling back to first candidate."
+}
+
+Write-Host "[INFO] Selected QGIS executable: $qgisBin"
+
+Set-Content -Path qgis-bin-path.txt -Value $qgisBin -Encoding ASCII
 
 Write-Host "[INFO] Installation verification passed."

@@ -35,7 +35,6 @@ jobs:
       PLUGIN_NAME: flo2d
       QGIS_PROFILE: default
       EXPECTED_QGIS_MAJOR_MINOR: ${{ matrix.qgis_series }}
-      QGIS_INSTALL_DIR: ${{ matrix.install_dir }}
       QGIS_INSTALLER_URL: ${{ matrix.installer_url }}
 
     steps:
@@ -63,6 +62,7 @@ jobs:
         with:
           name: smoke-logs-${{ matrix.qgis_series }}
           path: |
+            qgis-bin-path.txt
             smoke-test.log
             smoke-test-python.log
             smoke-runner.bat
