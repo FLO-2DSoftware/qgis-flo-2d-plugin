@@ -15,7 +15,7 @@ import traceback
 from subprocess import PIPE, STDOUT, Popen
 
 from PyQt5.QtGui import QTextCursor
-from qgis.PyQt.QtCore import QSettings, pyqtSignal
+from qgis.PyQt.QtCore import QSettings, pyqtSignal, Qt
 from qgis.PyQt.QtWidgets import QFileDialog
 
 from ..flo2d_tools.grid_tools import grid_has_empty_elev, raster2grid
@@ -34,7 +34,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
     logMessage = pyqtSignal(str, bool, name="logMessage")
 
     def __init__(self, con, iface, lyrs, cell_size):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.con = con
         self.iface = iface
@@ -42,6 +42,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.grid = None
         self.cell_size = float(cell_size)
         self.setupUi(self)
+        self.setWindowModality(Qt.WindowModal)
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")

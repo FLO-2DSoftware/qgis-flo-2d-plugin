@@ -161,7 +161,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         return cs
 
     def create_grid(self):
-        create_grid_dlg = CreateGridDialog(self.lyrs)
+        create_grid_dlg = CreateGridDialog(self.iface, self.lyrs)
         ok = create_grid_dlg.exec_()
         if not ok:
             return
@@ -264,14 +264,14 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         if field_index == -1:
             if add_new_colums == QMessageBox.No:
-                square_grid(self.gutils, boundary, upper_left_coords_override)
+                square_grid(self.gutils, boundary, self.iface, upper_left_coords_override)
             else:
                 if add_col_and_row_fields(grid_lyr):
                     assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
                 else:
-                    square_grid(self.gutils, boundary, upper_left_coords_override)
+                    square_grid(self.gutils, boundary, self.iface, upper_left_coords_override)
         else:
-            square_grid(self.gutils, boundary, upper_left_coords_override)
+            square_grid(self.gutils, boundary, self.iface, upper_left_coords_override)
 
         # Assign default manning value (as set in Control layer ('cont')
         default = self.gutils.get_cont_par("MANNING")
@@ -455,6 +455,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                                 zfield,
                                 calc_type,
                                 search_distance,
+                                self.iface
                             )
                             points_elevation = zs.points_elevation()
                             zs.set_elevation(points_elevation)
@@ -685,6 +686,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     zfield,
                     calc_type,
                     search_distance,
+                    self.iface
                 )
                 points_elevation = zs.points_elevation()
                 zs.set_other(points_elevation)
@@ -905,7 +907,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def eval_arfwrf(self):
-        eval_dlg = EvaluateReductionFactorsDialog(self.lyrs)
+        eval_dlg = EvaluateReductionFactorsDialog(self.iface, self.lyrs)
         ok = eval_dlg.exec_()
         if not ok:
             return

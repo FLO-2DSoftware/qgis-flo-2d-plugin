@@ -10,6 +10,7 @@
 
 from qgis.core import QgsWkbTypes
 from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox
+from qgis.PyQt.QtCore import Qt
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -20,12 +21,13 @@ uiDialog, qtBaseClass = load_ui("sampling_variable_into_grid")
 
 class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.con = con
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowModality(Qt.WindowModal)
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")
