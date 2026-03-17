@@ -1,0 +1,7 @@
+FROM qgis/qgis:3.44
+
+WORKDIR /workspace
+
+RUN chmod +x /workspace/ci/qgis/run-qgis-load-test.sh || true
+
+CMD ["bash", "/workspace/ci/qgis/run-qgis-load-test.sh"]
