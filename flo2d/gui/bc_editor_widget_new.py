@@ -16,7 +16,7 @@ from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-from ..utils import is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style
+from ..utils import is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style, qt_cursor_shape
 
 from ..flo2d_tools.grid_tools import get_adjacent_cell
 
@@ -1455,7 +1455,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 return
 
         self.bc_type = "inflow"
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         in_inserted = self.schematize_inflows()
 
@@ -1490,7 +1490,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 return
 
         self.bc_type = "outflow"
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         out_inserted = self.schematize_outflows()
 
@@ -1526,7 +1526,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             ):
                 return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         out_inserted = self.schematize_outflows()
         in_inserted = self.schematize_inflows()
@@ -1552,7 +1552,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.uc.log_info(m)
 
     def schematize_outflows(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             self.gutils.execute("DELETE FROM outflow_cells;")
             total_inserted = 0
@@ -1625,7 +1625,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             return 0
 
     def schematize_inflows(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             del_qry = "DELETE FROM inflow_cells;"
             ins_qry = """INSERT INTO inflow_cells (inflow_fid, grid_fid)
@@ -2443,7 +2443,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         else:
             self.bc_type = type
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 if type == "inflow":
                     self.gutils.execute(f"DELETE FROM all_schem_bc WHERE type = 'inflow'")
                     self.gutils.execute(f"DELETE FROM inflow_cells")
@@ -2480,7 +2480,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             return
 
         self.bc_type = "outflow"
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         try:
             grid = self.lyrs.data["grid"]["qlyr"]

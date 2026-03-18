@@ -14,13 +14,16 @@
 from qgis.gui import QgsMapToolIdentify
 from qgis.PyQt.QtCore import Qt, pyqtSignal
 
+from flo2d.utils import qt_cursor_shape
+
+
 class GridInfoTool(QgsMapToolIdentify):
     grid_elem_picked = pyqtSignal(int)
 
     def __init__(self, uc, canvas, lyrs):
         self.uc = uc
         self.canvas = canvas
-        self.canvas.setCursor(Qt.CrossCursor)
+        self.canvas.setCursor(qt_cursor_shape("CrossCursor"))
         self.lyrs = lyrs
         self.grid = None
 
@@ -41,10 +44,10 @@ class GridInfoTool(QgsMapToolIdentify):
             self.uc.log_info("ERROR 100721.1942: is the grid defined?")
 
     def activate(self):
-        self.canvas.setCursor(Qt.CrossCursor)
+        self.canvas.setCursor(qt_cursor_shape("CrossCursor"))
 
     def deactivate(self):
-        self.canvas.setCursor(Qt.ArrowCursor)
+        self.canvas.setCursor(qt_cursor_shape("ArrowCursor"))
         self.lyrs.clear_rubber()
 
     def isZoomTool(self):

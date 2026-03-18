@@ -13,6 +13,7 @@ from itertools import chain, zip_longest
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import Qt
 from ..user_communication import UserCommunication
+from ..utils import qt_cursor_shape
 
 
 class StormDrainProject(object):
@@ -82,7 +83,7 @@ class StormDrainProject(object):
                 return 3
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             self.uc.show_error("ERROR 170618.0611: construction of INP dictionary failed!", e)
             QApplication.restoreOverrideCursor()
             return 0

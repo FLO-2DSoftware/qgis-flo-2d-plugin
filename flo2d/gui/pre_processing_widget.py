@@ -19,6 +19,8 @@ from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsRasterLayer, QgsUnitTypes
 
+from ..utils import qt_cursor_shape
+
 uiDialog, qtBaseClass = load_ui("pre_processing_widget")
 
 
@@ -119,7 +121,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
             return
         output_raster_name = os.path.splitext(os.path.basename(output_raster))[0]
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # Prepare the raster calculator entry
         raster_entry = QgsRasterCalculatorEntry()

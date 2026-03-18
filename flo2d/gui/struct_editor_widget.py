@@ -31,7 +31,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
 from ..misc.project_review_utils import hydrostruct_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, qt_pen_style
+from ..utils import is_number, m_fdata, qt_pen_style, qt_cursor_shape
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
@@ -267,7 +267,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 return
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             del_qry = "DELETE FROM struct WHERE fid NOT IN (SELECT fid FROM user_struct);"
             self.gutils.execute(del_qry)
@@ -491,7 +491,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 return
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 s.setValue("FLO-2D/ImportStructTable", os.path.dirname(rating_files[0]))
                 for file in rating_files:
                     file_name, file_ext = os.path.splitext(os.path.basename(file))
@@ -534,7 +534,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                                 )
                                 self.rating_cbo.setCurrentIndex(1)
 
-                            QApplication.setOverrideCursor(Qt.WaitCursor)
+                            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     else:
                         # There is no structure with name 'file_name'.
                         tables_out += file_name + "\n"
@@ -881,7 +881,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         if use_prs == '1' and os.path.exists(processed_results_file):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 dict_df = hydrostruct_dataframe_from_hdf5_scenarios(processed_results_file, struct_name)
 
                 # Clear the plots

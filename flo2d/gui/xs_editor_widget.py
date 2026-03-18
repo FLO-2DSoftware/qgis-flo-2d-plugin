@@ -57,7 +57,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_tributaries import TributariesDialog
 from ..misc.project_review_utils import hychan_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, qt_item_role, qt_pen_style
+from ..utils import is_number, m_fdata, qt_item_role, qt_pen_style, qt_cursor_shape
 from .plot_widget import PlotWidget
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import (
@@ -748,7 +748,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # Create the Schematized Left Bank (Channel Segments), joining cells intersecting
         # the User Left Bank Line, with arrows from one cell centroid to the next:
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             cs.create_schematized_channels()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -772,7 +772,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             cs.copy_features_from_user_channel_layer_to_schematized_channel_layer()
             cs.copy_features_from_user_xsections_layer_to_schematized_xsections_layer()
             self.gutils.create_xs_type_n_r_t_v_tables()
@@ -789,7 +789,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         if not self.gutils.is_table_empty("chan_elems"):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 cs.make_distance_table()
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
@@ -810,7 +810,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         # Fill the chan_interior_nodes table
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.fill_chan_interior_nodes_table()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -848,7 +848,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             msg = ""
 
@@ -1219,7 +1219,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         Function to interpolate channel elevation
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
             if xs_survey:
                 if self.save_xsec_dot_dat_with_only_user_cross_sections():
@@ -1518,7 +1518,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def save_chan_dot_dat_with_zero_natural_cross_sections(self):
         # check if there are any channels defined
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("chan"):
                 QApplication.restoreOverrideCursor()
                 return []
@@ -1583,7 +1583,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
             if outdir:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 chan = os.path.join(outdir, "CHAN.DAT")
                 if os.path.isfile(chan):
                     os.remove(chan)
@@ -1730,7 +1730,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         if outdir:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 xsec = os.path.join(outdir, "XSEC.DAT")
                 with open(xsec, "w") as x:
                     for fid, nxsecnum, name in chan_n:
@@ -1757,7 +1757,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 if not os.path.exists(outdir):
                     os.mkdir(outdir)
                 if outdir:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     chanbank = os.path.join(outdir, "CHANBANK.DAT")
                     with open(chanbank, "w") as cb:
                         for rb in rbanks:
@@ -1774,7 +1774,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Could not run interpolation under current operation system!")
             return -1
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             s = QSettings()
             self.project_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
             self.exe_dir = s.value("FLO-2D/last_flopro", "")
@@ -1812,7 +1812,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Could not run CHANRIGHTBANK.EXE under current operation system!")
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if os.path.isfile(self.exe_dir + "\\CHANRIGHTBANK.EXE"):
                 chanrightbank = ChanRightBankExecutor(self.exe_dir, self.project_dir)
                 return_code = chanrightbank.run()
@@ -1845,7 +1845,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("CHANRIGHTBANK.EXE failed!")
 
     def interpolate_xs_values(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 060319.1756: Interpolation of cross-sections values failed!")
@@ -2052,7 +2052,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             # Check if this is a Project Review Scenarios or regular plot
             if use_prs == '1' and os.path.exists(processed_results_file):
@@ -2649,7 +2649,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             # Check if this is a Project Review Scenarios or regular plot
             if use_prs == '1' and os.path.exists(processed_results_file):
@@ -3064,7 +3064,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             # Export CONT, TOPO, CHAN and XSEC to temp folder
             self.f2g.export_cont_toler_dat(outdir)
             self.f2g.export_mannings_n_topo_dat(outdir, None)
@@ -3164,7 +3164,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("WARNING 160821.0931: There are no schematized channel cross sections.")
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
             xs_lyr = self.lyrs.data["chan_elems"]["qlyr"]
@@ -3270,7 +3270,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.clear_tables("chan_confluences")
             self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
             self.uc.bar_info("Confluences deleted!")

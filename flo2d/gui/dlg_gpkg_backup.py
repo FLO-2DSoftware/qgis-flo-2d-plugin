@@ -8,6 +8,7 @@ from qgis._core import QgsProject
 
 from flo2d.gui.ui_utils import load_ui
 from flo2d.user_communication import UserCommunication
+from flo2d.utils import qt_cursor_shape
 
 uiDialog, qtBaseClass = load_ui("gpkg_backup")
 
@@ -51,7 +52,7 @@ class GpkgBackupDialog(qtBaseClass, uiDialog):
         gpkg_backup_name = self.gpkg_name_le.text()
         gpkg_backup_path = os.path.join(self.gpkg_dir, f"{gpkg_backup_name}.gpkg")
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # First update the current geopackage name to the backup name to create the backup correctly
         self.gutils.execute(f"UPDATE metadata SET value = '{gpkg_backup_name}' WHERE name = 'PROJ_NAME';")

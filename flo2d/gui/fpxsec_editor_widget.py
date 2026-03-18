@@ -33,7 +33,7 @@ from ..user_communication import UserCommunication
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 from ..deps import safe_h5py as h5py
-from ..utils import qt_pen_style
+from ..utils import qt_pen_style, qt_cursor_shape
 
 uiDialog, qtBaseClass = load_ui("fpxsec_editor")
 
@@ -456,7 +456,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             processed_results_file = self.gutils.get_cont_par("SCENARIOS_RESULTS")
             use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
@@ -658,7 +658,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             grid_fid = self.gutils.execute(f"SELECT grid_fid FROM fpxsec_cells WHERE fid = '{fid}'").fetchone()[0]
 
@@ -852,7 +852,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         """
         try:
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             units = "m" if self.gutils.get_cont_par("METRIC") == "1" else "ft"
 

@@ -22,7 +22,7 @@ from ..utils import (
     is_number,
     m_fdata,
     second_smallest,
-    set_min_max_elevs, set_min_max_n_values,
+    set_min_max_elevs, set_min_max_n_values, qt_cursor_shape,
 )
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
@@ -688,7 +688,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
 
     def find_cell(self, cell=None):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return

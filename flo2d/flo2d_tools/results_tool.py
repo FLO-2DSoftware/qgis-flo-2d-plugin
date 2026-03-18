@@ -20,6 +20,8 @@ from qgis.PyQt.QtCore import QPoint, pyqtSignal, Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
+from flo2d.utils import qt_cursor_shape
+
 
 class ResultsTool(QgsMapToolIdentify):
     feature_picked = pyqtSignal(str, int, object)  # Defines a new own signal 'feature_picked' with 2 arguments of
@@ -33,7 +35,7 @@ class ResultsTool(QgsMapToolIdentify):
         self.rb = None
         self.uc = uc
         # self.profile_tabs = ["chan"]
-        self.canvas.setCursor(Qt.CrossCursor)
+        self.canvas.setCursor(qt_cursor_shape("CrossCursor"))
         QgsMapToolIdentify.__init__(self, self.canvas)
 
     def update_lyrs_list(self):
@@ -217,7 +219,7 @@ class ResultsTool(QgsMapToolIdentify):
                     self.rb.reset(QgsWkbTypes.PolygonGeometry)
 
     def activate(self):
-        self.canvas.setCursor(Qt.CrossCursor)
+        self.canvas.setCursor(qt_cursor_shape("CrossCursor"))
         self.update_lyrs_list()  # self.lyrs_list gets current data from 'chan' layer (schematic left bank).
         self.lyrs.root.visibilityChanged.connect(self.update_lyrs_list)
 

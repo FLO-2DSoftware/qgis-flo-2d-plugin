@@ -33,7 +33,7 @@ from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, 
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_settings import SettingsDialog
 from ..layers import Layers
-from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date
+from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date, qt_cursor_shape
 from .flo2d_parser import ParseDAT, ParseHDF5
 
 
@@ -354,7 +354,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to import only the TOPO.DAT file (single component)
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
 
             qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
@@ -387,7 +387,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to import only the MANNINGS_N.DAT file (single component)
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
 
             qry = "UPDATE grid SET n_value = ? WHERE fid = ?;"
@@ -4008,7 +4008,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(
                 "ERROR 101122.1107: Importing hydraulic structures bridge xsecs from BRIDGE_XSEC.DAT failed!"
             )
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
     def import_hystruc_bridge_xs_hdf5(self):
         try:
@@ -4036,7 +4036,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("Importing HDF5 bridge xsecs failed!")
             self.uc.log_info("Importing HDF5 bridge xsecs failed!")
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
     def import_street(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -4794,7 +4794,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     + "They were omitted:\n\n"
                     + error,
                 )
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -4803,7 +4803,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 + "\n__________________________________________________",
                 e,
             )
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
     def import_sed_hdf5(self, grid_to_domain):
         # try:
@@ -5122,7 +5122,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #         e,
         #     )
         #     self.uc.log_info("Error while importing Mudflow and Sediment Transport from hdf5 file!")
-        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        #     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
     def import_levee(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
@@ -6143,7 +6143,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"STORAGES: {storage_deleted_count} are outside the domain and not added to the project")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 08282024.0505: Removing outside nodes failed!\n\n" \
                   f"{e}"
             self.uc.show_error(msg, e)
@@ -6191,7 +6191,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("Storm Drain control variables set")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 08272024.0849: creation of Storm Drain control variables failed!\n\n" \
                   "Please check your SWMM input data.\n" \
                   f"{e}"
@@ -6357,7 +6357,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         f"WEIRS: {len(not_added)} are outside the domain and not added to the project")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 080422.1115: creation of Storm Drain Weirs layer failed!\n\n" \
                   "Please check your SWMM input data.\n" \
                   f"{e}"
@@ -6514,7 +6514,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         f"ORIFICES: {len(not_added)} are outside the domain and not added to the project")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 310322.0853: creation of Storm Drain Orifices layer failed!\n\n" \
                   "Please check your SWMM input data.\n" \
                   f"{e}"
@@ -6646,7 +6646,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         f"PUMPS: {len(not_added)} are outside the domain and not added to the project")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 050618.1805: creation of Storm Drain Pumps layer failed!\n\n" \
                   "Please check your SWMM input data.\n" \
                   f"{e}"
@@ -6856,7 +6856,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         f"CONDUITS: {len(not_added)} are outside the domain and not added to the project")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 050618.1804: creation of Storm Drain Conduits layer failed!\n\n" \
                   "Please check your SWMM input data.\n" \
                   f"{e}"
@@ -7043,7 +7043,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"STORAGES: {added_storages} added and {updated_storages} updated from imported SWMM INP file")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 300124.1109: Creating Storm Drain Storage Units layer failed!\n\n" \
                   "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
                   f"{e}"
@@ -7167,7 +7167,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"OUTFALLS: {added_outfalls} added and {updated_outfalls} updated from imported SWMM INP file")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 060319.1610: Creating Storm Drain Outfalls layer failed!\n\n" \
                   "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
                   f"{e}"
@@ -7332,7 +7332,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"JUNCTIONS: {added_inlets_junctions} added and {updated_inlets_junctions} updated from imported SWMM INP file")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 060319.1610: Creating Storm Drain Inlets/Junctions layer failed!\n\n" \
                   "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
                   f"{e}"
@@ -7511,7 +7511,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"CURVES (other): {added_other_curves} added and {updated_other_curves} updated from imported SWMM INP file")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 241121.0547: Reading storm drain curve data from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
@@ -7622,7 +7622,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"TIMESERIES: {added_time_series} added and {updated_time_series} updated from imported SWMM INP file")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 020219.0812:  Reading storm drain time series from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
@@ -7698,7 +7698,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"INFLOWS: {added_inflows} added and {update_inflows} updated from imported SWMM INP file")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 020219.0812: Reading storm drain inflows from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
@@ -7794,7 +7794,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     f"PATTERNS: {added_patterns} added and {updated_patterns} updated from imported SWMM INP file")
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg = "ERROR 020219.0812: Reading storm drain patterns from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
@@ -8822,7 +8822,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting STEEP_SLOPEN.DAT failed!")
             self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n")
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
 
     def export_steep_slopen_hdf5(self, subdomain):
@@ -8881,7 +8881,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting STEEP_SLOPEN to hdf5 failed!")
             self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n")
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
 
     def export_lid_volume(self, output=None, subdomain=None):
@@ -8923,7 +8923,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting LID_VOLUME.DAT failed!")
             self.uc.log_info("ERROR: exporting LID_VOLUME.DAT failed!\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
 
     def export_lid_volume_hdf5(self, subdomain):
@@ -8962,7 +8962,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting LID_VOLUME to hdf5 failed!")
             self.uc.log_info("ERROR: exporting LID_VOLUME to hdf5 failed!\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
 
     def export_mannings_n_topo(self, output=None, subdomain=None):
@@ -9032,13 +9032,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     + "Default values where written to the exported files.\n\n"
                     + "Please check the source layer coverage or use Fill Nodata."
                 )
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1541: exporting Grid data failed!.\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
 
     def export_mannings_n_topo_dat(self, outdir, subdomain):
@@ -9099,13 +9099,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     + "Default values where written to the exported files.\n\n"
                     + "Please check the source layer coverage or use Fill Nodata."
                 )
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
 
     # def export_neighbours(self):
@@ -9129,7 +9129,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     #     # except Exception as e:
     #     #     QApplication.restoreOverrideCursor()
     #     #     self.uc.show_error("ERROR: exporting grid neighbors data failed!.\n", e)
-    #     #     QApplication.setOverrideCursor(Qt.WaitCursor)
+    #     #     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
     #     #     return False
 
     def export_inflow(self, output=None, subdomain=None):
@@ -10054,7 +10054,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 os.remove(outflow)
 
             if warning != "":
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" + warning
                 msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
                 self.uc.show_warn(msg)
@@ -10828,7 +10828,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if os.path.exists(raincell):
                 msg = f"There is an existing RAINCELL.DAT file at: \n\n{outdir}\n\n"
                 msg += "Would you like to overwrite it?"
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 answer = self.uc.customized_question("FLO-2D", msg)
                 if answer == self.uc.msgbox_button("No"):
                     QApplication.restoreOverrideCursor()
@@ -10883,12 +10883,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg_box.setIcon(QMessageBox.Information)
 
             # Display the message box and wait for the user to click a button
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             msg_box.exec_()
 
             # New RAINCELL.DAT
             if msg_box.clickedButton() == button2:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
                     data_sql = """SELECT time_interval, rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
@@ -10942,7 +10942,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             # Old RAINCELL.DAT
             elif msg_box.clickedButton() == button3:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
                 if not subdomain:
                     data_sql = """SELECT time_interval, rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
@@ -11023,10 +11023,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
                 if answer == self.uc.msgbox_button("No"):
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     return
                 else:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
             header = self.gutils.execute(qry_header).fetchone()
@@ -11175,10 +11175,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
                 if answer == self.uc.msgbox_button("No"):
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     return
                 else:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             qry_header = "SELECT rainintime, irinters FROM raincell LIMIT 1;"
             header = self.gutils.execute(qry_header).fetchone()
@@ -15062,7 +15062,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             swmm_file = outdir + r"\SWMM.INP"
             if os.path.isfile(swmm_file):
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 replace = self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?")
                 QApplication.restoreOverrideCursor()
                 if not replace:
@@ -16572,7 +16572,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     os.remove(swmm_file)
                 self.gutils.set_cont_par("SWMM", 0)
 
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
 
             self.uc.log_info(
                 swmm_file
@@ -17254,7 +17254,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return True
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             self.uc.show_error("ERROR 101218.1619: exporting SWMMFLORT.DAT failed!.\n", e)
             QApplication.restoreOverrideCursor()
             return False

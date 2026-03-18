@@ -603,7 +603,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
 
         # try:
-        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        #     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used = self.get_subdomain_data(subdomain_path)
         default_n = float(self.gutils.get_cont_par("MANNING"))

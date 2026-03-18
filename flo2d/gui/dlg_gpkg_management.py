@@ -17,6 +17,8 @@ from flo2d.user_communication import UserCommunication
 
 import processing
 
+from flo2d.utils import qt_cursor_shape
+
 uiDialog, qtBaseClass = load_ui("gpkg_management")
 
 
@@ -110,7 +112,7 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
         Function to save the layers adjustments done to the geopackage
         """
         # try:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         gpkg_path = self.gutils.get_gpkg_path()
 
@@ -247,7 +249,7 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
         """
         Function to delete user layers in the list view
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         removed_layers = []
         if len(self.external_list.selectedItems()) != 0:
             for item in self.external_list.selectedItems():

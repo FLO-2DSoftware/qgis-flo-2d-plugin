@@ -18,6 +18,7 @@ from ..flo2d_tools.grid_tools import evaluate_spatial_tolerance, evaluate_spatia
     evaluate_spatial_noexchange, evaluate_arfwrf, evaluate_roughness
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..utils import qt_cursor_shape
 
 uiDialog, qtBaseClass = load_ui("areas_editor")
 
@@ -503,7 +504,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         Schematizes the selected areas in the database.
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             selected_areas_idx = self.areas_cbo.currentIndex()
             if selected_areas_idx != 0:

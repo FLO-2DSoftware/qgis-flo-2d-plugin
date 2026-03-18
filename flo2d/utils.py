@@ -473,3 +473,11 @@ def qt_pen_style(name):
     if hasattr(Qt, "PenStyle"):  # Qt6
         return getattr(Qt.PenStyle, name)
     return getattr(Qt, name)  # Qt5
+
+def qt_cursor_shape(name):
+    """
+    Cross-compatible Qt cursor shape lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "CursorShape"):  # Qt6
+        return getattr(Qt.CursorShape, name)
+    return getattr(Qt, name)  # Qt5

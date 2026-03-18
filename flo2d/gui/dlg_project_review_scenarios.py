@@ -23,6 +23,8 @@ from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..user_communication import UserCommunication, is_file_locked
 import numpy as np
 
+from ..utils import qt_cursor_shape
+
 uiDialog, qtBaseClass = load_ui("project_review_scenarios")
 
 
@@ -253,7 +255,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             self.uc.log_info("No scenarios selected")
             return False
 
-        QgsApplication.setOverrideCursor(Qt.WaitCursor)
+        QgsApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         if self.stormdrain_chbox.isChecked():
             self.process_swmmrpt(scenarios, processed_results_file)

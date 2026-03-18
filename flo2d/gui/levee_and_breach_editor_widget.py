@@ -19,7 +19,7 @@ from ..gui.dlg_breach import (
     LeveeFragilityCurvesDialog,
 )
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
+from ..utils import float_or_zero, qt_cursor_shape
 from .ui_utils import load_ui, set_icon
 from .dlg_breach import repaint_levee
 
@@ -119,7 +119,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             return
         else:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 self.gutils.clear_tables("levee_data", "levee_general", "levee_failure", "levee_fragility")
 
             except Exception as e:
@@ -152,7 +152,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             return
         else:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 self.gutils.clear_tables("breach", "breach_global", "breach_cells", "breach_fragility_curves")
 
             except Exception as e:
@@ -200,7 +200,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         dlg_individual_levees = IndividualLeveesDialog(self.iface, self.lyrs)
         QApplication.restoreOverrideCursor()
         close = dlg_individual_levees.exec_()

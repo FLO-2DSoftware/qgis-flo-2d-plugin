@@ -21,6 +21,7 @@ from ..flo2d_tools.grid_tools import poly2grid
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qt_cursor_shape
 
 uiDialog, qtBaseClass = load_ui("raincellraw")
 
@@ -109,7 +110,7 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
             return False
 
         try:
-            QgsApplication.setOverrideCursor(Qt.WaitCursor)
+            QgsApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.clear_tables("raincell", "raincellraw", "flo2d_raincell")
 
             # Convert grid layer to correct CRS

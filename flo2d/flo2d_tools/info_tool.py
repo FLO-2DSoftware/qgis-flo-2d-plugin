@@ -20,12 +20,15 @@ from qgis.PyQt.QtCore import QPoint, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
+from flo2d.utils import qt_cursor_shape
+
+
 class InfoTool(QgsMapToolIdentify):
     feature_picked = pyqtSignal(str, int, object)
 
     def __init__(self, canvas, lyrs, uc):
         self.canvas = canvas
-        self.canvas.setCursor(Qt.CrossCursor)
+        self.canvas.setCursor(qt_cursor_shape("CrossCursor"))
         self.lyrs = lyrs
         self.uc = uc
         self.rb = None
@@ -180,13 +183,13 @@ class InfoTool(QgsMapToolIdentify):
                     self.rb.reset(QgsWkbTypes.PolygonGeometry)
 
     def activate(self):
-        self.canvas.setCursor(Qt.CrossCursor)
+        self.canvas.setCursor(qt_cursor_shape("CrossCursor"))
         # self.canvas.setCursor(QCursor(QPixmap(os.path.join(os.path.dirname(__file__), "img/info_tool_icon.svg"))))
         self.update_lyrs_list()
         self.lyrs.root.visibilityChanged.connect(self.update_lyrs_list)
 
     def deactivate(self):
-        self.canvas.setCursor(Qt.ArrowCursor)
+        self.canvas.setCursor(qt_cursor_shape("ArrowCursor"))
         self.clear_rubber()
         self.lyrs.root.visibilityChanged.disconnect(self.update_lyrs_list)
 

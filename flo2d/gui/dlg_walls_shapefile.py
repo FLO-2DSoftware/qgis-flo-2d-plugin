@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
+from ..utils import float_or_zero, qt_cursor_shape
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("walls_shapefile")
@@ -229,7 +229,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                             ):
                                 return
                             else:
-                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                                 self.gutils.clear_tables("user_levee_lines", "levee_failure")
                                 self.user_levee_lines_lyr.reload()
                                 self.current_user_lines = -self.current_user_lines
@@ -246,7 +246,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                             ):
                                 return
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 starttime = datetime.datetime.now()
 
                 extent_request = QgsFeatureRequest()

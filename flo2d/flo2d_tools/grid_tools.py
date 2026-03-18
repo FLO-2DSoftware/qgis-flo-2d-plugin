@@ -43,7 +43,7 @@ from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QProgressDialog
 
 from ..errors import Flo2dError, GeometryValidityErrors
 from ..gui.ui_utils import center_canvas, zoom_show_n_cells
-from ..utils import get_file_path, is_number
+from ..utils import get_file_path, is_number, qt_cursor_shape
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None
@@ -3371,7 +3371,7 @@ def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
 
 def find_this_cell(iface, lyrs, uc, gutils, cell, color=QColor("yellow"), zoom_in=False, clear_previous=True):
     try:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         grid = lyrs.data["grid"]["qlyr"]
         if grid is not None:
             if grid:

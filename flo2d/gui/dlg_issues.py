@@ -37,7 +37,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import copy_tablewidget_selection, qt_item_role
+from ..utils import copy_tablewidget_selection, qt_item_role, qt_cursor_shape
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_show_n_cells
 
 # from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
@@ -88,7 +88,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         """
         Opens the dock widgets
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         if self.current_project_radio.isChecked():
             try:
@@ -320,7 +320,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.uc.log_info(os.path.basename(debug_file) + " is empty!")
                 return False
             else:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 s.setValue("FLO-2D/lastDEBUGDir", os.path.dirname(debug_file))
                 self.debug_directory = os.path.dirname(debug_file)
 
@@ -415,7 +415,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
         dlg_issues_files = IssuesFiles(self.con, self.iface, self.lyrs)
         ok = dlg_issues_files.exec_()
-        # QApplication.setOverrideCursor(Qt.WaitCursor)
+        # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         if ok:
             for lyr in QgsProject.instance().mapLayers().values():
                 if lyr.name() == "Depressed Elements":
@@ -479,7 +479,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("Depressed Elements")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -537,7 +537,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("Channel Bank Elev Differences")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -611,7 +611,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("Floodplain Rim Differences")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -687,7 +687,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("ARF_ADJUSTMENT")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -747,7 +747,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("UndergOUTFALLS")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -829,7 +829,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("CHAN_INTERIOR_NODES")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -886,7 +886,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("ManholePop")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -961,7 +961,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.elements_cbo.addItem(x[0].strip())
 
     def codes_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.loadIssues()
         QApplication.restoreOverrideCursor()
 
@@ -997,7 +997,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             self.uc.log_info("Manhole cover pop off (ManholePop.OUT)")
             codes = "9007"
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         first, second = "", ""
         codes = codes.split(" ")
@@ -1143,7 +1143,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.grid is not None:
                 if self.grid:
                     if cell != "":
@@ -1188,7 +1188,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
     def zoom_in(self):
         if self.currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -1197,7 +1197,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
     def zoom_out(self):
         if self.currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -2130,7 +2130,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         self.create_current_conflicts_layer()
 
     def create_current_conflicts_layer(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         s = QSettings()
         lastDir = s.value("FLO-2D/lastGdsDir", "")
@@ -2230,7 +2230,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         self.loadIssuePairs()
 
     def loadIssuePairs(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.description_tblw.setRowCount(0)
         comp1 = self.component1_cbo.currentText()
         comp2 = self.component2_cbo.currentText()
@@ -2269,7 +2269,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def elements_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.description_tblw.setRowCount(0)
         nElems = self.elements_cbo.count()
         if nElems > 0:
@@ -2291,7 +2291,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def errors_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.description_tblw.setRowCount(0)
         nElems = self.errors_cbo.count()
         if nElems > 0:
@@ -2321,7 +2321,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
@@ -2832,7 +2832,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.create_levee_crests_conflicts_layer()
 
     def create_levee_crests_conflicts_layer(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         s = QSettings()
         lastDir = s.value("FLO-2D/lastGdsDir", "")
@@ -2937,7 +2937,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.errors_cbo.model().sort(0)
 
     def loadLeveeCrests(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.crest_tblw.setRowCount(0)
 
         pd = QProgressDialog("Checking levees errors...", None, 0, len(self.levee_crests))
@@ -3009,7 +3009,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def elements_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.crest_tblw.setRowCount(0)
         nElems = self.elements_cbo.count()
         if nElems > 0:
@@ -3056,7 +3056,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def errors_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.crest_tblw.setRowCount(0)
         nElems = self.errors_cbo.count()
         if nElems > 0:
@@ -3086,7 +3086,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:

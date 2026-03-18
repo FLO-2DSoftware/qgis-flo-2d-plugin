@@ -34,7 +34,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero, qt_item_role
+from ..utils import float_or_zero, int_or_zero, qt_item_role, qt_cursor_shape
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
 
@@ -755,7 +755,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.previous_levees_lbl.setText("Previous " + str(self.n_levees))
         self.next_levees_lbl.setText("Next " + str(self.n_levees))
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.setup_connection()
 
         self.grid_count = self.gutils.count("grid", field="fid")
@@ -1059,7 +1059,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
     @timer
     def show_levee(self, cell):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.uc.clear_bar_messages()
 
             if cell == "":
@@ -1636,7 +1636,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
     def zoom_in(self):
         if self.currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -1645,7 +1645,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
     def zoom_out(self):
         if self.currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -1657,7 +1657,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
     def find_levee_cell(self):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.grid_lyr is not None:
                 if self.grid_lyr:
                     cell = self.cell_to_find_le.text()

@@ -38,7 +38,7 @@ from ..user_communication import UserCommunication
 from ..utils import (
     second_smallest,
     set_min_max_elevs,
-    time_taken,
+    time_taken, qt_cursor_shape,
 )
 from .ui_utils import load_ui
 
@@ -118,7 +118,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastLIDARDir", os.path.dirname(lidar_files[0]))
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             elevs = {}
             read_error = "Error reading files:\n\n"
             outside_grid, inside_grid = 0, 0
@@ -276,7 +276,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                 self.uc.show_info(read_error)
 
             if nope:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 elevs = [x[0] for x in cell_elev]
                 mini = -9999
                 mini2 = min(elevs)
@@ -383,7 +383,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         vl.commitChanges()
                         QgsProject.instance().addMapLayer(vl)
 
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                         elevs = [x[0] for x in assigned]
                         mini = -9999
                         mini2 = min(elevs)
@@ -401,7 +401,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
                         try:
                             ini_time = time.time()
-                            QApplication.setOverrideCursor(Qt.WaitCursor)
+                            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                             zs = ZonalStatistics(
                                 self.gutils,
                                 self.grid,
@@ -454,7 +454,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                     # &&&&&&&&&&&&&&&&&&&&&&&&
 
                     # ini_time = time.time()
-                    # QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     #
                     # for this_cell in nope:
                     #
@@ -484,7 +484,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
                     elif dlg.assign_radio.isChecked():
                         ini_time = time.time()
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                         value = dlg.non_interpolated_value_dbox.value()
                         for this_cell in nope:
@@ -527,7 +527,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                     #     pass
 
                     # ini_time = time.time()
-                    # QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     #
                     # render_grid_elevations(self.grid, True);
                     #

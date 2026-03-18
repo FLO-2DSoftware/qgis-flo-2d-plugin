@@ -29,7 +29,7 @@ from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 from ..geopackage_utils import GeoPackageUtils
 
 from ..user_communication import UserCommunication
-from ..utils import m_fdata
+from ..utils import m_fdata, qt_cursor_shape
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 from ..misc.ssurgo_soils import SsurgoSoil
@@ -428,7 +428,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if imethod == 0:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
@@ -594,7 +594,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not ok:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             if dlg.single_grp.isChecked():

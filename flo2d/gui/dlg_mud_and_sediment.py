@@ -18,7 +18,7 @@ from qgis.PyQt.QtWidgets import (
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import FloatDelegate, qt_item_role
+from ..utils import FloatDelegate, qt_item_role, qt_cursor_shape
 from .ui_utils import load_ui, set_icon
 from ..flo2d_tools.grid_tools import number_of_elements
 
@@ -526,7 +526,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 has_tal_cells = True
 
             if has_tal_res or has_tal_cells:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_warn("Schematized tailings data has been detected! "
                                   "The schematized tailings data will be deleted.")
                 self.uc.log_info("Schematized tailings data has been detected! "
@@ -549,7 +549,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 has_water_res = True
 
             if has_water_res:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_warn("Schematized reservoir data has been detected! "
                                   "The schematized reservoirs data will be deleted.")
                 self.uc.log_info("Schematized reservoir data has been detected! "

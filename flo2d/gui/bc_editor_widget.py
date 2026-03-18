@@ -20,7 +20,7 @@ from ..flo2d_tools.grid_tools import get_adjacent_cell, is_boundary_cell
 from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import get_BC_Border, is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style
+from ..utils import get_BC_Border, is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style, qt_cursor_shape
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
@@ -181,7 +181,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             ):
                 return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         out_inserted = self.schematize_outflows()
         in_inserted = self.schematize_inflows()
@@ -593,7 +593,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.update_inflow_plot()
 
     def schematize_inflows(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
             inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall()
@@ -958,7 +958,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.update_outflow_plot()
 
     def schematize_outflows(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             msg = ""
 

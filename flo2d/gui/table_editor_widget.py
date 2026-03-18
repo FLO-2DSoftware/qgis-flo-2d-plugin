@@ -26,7 +26,7 @@ except ImportError:
 
 
 from ..user_communication import UserCommunication
-from ..utils import is_number, qt_item_role
+from ..utils import is_number, qt_item_role, qt_cursor_shape
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("table_editor")
@@ -100,7 +100,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             QApplication.clipboard().setText(stream.getvalue())
 
     def paste(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.before_paste.emit()
         paste_str = QApplication.clipboard().text()
         rows = paste_str.split("\n")

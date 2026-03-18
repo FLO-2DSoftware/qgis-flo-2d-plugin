@@ -67,7 +67,7 @@ from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..user_communication import UserCommunication
-from ..utils import second_smallest, set_min_max_elevs, time_taken, qt_pen_style
+from ..utils import second_smallest, set_min_max_elevs, time_taken, qt_pen_style, qt_cursor_shape
 from .ui_utils import load_ui, set_icon
 
 from ..gui.dlg_rgh import RGHDialog
@@ -222,7 +222,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         bl.updateFeature(bfeat)
         bl.commitChanges()
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         ini_time = time.time()
         boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
         upper_left_coords_override = None
@@ -336,7 +336,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         else:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             res = dlg.probe_elevation()
             QApplication.restoreOverrideCursor()
             if res:
@@ -366,7 +366,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         else:
             return
         # try:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         # res = dlg.probe_elevation()
         dlg.create_elev_rc()
         QApplication.restoreOverrideCursor()
@@ -394,7 +394,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         else:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             res = dlg.probe_roughness()
             QApplication.restoreOverrideCursor()
             if res:
@@ -446,7 +446,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                         try:
                             ini_time = time.time()
-                            QApplication.setOverrideCursor(Qt.WaitCursor)
+                            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                             # grid_lyr = self.lyrs.data["grid"]["qlyr"]
                             zs = ZonalStatistics(
                                 self.gutils,
@@ -525,13 +525,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         if cell[0] != NULL:
                             dlg.interpolate_from_lidar()
                         else:
-                            QApplication.setOverrideCursor(Qt.ArrowCursor)
+                            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
                             QApplication.restoreOverrideCursor()
                             if proceed:
-                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
                                 QApplication.restoreOverrideCursor()
                                 dlg.interpolate_from_lidar()
@@ -675,7 +675,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             search_distance = dlg.search_spin_box.value()
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 grid_lyr = self.lyrs.data["grid"]["qlyr"]
                 zs = ZonalStatisticsOther(
                     self.gutils,
@@ -741,7 +741,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     return
                 method = correct_dlg.run_external
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             method()
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning grid elevation finished!")
@@ -800,7 +800,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         try:
 
             start_time = time.time()
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             if mann_dlg.intersect_cell_rectangle_radio.isChecked():
                 method = "Areas"
@@ -838,7 +838,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 self.uc.log_info("There is no grid. Please, create it before sampling tailings.")
                 return
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             qry = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]
 
             if tailings_dlg.use_external_layer():
@@ -944,7 +944,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     )
                     return
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             user_arf_lyr = self.lyrs.data["user_blocked_areas"]["qlyr"]
             if evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr):
@@ -1089,7 +1089,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     def import_comp_domain(self, external_layer, cell_size_field):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if not all([external_layer, cell_size_field]):
                 raise UserWarning("Missing Parameters!")
             user_model_boundary_lyr = self.lyrs.data["user_model_boundary"]["qlyr"]
@@ -1135,7 +1135,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     def import_external_blocked_areas(self, external_layer, collapse_field, arf_field, wrf_field):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if not all([external_layer, collapse_field, arf_field, wrf_field]):
                 raise UserWarning("Missing external layers parameters!")
             blocked_areas_lyr = self.lyrs.data["user_blocked_areas"]["qlyr"]
@@ -1203,7 +1203,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(w)
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             user_tol_lyr = self.lyrs.data["tolspatial"]["qlyr"]
             evaluate_spatial_tolerance(self.gutils, grid_lyr, user_tol_lyr)
@@ -1241,7 +1241,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(w)
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             user_froude_lyr = self.lyrs.data["fpfroude"]["qlyr"]
             evaluate_spatial_froude(self.gutils, grid_lyr, user_froude_lyr)
@@ -1286,7 +1286,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(w)
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             user_shallow_lyr = self.lyrs.data["spatialshallow"]["qlyr"]
             evaluate_spatial_shallow(self.gutils, grid_lyr, user_shallow_lyr)
@@ -1341,7 +1341,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         else:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 grid_lyr = self.lyrs.data["grid"]["qlyr"]
 
                 user_gutter_areas_lyr = self.lyrs.data["gutter_areas"]["qlyr"]
@@ -1421,7 +1421,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(w)
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             user_tol_lyr = self.lyrs.data["user_noexchange_chan_areas"]["qlyr"]
             evaluate_spatial_noexchange(self.gutils, grid_lyr, user_tol_lyr)
@@ -1459,7 +1459,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(w)
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.clear_tables("steep_slope_n_cells")
             qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
             result = self.gutils.execute(qry).fetchone()
@@ -1513,7 +1513,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(w)
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.clear_tables("lid_volume_cells")
             intersection_qry = """
                                     INSERT INTO lid_volume_cells (volume, area_fid, grid_fid)
@@ -1548,7 +1548,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         Function to create the 2d time series plot for a specific grid element.
         """
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
@@ -1923,7 +1923,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             # ---- Read second column ----
             values = []

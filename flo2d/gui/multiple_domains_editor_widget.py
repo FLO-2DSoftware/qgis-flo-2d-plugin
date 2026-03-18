@@ -11,6 +11,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui, center_canvas
 from ..deps import safe_h5py as h5py
+from ..utils import qt_cursor_shape
 
 uiDialog, qtBaseClass = load_ui("multiple_domains_editor")
 
@@ -197,7 +198,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         # Check if there is data on the domain_cells and ask you if he wants to override
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         pd = QProgressDialog("Schematizing the subdomains...", "Cancel", 0, 0)
         pd.setWindowModality(Qt.WindowModal)
@@ -333,7 +334,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         needed.
         """
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         self.gutils.clear_tables("schema_md_cells")
         self.gutils.clear_tables("mult_domains_methods")
