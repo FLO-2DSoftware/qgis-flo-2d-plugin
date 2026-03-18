@@ -14,6 +14,7 @@ from ..flo2d_tools.grid_tools import find_this_cell
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qt_item_role
 
 uiDialog, qtBaseClass = load_ui("tributaries")
 
@@ -53,7 +54,7 @@ class TributariesDialog(qtBaseClass, uiDialog):
                 i += 1
                 self.confluences_tblw.insertRow(i)
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, confluence[0])
+                item.setData(qt_item_role("DisplayRole"), confluence[0])
                 self.confluences_tblw.setItem(i, 0, item)
                 combo = QComboBox()
                 combo.setStyleSheet("QComboBox { border: 1px gray; } QFrame { border: 3px solid blue; }")

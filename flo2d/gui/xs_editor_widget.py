@@ -57,7 +57,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_tributaries import TributariesDialog
 from ..misc.project_review_utils import hychan_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata
+from ..utils import is_number, m_fdata, qt_item_role
 from .plot_widget import PlotWidget
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import (
@@ -69,7 +69,7 @@ from .ui_utils import (
 
 uiDialog, qtBaseClass = load_ui("xs_editor")
 
-ChannelRole = Qt.UserRole + 1
+ChannelRole = qt_item_role("UserRole") + 1
 
 
 class CrossSectionDelegate(QStyledItemDelegate):

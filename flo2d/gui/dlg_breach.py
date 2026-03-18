@@ -34,7 +34,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero
+from ..utils import float_or_zero, int_or_zero, qt_item_role
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
 
@@ -675,11 +675,11 @@ class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
         for row, value in enumerate(data):
             if value[0] is not None:
                 item1 = QTableWidgetItem()
-                item1.setData(Qt.DisplayRole, value[0])
+                item1.setData(qt_item_role("DisplayRole"), value[0])
                 self.fragility_tblw.setItem(row, 0, item1)
 
                 item2 = QTableWidgetItem()
-                item2.setData(Qt.DisplayRole, value[1])
+                item2.setData(qt_item_role("DisplayRole"), value[1])
                 self.fragility_tblw.setItem(row, 1, item2)
 
     def ID_cbo_currentIndexChanged(self):

@@ -72,7 +72,7 @@ from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
-from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
+from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -80,7 +80,7 @@ from ..flo2d_ie.flo2d_parser import ParseDAT
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-SDTableRole = Qt.UserRole + 1
+SDTableRole = qt_item_role("UserRole") + 1
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
 
@@ -5299,7 +5299,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
             )
@@ -5310,7 +5310,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
             )
@@ -5321,7 +5321,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
             )
@@ -5363,7 +5363,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             row_index = self.SD_type4_cbo.model().rowCount() - 1
             flags = self.SD_type4_cbo.model().item(row_index).flags()
             self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
-            self.SD_type4_cbo.model().item(row_index).setData(True,  Qt.UserRole + 1)
+            self.SD_type4_cbo.model().item(row_index).setData(True,  qt_item_role("UserRole") + 1)
             for culv in culverts:
                 fid, grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
                 if name and name != "":
@@ -6920,11 +6920,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             sql = "UPDATE swmmflo_culvert SET cdiameter=?, typec=?, typeen=?, cubase=?, multbarrels=? WHERE name = ?;"
             
-            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), Qt.DisplayRole)
-            typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), Qt.DisplayRole)
-            typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), Qt.DisplayRole)
-            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), Qt.DisplayRole)
-            multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), Qt.DisplayRole)
+            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), qt_item_role("DisplayRole"))
+            typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), qt_item_role("DisplayRole"))
+            typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), qt_item_role("DisplayRole"))
+            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), qt_item_role("DisplayRole"))
+            multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), qt_item_role("DisplayRole"))
             
             self.gutils.execute(sql , (cdiameter ,typec ,typeen ,cubase ,multbarrels, name))
             

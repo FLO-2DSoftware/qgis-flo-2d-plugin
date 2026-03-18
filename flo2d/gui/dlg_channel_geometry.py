@@ -16,7 +16,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
+from ..utils import float_or_zero, qt_item_role
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("channel_geometry")
@@ -282,13 +282,13 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
     def assign_value_to_cell(self, value, row, column):
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, value)
+        item.setData(qt_item_role("DisplayRole"), value)
         self.segment_elements_tblw.setItem(row, column, item)
 
     def assign_values_to_row(self, values, row):
         for val in values:
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, val[0])
+            item.setData(qt_item_role("DisplayRole"), val[0])
             self.segment_elements_tblw.setItem(row, val[1], item)
 
     def fill_channel_segment_global_data(self):
@@ -818,7 +818,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
     def update_segment_widget_table(self, widget, col):
         row = self.grid_element_cbo.currentIndex()
         item = QTableWidgetItem()
-        item.setData(Qt.EditRole, widget.value())
+        item.setData(qt_item_role("EditRole"), widget.value())
         self.segment_elements_tblw.setItem(row, col, item)
 
     def close_dialog(self):

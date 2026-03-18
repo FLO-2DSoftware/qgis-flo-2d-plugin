@@ -12,7 +12,7 @@ from qgis._core import QgsFeatureRequest
 from .ui_utils import load_ui, set_icon, center_canvas, zoom, zoom_cell_buffer
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import TimeSeriesDelegate, is_true, FloatDelegate
+from ..utils import TimeSeriesDelegate, is_true, FloatDelegate, qt_item_role
 import csv
 import io
 import os
@@ -3206,7 +3206,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                             if col == 2:
                                 data = str(data)
                             item = QTableWidgetItem()
-                            item.setData(Qt.DisplayRole, data)
+                            item.setData(qt_item_role("DisplayRole"), data)
                             self.inflow_time_series_tblw.setItem(row_number, col, item)
 
                     self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)
@@ -3394,7 +3394,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         # item.setData(Qt.DisplayRole, d)
 
         # Code for empty item
-        item.setData(Qt.DisplayRole, "")
+        item.setData(qt_item_role("DisplayRole"), "")
 
         self.inflow_time_series_tblw.setItem(row_number, 0, item)
 
@@ -3407,11 +3407,11 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
 
         # Code for starting time equal 00:00
         t = "00:00"
-        item.setData(Qt.DisplayRole, t)
+        item.setData(qt_item_role("DisplayRole"), t)
         self.inflow_time_series_tblw.setItem(row_number, 1, item)
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.inflow_time_series_tblw.setItem(row_number, 2, item)
 
         self.inflow_time_series_tblw.selectRow(row_number)
@@ -3537,7 +3537,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
             self.multipliers_tblw.setRowCount(SIMUL)
             for i in range(SIMUL):
                 itm = QTableWidgetItem()
-                itm.setData(Qt.EditRole, "1.0")
+                itm.setData(qt_item_role("EditRole"), "1.0")
                 self.multipliers_tblw.setItem(i, 0, itm)
         else:
             select_sql = "SELECT * FROM swmm_inflow_patterns WHERE pattern_name = ?"
@@ -3547,7 +3547,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
                     self.name_le.setText(row[1])
                     self.description_le.setText(row[2])
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, row[4])
+                    itm.setData(qt_item_role("EditRole"), row[4])
                     self.multipliers_tblw.setItem(i, 0, itm)
             else:
                 self.name_le.setText(self.pattern_name)
@@ -3555,7 +3555,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
                 self.multipliers_tblw.setRowCount(SIMUL)
                 for i in range(SIMUL):
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, "1.0")
+                    itm.setData(qt_item_role("EditRole"), "1.0")
                     self.multipliers_tblw.setItem(i, 0, itm)
 
     def save_pattern(self):
@@ -3789,7 +3789,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                             if col == 2: # Value
                                 data = str(data)
                             item = QTableWidgetItem()
-                            item.setData(Qt.DisplayRole, data)
+                            item.setData(qt_item_role("DisplayRole"), data)
                             self.outfall_time_series_tblw.setItem(row_number, col, item)
 
                     # self.outfall_time_series_tblw.sortItems(0, Qt.AscendingOrder)
@@ -3933,7 +3933,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         # item.setData(Qt.DisplayRole, d)
 
         # Code for empty item
-        item.setData(Qt.DisplayRole, "")
+        item.setData(qt_item_role("DisplayRole"), "")
 
         self.outfall_time_series_tblw.setItem(row_number, 0, item)
 
@@ -3946,11 +3946,11 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
 
         # Code for starting time equal 00:00
         t = "00:00"
-        item.setData(Qt.DisplayRole, t)
+        item.setData(qt_item_role("DisplayRole"), t)
         self.outfall_time_series_tblw.setItem(row_number, 1, item)
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.outfall_time_series_tblw.setItem(row_number, 2, item)
 
         self.outfall_time_series_tblw.selectRow(row_number)
@@ -4128,11 +4128,11 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
         row_number = self.curve_tblw.rowCount() - 1
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.curve_tblw.setItem(row_number, 0, item)
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.curve_tblw.setItem(row_number, 1, item)
 
         self.curve_tblw.selectRow(row_number)

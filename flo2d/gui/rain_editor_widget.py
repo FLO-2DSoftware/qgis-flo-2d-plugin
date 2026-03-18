@@ -28,7 +28,7 @@ from ..flo2dobjects import Rain
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, get_flo2dpro_release_date, second_smallest, set_min_max_elevs
+from ..utils import is_number, m_fdata, get_flo2dpro_release_date, second_smallest, set_min_max_elevs, qt_item_role
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect
 
@@ -78,7 +78,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self,
                 item,

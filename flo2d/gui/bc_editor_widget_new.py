@@ -16,7 +16,7 @@ from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-from ..utils import is_number, m_fdata, set_BC_Border
+from ..utils import is_number, m_fdata, set_BC_Border, qt_item_role
 
 from ..flo2d_tools.grid_tools import get_adjacent_cell
 
@@ -2356,7 +2356,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self,
                 item,

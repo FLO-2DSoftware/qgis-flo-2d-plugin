@@ -69,7 +69,7 @@ class NumericDelegate2(QStyledItemDelegate):
         return editor
 
     def paint(self, painter, option, index):
-        value = index.model().data(index, Qt.EditRole)
+        value = index.model().data(index, qt_item_role("EditRole"))
         try:
             number = float(value)
             painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 2))
@@ -141,7 +141,7 @@ class FloatDelegate(QItemDelegate):
         return editor
 
     def paint(self, painter, option, index):
-        value = index.model().data(index, Qt.EditRole)
+        value = index.model().data(index, qt_item_role("EditRole"))
         try:
             number = float(value)
             painter.drawText(option.rect, Qt.AlignLeft, "{.3f}".format(number, self.nDecimals))
@@ -229,7 +229,7 @@ def m_fdata(model, i, j):
     """
     Return float of model data at index i, j. If the data cannot be converted to float, return NaN.
     """
-    d = model.data(model.index(i, j), Qt.DisplayRole)
+    d = model.data(model.index(i, j), qt_item_role("DisplayRole"))
     if is_number(d):
         return float(d)
     else:
@@ -457,3 +457,11 @@ def get_flo2dpro_release_date(file_path):
     date_str_dict = date.strftime("%Y-%m-%d")
 
     return date_str_dict
+
+def qt_item_role(name):
+    """
+    Cross-compatible Qt item data role lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "ItemDataRole"):  # Qt6
+        return getattr(Qt.ItemDataRole, name)
+    return getattr(Qt, name)  # Qt5
