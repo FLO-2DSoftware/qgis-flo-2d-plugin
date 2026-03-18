@@ -89,7 +89,7 @@ from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
-from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape
+from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode
 
 from PIL import Image
 
@@ -289,7 +289,7 @@ class Flo2D(object):
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
                 toolButton.setIcon(QIcon(self.plugin_dir + tool_button_mapping[text][0]))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
+                toolButton.setPopupMode(qt_toolbutton_popup_mode("InstantPopup"))
 
                 if len(tool_button_mapping[text]) >= 3 and tool_button_mapping[text][2]:
                     toolButton.setCheckable(True)

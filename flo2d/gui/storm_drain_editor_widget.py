@@ -71,7 +71,8 @@ from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
-from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, qt_cursor_shape
+from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, \
+    qt_cursor_shape, qt_toolbutton_popup_mode
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -389,7 +390,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         menu.addAction(action2)
         menu.triggered.connect(lambda action: self.add_type4_data(action.text()))
         self.SD_add_one_type4_btn.setMenu(menu)
-        self.SD_add_one_type4_btn.setPopupMode(QToolButton.InstantPopup)
+        self.SD_add_one_type4_btn.setPopupMode(qt_toolbutton_popup_mode("InstantPopup"))
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]

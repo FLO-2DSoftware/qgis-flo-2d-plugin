@@ -35,6 +35,7 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QStyledItemDelegate,
+    QToolButton
 )
 
 class NumericDelegate(QStyledItemDelegate):
@@ -481,3 +482,11 @@ def qt_cursor_shape(name):
     if hasattr(Qt, "CursorShape"):  # Qt6
         return getattr(Qt.CursorShape, name)
     return getattr(Qt, name)  # Qt5
+
+def qt_toolbutton_popup_mode(name):
+    """
+    Cross-compatible QToolButton popup mode lookup for Qt5/Qt6.
+    """
+    if hasattr(QToolButton, "ToolButtonPopupMode"):  # Qt6
+        return getattr(QToolButton.ToolButtonPopupMode, name)
+    return getattr(QToolButton, name)  # Qt5
