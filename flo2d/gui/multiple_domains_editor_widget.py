@@ -11,7 +11,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui, center_canvas
 from ..deps import safe_h5py as h5py
-from ..utils import qt_cursor_shape
+from ..utils import qt_cursor_shape, qt_window_modality
 
 uiDialog, qtBaseClass = load_ui("multiple_domains_editor")
 
@@ -201,7 +201,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         pd = QProgressDialog("Schematizing the subdomains...", "Cancel", 0, 0)
-        pd.setWindowModality(Qt.WindowModal)
+        pd.setWindowModality(qt_window_modality("WindowModal"))
         pd.setMinimumDuration(0)
         pd.setRange(0, 0)
         pd.show()

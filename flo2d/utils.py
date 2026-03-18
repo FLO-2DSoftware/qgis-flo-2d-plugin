@@ -490,3 +490,19 @@ def qt_toolbutton_popup_mode(name):
     if hasattr(QToolButton, "ToolButtonPopupMode"):  # Qt6
         return getattr(QToolButton.ToolButtonPopupMode, name)
     return getattr(QToolButton, name)  # Qt5
+
+def qt_window_modality(name):
+    """
+    Cross-compatible Qt window modality lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "WindowModality"):  # Qt6
+        return getattr(Qt.WindowModality, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_window_type(name):
+    """
+    Cross-compatible Qt window type / flag lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "WindowType"):  # Qt6
+        return getattr(Qt.WindowType, name)
+    return getattr(Qt, name)  # Qt5

@@ -32,6 +32,8 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.QtGui import QFont
 
+from flo2d.utils import qt_window_modality, qt_window_type
+
 
 def is_file_locked(filepath):
     if not os.path.exists(filepath):
@@ -247,8 +249,8 @@ class UserCommunication(object):
             m.setDefaultButton(default)
             m.setIcon(icon)
 
-            m.setWindowModality(Qt.ApplicationModal)
-            m.setWindowFlags(m.windowFlags() | Qt.WindowStaysOnTopHint)
+            m.setWindowModality(qt_window_modality("ApplicationModal"))
+            m.setWindowFlags(m.windowFlags() | qt_window_type("WindowStaysOnTopHint"))
             m.raise_()
             m.activateWindow()
 

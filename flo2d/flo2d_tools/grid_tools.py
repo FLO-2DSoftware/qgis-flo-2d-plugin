@@ -43,7 +43,7 @@ from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QProgressDialog
 
 from ..errors import Flo2dError, GeometryValidityErrors
 from ..gui.ui_utils import center_canvas, zoom_show_n_cells
-from ..utils import get_file_path, is_number, qt_cursor_shape
+from ..utils import get_file_path, is_number, qt_cursor_shape, qt_window_modality
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None
@@ -1235,7 +1235,7 @@ def square_grid(gutils, boundary, upper_left_coords=None):
 
     prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100)
     prog.setWindowTitle("FLO-2D")
-    prog.setWindowModality(Qt.WindowModal)
+    prog.setWindowModality(qt_window_modality("WindowModal"))
     prog.setMinimumDuration(0)
     prog.setValue(0)
     QApplication.processEvents()
