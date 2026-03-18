@@ -207,7 +207,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         dialog.setAcceptMode(QFileDialog.AcceptSave)
         dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
 
-        if not dialog.exec_():
+        if not dialog.exec():
             return
 
         file_path = dialog.selectedFiles()[0]

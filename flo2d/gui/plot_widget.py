@@ -17,7 +17,7 @@ from qgis._core import QgsMessageLog
 from ..deps import safe_pyqtgraph as pg
 import numpy as np
 
-from ..utils import qt_pen_style
+from ..utils import qt_pen_style, qframe_shape, qt_widget_attribute
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -53,7 +53,7 @@ class PlotWidget(QWidget):
         # Floating legend overlay (stays a child of the plot)
         self.legend_panel = QFrame() # Floating panel widget that displays legend entries
         self.legend_panel.setObjectName("floatingLegend") # Assign object name for stylesheet targeting
-        self.legend_panel.setFrameShape(QFrame.StyledPanel) # Subtle frame panel border
+        self.legend_panel.setFrameShape(qframe_shape("StyledPanel")) # Subtle frame panel border
         self.legend_panel.setStyleSheet("""
         QFrame#floatingLegend {
             background: rgba(255,255,255,230);
@@ -69,8 +69,8 @@ class PlotWidget(QWidget):
         self.legend_panel.mouseMoveEvent = self.legend_mouse_move # Override mose move to reposition legend
         self.legend_panel.mouseReleaseEvent = self.legend_mouse_release # Override mouse release to end drag
         self.legend_container = QWidget() # Inner container widget that hold legend row widgets
-        self.legend_panel.setAttribute(Qt.WA_TranslucentBackground) # Allow legend to blend with background
-        self.legend_container.setAttribute(Qt.WA_TranslucentBackground) # Same translucency for contents
+        self.legend_panel.setAttribute(qt_widget_attribute("WA_TranslucentBackground")) # Allow legend to blend with background
+        self.legend_container.setAttribute(qt_widget_attribute("WA_TranslucentBackground")) # Same translucency for contents
         self.legend_layout = QVBoxLayout(self.legend_container) # Vertical layout for legend rows
         self.legend_layout.setContentsMargins(6, 6, 6, 6) # Padding around legend contents
         self.legend_layout.setSpacing(4) # Space between legend rows

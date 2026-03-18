@@ -99,7 +99,7 @@ class UserCommunication(object):
             layout = msgBox.layout()
             layout.addItem(horizontalSpacer, layout.rowCount(), 0, 1, layout.columnCount())
             msgBox.setFont(QFont("Courier", 8))
-            msgBox.exec_()            
+            msgBox.exec()            
         else:
             print(msg)
             
@@ -203,7 +203,7 @@ class UserCommunication(object):
             m.setText(msg)
             m.setStandardButtons(self.msgbox_button("No") | self.msgbox_button("Yes"))
             m.setDefaultButton(self.msgbox_button("Yes"))
-            return True if m.exec_() == self.msgbox_button("Yes") else False
+            return True if m.exec() == self.msgbox_button("Yes") else False
         else:
             print(msg)
 
@@ -220,7 +220,7 @@ class UserCommunication(object):
         buttonN.setText(text2)
 
         # ret = msgBox.exec()
-        return msgBox.exec_()
+        return msgBox.exec()
 
     def customized_question(
         self,
@@ -254,7 +254,7 @@ class UserCommunication(object):
             m.raise_()
             m.activateWindow()
 
-            return m.exec_()
+            return m.exec()
         else:
             print(text)
 

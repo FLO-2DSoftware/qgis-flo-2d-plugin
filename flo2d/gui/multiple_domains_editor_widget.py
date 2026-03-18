@@ -460,7 +460,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         domains.
         """
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:

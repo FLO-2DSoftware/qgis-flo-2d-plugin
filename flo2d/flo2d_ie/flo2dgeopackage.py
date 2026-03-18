@@ -10884,7 +10884,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             # Display the message box and wait for the user to click a button
             QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
-            msg_box.exec_()
+            msg_box.exec()
 
             # New RAINCELL.DAT
             if msg_box.clickedButton() == button2:

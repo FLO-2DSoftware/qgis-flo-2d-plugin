@@ -239,7 +239,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
 
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
 
                 QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))

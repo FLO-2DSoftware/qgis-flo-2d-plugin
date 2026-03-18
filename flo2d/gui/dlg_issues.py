@@ -414,7 +414,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
     def import_other_issues_files(self):
         QApplication.restoreOverrideCursor()
         dlg_issues_files = IssuesFiles(self.con, self.iface, self.lyrs)
-        ok = dlg_issues_files.exec_()
+        ok = dlg_issues_files.exec()
         # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         if ok:
             for lyr in QgsProject.instance().mapLayers().values():

@@ -212,7 +212,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
                 street_general.inflow_to_street.setChecked(True)
             else:
                 street_general.inflow_to_street.setChecked(False)
-        ok = street_general.exec_()
+        ok = street_general.exec()
         if ok:
             self.gutils.clear_tables("street_general")
             update_qry = """INSERT INTO street_general (strfno, strman, depx, widst, istrflo) VALUES (?,?,?,?,?);"""

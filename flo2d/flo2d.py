@@ -817,7 +817,7 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
-        result = dlg_settings.exec_()
+        result = dlg_settings.exec()
         if result and dlg_settings.con:
             dlg_settings.write()
             self.con = dlg_settings.con
@@ -941,7 +941,7 @@ class Flo2D(object):
                     dlg_update_gpkg.cellSizeDSpinBox.setValue(cell_size)
                     dlg_update_gpkg.show()
                     QApplication.restoreOverrideCursor()
-                    result = dlg_update_gpkg.exec_()
+                    result = dlg_update_gpkg.exec()
                     if result:
                         QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                         dlg_update_gpkg.write()
@@ -1109,7 +1109,7 @@ class Flo2D(object):
                     if answer == self.uc.msgbox_button("Yes"):
                         dlg_gpkg_management.show()
                         while True:
-                            ok = dlg_gpkg_management.exec_()
+                            ok = dlg_gpkg_management.exec()
                             if ok:
                                 QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                                 dlg_gpkg_management.save_layers()
@@ -1157,7 +1157,7 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:
@@ -1871,7 +1871,7 @@ class Flo2D(object):
                 return
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
                 try:
                     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
@@ -2325,7 +2325,7 @@ class Flo2D(object):
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
             QApplication.restoreOverrideCursor()
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
                 try:
                     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
@@ -2756,7 +2756,7 @@ class Flo2D(object):
                     break
 
             QApplication.restoreOverrideCursor()
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
 
                 if not export_type:
@@ -3193,7 +3193,7 @@ class Flo2D(object):
                     msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                     msg.setDefaultButton(QMessageBox().Cancel)
                     msg.setIcon(QMessageBox.Question)
-                    ret = msg.exec_()
+                    ret = msg.exec()
                     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     if ret == 0:
                         self.f2g.import_swmminp(swmm_file=fname, delete_existing=False)
@@ -3233,7 +3233,7 @@ class Flo2D(object):
         Function to import multiple domains into the FLO-2D project
         """
         dlg = ImportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             dlg.import_global_domain()
             self.setup_dock_widgets()
@@ -3247,7 +3247,7 @@ class Flo2D(object):
         Function to export multiple domains into the FLO-2D project
         """
         dlg = ExportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:
@@ -3257,7 +3257,7 @@ class Flo2D(object):
     def import_from_ras(self):
         self.uncheck_all_info_tools()
         dlg = RasImportDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
@@ -3296,7 +3296,7 @@ class Flo2D(object):
         try:
             dlg_control = ContToler(self.con, self.iface, self.lyrs)
             while True:
-                save = dlg_control.exec_()
+                save = dlg_control.exec()
                 if save:
                     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     try:
@@ -3921,7 +3921,7 @@ class Flo2D(object):
         dlg_levee_elev.show()
 
         while True:
-            ok = dlg_levee_elev.exec_()
+            ok = dlg_levee_elev.exec()
             if ok:
                 if dlg_levee_elev.methods:
                     if 1 in dlg_levee_elev.methods:
@@ -4108,7 +4108,7 @@ class Flo2D(object):
                 #                     m.setMinimumSize(1000,1000)
 
                 #                     m.setInformativeText(dletes + '\n\nWould you like to delete them?')
-                q = m.exec_()
+                q = m.exec()
                 if q == self.uc.msgbox_button("Yes"):
                     #                     q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' +
                     #                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')
@@ -4216,7 +4216,7 @@ class Flo2D(object):
         dlg_breach_hydrograph_tool.show()
 
         while True:
-            ok = dlg_breach_hydrograph_tool.exec_()
+            ok = dlg_breach_hydrograph_tool.exec()
             if ok:
                 break
             else:
@@ -4236,7 +4236,7 @@ class Flo2D(object):
         dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
         dlg_prs.show()
         while True:
-            ok = dlg_prs.exec_()
+            ok = dlg_prs.exec()
             if ok:
                 break
             else:
@@ -4272,7 +4272,7 @@ class Flo2D(object):
         #         self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
 
         dlg_hazus = HazusDialog(self.con, self.iface, self.lyrs)
-        save = dlg_hazus.exec_()
+        save = dlg_hazus.exec()
         if save:
             try:
                 self.uc.bar_info("Hazus Flooding Analysis performed!")
@@ -4290,7 +4290,7 @@ class Flo2D(object):
         dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
         dlg_errors.show()
         while True:
-            ok = dlg_errors.exec_()
+            ok = dlg_errors.exec()
             if ok:
                 break
             else:
@@ -4309,7 +4309,7 @@ class Flo2D(object):
         repeat = True
         while repeat:
             dlg_ms.show()
-            ok = dlg_ms.exec_()
+            ok = dlg_ms.exec()
             if ok:
                 if dlg_ms.ok_to_save():
                     try:
@@ -4364,7 +4364,7 @@ class Flo2D(object):
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         if check_components:
             converter_dlg.check_imported_components(True)
-        ok = converter_dlg.exec_()
+        ok = converter_dlg.exec()
         if ok:
             if converter_dlg.methods:
                 pass
@@ -4392,7 +4392,7 @@ class Flo2D(object):
     def user2schematic(self):
         self.uncheck_all_info_tools
         converter_dlg = User2SchemaDialog(self.con, self.iface, self.lyrs, self.uc)
-        ok = converter_dlg.exec_()
+        ok = converter_dlg.exec()
         if ok:
             if converter_dlg.methods:
                 pass

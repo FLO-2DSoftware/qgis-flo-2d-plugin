@@ -160,7 +160,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         between domains such as upstream and downstream connections.
         """
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:

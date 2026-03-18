@@ -154,7 +154,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def show_global_params(self):
         self.iglobal.populate_infilglobals()
 
-        ok = self.iglobal.exec_()
+        ok = self.iglobal.exec()
         if ok:
             self.iglobal.save_imethod()
             self.write_global_params()
@@ -502,7 +502,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
     def calculate_green_ampt(self):
         dlg = GreenAmptDialog(self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         try:
@@ -590,7 +590,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
     def calculate_scs(self):
         dlg = SCSDialog(self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         try:
@@ -722,7 +722,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
     def show_channel_dialog(self):
         hydcxx = self.spin_hydcxx.value()
         self.chan_dlg.set_chan_model(hydcxx)
-        ok = self.chan_dlg.exec_()
+        ok = self.chan_dlg.exec()
         if not ok:
             return
         self.chan_dlg.save_channel_params()

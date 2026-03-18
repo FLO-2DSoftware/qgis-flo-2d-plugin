@@ -35,7 +35,8 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QStyledItemDelegate,
-    QToolButton
+    QToolButton,
+    QFrame
 )
 
 class NumericDelegate(QStyledItemDelegate):
@@ -343,7 +344,7 @@ def Msge(msg_string, icon):
     elif icon == "Warning":
         msgBox.setIcon(QMessageBox.Warning)
     msgBox.setText(msg_string)
-    msgBox.exec_()
+    msgBox.exec()
 
 
 def copy_tablewidget_selection(tablewidget):
@@ -505,4 +506,20 @@ def qt_window_type(name):
     """
     if hasattr(Qt, "WindowType"):  # Qt6
         return getattr(Qt.WindowType, name)
+    return getattr(Qt, name)  # Qt5
+
+def qframe_shape(name):
+    """
+    Cross-compatible QFrame shape lookup for Qt5/Qt6.
+    """
+    if hasattr(QFrame, "Shape"):  # Qt6
+        return getattr(QFrame.Shape, name)
+    return getattr(QFrame, name)  # Qt5
+
+def qt_widget_attribute(name):
+    """
+    Cross-compatible Qt widget attribute lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "WidgetAttribute"):  # Qt6
+        return getattr(Qt.WidgetAttribute, name)
     return getattr(Qt, name)  # Qt5

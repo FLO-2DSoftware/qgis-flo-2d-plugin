@@ -3001,7 +3001,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if storm_drain.status_report:
             result2 = ScrollMessageBox2(QMessageBox.Warning, "Storm Drain import status", storm_drain.status_report)
-            result2.exec_()
+            result2.exec()
             
         if skipped_inlets != 0:
             self.uc.show_warn("File " + Path(swmm_file).name + " has [SUBCATCHMENTS].\n\n" + 
@@ -3017,7 +3017,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
         dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-        ok = dlg_INP_groups.exec_()
+        ok = dlg_INP_groups.exec()
         if ok:
             self.uc.bar_info("Storm Drain control data saved!")
             self.uc.log_info("Storm Drain control data saved!")
@@ -3039,7 +3039,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
         msg.setDefaultButton(QMessageBox().Cancel)
         msg.setIcon(QMessageBox.Question)
-        ret = msg.exec_()
+        ret = msg.exec()
         if ret == 0:
             return "Keep and Complete"
         elif ret == 1:
@@ -3122,7 +3122,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # and project units, start date, report start.
             # QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             # dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-            # ok = dlg_INP_groups.exec_()
+            # ok = dlg_INP_groups.exec()
             # QApplication.restoreOverrideCursor()
             # if ok:
             start_date = NULL
@@ -4692,7 +4692,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         dlg_shapefile = StormDrainShapefile(self.con, self.iface, self.lyrs)
         dlg_shapefile.components_tabWidget.setCurrentPage = 0
-        save = dlg_shapefile.exec_()
+        save = dlg_shapefile.exec()
         if save:
             try:
                 if dlg_shapefile.saveSelected:
@@ -6673,7 +6673,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if self.no_nodes != "":
                 msg = "The following nodes (inlets or outlets) could not" + "\n" + "be found for the indicated links:\n\n" + self.no_nodes
                 result2 = ScrollMessageBox2(QMessageBox.Warning, "Missing inlets and outlets", msg)
-                result2.exec_()
+                result2.exec()
             else:
                 success = " Success! all inlets and outlets nodes where assigned.\n\n"
 
@@ -7414,7 +7414,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Function to open and retrieve the data from the sd_control table
         """
         dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-        ok = dlg_INP_groups.exec_()
+        ok = dlg_INP_groups.exec()
         if ok:
             self.uc.bar_info("Storm Drain control data saved!")
             self.uc.log_info("Storm Drain control data saved!")

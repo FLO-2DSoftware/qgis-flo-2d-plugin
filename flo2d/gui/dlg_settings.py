@@ -419,7 +419,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
             # dlg.debug_run_btn.setVisible(False)
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if not ok:
                 return
             flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()

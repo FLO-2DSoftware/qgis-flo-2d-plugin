@@ -145,7 +145,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg_channels = ChannelGeometryDialog(self.iface, self.lyrs)
-        close = dlg_channels.exec_()
+        close = dlg_channels.exec()
         self.show_channel_segment_dependencies()
         # if close:
         #     try:

@@ -441,7 +441,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             dlg_structures_report.error_grids_cbo.addItems(grid_errors)
             dlg_structures_report.show()
             while True:
-                ok = dlg_structures_report.exec_()
+                ok = dlg_structures_report.exec()
                 if ok:
                     break
                 else:
@@ -841,7 +841,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
         dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
-        save = dlg_bridge.exec_()
+        save = dlg_bridge.exec()
         if save:
             if dlg_bridge.save_bridge_variables():
                 self.uc.show_info("Bridge variables saved for '" + self.struct_cbo.currentText() + "'")

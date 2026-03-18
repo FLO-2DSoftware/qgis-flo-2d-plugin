@@ -152,7 +152,7 @@ class InfoTool(QgsMapToolIdentify):
                     sm[i].addAction(actions[i][j])
 
             popup.addMenu(sm[i])
-        popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30)))
+        popup.exec(self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30)))
         # except:
         #     pass
 

@@ -309,7 +309,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Elevation Polygon."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 
@@ -358,7 +358,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Elevation Polygon & Elevation points."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 
@@ -408,7 +408,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Elevation Polygon."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 
@@ -472,7 +472,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Blocked Areas."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 

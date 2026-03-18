@@ -165,7 +165,7 @@ class HazusDialog(qtBaseClass, uiDialog):
 
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
@@ -187,7 +187,7 @@ class HazusDialog(qtBaseClass, uiDialog):
     #             self.uc.bar_warn("WARNING 060319.1628: There is no grid! Please create it before running tool.")
     #             return
     #         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
-    #         ok = dlg.exec_()
+    #         ok = dlg.exec()
     #         if ok:
     #             pass
     #         else:
@@ -427,7 +427,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             while repeat is True:
                 QApplication.restoreOverrideCursor()
                 dlg = SamplingBuildingsElevationsDialog(self.con, self.iface, self.lyrs)
-                ok = dlg.exec_()
+                ok = dlg.exec()
                 if ok:
                     pass
                 else:

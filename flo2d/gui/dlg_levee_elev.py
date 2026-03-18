@@ -103,7 +103,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
 
     def create_walls(self):
         dlg_walls_shapefile = WallsShapefile(self.con, self.iface, self.lyrs)
-        save = dlg_walls_shapefile.exec_()
+        save = dlg_walls_shapefile.exec()
         QApplication.restoreOverrideCursor()
 
     def check_sources(self):

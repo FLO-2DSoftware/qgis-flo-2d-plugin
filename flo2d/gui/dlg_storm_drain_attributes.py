@@ -502,7 +502,7 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
         dlg_external_inflow.setWindowTitle("Inlet/Junction " + name)
-        save = dlg_external_inflow.exec_()
+        save = dlg_external_inflow.exec()
         if save:
             inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
             inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
@@ -1211,7 +1211,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         tidal_curve_name = self.tidal_curve.currentText()
         dlg = OutfallTidalCurveDialog(self.iface, tidal_curve_name)
         while True:
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if ok:
                 if dlg.values_ok:
                     dlg.save_curve()
@@ -1241,7 +1241,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         time_series_name = self.time_series.currentText()
         dlg = OutfallTimeSeriesDialog(self.iface, time_series_name)
         while True:
-            save = dlg.exec_()
+            save = dlg.exec()
             if save:
                 if dlg.values_ok:
                     dlg.save_time_series()
@@ -2729,7 +2729,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
 
         dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
         dlg_external_inflow.setWindowTitle("Storage Units " + name)
-        save = dlg_external_inflow.exec_()
+        save = dlg_external_inflow.exec()
         if save:
             inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
             inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
@@ -2803,7 +2803,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         tabular_curve_name = self.curve_name.currentText()
         dlg = StorageUnitTabularCurveDialog(self.iface, tabular_curve_name)
         while True:
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if ok:
                 if dlg.values_ok:
                     dlg.save_curve()
@@ -3018,7 +3018,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
     def select_inflow_pattern(self):
         pattern_name = self.swmm_inflow_pattern_cbo.currentText()
         dlg_inflow_pattern = InflowPatternDialog(self.iface, pattern_name)
-        save = dlg_inflow_pattern.exec_()
+        save = dlg_inflow_pattern.exec()
 
         pattern_name = dlg_inflow_pattern.get_name()
         if pattern_name != "":
@@ -3039,7 +3039,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         time_series_name = self.swmm_time_series_cbo.currentText()
         dlg = InflowTimeSeriesDialog(self.iface, time_series_name)
         while True:
-            save = dlg.exec_()
+            save = dlg.exec()
             if save:
                 if dlg.values_ok:
                     dlg.save_time_series()

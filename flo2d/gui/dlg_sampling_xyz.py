@@ -339,7 +339,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         "Elevations from LIDAR files assigned to " + "{0:,d}".format(len(assigned)) + " cells."
                     )
 
-                ok = dlg.exec_()
+                ok = dlg.exec()
                 if not ok:
                     break
                 else:

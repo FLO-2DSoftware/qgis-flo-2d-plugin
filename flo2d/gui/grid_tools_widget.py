@@ -162,7 +162,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     def create_grid(self):
         create_grid_dlg = CreateGridDialog(self.lyrs)
-        ok = create_grid_dlg.exec_()
+        ok = create_grid_dlg.exec()
         if not ok:
             return
 
@@ -330,7 +330,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
@@ -360,7 +360,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         cell_size = self.get_cell_size()
         dlg = SamplingRCDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
@@ -388,7 +388,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         cell_size = self.get_cell_size()
         dlg = SamplingRoughnessDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
@@ -415,7 +415,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         cell_size = self.get_cell_size()
         dlg = SamplingPointElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
 
     def xyz_elevation(self):
         try:
@@ -432,7 +432,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             # grid_extent = grid.extent()
 
             dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if ok:
                 if dlg.points_layer_grp.isChecked():
                     # Interpolate from points layer:
@@ -663,7 +663,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         else:
             dlg = SamplingOtherVariableDialog(self.con, self.iface, self.lyrs)
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if ok:
                 pass
             else:
@@ -723,7 +723,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     if not self.lyrs.save_edits_and_proceed(lyr):
                         return
             correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
-            ok = correct_dlg.exec_()
+            ok = correct_dlg.exec()
             if not ok:
                 return
             tab = correct_dlg.correction_tab.currentIndex()
@@ -762,7 +762,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
-        ok = mann_dlg.exec_()
+        ok = mann_dlg.exec()
         if ok:
             pass
         else:
@@ -829,7 +829,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     def get_tailings(self):
         tailings_dlg = SamplingTailingsDialog2()
-        ok = tailings_dlg.exec_()
+        ok = tailings_dlg.exec()
         if not ok:
             return
         try:
@@ -906,7 +906,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     def eval_arfwrf(self):
         eval_dlg = EvaluateReductionFactorsDialog(self.lyrs)
-        ok = eval_dlg.exec_()
+        ok = eval_dlg.exec()
         if not ok:
             return
         try:
@@ -1909,7 +1909,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
 
         dlg = RGHDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
 

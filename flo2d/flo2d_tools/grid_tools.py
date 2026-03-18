@@ -432,7 +432,7 @@ class ZonalStatisticsOther(object):
 def debugMsg(msg_string):
     msgBox = QMessageBox()
     msgBox.setText(msg_string)
-    msgBox.exec_()
+    msgBox.exec()
 
 
 def show_error(msg):
@@ -457,7 +457,7 @@ def show_error(msg):
         + "On line "
         + line,
     )
-    ms_box.exec_()
+    ms_box.exec()
     ms_box.show()
 
 
@@ -1703,7 +1703,7 @@ def evaluate_arfwrf(gutils, grid, areas):
                 + "references to the NULL values may affect its related FLO-2D funtionality.",
             )
 
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
 
         return True

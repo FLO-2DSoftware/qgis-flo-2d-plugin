@@ -1107,7 +1107,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 dlg_channel_report.error_grids_cbo.addItems(grid_errors)
                 dlg_channel_report.show()
                 while True:
-                    ok = dlg_channel_report.exec_()
+                    ok = dlg_channel_report.exec()
                     if ok:
                         break
                     else:
@@ -1323,7 +1323,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                             msg.setDefaultButton(QMessageBox().Cancel)
                             msg.setIcon(QMessageBox.Question)
-                            ret = msg.exec_()
+                            ret = msg.exec()
                             if ret == 0:
                                 s = QSettings()
                                 last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -3053,7 +3053,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
         # dlg.debug_run_btn.setVisible(False)
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
-        # ok = dlg.exec_()
+        # ok = dlg.exec()
         # if not ok:
         #     return
         s = QSettings()
@@ -3245,7 +3245,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
             dlg_tributaries = TributariesDialog(self.iface, self.lyrs, confluences)
-            save = dlg_tributaries.exec_()
+            save = dlg_tributaries.exec()
             if save:
                 dlg_tributaries.save()
 

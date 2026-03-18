@@ -187,7 +187,7 @@ class ResultsTool(QgsMapToolIdentify):
                     actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
                     sm[i].addAction(actions[i][j])
             popup.addMenu(sm[i])
-        popup.exec_(
+        popup.exec(
             self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30))
         )  # Shows popup menu with list of selected
         # channel left bank (shematized) (selected from table 'Chan')

@@ -119,7 +119,7 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg_individual_multiple_channels = IndividualMultipleChannelsDialog(self.iface, self.lyrs)
-        save = dlg_individual_multiple_channels.exec_()
+        save = dlg_individual_multiple_channels.exec()
         if save:
             try:
                 if dlg_individual_multiple_channels.save_individual_multiple_chennels_data():
@@ -147,4 +147,4 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg_individual_simplified_multiple_channels = IndividualSimplifiedMultipleChannelsDialog(self.iface, self.lyrs)
-        dlg_individual_simplified_multiple_channels.exec_()
+        dlg_individual_simplified_multiple_channels.exec()

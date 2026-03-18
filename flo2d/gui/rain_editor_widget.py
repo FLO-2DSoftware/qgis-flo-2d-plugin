@@ -327,7 +327,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg = SamplingRaincellRawDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             dlg.process_raincellraw()
         else:
@@ -597,7 +597,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
         cell_size = self.get_cell_size()
         dlg = SamplingRainDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:

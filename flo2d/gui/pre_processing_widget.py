@@ -463,7 +463,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         file_dialog.setNameFilter("GeoTIFF files (*.tif *.tiff);;All files (*.*)")
         file_dialog.setDefaultSuffix("tif")
 
-        if file_dialog.exec_():
+        if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0]
         else:
             self.uc.show_warn("Save canceled.")
