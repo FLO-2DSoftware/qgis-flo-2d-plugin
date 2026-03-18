@@ -24,7 +24,7 @@ jobs:
             install_dir: "C:\\Program Files\\QGIS 3.34"
           - qgis_series: "3.40"
             qgis_label: "3.40 LTR"
-            installer_url: "https://qgis.org/downloads/QGISQT6-OSGeo4W-3.40.9-1.msi"
+            installer_url: "https://qgis.org/downloads/QGIS-OSGeo4W-3.40.9-1.msi"
             install_dir: "C:\\Program Files\\QGIS 3.40"
           - qgis_series: "3.44"
             qgis_label: "3.44 LTR"
