@@ -17,6 +17,8 @@ from qgis._core import QgsMessageLog
 from ..deps import safe_pyqtgraph as pg
 import numpy as np
 
+from ..utils import qt_pen_style
+
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 pg.setConfigOption("antialias", True)
@@ -297,7 +299,7 @@ class PlotWidget(QWidget):
         self.legend_checks = {} # Reset mapping of plot names to legend checkboxes
         self.legend_panel.hide() # Hide the floating legend panel until new items are added
 
-    def add_item(self, name, data, col=QColor("#0000aa"), sty=Qt.SolidLine, hide=False):
+    def add_item(self, name, data, col=QColor("#0000aa"), sty=qt_pen_style("SolidLine"), hide=False):
         x, y = data
         pen = pg.mkPen(color=col, width=1.5, style=sty, cosmetic=True)
         self.items[name] = self.plot.plot(x=x, y=y, connect="finite", pen=pen) # Add the curve to the plot and store it by name

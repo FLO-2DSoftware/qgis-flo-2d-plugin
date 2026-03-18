@@ -16,7 +16,7 @@ from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-from ..utils import is_number, m_fdata, set_BC_Border, qt_item_role
+from ..utils import is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style
 
 from ..flo2d_tools.grid_tools import get_adjacent_cell
 
@@ -633,10 +633,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             "Original Discharge",
             [self.ot, self.od],
             col=QColor("#7dc3ff"),
-            sty=Qt.DotLine,
+            sty=qt_pen_style("DotLine"),
         )
         self.plot.add_item("Current Discharge", [self.ot, self.od], col=QColor("#0018d4"))
-        self.plot.add_item("Original Mud", [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
+        self.plot.add_item("Original Mud", [self.ot, self.om], col=QColor("#cd904b"), sty=qt_pen_style("DotLine"))
         self.plot.add_item("Current Mud", [self.ot, self.om], col=QColor("#884800"))
 
     def save_inflow(self):

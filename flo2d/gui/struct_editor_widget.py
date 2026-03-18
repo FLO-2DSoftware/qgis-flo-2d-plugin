@@ -31,7 +31,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
 from ..misc.project_review_utils import hydrostruct_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata
+from ..utils import is_number, m_fdata, qt_pen_style
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
@@ -993,7 +993,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.plot.plot.setTitle(title=f"Hydraulic Structure - {structure_name}")
             self.plot.plot.setLabel("bottom", text="Time (hrs)")
             self.plot.plot.setLabel("left", text="")
-            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
 
             try:  # Build table.
                 discharge_data_model = StandardItemModel()
@@ -1069,7 +1069,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         #             if j == 5:
         #                 color = Qt.blue
         #             self.plot.add_item(f"Discharge ({self.system_units[units][2]}) - Scenario {j}", [time_list, discharge_list],
-        #                                col=QColor(color), sty=Qt.SolidLine)
+        #                                col=QColor(color), sty=qt_pen_style("SolidLine"))
         #
         #             headers.extend([f"Discharge ({self.system_units[units][2]}) - Scenario {j}"])
         #             discharge_data_model.setHorizontalHeaderLabels(headers)

@@ -20,7 +20,15 @@ import os
 from qgis.PyQt.QtCore import Qt, QSettings, pyqtSignal
 from qgis.PyQt.QtGui import QColor, QKeySequence, QDoubleValidator
 from qgis.PyQt.QtWidgets import QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
-    QFileDialog, QUndoStack
+    QFileDialog
+
+#Qt5
+try:
+    from qgis.PyQt.QtWidgets import QUndoStack
+# Qt6
+except ImportError:
+    from qgis.PyQt.QtGui import QUndoStack
+
 from qgis._gui import QgsDockWidget
 
 uiDialog, qtBaseClass = load_ui("inlet_attributes")

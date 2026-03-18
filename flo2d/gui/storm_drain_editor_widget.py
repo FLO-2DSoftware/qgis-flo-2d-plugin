@@ -57,7 +57,6 @@ from qgis.PyQt.QtWidgets import (
     QAction,
     QMenu,
     QToolButton,
-    qApp,
 )
 
 from ..deps import safe_pyqtgraph as pg
@@ -72,7 +71,7 @@ from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
-from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role
+from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -4943,10 +4942,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 depthRPT.append(row[3] if not row[3] is None else float("NaN"))
                                 percent_fullRPT.append(row[4] if not row[4] is None else float("NaN"))
 
-                            self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-                            self.plot.add_item(f"Percent Full (%)", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+                            self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"))
+                            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=qt_pen_style("SolidLine"), hide=True)
+                            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=qt_pen_style("SolidLine"), hide=True)
+                            self.plot.add_item(f"Percent Full (%)", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=qt_pen_style("SolidLine"), hide=True)
 
                             # self.plot.plot.setLabel("left", text="Units of measurement: " + units)
                             QApplication.restoreOverrideCursor()
@@ -6040,15 +6039,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.plot.plot.setTitle(title="Node - " + node + " (grid " + grid + ")")
             self.plot.plot.setLabel("bottom", text="Time (hours)")
 
-            self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-            self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=qt_pen_style("SolidLine"), hide=True)
             if SWMMOUTFINtimeseries:
-                self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=qt_pen_style("SolidLine"), hide=True)
             if SWMMQINtimeSeries:
-                self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.blue), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"), hide=True)
 
             try: # Build table.
                 discharge_data_model = StandardItemModel()
@@ -7768,7 +7767,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"External Inflow - {time_series_name}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
 
         try:  # Build table.
             discharge_data_model = StandardItemModel()

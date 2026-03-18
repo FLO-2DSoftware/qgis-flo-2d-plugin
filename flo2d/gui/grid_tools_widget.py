@@ -67,7 +67,7 @@ from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..user_communication import UserCommunication
-from ..utils import second_smallest, set_min_max_elevs, time_taken
+from ..utils import second_smallest, set_min_max_elevs, time_taken, qt_pen_style
 from .ui_utils import load_ui, set_icon
 
 from ..gui.dlg_rgh import RGHDialog
@@ -1711,9 +1711,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 self.plot.plot.setTitle(title=f"Grid Element - {grid_element}")
                 self.plot.plot.setLabel("bottom", text="Time (hrs)")
                 self.plot.plot.setLabel("left", text="")
-                self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
-                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water_Surface_Elevation']], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water_Surface_Elevation']], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"), hide=True)
 
             except:
                 QApplication.restoreOverrideCursor()

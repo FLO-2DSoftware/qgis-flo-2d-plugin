@@ -33,6 +33,7 @@ from ..user_communication import UserCommunication
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 from ..deps import safe_h5py as h5py
+from ..utils import qt_pen_style
 
 uiDialog, qtBaseClass = load_ui("fpxsec_editor")
 
@@ -599,9 +600,9 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.plot.plot.setTitle(title=f"Floodplain Cross Section - {fid}")
                 self.plot.plot.setLabel("bottom", text="Time (hrs)")
                 self.plot.plot.setLabel("left", text="")
-                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-                self.plot.add_item(f"Flow Width ({self.system_units[units][0]})", [time_list, flow_width_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Flow Width ({self.system_units[units][0]})", [time_list, flow_width_list], col=QColor(Qt.black), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"), hide=True)
 
                 try:  # Build table.
                     discharge_data_model = StandardItemModel()
@@ -755,7 +756,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                                     break
                             break
 
-                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
 
                 try:  # Build table.
                     discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
@@ -919,9 +920,9 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                     step_data.append(cumulative_step)
 
                 self.plot.add_item(f"Elevation ({units})", [step_data[:-1], elevation_data],
-                                   col=QColor(Qt.black), sty=Qt.SolidLine)
+                                   col=QColor(Qt.black), sty=qt_pen_style("SolidLine"))
                 self.plot.add_item(f"Mannings", [step_data[:-1], roughness_data],
-                                   col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                                   col=QColor(Qt.red), sty=qt_pen_style("SolidLine"), hide=True)
 
                 headers = ["Station", f"Elevation ({units})", f"Mannings"]
                 data_model.setHorizontalHeaderLabels(headers)

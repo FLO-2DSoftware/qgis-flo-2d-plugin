@@ -5,6 +5,8 @@ from qgis.PyQt.QtWidgets import QApplication
 from ..deps import safe_h5py as h5py
 import numpy as np
 
+from ..utils import qt_pen_style
+
 SCENARIO_COLOURS = [
     QColor("#1f77b4"),  # blue
     QColor("#d62728"),  # red
@@ -14,11 +16,11 @@ SCENARIO_COLOURS = [
 ]
 
 SCENARIO_STYLES = [
-    Qt.SolidLine,
-    Qt.DashLine,
-    Qt.DotLine,
-    Qt.DashDotLine,
-    Qt.DashDotDotLine,
+    qt_pen_style("SolidLine"),
+    qt_pen_style("DashLine"),
+    qt_pen_style("DotLine"),
+    qt_pen_style("DashDotLine"),
+    qt_pen_style("DashDotDotLine"),
 ]
 
 

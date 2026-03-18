@@ -29,7 +29,6 @@ from qgis.PyQt.QtWidgets import (
     QFileDialog,
     QProgressDialog,
     QTableWidgetItem,
-    qApp,
 )
 
 from ..flo2d_tools.grid_tools import (

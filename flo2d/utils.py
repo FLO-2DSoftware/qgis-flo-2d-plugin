@@ -465,3 +465,11 @@ def qt_item_role(name):
     if hasattr(Qt, "ItemDataRole"):  # Qt6
         return getattr(Qt.ItemDataRole, name)
     return getattr(Qt, name)  # Qt5
+
+def qt_pen_style(name):
+    """
+    Cross-compatible Qt pen style lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "PenStyle"):  # Qt6
+        return getattr(Qt.PenStyle, name)
+    return getattr(Qt, name)  # Qt5
