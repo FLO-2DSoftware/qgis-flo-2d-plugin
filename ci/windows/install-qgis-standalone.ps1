@@ -45,15 +45,20 @@ $qgisDirCandidates = $qgisDirCandidates | Select-Object -Unique
 Write-Host "[INFO] QGIS directory candidates:"
 $qgisDirCandidates | ForEach-Object { Write-Host "  $_" }
 
+# Broaden executable discovery for version/layout differences
 $qgisExeCandidates = foreach ($dir in $qgisDirCandidates) {
-    Get-ChildItem $dir -Recurse -Include "qgis-ltr-bin.exe","qgis-bin.exe" -File -ErrorAction SilentlyContinue |
+    Get-ChildItem $dir -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Name -match '^qgis.*-bin\.exe$' -or
+            $_.Name -eq 'qgis-bin.exe'
+        } |
         Select-Object -ExpandProperty FullName
 }
 
 $qgisExeCandidates = $qgisExeCandidates | Select-Object -Unique
 
 if (-not $qgisExeCandidates) {
-    Write-Host "[WARN] Could not find qgis-ltr-bin.exe or qgis-bin.exe"
+    Write-Host "[WARN] Could not find any QGIS bin executable."
     foreach ($dir in $qgisDirCandidates) {
         Write-Host "[INFO] Dumping install tree under $dir (depth 4)..."
         Get-ChildItem $dir -Recurse -Depth 4 | Select-Object FullName | Out-String | Write-Host
@@ -64,9 +69,17 @@ if (-not $qgisExeCandidates) {
 Write-Host "[INFO] QGIS executable candidates:"
 $qgisExeCandidates | ForEach-Object { Write-Host "  $_" }
 
+# Prefer the expected series, then prefer ltr, then first candidate
 $qgisBin = $qgisExeCandidates |
     Where-Object { $_ -match [regex]::Escape($expectedSeries) } |
+    Where-Object { $_ -match 'qgis-ltr-bin\.exe$' } |
     Select-Object -First 1
+
+if (-not $qgisBin) {
+    $qgisBin = $qgisExeCandidates |
+        Where-Object { $_ -match [regex]::Escape($expectedSeries) } |
+        Select-Object -First 1
+}
 
 if (-not $qgisBin) {
     $qgisBin = $qgisExeCandidates | Select-Object -First 1
