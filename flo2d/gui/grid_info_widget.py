@@ -154,7 +154,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     self.n_cells = number_of_elements(self.gutils, self.grid)
                     self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
 
-                    self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor(Qt.yellow))
+                    self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor("yellow"))
                 else:
                     self.idEdit.setText("")
                     self.elevEdit.setText("")

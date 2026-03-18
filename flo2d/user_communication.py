@@ -52,6 +52,32 @@ class UserCommunication(object):
         self.iface = iface
         self.context = context
 
+    def msgbox_button(self, name):
+        """
+        Return a QMessageBox standard button that works in Qt5 and Qt6.
+        Example: msgbox_button("Yes"), msgbox_button("No"), msgbox_button("Ok")
+        """
+        if hasattr(QMessageBox, "StandardButton"):  # Qt6-style
+            return getattr(QMessageBox.StandardButton, name)
+        return getattr(QMessageBox, name)  # Qt5-style
+
+    def msgbox_role(self, name):
+        """
+        Cross-compatible QMessageBox button role lookup.
+        """
+        if hasattr(QMessageBox, "ButtonRole"):  # Qt6
+            return getattr(QMessageBox.ButtonRole, name)
+        return getattr(QMessageBox, name)  # Qt5
+
+    def msgbox_icon(self, name):
+        """
+        Cross-compatible QMessageBox icon lookup.
+        Example: msgbox_icon("Information"), msgbox_icon("Warning"), msgbox_icon("Critical")
+        """
+        if hasattr(QMessageBox, "Icon"):  # Qt6
+            return getattr(QMessageBox.Icon, name)
+        return getattr(QMessageBox, name)  # Qt5
+
     def show_info(self, msg):
         if self.iface is not None:
             QMessageBox.information(self.iface.mainWindow(), self.context, msg)
@@ -173,9 +199,9 @@ class UserCommunication(object):
             m = QMessageBox()
             m.setWindowTitle(self.context)
             m.setText(msg)
-            m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
-            m.setDefaultButton(QMessageBox.Yes)
-            return True if m.exec_() == QMessageBox.Yes else False
+            m.setStandardButtons(self.msgbox_button("No") | self.msgbox_button("Yes"))
+            m.setDefaultButton(self.msgbox_button("Yes"))
+            return True if m.exec_() == self.msgbox_button("Yes") else False
         else:
             print(msg)
 
@@ -184,11 +210,11 @@ class UserCommunication(object):
         msgBox.setWindowTitle(title)
         if msg != "":
             msgBox.setText(msg)
-        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close)
-        msgBox.setDefaultButton(QMessageBox.Yes)
-        buttonY = msgBox.button(QMessageBox.Yes)
+        msgBox.setStandardButtons(self.msgbox_button("Yes") | self.msgbox_button("No") | QMessageBox.Close)
+        msgBox.setDefaultButton(self.msgbox_button("Yes"))
+        buttonY = msgBox.button(self.msgbox_button("Yes"))
         buttonY.setText(text1)
-        buttonN = msgBox.button(QMessageBox.No)
+        buttonN = msgBox.button(self.msgbox_button("No"))
         buttonN.setText(text2)
 
         # ret = msgBox.exec()
@@ -198,11 +224,21 @@ class UserCommunication(object):
         self,
         title,
         text,
-        standard_buttons=QMessageBox.No | QMessageBox.Yes,
-        default=QMessageBox.Yes,
-        icon=QMessageBox.Information,
+        standard_buttons=None,
+        default=None,
+        icon=None,
     ):
         if self.iface is not None:
+
+            if standard_buttons is None:
+                standard_buttons = self.msgbox_button("No") | self.msgbox_button("Yes")
+
+            if default is None:
+                default = self.msgbox_button("Yes")
+
+            if icon is None:
+                icon = self.msgbox_icon("Information")
+
             parent = self.iface.mainWindow()
             m = QMessageBox(parent)
             m.setWindowTitle(title)

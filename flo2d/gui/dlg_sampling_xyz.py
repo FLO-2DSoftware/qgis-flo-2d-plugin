@@ -198,7 +198,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             for i, line in enumerate(lines, 1):
                                 if int(i % step) == 0:
                                     advanceBar.setValue(i)
-                                    qApp.processEvents()
+                                    QApplication.processEvents()
 
                                 line = line.replace("\t", "")
                                 if n_commas == 0:  # No commas, values separated by spaces.
@@ -236,7 +236,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             self.uc.clear_bar_messages()
             statBar.removeWidget(statusLabel)
             statBar.removeWidget(advanceBar)
-            qApp.processEvents()
+            QApplication.processEvents()
             self.uc.bar_info("Updating grid elevations...")
             self.uc.log_info("Updating grid elevations...")
 
@@ -344,7 +344,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                 if not ok:
                     break
                 else:
-                    qApp.processEvents()
+                    QApplication.processEvents()
 
                     update_qry = "UPDATE grid SET elevation = ?  WHERE fid = ?;"
                     qry_values = []

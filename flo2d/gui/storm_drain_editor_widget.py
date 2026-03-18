@@ -915,7 +915,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             s = QSettings()
             lastDir = s.value("FLO-2D/lastGdsDir", "")
-            qApp.processEvents()
+            QApplication.processEvents()
 
             shapefile = lastDir + "/SD Conduits.shp"
             name = "SD Conduits"
@@ -3034,8 +3034,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             + "or you prefer to erase it and create new storm drains from the .INP file?\n"
         )
 
-        msg.addButton(QPushButton("Keep existing and complete"), QMessageBox.YesRole)
-        msg.addButton(QPushButton("Create new Storm Drains"), QMessageBox.NoRole)
+        msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
+        msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
         msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
         msg.setDefaultButton(QMessageBox().Cancel)
         msg.setIcon(QMessageBox.Question)
@@ -6420,7 +6420,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             "Assign Max. Depth", txt, "All Nodes", "Selected Nodes"
         )
 
-        if dialog == QMessageBox.Yes:
+        if dialog == self.uc.msgbox_button("Yes"):
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -6511,7 +6511,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             finally:
                 QApplication.restoreOverrideCursor()
 
-        elif dialog == QMessageBox.No:
+        elif dialog == self.uc.msgbox_button("No"):
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 

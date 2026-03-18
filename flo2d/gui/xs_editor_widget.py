@@ -1317,9 +1317,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             #                         QMessageBox().Ok | QMessageBox().Cancel)
                             msg.addButton(
                                 QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"),
-                                QMessageBox.YesRole,
+                                self.uc.msgbox_button("Yes"),
                             )
-                            msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
+                            msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), self.uc.msgbox_role("NoRole"))
                             msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                             msg.setDefaultButton(QMessageBox().Cancel)
                             msg.setIcon(QMessageBox.Question)

@@ -36,8 +36,7 @@ from qgis.PyQt.QtWidgets import (
     QApplication,
     QFileDialog,
     QMenu,
-    QMessageBox,
-    qApp,
+    QMessageBox
 )
 from qgis.utils import plugins
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
@@ -1107,7 +1106,7 @@ class Flo2D(object):
                     QApplication.restoreOverrideCursor()
                     answer = self.uc.customized_question("FLO-2D", msg)
                     dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
-                    if answer == QMessageBox.Yes:
+                    if answer == self.uc.msgbox_button("Yes"):
                         dlg_gpkg_management.show()
                         while True:
                             ok = dlg_gpkg_management.exec_()
@@ -1119,7 +1118,7 @@ class Flo2D(object):
                             else:
                                 return
 
-                    elif answer == QMessageBox.No:
+                    elif answer == self.uc.msgbox_button("No"):
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         dlg_gpkg_management.populate_user_lyrs()
                         dlg_gpkg_management.save_layers()
@@ -1534,9 +1533,9 @@ class Flo2D(object):
                     msg += "Load the model?"
                     QApplication.restoreOverrideCursor()
                     answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.Yes:
+                if answer == self.uc.msgbox_button("Yes"):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
-                    qApp.processEvents()
+                    QApplication.processEvents()
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     if not dlg_settings.connect(old_gpkg):
                         return
@@ -1562,9 +1561,9 @@ class Flo2D(object):
                 msg += "Load the model?"
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.Yes:
+                if answer == self.uc.msgbox_button("Yes"):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
-                    qApp.processEvents()
+                    QApplication.processEvents()
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     if not dlg_settings.connect(new_gpkg):
                         return
@@ -1590,7 +1589,7 @@ class Flo2D(object):
             msg += "Would you like to load the geopackage?"
             QApplication.restoreOverrideCursor()
             answer = self.uc.customized_question("FLO-2D", msg)
-            if answer == QMessageBox.Yes:
+            if answer == self.uc.msgbox_button("Yes"):
                 s = QSettings()
                 last_gpkg_dir = s.value("FLO-2D/lastGpkgDir", "")
                 gpkg_path, __ = QFileDialog.getOpenFileName(
@@ -1604,7 +1603,7 @@ class Flo2D(object):
 
                 self.new_gpkg = gpkg_path
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                qApp.processEvents()
+                QApplication.processEvents()
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                 if not dlg_settings.connect(new_gpkg):
                     return
@@ -1989,14 +1988,14 @@ class Flo2D(object):
                             "FLO-2D",
                             "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
                             + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                            self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | QMessageBox.Cancel,
                             QMessageBox.Cancel,
                         )
 
                         if add_new_colums == QMessageBox.Cancel:
                             return
 
-                        if add_new_colums == QMessageBox.No:
+                        if add_new_colums == self.uc.msgbox_button("No"):
                             return
                         else:
                             if add_col_and_row_fields(grid_lyr):
@@ -2178,14 +2177,14 @@ class Flo2D(object):
                 "FLO-2D",
                 "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
                 + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | QMessageBox.Cancel,
                 QMessageBox.Cancel,
             )
 
             if add_new_colums == QMessageBox.Cancel:
                 return
 
-            if add_new_colums == QMessageBox.No:
+            if add_new_colums == self.uc.msgbox_button("No"):
                 return
             else:
                 if add_col_and_row_fields(grid_lyr):
@@ -2257,9 +2256,9 @@ class Flo2D(object):
             "Select import method", msg, " Several Components", " One Single Component"
         )
 
-        if imprt == QMessageBox.Yes:
+        if imprt == self.uc.msgbox_button("Yes"):
             self.import_selected_components()
-        elif imprt == QMessageBox.No:
+        elif imprt == self.uc.msgbox_button("No"):
             self.import_selected_components2()
 
     @connection_required
@@ -3189,8 +3188,8 @@ class Flo2D(object):
                         + "or you prefer to erase it and create new storm drains from the .INP file?\n"
                     )
 
-                    msg.addButton(QPushButton("Keep existing and complete"), QMessageBox.YesRole)
-                    msg.addButton(QPushButton("Create new Storm Drains"), QMessageBox.NoRole)
+                    msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
+                    msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
                     msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                     msg.setDefaultButton(QMessageBox().Cancel)
                     msg.setIcon(QMessageBox.Question)
@@ -4089,8 +4088,8 @@ class Flo2D(object):
                     + "Would you like to delete them?"
                 )
                 m.setDetailedText(dletes)
-                m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
-                m.setDefaultButton(QMessageBox.Yes)
+                m.setStandardButtons(self.uc.msgbox_button("No") | self.uc.msgbox_button("Yes"))
+                m.setDefaultButton(self.uc.msgbox_button("Yes"))
 
                 # Spacer                        width, height, h policy, v policy
                 # horizontalSpacer = QSpacerItem(0, 300, QSizePolicy.Preferred, QSizePolicy.Preferred)
@@ -4110,7 +4109,7 @@ class Flo2D(object):
 
                 #                     m.setInformativeText(dletes + '\n\nWould you like to delete them?')
                 q = m.exec_()
-                if q == QMessageBox.Yes:
+                if q == self.uc.msgbox_button("Yes"):
                     #                     q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' +
                     #                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')
                     #                     if q:

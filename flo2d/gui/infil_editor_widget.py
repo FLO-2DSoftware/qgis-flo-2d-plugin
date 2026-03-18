@@ -996,9 +996,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         # Verify if the user would like to save the intermediate calculation layers
         saveLayers = True
         answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
-                                      'Remove intermediate calculation layers?', QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
+                                      'Remove intermediate calculation layers?', self.uc.msgbox_button("Yes"),
+                                      self.uc.msgbox_button("No"))
+        if answer == self.uc.msgbox_button("Yes"):
             saveLayers = False
 
         try:
@@ -1077,9 +1077,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         temp_layers = []
         answer = QMessageBox.question(self.iface.mainWindow(), 'OSM land use',
                                       'Remove intermediate calculation layers?',
-                                      QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
+                                      self.uc.msgbox_button("Yes"),
+                                      self.uc.msgbox_button("No"))
+        if answer == self.uc.msgbox_button("Yes"):
             saveLayers = False
 
         # Create the progress Dialog

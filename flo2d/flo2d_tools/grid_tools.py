@@ -3369,7 +3369,7 @@ def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
     prj = QgsProject.instance()
     prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
 
-def find_this_cell(iface, lyrs, uc, gutils, cell, color=Qt.yellow, zoom_in=False, clear_previous=True):
+def find_this_cell(iface, lyrs, uc, gutils, cell, color=QColor("yellow"), zoom_in=False, clear_previous=True):
     try:
         QApplication.setOverrideCursor(Qt.WaitCursor)
         grid = lyrs.data["grid"]["qlyr"]

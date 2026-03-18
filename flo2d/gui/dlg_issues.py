@@ -2135,7 +2135,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
         s = QSettings()
         lastDir = s.value("FLO-2D/lastGdsDir", "")
-        qApp.processEvents()
+        QApplication.processEvents()
         features = []
         for e in self.errors:
             if int(e[0]) > 1:
@@ -2837,7 +2837,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
 
         s = QSettings()
         lastDir = s.value("FLO-2D/lastGdsDir", "")
-        qApp.processEvents()
+        QApplication.processEvents()
         features = []
         for e in self.levee_crests:
             pnt = self.gutils.single_centroid(e[1])

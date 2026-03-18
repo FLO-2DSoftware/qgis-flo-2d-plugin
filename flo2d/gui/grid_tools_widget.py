@@ -255,7 +255,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
                 + "Some functionality will be unavailable.\n\n"
                 + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | QMessageBox.Cancel,
                 QMessageBox.Cancel,
             )
 
@@ -263,7 +263,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return
 
         if field_index == -1:
-            if add_new_colums == QMessageBox.No:
+            if add_new_colums == self.uc.msgbox_button("No"):
                 square_grid(self.gutils, boundary, upper_left_coords_override)
             else:
                 if add_col_and_row_fields(grid_lyr):

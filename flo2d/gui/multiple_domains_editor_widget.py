@@ -493,7 +493,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                         msg = f"Name '{name_adj}' already exists in the geopackage.\n\n"
                         msg += "Would you like to replace it?"
                         answer = self.uc.customized_question("FLO-2D", msg)
-                        if answer == QMessageBox.Yes:
+                        if answer == self.uc.msgbox_button("Yes"):
                             self.gutils.execute(f"DELETE FROM mult_domains_methods WHERE subdomain_name = '{name_adj}'")
                             self.gutils.execute(f"DELETE FROM mult_domains_con WHERE subdomain_name = '{name_adj}'")
                             self.gutils.execute(f"INSERT INTO mult_domains_methods (subdomain_name, fid_method) VALUES ('{name_adj}', {name[0]})")

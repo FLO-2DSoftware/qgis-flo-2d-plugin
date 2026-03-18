@@ -305,7 +305,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 answer = self.uc.customized_question("WARNING 060319.1655",
                     "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
                 )
-                if answer == QMessageBox.Yes:
+                if answer == self.uc.msgbox_button("Yes"):
                     continue
                 else:
                     self.proj_lab.setText("----")
@@ -337,7 +337,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 answer = self.uc.customized_question("WARNING 060319.1655",
                     "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
                 )
-                if answer == QMessageBox.Yes:
+                if answer == self.uc.msgbox_button("Yes"):
                     continue
                 else:
                     self.proj_lab.setText("----")

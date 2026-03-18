@@ -10830,7 +10830,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 msg += "Would you like to overwrite it?"
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.No:
+                if answer == self.uc.msgbox_button("No"):
                     QApplication.restoreOverrideCursor()
                     return
                 else:
@@ -11022,7 +11022,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 msg += "Would you like to overwrite it?"
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.No:
+                if answer == self.uc.msgbox_button("No"):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     return
                 else:
@@ -11174,7 +11174,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 msg += "Would you like to overwrite it?"
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.No:
+                if answer == self.uc.msgbox_button("No"):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     return
                 else:
