@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-from PyQt5.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings
 import qgis
 from qgis._core import QgsProject, QgsUnitTypes
 

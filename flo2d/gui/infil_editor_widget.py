@@ -12,13 +12,13 @@ from collections import OrderedDict
 from itertools import chain
 from math import isnan
 
-from PyQt5.QtCore import QMetaType, QUrl
-from PyQt5.QtWidgets import QFileDialog
+from qgis.PyQt.QtCore import QMetaType, QUrl
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsLayerTreeRegistryBridge, \
     QgsMapLayer, QgsVectorFileWriter
 from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox,
                                  QInputDialog, QSpinBox, QProgressDialog,

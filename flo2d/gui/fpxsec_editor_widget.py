@@ -15,9 +15,9 @@ import traceback
 from collections import defaultdict
 
 import numpy as np
-from PyQt5.QtCore import QSettings, Qt, QUrl
-from PyQt5.QtGui import QColor, QDesktopServices
-from PyQt5.QtWidgets import QApplication
+from qgis.PyQt.QtCore import QSettings, Qt, QUrl
+from qgis.PyQt.QtGui import QColor, QDesktopServices
+from qgis.PyQt.QtWidgets import QApplication
 from qgis._core import QgsPointXY, QgsGeometry
 from qgis.core import QgsFeatureRequest, QgsSpatialIndex
 from qgis.PyQt.QtGui import QIcon

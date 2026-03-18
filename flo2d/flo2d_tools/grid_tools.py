@@ -17,7 +17,7 @@ from operator import itemgetter
 from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
-from PyQt5.QtCore import QMetaType
+from qgis.PyQt.QtCore import QMetaType
 from qgis._core import QgsField, QgsVectorDataProvider, QgsMessageLog
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from qgis.core import (

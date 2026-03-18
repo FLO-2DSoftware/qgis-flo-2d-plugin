@@ -13,13 +13,13 @@ import traceback
 from datetime import datetime
 from math import isnan
 
-from PyQt5.QtWidgets import QProgressDialog
+from qgis.PyQt.QtWidgets import QProgressDialog
 from qgis.core import QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices, QStandardItem, QStandardItemModel
 
 from .dlg_sampling_raincellraw import SamplingRaincellRawDialog
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage

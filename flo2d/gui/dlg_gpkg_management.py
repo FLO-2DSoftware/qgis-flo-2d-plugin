@@ -6,8 +6,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QListWidgetItem, QApplication
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QListWidgetItem, QApplication
 from qgis._core import QgsProject, QgsMapLayer, QgsVectorFileWriter, QgsVectorLayer, QgsRasterLayer
 from qgis.core import QgsMapLayerType
 

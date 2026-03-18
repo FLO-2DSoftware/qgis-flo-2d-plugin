@@ -5,8 +5,8 @@ from itertools import combinations
 
 from ..deps import safe_h5py as h5py
 import numpy as np
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox
 from qgis.PyQt.QtCore import NULL
 
 from .dlg_components import ComponentsDialog

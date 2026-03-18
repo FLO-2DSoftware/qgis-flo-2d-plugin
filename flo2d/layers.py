@@ -13,8 +13,8 @@ from collections import OrderedDict
 from os.path import normpath
 
 import processing
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QProgressDialog
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QProgressDialog
 from qgis.core import (
     QgsDefaultValue,
     QgsEditorWidgetSetup,

@@ -5,8 +5,8 @@ import os
 from math import ceil
 from pathlib import Path
 
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QFileDialog
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis._core import QgsWkbTypes, QgsApplication
 
 from ..flo2d_tools.grid_tools import poly2grid

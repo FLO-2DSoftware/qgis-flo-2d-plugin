@@ -9,7 +9,7 @@
 
 import os
 
-from PyQt5.QtWidgets import QDockWidget
+from qgis.PyQt.QtWidgets import QDockWidget
 from qgis.core import *
 from qgis.core import (
     QgsFeature,

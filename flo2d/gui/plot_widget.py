@@ -11,7 +11,7 @@
 from qgis.PyQt.QtCore import QSize, Qt, QPoint
 from qgis.PyQt.QtGui import QColor, QPainter # QPainter is in the widget to draw legend sample line (in LegendLine.paintEvent())
 from qgis.PyQt.QtWidgets import *
-from PyQt5.QtWidgets import QMenu, QCheckBox, QWidgetAction, QGraphicsProxyWidget # QGraphicsProxyWidget is used to embed legend panel (QWidget) inside pyqtgraph (QGraphicsScene)
+from qgis.PyQt.QtWidgets import QMenu, QCheckBox, QWidgetAction, QGraphicsProxyWidget # QGraphicsProxyWidget is used to embed legend panel (QWidget) inside pyqtgraph (QGraphicsScene)
 from qgis._core import QgsMessageLog
 
 from ..deps import safe_pyqtgraph as pg

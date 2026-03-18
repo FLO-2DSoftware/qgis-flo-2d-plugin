@@ -2,9 +2,9 @@
 import math
 
 import processing
-from PyQt5.QtCore import QSettings, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QListWidgetItem, QSizePolicy, QFileDialog
+from qgis.PyQt.QtCore import QSettings, QUrl
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtWidgets import QListWidgetItem, QSizePolicy, QFileDialog
 from qgis._core import QgsProject, QgsWkbTypes, QgsVectorLayer, QgsFeature, QgsGeometry
 from qgis.core import QgsMapLayerType
 

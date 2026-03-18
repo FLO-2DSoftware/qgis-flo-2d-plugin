@@ -1,9 +1,9 @@
 #  -*- coding: utf-8 -*-
 import itertools
 import os
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
+from qgis.PyQt.QtCore import Qt, QUrl
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
 from qgis.PyQt.QtCore import NULL
 from qgis._core import QgsFeatureRequest, QgsFeature
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog

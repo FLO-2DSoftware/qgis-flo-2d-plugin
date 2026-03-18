@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from math import isnan
 
-from PyQt5.QtCore import QSettings, QUrl
-from PyQt5.QtGui import QColor, QDesktopServices
-from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog
+from qgis.PyQt.QtCore import QSettings, QUrl
+from qgis.PyQt.QtGui import QColor, QDesktopServices
+from qgis.PyQt.QtWidgets import QInputDialog, QApplication, QFileDialog
 from qgis._core import QgsProject, QgsFeatureRequest, QgsFeature, QgsGeometry, QgsPointXY
 from qgis._gui import QgsRubberBand
 

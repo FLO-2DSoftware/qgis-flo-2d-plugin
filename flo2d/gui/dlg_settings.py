@@ -12,7 +12,7 @@ import time
 from itertools import chain
 
 import qgis
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis._core import QgsProject
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget

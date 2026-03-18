@@ -17,9 +17,9 @@ from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES, timde
 from ..deps import safe_h5py as h5py
 
 import numpy as np
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices, QColor
-from PyQt5.QtWidgets import QProgressDialog
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices, QColor
+from qgis.PyQt.QtWidgets import QProgressDialog
 from qgis._core import QgsFeatureRequest, QgsProject, QgsMeshLayer, QgsMeshDatasetIndex
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt.QtCore import QSettings, Qt, QThread

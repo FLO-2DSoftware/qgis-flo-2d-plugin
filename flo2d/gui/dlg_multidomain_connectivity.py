@@ -2,7 +2,7 @@ import os
 import time
 
 from ..deps import safe_h5py as h5py
-from PyQt5.QtWidgets import QProgressDialog
+from qgis.PyQt.QtWidgets import QProgressDialog
 from qgis.PyQt.QtCore import NULL
 
 from .ui_utils import load_ui

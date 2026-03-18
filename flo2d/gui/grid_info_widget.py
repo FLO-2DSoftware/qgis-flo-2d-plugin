@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMenu
+from qgis.PyQt.QtWidgets import QMenu
 from qgis._core import QgsVectorLayerJoinInfo
 # FLO-2D Preprocessor tools for QGIS
 # Copyright Â© 2016 Lutra Consulting for FLO-2D

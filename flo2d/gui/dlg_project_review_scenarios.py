@@ -8,8 +8,8 @@ from qgis._core import QgsApplication
 from ..flo2dobjects import ChannelSegment
 
 from ..deps import safe_h5py as h5py
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QFileDialog, QProgressDialog
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QFileDialog, QProgressDialog
 
 # FLO-2D Preprocessor tools for QGIS
 

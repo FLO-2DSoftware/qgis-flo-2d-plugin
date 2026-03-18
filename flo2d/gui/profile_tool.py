@@ -10,11 +10,11 @@
 
 from operator import itemgetter
 
-from PyQt5.QtCore import QUrl
+from qgis.PyQt.QtCore import QUrl
 from qgis.core import QgsFeatureRequest, QgsProject, QgsRaster
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QDesktopServices
 
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2dobjects import ChannelSegment

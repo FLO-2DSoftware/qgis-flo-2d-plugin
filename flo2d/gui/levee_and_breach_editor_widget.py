@@ -9,8 +9,8 @@
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_breach import (
     GlobalBreachDialog,

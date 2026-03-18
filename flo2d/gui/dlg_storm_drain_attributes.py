@@ -17,9 +17,9 @@ import csv
 import io
 import os
 
-from PyQt5.QtCore import Qt, QSettings, pyqtSignal
-from PyQt5.QtGui import QColor, QKeySequence, QDoubleValidator
-from PyQt5.QtWidgets import QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
+from qgis.PyQt.QtCore import Qt, QSettings, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QKeySequence, QDoubleValidator
+from qgis.PyQt.QtWidgets import QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
     QFileDialog, QUndoStack
 from qgis._gui import QgsDockWidget
 

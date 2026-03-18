@@ -6,8 +6,8 @@
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_channel_geometry import ChannelGeometryDialog
 from ..user_communication import UserCommunication
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2

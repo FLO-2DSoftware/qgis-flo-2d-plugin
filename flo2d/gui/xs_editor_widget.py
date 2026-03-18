@@ -16,9 +16,9 @@ import traceback
 from collections import OrderedDict
 from math import isnan
 
-from PyQt5.QtWidgets import QProgressDialog
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtCore import QUrl  
+from qgis.PyQt.QtWidgets import QProgressDialog
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QUrl  
 from qgis._gui import QgsDockWidget
 from qgis.core import (
     QgsCoordinateTransform,

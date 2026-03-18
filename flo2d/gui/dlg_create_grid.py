@@ -15,8 +15,8 @@ from qgis._core import QgsWkbTypes
 from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel, NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtWidgets import QDialogButtonBox
 
 from .ui_utils import load_ui

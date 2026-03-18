@@ -14,7 +14,7 @@ import re
 from collections import OrderedDict
 from math import isnan
 
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis._gui import QgsDockWidget
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import (
@@ -23,7 +23,7 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog
-from PyQt5.QtCore import QUrl
+from qgis.PyQt.QtCore import QUrl
 
 from .dlg_check_report import GenericCheckReportDialog
 from ..flo2dobjects import Structure

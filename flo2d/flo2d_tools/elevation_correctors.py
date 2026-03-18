@@ -7,7 +7,7 @@ import functools
 import time
 from collections import defaultdict
 
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis._core import QgsMessageLog, QgsSpatialIndex
 from qgis.analysis import QgsZonalStatistics
 from qgis.core import (
@@ -19,7 +19,7 @@ from qgis.core import (
     QgsVectorLayer,
     QgsWkbTypes,
 )
-from PyQt5.QtCore import QMetaType
+from qgis.PyQt.QtCore import QMetaType
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

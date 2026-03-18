@@ -9,7 +9,7 @@
 
 from collections import OrderedDict
 
-from PyQt5.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox
 

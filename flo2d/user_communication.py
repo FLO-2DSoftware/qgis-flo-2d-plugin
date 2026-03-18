@@ -30,7 +30,7 @@ from qgis.PyQt.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,    
 )
-from PyQt5.QtGui import QFont
+from qgis.PyQt.QtGui import QFont
 
 
 def is_file_locked(filepath):

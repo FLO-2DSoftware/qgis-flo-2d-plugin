@@ -2,8 +2,8 @@ import os
 import shutil
 from datetime import datetime
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QApplication
 from qgis._core import QgsProject
 
 from flo2d.gui.ui_utils import load_ui

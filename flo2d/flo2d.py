@@ -17,7 +17,7 @@ import time
 import traceback
 from contextlib import contextmanager
 
-from PyQt5.QtWidgets import QToolButton, QProgressDialog, QPushButton
+from qgis.PyQt.QtWidgets import QToolButton, QProgressDialog, QPushButton
 from osgeo import gdal, ogr
 from qgis._core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsRasterLayer
 from qgis.core import NULL, QgsProject, QgsWkbTypes

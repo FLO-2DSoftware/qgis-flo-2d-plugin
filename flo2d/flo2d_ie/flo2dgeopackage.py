@@ -23,8 +23,8 @@ from ..flo2d_tools.schematic_tools import ChannelsSchematizer
 
 from ..deps import safe_h5py as h5py
 import numpy as np
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog

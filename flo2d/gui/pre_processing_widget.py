@@ -9,9 +9,9 @@ import os.path
 # of the License, or (at your option) any later version
 
 import processing
-from PyQt5.QtCore import QMetaType, QUrl, Qt
-from PyQt5.QtWidgets import QFileDialog, QApplication
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QMetaType, QUrl, Qt
+from qgis.PyQt.QtWidgets import QFileDialog, QApplication
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis._analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 
 from ..geopackage_utils import GeoPackageUtils

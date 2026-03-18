@@ -3,9 +3,9 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_individual_multiple_channels import (
     IndividualMultipleChannelsDialog,

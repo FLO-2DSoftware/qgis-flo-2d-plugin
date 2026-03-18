@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # FLO-2D Preprocessor tools for QGIS
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis._core import QgsFeatureRequest
 
 # This program is free software; you can redistribute it and/or
