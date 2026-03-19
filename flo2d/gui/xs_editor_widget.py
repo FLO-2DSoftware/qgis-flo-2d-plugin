@@ -57,7 +57,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_tributaries import TributariesDialog
 from ..misc.project_review_utils import hychan_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, qt_item_role, qt_pen_style, qt_cursor_shape
+from ..utils import is_number, m_fdata, qt_item_role, qt_pen_style, qt_cursor_shape, qt_item_flag
 from .plot_widget import PlotWidget
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import (
@@ -304,7 +304,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.xs_cbo.addItem("Non Schematized")
             row_index = self.xs_cbo.model().rowCount() - 1
             flags = self.xs_cbo.model().item(row_index).flags()
-            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
             self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
             for xs_fid in non_schematized_xs:
                 name = xs_name_dict[xs_fid]
@@ -321,7 +321,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.xs_cbo.addItem(channel_name)
             row_index = self.xs_cbo.model().rowCount() - 1
             flags = self.xs_cbo.model().item(row_index).flags()
-            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
             self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
             for tup in cross_sections:
                 xs_fid = tup[0]

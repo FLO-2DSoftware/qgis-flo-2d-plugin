@@ -72,7 +72,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, \
-    qt_cursor_shape, qt_toolbutton_popup_mode
+    qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -5344,7 +5344,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.SD_type4_cbo.addItem("Rating Tables")
             row_index = self.SD_type4_cbo.model().rowCount() - 1
             flags = self.SD_type4_cbo.model().item(row_index).flags()
-            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
             self.SD_type4_cbo.model().item(row_index).setData(True,  SDTableRole)
             for row in sd_rating_tables:
                 rt_fid, name = [x if x is not None else "" for x in row]
@@ -5362,7 +5362,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.SD_type4_cbo.addItem("Culvert Equations")
             row_index = self.SD_type4_cbo.model().rowCount() - 1
             flags = self.SD_type4_cbo.model().item(row_index).flags()
-            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
             self.SD_type4_cbo.model().item(row_index).setData(True,  qt_item_role("UserRole") + 1)
             for culv in culverts:
                 fid, grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv

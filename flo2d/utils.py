@@ -547,3 +547,11 @@ def qevent_type(name):
     if hasattr(QEvent, "Type"):  # Qt6
         return getattr(QEvent.Type, name)
     return getattr(QEvent, name)  # Qt5
+
+def qt_item_flag(name):
+    """
+    Cross-compatible Qt item flag lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "ItemFlag"):  # Qt6
+        return getattr(Qt.ItemFlag, name)
+    return getattr(Qt, name)  # Qt5
