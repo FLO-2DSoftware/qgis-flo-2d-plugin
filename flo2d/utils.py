@@ -27,7 +27,7 @@ from heapq import nsmallest
 from itertools import filterfalse
 from math import ceil
 
-from qgis.PyQt.QtCore import QRegularExpression, Qt
+from qgis.PyQt.QtCore import QRegularExpression, Qt, QEvent
 from qgis.PyQt.QtGui import QRegularExpressionValidator
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -539,3 +539,11 @@ def qt_check_state(name):
     if hasattr(Qt, "CheckState"):  # Qt6
         return getattr(Qt.CheckState, name)
     return getattr(Qt, name)  # Qt5
+
+def qevent_type(name):
+    """
+    Cross-compatible QEvent type lookup for Qt5/Qt6.
+    """
+    if hasattr(QEvent, "Type"):  # Qt6
+        return getattr(QEvent.Type, name)
+    return getattr(QEvent, name)  # Qt5

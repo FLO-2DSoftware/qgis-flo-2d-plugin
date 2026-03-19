@@ -26,7 +26,7 @@ except ImportError:
 
 
 from ..user_communication import UserCommunication
-from ..utils import is_number, qt_item_role, qt_cursor_shape
+from ..utils import is_number, qt_item_role, qt_cursor_shape, qevent_type
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("table_editor")
@@ -199,7 +199,7 @@ class CommandItemEdit(QUndoCommand):
 
 class TableEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
-        if event.type() == QEvent.KeyPress:
+        if event.type() == qevent_type("KeyPress"):
             if event.modifiers() & Qt.ControlModifier:
                 if event.key() == Qt.Key_C:
                     table_editor_widget = receiver.parent()
