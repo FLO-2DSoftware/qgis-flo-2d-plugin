@@ -37,7 +37,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import copy_tablewidget_selection, qt_item_role, qt_cursor_shape
+from ..utils import copy_tablewidget_selection, qt_item_role, qt_cursor_shape, qt_dock_widget_area
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_show_n_cells
 
 # from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
@@ -103,7 +103,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
 
                 dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, 1000000, "All", "All")
                 dlg_conflicts.dock_widget.setFloating(False)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_conflicts.dock_widget)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), dlg_conflicts.dock_widget)
                 dlg_conflicts.dock_widget.show()
                 self.lyrs.clear_rubber()
                 QApplication.restoreOverrideCursor()
@@ -136,7 +136,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
                         + " cells references that are outside the grid !"
                     )
                 dlg_issues.dock_widget.setFloating(False)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_issues.dock_widget)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), dlg_issues.dock_widget)
                 dlg_issues.dock_widget.show()
                 self.lyrs.clear_rubber()
                 QApplication.restoreOverrideCursor()
@@ -158,7 +158,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
 
                 dlg_levee_crests = LeveeCrestsDialog(self.con, self.iface, self.lyrs)
                 dlg_levee_crests.dock_widget.setFloating(False)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_levee_crests.dock_widget)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), dlg_levee_crests.dock_widget)
                 dlg_levee_crests.dock_widget.show()
                 self.lyrs.clear_rubber()
                 QApplication.restoreOverrideCursor()

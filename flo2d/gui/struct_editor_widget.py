@@ -31,7 +31,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
 from ..misc.project_review_utils import hydrostruct_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, qt_pen_style, qt_cursor_shape
+from ..utils import is_number, m_fdata, qt_pen_style, qt_cursor_shape, qt_dock_widget_area
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
@@ -430,7 +430,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             plot_dock = QgsDockWidget()
             plot_dock.setWindowTitle("FLO-2D Hydraulic Structures Check Report")
             plot_dock.setWidget(dlg_structures_report)
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), plot_dock)
             dlg_structures_report.report_te.insertPlainText(msg)
 
             grid_errors = list(set(

@@ -72,7 +72,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, \
-    qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag
+    qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag, qt_dock_widget_area
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -5900,7 +5900,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             if rpt_file:
                 self.sd_animator = SDAnimator(self.iface, existing_nodes_dict, rpt_file, units, manhole_diameter, mh_pop)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.sd_animator)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.sd_animator)
                 self.sd_animator.setFloating(True)
                 self.sd_animator.setGeometry(100, 100, 800, 600)
                 QApplication.restoreOverrideCursor()
@@ -7656,7 +7656,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Show the dialog
                 dlg = dock_dialogs.get(table)(self.con, self.iface, self.lyrs)
 
-                self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+                self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
                 if f2d_dock:
                     self.iface.mainWindow().tabifyDockWidget(f2d_dock, dlg.dock_widget)
                 dlg.dock_widget.setFloating(False)

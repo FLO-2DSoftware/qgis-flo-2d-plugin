@@ -89,7 +89,8 @@ from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
-from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode
+from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
+    qt_dock_widget_area
 
 from PIL import Image
 
@@ -651,31 +652,31 @@ class Flo2D(object):
 
     def add_docks_to_iface(self):
         s = QSettings("FLO2D")
-        ma = s.value("dock/area", Qt.RightDockWidgetArea, type=int)
-        ta = s.value("table_dock/area", Qt.BottomDockWidgetArea, type=int)
-        pa = s.value("plot_dock/area", Qt.BottomDockWidgetArea, type=int)
-        ga = s.value("grid_info_dock/area", Qt.TopDockWidgetArea, type=int)
+        ma = s.value("dock/area", qt_dock_widget_area("RightDockWidgetArea"), type=int)
+        ta = s.value("table_dock/area", qt_dock_widget_area("BottomDockWidgetArea"), type=int)
+        pa = s.value("plot_dock/area", qt_dock_widget_area("BottomDockWidgetArea"), type=int)
+        ga = s.value("grid_info_dock/area", qt_dock_widget_area("TopDockWidgetArea"), type=int)
 
         if ma == 0:
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), self.f2d_dock)
             self.f2d_dock.setFloating(True)
         else:
             self.iface.addDockWidget(ma, self.f2d_dock)
 
         if ta == 0:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
             self.f2d_table_dock.setFloating(True)
         else:
             self.iface.addDockWidget(ta, self.f2d_table_dock)
 
         if pa == 0:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
             self.f2d_plot_dock.setFloating(True)
         else:
             self.iface.addDockWidget(pa, self.f2d_plot_dock)
 
         if ga == 0:
-            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("TopDockWidgetArea"), self.f2d_grid_info_dock)
             self.f2d_grid_info_dock.setFloating(True)
         else:
             self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
@@ -3329,10 +3330,10 @@ class Flo2D(object):
                 info_ac = ac
 
         if self.f2d_table_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
 
         if self.f2d_plot_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
@@ -3361,7 +3362,7 @@ class Flo2D(object):
                 info_ac = ac
 
         if self.f2d_grid_info_dock is not None:
-            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("TopDockWidgetArea"), self.f2d_grid_info_dock)
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
@@ -3398,10 +3399,10 @@ class Flo2D(object):
                 info_ac = ac
 
         if self.f2d_table_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
 
         if self.f2d_plot_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
 
         tool = self.canvas.mapTool()
         if tool == self.results_tool:
@@ -3542,7 +3543,7 @@ class Flo2D(object):
             self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
         else:
             dlg = InletAttributes(self.con, self.iface, self.lyrs)
-            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
             self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
             dlg.dock_widget.setFloating(False)
             dlg.populate_attributes(fid)
@@ -3573,7 +3574,7 @@ class Flo2D(object):
             self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
         else:
             dlg = OutletAttributes(self.con, self.iface, self.lyrs)
-            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
             self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
             dlg.dock_widget.setFloating(False)
             dlg.populate_attributes(fid)
@@ -3603,7 +3604,7 @@ class Flo2D(object):
             self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, storage_unit_name[0])
         else:
             dlg = StorageUnitAttributes(self.con, self.iface, self.lyrs)
-            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
             self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
             dlg.dock_widget.setFloating(False)
             dlg.populate_attributes(fid)
@@ -3633,7 +3634,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Weir: " + str(weir_name[0]))
 
         dlg = WeirAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
@@ -3661,7 +3662,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Orifice: " + str(orifice_name[0]))
 
         dlg = OrificeAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
@@ -3689,7 +3690,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Pump: " + str(pump_name[0]))
 
         dlg = PumpAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
@@ -3717,7 +3718,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Conduit: " + str(conduit_name[0]))
 
         dlg = ConduitAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)

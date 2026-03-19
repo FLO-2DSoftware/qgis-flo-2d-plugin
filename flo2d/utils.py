@@ -555,3 +555,11 @@ def qt_item_flag(name):
     if hasattr(Qt, "ItemFlag"):  # Qt6
         return getattr(Qt.ItemFlag, name)
     return getattr(Qt, name)  # Qt5
+
+def qt_dock_widget_area(name):
+    """
+    Cross-compatible Qt dock widget area lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "DockWidgetArea"):  # Qt6
+        return getattr(Qt.DockWidgetArea, name)
+    return getattr(Qt, name)  # Qt5
