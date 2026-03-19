@@ -33,7 +33,7 @@ from qgis.PyQt.QtWidgets import QApplication
 from .errors import Flo2dError, Flo2dLayerInvalid, Flo2dLayerNotFound, Flo2dNotString
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
-from .utils import get_file_path, is_number
+from .utils import get_file_path, is_number, qt_check_state
 
 
 class Layers(object):
@@ -2053,9 +2053,9 @@ class Layers(object):
         # set visibility
         if not lyr_exists:
             if visible:
-                vis = Qt.Checked
+                vis = qt_check_state("Checked")
             else:
-                vis = Qt.Unchecked
+                vis = qt_check_state("Unchecked")
             tree_lyr.setItemVisibilityChecked(vis)
             tree_lyr.setExpanded(False)
         # preserve layer visibility for existing layers

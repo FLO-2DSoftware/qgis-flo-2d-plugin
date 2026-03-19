@@ -74,7 +74,7 @@ class NumericDelegate2(QStyledItemDelegate):
         value = index.model().data(index, qt_item_role("EditRole"))
         try:
             number = float(value)
-            painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 2))
+            painter.drawText(option.rect, qt_alignment_flag("AlignLeft"), "{:.{}f}".format(number, 2))
         except:
             QStyledItemDelegate.paint(self, painter, option, index)
 
@@ -146,7 +146,7 @@ class FloatDelegate(QItemDelegate):
         value = index.model().data(index, qt_item_role("EditRole"))
         try:
             number = float(value)
-            painter.drawText(option.rect, Qt.AlignLeft, "{.3f}".format(number, self.nDecimals))
+            painter.drawText(option.rect, qt_alignment_flag("AlignLeft"), "{.3f}".format(number, self.nDecimals))
         except:
             QItemDelegate.paint(self, painter, option, index)
 
@@ -522,4 +522,20 @@ def qt_widget_attribute(name):
     """
     if hasattr(Qt, "WidgetAttribute"):  # Qt6
         return getattr(Qt.WidgetAttribute, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_alignment_flag(name):
+    """
+    Cross-compatible Qt alignment flag lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "AlignmentFlag"):  # Qt6
+        return getattr(Qt.AlignmentFlag, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_check_state(name):
+    """
+    Cross-compatible Qt check state lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "CheckState"):  # Qt6
+        return getattr(Qt.CheckState, name)
     return getattr(Qt, name)  # Qt5

@@ -17,7 +17,7 @@ from qgis._core import QgsMessageLog
 from ..deps import safe_pyqtgraph as pg
 import numpy as np
 
-from ..utils import qt_pen_style, qframe_shape, qt_widget_attribute
+from ..utils import qt_pen_style, qframe_shape, qt_widget_attribute, qt_alignment_flag, qt_check_state
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -109,7 +109,7 @@ class PlotWidget(QWidget):
         self.auto_range_btn.clicked.connect(self.auto_range)
 
         button_layout.addWidget(self.auto_range_btn)
-        button_layout.setAlignment(Qt.AlignRight)
+        button_layout.setAlignment(qt_alignment_flag("AlignRight"))
         self.left_layout.addLayout(button_layout) # Place controls (hover + autorange) beneath the plot
         self.layout.addLayout(self.left_layout, 1) # Insert left-layout into main layout with stretch factor
         self.setLayout(self.layout)
@@ -119,7 +119,7 @@ class PlotWidget(QWidget):
         self.init_hover_items()
 
         self.hover_enabled = False # Disable hover by default
-        self.toggle_hover(Qt.Unchecked) # Enforce initial hidden state
+        self.toggle_hover(qt_check_state("Unchecked")) # Enforce initial hidden state
 
     # Handle mouse press on the legend panel
     def legend_mouse_press(self, event):
@@ -317,7 +317,7 @@ class PlotWidget(QWidget):
         row_layout = QHBoxLayout(row) # Horizontal layout to place icon + checkbox side-by-side
         row_layout.setContentsMargins(0, 0, 0, 0) # Remove outer padding so content is compact
         row_layout.setSpacing(6) # Space between the line sample and checkbox
-        row_layout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter) # Align row contents left and vertically centered
+        row_layout.setAlignment(qt_alignment_flag("AlignLeft") | qt_alignment_flag("AlignVCenter")) # Align row contents left and vertically centered
 
         line_sample = LegendLine(self.items[name].legend_pen) # Mini widget displaying the curve's line style
 
@@ -341,7 +341,7 @@ class PlotWidget(QWidget):
             if item is None:
                 return
 
-            visible = (state == Qt.Checked)
+            visible = (state == qt_check_state("Checked"))
             item.setVisible(visible)
 
             # If nothing is visible, do not leave a "latest plot" on screen

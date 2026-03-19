@@ -67,7 +67,7 @@ from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..user_communication import UserCommunication
-from ..utils import second_smallest, set_min_max_elevs, time_taken, qt_pen_style, qt_cursor_shape
+from ..utils import second_smallest, set_min_max_elevs, time_taken, qt_pen_style, qt_cursor_shape, qt_alignment_flag
 from .ui_utils import load_ui, set_icon
 
 from ..gui.dlg_rgh import RGHDialog
@@ -557,7 +557,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             "Interpolating from LIDAR files...",
         )
         self.advanceBar = QProgressBar()
-        self.advanceBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.advanceBar.setAlignment(qt_alignment_flag("AlignLeft") | qt_alignment_flag("AlignVCenter"))
         self.cancelButton = QPushButton()
         self.cancelButton.setText("Cancel")
         self.cancelButton.clicked.connect(LIDAR_walker_instance.THREAD_kill)
@@ -595,7 +595,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             "Interpolating from LIDAR files...",
         )
         self.advanceBar = QProgressBar()
-        self.advanceBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.advanceBar.setAlignment(qt_alignment_flag("AlignLeft") | qt_alignment_flag("AlignVCenter"))
         self.cancelButton = QPushButton()
         self.cancelButton.setText("Cancel")
         self.cancelButton.clicked.connect(LIDAR_walker_instance.THREAD_kill)

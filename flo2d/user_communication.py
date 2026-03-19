@@ -32,7 +32,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.QtGui import QFont
 
-from flo2d.utils import qt_window_modality, qt_window_type
+from flo2d.utils import qt_window_modality, qt_window_type, qt_alignment_flag
 
 
 def is_file_locked(filepath):
@@ -265,7 +265,7 @@ class UserCommunication(object):
         pb.setMinimum(minimum)
         pb.setMaximum(maximum)
         pb.setValue(init_value)
-        pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        pb.setAlignment(qt_alignment_flag("AlignLeft") | qt_alignment_flag("AlignVCenter"))
         pmb.layout().addWidget(pb)
         self.iface.messageBar().pushWidget(pmb, Qgis.Info)
         return pb
