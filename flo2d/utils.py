@@ -558,8 +558,17 @@ def qt_item_flag(name):
 
 def qt_dock_widget_area(name):
     """
-    Cross-compatible Qt dock widget area lookup for Qt5/Qt6.
+    Qt5/Qt6-safe access to dock area enum members by name.
     """
     if hasattr(Qt, "DockWidgetArea"):  # Qt6
         return getattr(Qt.DockWidgetArea, name)
     return getattr(Qt, name)  # Qt5
+
+
+def dock_area_from_int(value):
+    """
+    Convert stored QSettings integer back to a dock area enum.
+    """
+    if hasattr(Qt, "DockWidgetArea"):  # Qt6
+        return Qt.DockWidgetArea(value)
+    return value  # Qt5 accepts the old value style

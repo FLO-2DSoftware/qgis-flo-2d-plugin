@@ -90,7 +90,7 @@ from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
-    qt_dock_widget_area
+    qt_dock_widget_area, dock_area_from_int
 
 from PIL import Image
 
@@ -652,34 +652,34 @@ class Flo2D(object):
 
     def add_docks_to_iface(self):
         s = QSettings("FLO2D")
-        ma = s.value("dock/area", qt_dock_widget_area("RightDockWidgetArea"), type=int)
-        ta = s.value("table_dock/area", qt_dock_widget_area("BottomDockWidgetArea"), type=int)
-        pa = s.value("plot_dock/area", qt_dock_widget_area("BottomDockWidgetArea"), type=int)
-        ga = s.value("grid_info_dock/area", qt_dock_widget_area("TopDockWidgetArea"), type=int)
+        ma = s.value("dock/area", 0, type=int)
+        ta = s.value("table_dock/area", 0, type=int)
+        pa = s.value("plot_dock/area", 0, type=int)
+        ga = s.value("grid_info_dock/area", 0, type=int)
 
         if ma == 0:
             self.iface.addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), self.f2d_dock)
             self.f2d_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(ma, self.f2d_dock)
+            self.iface.addDockWidget(dock_area_from_int(ma), self.f2d_dock)
 
         if ta == 0:
             self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
             self.f2d_table_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(ta, self.f2d_table_dock)
+            self.iface.addDockWidget(dock_area_from_int(ta), self.f2d_table_dock)
 
         if pa == 0:
             self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
             self.f2d_plot_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(pa, self.f2d_plot_dock)
+            self.iface.addDockWidget(dock_area_from_int(pa), self.f2d_plot_dock)
 
         if ga == 0:
             self.iface.addDockWidget(qt_dock_widget_area("TopDockWidgetArea"), self.f2d_grid_info_dock)
             self.f2d_grid_info_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
+            self.iface.addDockWidget(dock_area_from_int(ga), self.f2d_grid_info_dock)
 
     def unload(self):
         """
