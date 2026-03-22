@@ -11,6 +11,7 @@
 
 import os
 from qgis.gui import QgsFileWidget
+from qgis.PyQt.QtCore import Qt
 
 from .ui_utils import load_ui
 
@@ -22,14 +23,14 @@ class RGHDialog(qtBaseClass, uiDialog):
     """
     Dialog that loads rgh.ui and updates grid.n_value using MANNINGS_N.RGH.
     """
-
     def __init__(self, con, iface, lyrs, parent=None):
-        super().__init__(parent)
-        self.setupUi(self)
-
+        qtBaseClass.__init__(self, iface.mainWindow())
+        uiDialog.__init__(self)
         self.con = con
         self.iface = iface
         self.lyrs = lyrs
+        self.setupUi(self)
+        self.setWindowModality(Qt.WindowModal)
 
         # widgets from rgh.ui
         self.gb = self.mannings_n_rgh

@@ -13,7 +13,7 @@ import os
 
 from qgis._core import QgsWkbTypes
 from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel, NULL
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QFileDialog
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
@@ -25,12 +25,12 @@ uiDialog, qtBaseClass = load_ui("create_grid")
 
 
 class CreateGridDialog(qtBaseClass, uiDialog):
-    def __init__(self, lyrs):
-        super().__init__()
-        qtBaseClass.__init__(self)
+    def __init__(self, iface, lyrs):
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowModality(Qt.WindowModal)
         self.ok_btn = self.buttonBox.button(QDialogButtonBox.Ok)
         self.ok_btn.setEnabled(False)
         self.cellSizeSpinBox.valueChanged.connect(lambda v: self.ok_btn.setEnabled(v != 0))

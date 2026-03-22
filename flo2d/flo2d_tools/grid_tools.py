@@ -84,7 +84,9 @@ class ZonalStatistics(object):
         field_name,
         calculation_type,
         search_distance=0,
+        iface=None
     ):
+        self.iface = iface
         self.gutils = gutils
         self.grid = grid_lyr
         self.points = point_lyr
@@ -233,7 +235,7 @@ class ZonalStatistics(object):
 
     def null_elevation(self):
         req = QgsFeatureRequest().setFilterExpression('"elevation" IS NULL')
-        elev_fid = raster2grid(self.grid, self.filled_raster, request=req)
+        elev_fid = raster2grid(self.grid, self.filled_raster, self.iface, request=req)
         return elev_fid
 
     def set_elevation(self, elev_fid):
@@ -257,7 +259,9 @@ class ZonalStatisticsOther(object):
         field_name,
         calculation_type,
         search_distance=0,
+        iface=None
     ):
+        self.iface = iface
         self.gutils = gutils
         self.grid = grid_lyr
         self.points = point_lyr
@@ -411,7 +415,7 @@ class ZonalStatisticsOther(object):
 
     def null_elevation(self):
         req = QgsFeatureRequest().setFilterExpression('"water_elevation" IS NULL')
-        elev_fid = raster2grid(self.grid, self.filled_raster, request=req)
+        elev_fid = raster2grid(self.grid, self.filled_raster, self.iface, request=req)
         return elev_fid
 
     def set_other(self, elev_fid):
@@ -1129,7 +1133,7 @@ def calculate_gutter_variable_from_lines(grid, lines):
                 pass
 
 
-def raster2grid(grid, out_raster, request=None):
+def raster2grid(grid, out_raster, iface, request=None):
     """
     Generator for probing raster data within 'grid' features.
     """
@@ -1139,6 +1143,7 @@ def raster2grid(grid, out_raster, request=None):
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
 
+    # pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), iface.mainWindow())
     pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount())
     pd.setModal(True)
     pd.setValue(0)
@@ -1203,7 +1208,7 @@ def rasters2centroids(vlayer, request, *raster_paths):
 
 
 # Tools which use GeoPackageUtils instance
-def square_grid(gutils, boundary, upper_left_coords=None):
+def square_grid(gutils, boundary, iface, upper_left_coords=None):
     """
     Function for calculating and writing square grid into 'grid' table.
     """
@@ -1233,7 +1238,7 @@ def square_grid(gutils, boundary, upper_left_coords=None):
 
     total_candidates = cols * rows
 
-    prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100)
+    prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100, iface.mainWindow())
     prog.setWindowTitle("FLO-2D")
     prog.setWindowModality(Qt.WindowModal)
     prog.setMinimumDuration(0)
