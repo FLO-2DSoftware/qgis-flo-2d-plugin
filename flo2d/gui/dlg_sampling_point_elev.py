@@ -346,7 +346,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
             else:
                 pass
             self.log_message(">>> Sampling Raster-to-Grid")
-            sampler = raster2grid(self.grid, raster_outpath)
+            sampler = raster2grid(self.grid, raster_outpath, self.iface)
 
             qryIndex = """CREATE INDEX if not exists grid_FIDTemp ON grid (fid);"""
             self.con.execute(qryIndex)

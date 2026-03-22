@@ -1143,7 +1143,8 @@ def raster2grid(grid, out_raster, iface, request=None):
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
 
-    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), iface.mainWindow())
+    # pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), iface.mainWindow())
+    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount())
     pd.setModal(True)
     pd.setValue(0)
     pd.forceShow()

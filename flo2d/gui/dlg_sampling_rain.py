@@ -171,7 +171,7 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             self.fill_nodata()
         else:
             pass
-        sampler = raster2grid(self.grid, temp_file_path)
+        sampler = raster2grid(self.grid, temp_file_path, self.iface)
 
         qry = """INSERT INTO rain_arf_cells (arf, grid_fid) VALUES (?,?);"""
         self.con.executemany(qry, sampler)
