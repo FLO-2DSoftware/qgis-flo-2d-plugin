@@ -213,6 +213,8 @@ class TestPageBuffering(TestCase):
             fapl = f.id.get_access_plist()
             self.assertEqual(fapl.get_page_buffer_size(), (pbs, mm, mr))
 
+    @pytest.mark.skipif(h5py.version.hdf5_version_tuple > (1, 14, 3),
+                        reason='Requires HDF5 <= 1.14.3')
     def test_too_small_pbs(self):
         """Page buffer size must be greater than file space page size."""
         fname = self.mktemp()
@@ -221,6 +223,30 @@ class TestPageBuffering(TestCase):
             pass
         with self.assertRaises(OSError):
             File(fname, mode="r", page_buf_size=fsp-1)
+
+    @pytest.mark.skipif(h5py.version.hdf5_version_tuple < (1, 14, 4),
+                        reason='Requires HDF5 >= 1.14.4')
+    def test_open_nonpage_pbs(self):
+        """Open non-PAGE file with page buffer set."""
+        fname = self.mktemp()
+        fsp = 16 * 1024
+        with File(fname, mode='w'):
+            pass
+        with File(fname, mode='r', page_buf_size=fsp) as f:
+            fapl = f.id.get_access_plist()
+            assert fapl.get_page_buffer_size()[0] == 0
+
+    @pytest.mark.skipif(h5py.version.hdf5_version_tuple < (1, 14, 4),
+                    reason='Requires HDF5 >= 1.14.4')
+    def test_smaller_pbs(self):
+        """Adjust page buffer size automatically when smaller than file page."""
+        fname = self.mktemp()
+        fsp = 16 * 1024
+        with File(fname, mode='w', fs_strategy='page', fs_page_size=fsp):
+            pass
+        with File(fname, mode='r', page_buf_size=fsp-100) as f:
+            fapl = f.id.get_access_plist()
+            assert fapl.get_page_buffer_size()[0] == fsp
 
     def test_actual_pbs(self):
         """Verify actual page buffer size."""
@@ -326,7 +352,7 @@ class TestDrivers(TestCase):
         # could be an integer multiple of 512
         #
         # To allow HDF5 to do the heavy lifting for different platform,
-        # We didn't provide any argumnets to the first call
+        # We didn't provide any arguments to the first call
         # and obtained HDF5's default values there.
 
         # Testing creation with a few different property lists
@@ -435,7 +461,10 @@ class TestDrivers(TestCase):
     # TODO: family driver tests
 
 
-
+@pytest.mark.skipif(
+    h5py.version.hdf5_version_tuple[1] % 2 != 0 ,
+    reason='Not HDF5 release version'
+)
 class TestNewLibver(TestCase):
 
     """
@@ -639,9 +668,9 @@ class TestUnicode(TestCase):
         Modes 'r' and 'r+' do not create files even when given unicode names
         """
         fname = self.mktemp(prefix=chr(0x201a))
-        with self.assertRaises(IOError):
+        with self.assertRaises(OSError):
             File(fname, 'r')
-        with self.assertRaises(IOError):
+        with self.assertRaises(OSError):
             File(fname, 'r+')
 
 
@@ -923,8 +952,14 @@ class TestFileLocking:
             with h5py.File(fname, mode="r", locking=True) as h5f_read:
                 pass
 
-            with h5py.File(fname, mode="r", locking='best-effort') as h5f_read:
-                pass
+            if h5py.version.hdf5_version_tuple < (1, 14, 4):
+                with h5py.File(fname, mode="r", locking='best-effort') as h5f_read:
+                    pass
+            else:
+                with pytest.raises(OSError):
+                    with h5py.File(fname, mode="r", locking='best-effort') as h5f_read:
+                        pass
+
 
     def test_unsupported_locking(self, tmp_path):
         """Test with erroneous file locking value"""

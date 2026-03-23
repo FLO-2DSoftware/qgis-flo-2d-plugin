@@ -334,10 +334,10 @@ class ChunkIterator:
         self._layout = dset.chunks
         if source_sel is None:
             # select over entire dataset
-            slices = []
-            for dim in range(rank):
-                slices.append(slice(0, self._shape[dim]))
-            self._sel = tuple(slices)
+            self._sel = tuple(
+                slice(0, self._shape[dim])
+                for dim in range(rank)
+            )
         else:
             if isinstance(source_sel, slice):
                 self._sel = (source_sel,)
@@ -388,7 +388,7 @@ class ChunkIterator:
 
             if dim > 0:
                 # reset to the start and continue iterating with higher dimension
-                self._chunk_index[dim] = 0
+                self._chunk_index[dim] = s.start // self._layout[dim]
             dim -= 1
         return tuple(slices)
 
@@ -865,11 +865,11 @@ class Dataset(HLObject):
         if vlen is not None and vlen not in (bytes, str):
             try:
                 val = numpy.asarray(val, dtype=vlen)
-            except ValueError:
+            except (ValueError, TypeError):
                 try:
                     val = numpy.array([numpy.array(x, dtype=vlen)
                                        for x in val], dtype=self.dtype)
-                except ValueError:
+                except (ValueError, TypeError):
                     pass
             if vlen == val.dtype:
                 if val.ndim > 1:

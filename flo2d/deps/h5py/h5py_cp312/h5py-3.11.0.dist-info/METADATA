@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: h5py
-Version: 3.10.0
+Version: 3.11.0
 Summary: Read and write HDF5 files from Python
 Author-email: Andrew Collette <andrew.collette@gmail.com>
 Maintainer-email: Thomas Kluyver <thomas@kluyver.me.uk>, Thomas A Caswell <tcaswell@bnl.gov>
