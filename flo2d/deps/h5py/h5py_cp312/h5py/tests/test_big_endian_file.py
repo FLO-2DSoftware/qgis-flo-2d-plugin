@@ -1,4 +1,3 @@
-import pytest
 
 import numpy as np
 from h5py import File
@@ -24,14 +23,14 @@ def test_vlen_big_endian():
         assert dset[4] == 1.2
         assert dset.dtype == "<f8"
 
-        # Same float values with big endianess
+        # Same float values with big endianness
         assert f["DSBEfloat"][0] == 3.14
         assert f["DSBEfloat"].dtype == ">f8"
 
         assert f["DSLEint"][0] == 1
         assert f["DSLEint"].dtype == "<u8"
 
-        # Same int values with big endianess
+        # Same int values with big endianness
         assert f["DSBEint"][0] == 1
         assert f["DSBEint"].dtype == ">i8"
 

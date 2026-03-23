@@ -20,18 +20,18 @@ import posixpath
 import numpy as np
 
 # The high-level interface is serialized; every public API function & method
-# is wrapped in a lock.  We re-use the low-level lock because (1) it's fast,
+# is wrapped in a lock.  We reuse the low-level lock because (1) it's fast,
 # and (2) it eliminates the possibility of deadlocks due to out-of-order
 # lock acquisition.
 from .._objects import phil, with_phil
 from .. import h5d, h5i, h5r, h5p, h5f, h5t, h5s
-from .compat import fspath, filename_encode
+from .compat import filename_encode
 
 
 def is_hdf5(fname):
     """ Determine if a file is valid HDF5 (False if it doesn't exist). """
     with phil:
-        fname = os.path.abspath(fspath(fname))
+        fname = os.path.abspath(os.fspath(fname))
 
         if os.path.isfile(fname):
             return h5f.is_hdf5(filename_encode(fname))
@@ -102,6 +102,9 @@ def is_float16_dtype(dt):
 def array_for_new_object(data, specified_dtype=None):
     """Prepare an array from data used to create a new dataset or attribute"""
 
+    if not isinstance(specified_dtype, (np.dtype, type(None))):
+        specified_dtype = np.dtype(specified_dtype)
+
     # We mostly let HDF5 convert data as necessary when it's written.
     # But if we are going to a float16 datatype, pre-convert in python
     # to workaround a bug in the conversion.
@@ -128,11 +131,7 @@ def array_for_new_object(data, specified_dtype=None):
 
 def default_lapl():
     """ Default link access property list """
-    lapl = h5p.create(h5p.LINK_ACCESS)
-    fapl = h5p.create(h5p.FILE_ACCESS)
-    fapl.set_fclose_degree(h5f.CLOSE_STRONG)
-    lapl.set_elink_fapl(fapl)
-    return lapl
+    return None
 
 
 def default_lcpl():
@@ -355,7 +354,6 @@ class HLObject(CommonStateObject):
     def __bool__(self):
         with phil:
             return bool(self.id)
-    __nonzero__ = __bool__
 
     def __getnewargs__(self):
         """Disable pickle.
@@ -524,7 +522,7 @@ def product(nums):
 # Daniel Greenfeld, BSD license), where it is attributed to bottle (Copyright
 # (c) 2009-2022, Marcel Hellkamp, MIT license).
 
-class cached_property(object):
+class cached_property:
     def __init__(self, func):
         self.__doc__ = getattr(func, "__doc__")
         self.func = func

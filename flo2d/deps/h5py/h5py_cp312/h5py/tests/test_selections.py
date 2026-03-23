@@ -16,7 +16,7 @@ import h5py
 import h5py._hl.selections as sel
 import h5py._hl.selections2 as sel2
 
-from .common import TestCase, ut
+from .common import TestCase
 
 class BaseSelection(TestCase):
     def setUp(self):
@@ -65,7 +65,7 @@ class TestTypeGeneration(BaseSelection):
         self.assertEqual(out, np.dtype('i'))
         self.assertEqual(format, np.dtype( [('a','i')] ))
 
-        # Field does not apear in named typed
+        # Field does not appear in named typed
         with self.assertRaises(ValueError):
             out, format = sel2.read_dtypes(dt, ('j', 'k'))
 

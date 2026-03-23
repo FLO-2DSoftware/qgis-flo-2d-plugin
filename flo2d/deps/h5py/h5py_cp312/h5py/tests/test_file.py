@@ -13,19 +13,21 @@
     Tests all aspects of File objects, including their creation.
 """
 
-import pytest
 import os
 import stat
 import pickle
 import tempfile
+import time
 import subprocess
 import sys
+from hashlib import sha256
+
+import pytest
 
 from .common import ut, TestCase, UNICODE_FILENAMES, closed_tempfile
 from h5py._hl.files import direct_vfd
 from h5py import File
 import h5py
-from .. import h5
 import pathlib
 
 
@@ -99,6 +101,17 @@ class TestFileOpen(TestCase):
         finally:
             fid.close()
 
+    # Observed on cibuildwheel v2.19.1
+    # https://github.com/pypa/cibuildwheel/issues/1882
+    @pytest.mark.skipif(
+        os.getenv("CIBUILDWHEEL") == "1" and sys.platform == "linux",
+        reason="Linux docker cibuildwheel environment permissions issue",
+    )
+    def test_append_permissions(self):
+        """ Mode 'a' fails when file is read-only """
+        fname = self.mktemp()
+        with File(fname, 'a') as fid:
+            fid.create_group('foo')
         os.chmod(fname, stat.S_IREAD)  # Make file read-only
         try:
             with pytest.raises(PermissionError):
@@ -213,6 +226,8 @@ class TestPageBuffering(TestCase):
             fapl = f.id.get_access_plist()
             self.assertEqual(fapl.get_page_buffer_size(), (pbs, mm, mr))
 
+    @pytest.mark.skipif(h5py.version.hdf5_version_tuple > (1, 14, 3),
+                        reason='Requires HDF5 <= 1.14.3')
     def test_too_small_pbs(self):
         """Page buffer size must be greater than file space page size."""
         fname = self.mktemp()
@@ -221,6 +236,30 @@ class TestPageBuffering(TestCase):
             pass
         with self.assertRaises(OSError):
             File(fname, mode="r", page_buf_size=fsp-1)
+
+    @pytest.mark.skipif(h5py.version.hdf5_version_tuple < (1, 14, 4),
+                        reason='Requires HDF5 >= 1.14.4')
+    def test_open_nonpage_pbs(self):
+        """Open non-PAGE file with page buffer set."""
+        fname = self.mktemp()
+        fsp = 16 * 1024
+        with File(fname, mode='w'):
+            pass
+        with File(fname, mode='r', page_buf_size=fsp) as f:
+            fapl = f.id.get_access_plist()
+            assert fapl.get_page_buffer_size()[0] == 0
+
+    @pytest.mark.skipif(h5py.version.hdf5_version_tuple < (1, 14, 4),
+                    reason='Requires HDF5 >= 1.14.4')
+    def test_smaller_pbs(self):
+        """Adjust page buffer size automatically when smaller than file page."""
+        fname = self.mktemp()
+        fsp = 16 * 1024
+        with File(fname, mode='w', fs_strategy='page', fs_page_size=fsp):
+            pass
+        with File(fname, mode='r', page_buf_size=fsp-100) as f:
+            fapl = f.id.get_access_plist()
+            assert fapl.get_page_buffer_size()[0] == fsp
 
     def test_actual_pbs(self):
         """Verify actual page buffer size."""
@@ -326,7 +365,7 @@ class TestDrivers(TestCase):
         # could be an integer multiple of 512
         #
         # To allow HDF5 to do the heavy lifting for different platform,
-        # We didn't provide any argumnets to the first call
+        # We didn't provide any arguments to the first call
         # and obtained HDF5's default values there.
 
         # Testing creation with a few different property lists
@@ -431,11 +470,15 @@ class TestDrivers(TestCase):
         # Driver must be 'fileobj' for file-like object if specified
         with self.assertRaises(ValueError):
             File(tf, 'w', driver='core')
+        tf.close()
 
     # TODO: family driver tests
 
 
-
+@pytest.mark.skipif(
+    h5py.version.hdf5_version_tuple[1] % 2 != 0 ,
+    reason='Not HDF5 release version'
+)
 class TestNewLibver(TestCase):
 
     """
@@ -452,8 +495,10 @@ class TestNewLibver(TestCase):
             cls.latest = 'v110'
         elif h5py.version.hdf5_version_tuple < (1, 13, 0):
             cls.latest = 'v112'
-        else:
+        elif h5py.version.hdf5_version_tuple < (2, 0, 0):
             cls.latest = 'v114'
+        else:
+            cls.latest = 'v200'
 
     def test_default(self):
         """ Opening with no libver arg """
@@ -485,6 +530,22 @@ class TestNewLibver(TestCase):
         """ Opening with "v112" libver arg """
         f = File(self.mktemp(), 'w', libver='v112')
         self.assertEqual(f.libver, ('v112', self.latest))
+        f.close()
+
+    @ut.skipIf(h5py.version.hdf5_version_tuple < (1, 14, 0),
+               'Requires HDF5 1.14 or later')
+    def test_single_v114(self):
+        """ Opening with "v114" libver arg """
+        f = File(self.mktemp(), 'w', libver='v114')
+        self.assertEqual(f.libver, ('v114', self.latest))
+        f.close()
+
+    @ut.skipIf(h5py.version.hdf5_version_tuple < (2, 0, 0),
+               'Requires HDF5 2.0 or later')
+    def test_single_v200(self):
+        """ Opening with "v200" libver arg """
+        f = File(self.mktemp(), 'w', libver='v200')
+        self.assertEqual(f.libver, ('v200', self.latest))
         f.close()
 
     def test_multiple(self):
@@ -631,17 +692,22 @@ class TestUnicode(TestCase):
         """ Unicode filenames can be used, and seen correctly from python
         """
         fname = self.mktemp(prefix=chr(0x201a))
+        print(h5py.version.info)
+        from h5py._hl.compat import WINDOWS_ENCODING
+        print("Windows file encoding in use", WINDOWS_ENCODING)
+        print(f"Creating {fname!r}")
         with File(fname, 'w') as f:
-            self.assertTrue(os.path.exists(fname))
+            print(os.listdir(self.tempdir))
+        assert os.path.exists(fname)
 
     def test_nonexistent_file_unicode(self):
         """
         Modes 'r' and 'r+' do not create files even when given unicode names
         """
         fname = self.mktemp(prefix=chr(0x201a))
-        with self.assertRaises(IOError):
+        with self.assertRaises(OSError):
             File(fname, 'r')
-        with self.assertRaises(IOError):
+        with self.assertRaises(OSError):
             File(fname, 'r+')
 
 
@@ -899,10 +965,6 @@ class TestSWMRMode(TestCase):
         fid.close()
 
 
-@pytest.mark.skipif(
-    h5py.version.hdf5_version_tuple < (1, 12, 1) and (
-    h5py.version.hdf5_version_tuple[:2] != (1, 10) or h5py.version.hdf5_version_tuple[2] < 7),
-    reason="Requires HDF5 >= 1.12.1 or 1.10.x >= 1.10.7")
 @pytest.mark.skipif("HDF5_USE_FILE_LOCKING" in os.environ,
                     reason="HDF5_USE_FILE_LOCKING env. var. is set")
 class TestFileLocking:
@@ -923,8 +985,14 @@ class TestFileLocking:
             with h5py.File(fname, mode="r", locking=True) as h5f_read:
                 pass
 
-            with h5py.File(fname, mode="r", locking='best-effort') as h5f_read:
-                pass
+            if h5py.version.hdf5_version_tuple < (1, 14, 4):
+                with h5py.File(fname, mode="r", locking='best-effort') as h5f_read:
+                    pass
+            else:
+                with pytest.raises(OSError):
+                    with h5py.File(fname, mode="r", locking='best-effort') as h5f_read:
+                        pass
+
 
     def test_unsupported_locking(self, tmp_path):
         """Test with erroneous file locking value"""
@@ -964,6 +1032,43 @@ f = h5py.File({str(filename)!r}, mode={mode!r}, locking={locking})
             assert open_in_subprocess(fname, mode="w", locking=True)
 
 
+@pytest.mark.skipif(
+    h5py.version.hdf5_version_tuple < (1, 14, 4),
+    reason="Requires HDF5 >= 1.14.4",
+)
+@pytest.mark.skipif(
+    "HDF5_USE_FILE_LOCKING" in os.environ,
+    reason="HDF5_USE_FILE_LOCKING env. var. is set",
+)
+@pytest.mark.parametrize(
+    'locking_arg,file_locking_props',
+    [
+        (False, (0, 0)),
+        (True, (1, 0)),
+        ('best-effort', (1, 1)),
+    ]
+)
+def test_file_locking_external_link(tmp_path, locking_arg, file_locking_props):
+    """Test that same file locking is used for external link"""
+    fname_main = tmp_path / "test_main.h5"
+    fname_elink = tmp_path / "test_linked.h5"
+
+    # Create test files
+    with h5py.File(fname_elink, "w") as f:
+        f["data"] = 1
+    with h5py.File(fname_main, "w") as f:
+        f["link"] = h5py.ExternalLink(fname_elink, "/data")
+
+    with h5py.File(fname_main, "r", locking=locking_arg) as f:
+        locking_info = f.id.get_access_plist().get_file_locking()
+        assert locking_info == file_locking_props
+
+        # Test that external link file is also opened without file locking
+        elink_dataset = f["link"]
+        elink_locking_info = elink_dataset.file.id.get_access_plist().get_file_locking()
+        assert elink_locking_info == file_locking_props
+
+
 def test_close_gc(writable_file):
     # https://github.com/h5py/h5py/issues/1852
     for i in range(100):
@@ -980,3 +1085,19 @@ def test_close_gc(writable_file):
             refs = [d.id for d in f.values()]
             refs.append(refs)   # Make a reference cycle so GC is involved
             del refs  # GC is likely to fire while closing the file
+
+
+@pytest.mark.slow
+def test_reproducible_file(tmp_path):
+    def write(path):
+        with File(path, 'w', track_order=True) as hf:
+            g = hf.create_group("group", track_order=True)
+            g.create_dataset("dset", shape=10, dtype='f4')
+
+    f1 = tmp_path / "f1.h5"
+    write(f1)
+    time.sleep(1.1)  # Ensure any timestamps are different
+    f2 = tmp_path / "f2.h5"
+    write(f2)
+
+    assert sha256(f1.read_bytes()).hexdigest() == sha256(f2.read_bytes()).hexdigest()

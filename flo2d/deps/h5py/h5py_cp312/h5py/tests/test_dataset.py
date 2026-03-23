@@ -22,18 +22,16 @@ import sys
 import numpy as np
 import platform
 import pytest
-import warnings
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from .common import ut, TestCase
 from .data_files import get_data_file_path
-from h5py import File, Group, Dataset
+from h5py import File, Dataset
 from h5py._hl.base import is_empty_dataspace, product
 from h5py import h5f, h5t
-from h5py.h5py_warnings import H5pyDeprecationWarning
-from h5py import version
 import h5py
-import h5py._hl.selections as sel
-
+from h5py.tests.common import NUMPY_RELEASE_VERSION
 
 class BaseDataset(TestCase):
     def setUp(self):
@@ -48,13 +46,21 @@ class TestRepr(BaseDataset):
     """
         Feature: repr(Dataset) behaves sensibly
     """
+    endian_mark = '>' if sys.byteorder=='big' else '<'
 
-    def test_repr_open(self):
+    def test_repr_basic(self):
+        ds = self.f.create_dataset('foo', (4,), dtype='int32')
+        assert repr(ds) == f'<HDF5 dataset "foo": shape (4,), type "{self.endian_mark}i4">'
+
+    def test_repr_closed(self):
         """ repr() works on live and dead datasets """
         ds = self.f.create_dataset('foo', (4,))
-        self.assertIsInstance(repr(ds), str)
         self.f.close()
-        self.assertIsInstance(repr(ds), str)
+        assert repr(ds) == '<Closed HDF5 dataset>'
+
+    def test_repr_anonymous(self):
+        ds = self.f.create_dataset(None, (4,), dtype='int32')
+        assert repr(ds) == f'<HDF5 dataset (anonymous): shape (4,), type "{self.endian_mark}i4">'
 
 
 class TestCreateShape(BaseDataset):
@@ -263,6 +269,18 @@ class TestReadDirectly:
         arr = np.ones((10, 10), order='F')
         with pytest.raises(TypeError):
             dset.read_direct(arr)
+
+    def test_zero_length(self, writable_file):
+        shape = (0, 20)
+        dset = writable_file.create_dataset("dset", shape, dtype=np.int64)
+        arr = np.zeros(shape, dtype=np.int64)
+        dset.read_direct(arr)
+
+        # We should still get an error if the shape is wrong
+        arr2 = np.zeros((0, 25), dtype=np.int64)
+        with pytest.raises(TypeError):
+            dset.read_direct(arr2)
+
 
 class TestWriteDirectly:
 
@@ -474,6 +492,90 @@ class TestCreateFillvalue(BaseDataset):
         with self.assertRaises(ValueError):
             dset = self.f.create_dataset('foo', (10,),
                     dtype=[('a', 'i'), ('b', 'f')], fillvalue=42)
+
+
+class TestFillTime(BaseDataset):
+
+    """
+        Feature: Datasets created with specified fill time property
+    """
+
+    def test_fill_time_default(self):
+        """ Fill time default to IFSET """
+        dset = self.f.create_dataset('foo', (10,), fillvalue=4.0)
+        plist = dset.id.get_create_plist()
+        self.assertEqual(plist.get_fill_time(), h5py.h5d.FILL_TIME_IFSET)
+        self.assertEqual(dset[0], 4.0)
+        self.assertEqual(dset[7], 4.0)
+
+    @ut.skipIf('gzip' not in h5py.filters.encode, "DEFLATE is not installed")
+    def test_compressed_default(self):
+        """ Fill time is IFSET for compressed dataset (chunked) """
+        dset = self.f.create_dataset('foo', (10,), compression='gzip',
+                                     fillvalue=4.0)
+        plist = dset.id.get_create_plist()
+        self.assertEqual(plist.get_fill_time(), h5py.h5d.FILL_TIME_IFSET)
+        self.assertEqual(dset[0], 4.0)
+        self.assertEqual(dset[7], 4.0)
+
+    def test_fill_time_never(self):
+        """ Fill time set to NEVER """
+        dset = self.f.create_dataset('foo', (10,), fillvalue=4.0,
+                                     fill_time='never')
+        plist = dset.id.get_create_plist()
+        self.assertEqual(plist.get_fill_time(), h5py.h5d.FILL_TIME_NEVER)
+        # should not be equal to the explicitly set fillvalue
+        self.assertNotEqual(dset[0], 4.0)
+        self.assertNotEqual(dset[7], 4.0)
+
+    def test_fill_time_alloc(self):
+        """ Fill time explicitly set to ALLOC """
+        dset = self.f.create_dataset('foo', (10,), fillvalue=4.0,
+                                     fill_time='alloc')
+        plist = dset.id.get_create_plist()
+        self.assertEqual(plist.get_fill_time(), h5py.h5d.FILL_TIME_ALLOC)
+
+    def test_fill_time_ifset(self):
+        """ Fill time explicitly set to IFSET """
+        dset = self.f.create_dataset('foo', (10,), chunks=(2,), fillvalue=4.0,
+                                     fill_time='ifset')
+        plist = dset.id.get_create_plist()
+        self.assertEqual(plist.get_fill_time(), h5py.h5d.FILL_TIME_IFSET)
+
+    def test_invalid_fill_time(self):
+        """ Choice of fill_time is 'alloc', 'never', 'ifset' """
+        with self.assertRaises(ValueError):
+            dset = self.f.create_dataset('foo', (10,), fill_time='fill_bad')
+
+    def test_non_str_fill_time(self):
+        """ fill_time must be a string """
+        with self.assertRaises(ValueError):
+            dset = self.f.create_dataset('foo', (10,), fill_time=2)
+
+    def test_resize_chunk_fill_time_default(self):
+        """ The resize dataset will be filled (by default fill value 0) """
+        dset = self.f.create_dataset('foo', (50, ), maxshape=(100, ),
+                                     chunks=(5, ))
+        plist = dset.id.get_create_plist()
+        self.assertEqual(plist.get_fill_time(), h5py.h5d.FILL_TIME_IFSET)
+
+        assert np.isclose(dset[:], 0.0).all()
+
+        dset.resize((100, ))
+        assert np.isclose(dset[:], 0.0).all()
+
+    def test_resize_chunk_fill_time_never(self):
+        """ The resize dataset won't be filled """
+        dset = self.f.create_dataset('foo', (50, ), maxshape=(100, ),
+                                     fillvalue=4.0, fill_time='never',
+                                     chunks=(5, ))
+        plist = dset.id.get_create_plist()
+        self.assertEqual(plist.get_fill_time(), h5py.h5d.FILL_TIME_NEVER)
+
+        assert not np.isclose(dset[:], 4.0).any()
+
+        dset.resize((100, ))
+        assert not np.isclose(dset[:], 4.0).any()
 
 
 @pytest.mark.parametrize('dt,expected', [
@@ -695,7 +797,7 @@ class TestCreateScaleOffset(BaseDataset):
         range = 20 * 10 ** scalefac
         testdata = (np.random.rand(*shape) - 0.5) * range
 
-        dset = self.f.create_dataset('foo', shape, dtype=float, scaleoffset=scalefac)
+        dset = self.f.create_dataset('foo', shape, dtype=np.float64, scaleoffset=scalefac)
 
         # Dataset reports that scaleoffset is in use
         assert dset.scaleoffset is not None
@@ -718,10 +820,10 @@ class TestCreateScaleOffset(BaseDataset):
 
         nbits = 12
         shape = (100, 300)
-        testdata = np.random.randint(0, 2 ** nbits - 1, size=shape)
+        testdata = np.random.randint(0, 2 ** nbits - 1, size=shape, dtype=np.int64)
 
         # Create dataset; note omission of nbits (for library-determined precision)
-        dset = self.f.create_dataset('foo', shape, dtype=int, scaleoffset=True)
+        dset = self.f.create_dataset('foo', shape, dtype=np.int64, scaleoffset=True)
 
         # Dataset reports scaleoffset enabled
         assert dset.scaleoffset is not None
@@ -739,9 +841,9 @@ class TestCreateScaleOffset(BaseDataset):
 
         nbits = 12
         shape = (100, 300)
-        testdata = np.random.randint(0, 2 ** nbits, size=shape)
+        testdata = np.random.randint(0, 2 ** nbits, size=shape, dtype=np.int64)
 
-        dset = self.f.create_dataset('foo', shape, dtype=int, scaleoffset=nbits)
+        dset = self.f.create_dataset('foo', shape, dtype=np.int64, scaleoffset=nbits)
 
         # Dataset reports scaleoffset enabled with correct precision
         self.assertTrue(dset.scaleoffset == 12)
@@ -759,9 +861,9 @@ class TestCreateScaleOffset(BaseDataset):
 
         nbits = 12
         shape = (100, 300)
-        testdata = np.random.randint(0, 2 ** (nbits + 1) - 1, size=shape)
+        testdata = np.random.randint(0, 2 ** (nbits + 1) - 1, size=shape, dtype=np.int64)
 
-        dset = self.f.create_dataset('foo', shape, dtype=int, scaleoffset=nbits)
+        dset = self.f.create_dataset('foo', shape, dtype=np.int64, scaleoffset=nbits)
 
         # Dataset reports scaleoffset enabled with correct precision
         self.assertTrue(dset.scaleoffset == 12)
@@ -825,11 +927,10 @@ class TestExternal(BaseDataset):
             contents = fid.read()
         assert contents == testdata.tobytes()
 
-        # check efile_prefix, only for 1.10.0 due to HDFFV-9716
-        if h5py.version.hdf5_version_tuple >= (1,10,0):
-            efile_prefix = pathlib.Path(dset.id.get_access_plist().get_efile_prefix().decode()).as_posix()
-            parent = pathlib.Path(ext_file).parent.as_posix()
-            assert efile_prefix == parent
+        # check efile_prefix
+        efile_prefix = pathlib.Path(dset.id.get_access_plist().get_efile_prefix().decode()).as_posix()
+        parent = pathlib.Path(ext_file).parent.as_posix()
+        assert efile_prefix == parent
 
         dset2 = self.f.require_dataset('foo', shape, testdata.dtype, efile_prefix=os.path.dirname(ext_file))
         assert dset2.external is not None
@@ -873,6 +974,18 @@ class TestExternal(BaseDataset):
             with self.assertRaises(exc_type):
                 self.f.create_dataset('foo', shape, external=external)
 
+    def test_create_expandable(self):
+        """ Create expandable external dataset """
+
+        ext_file = self.mktemp()
+        shape = (128, 64)
+        maxshape = (None, 64)
+        exp_dset = self.f.create_dataset('foo', shape=shape, maxshape=maxshape,
+                                         external=ext_file)
+        assert exp_dset.chunks is None
+        assert exp_dset.shape == shape
+        assert exp_dset.maxshape == maxshape
+
 
 class TestAutoCreate(BaseDataset):
 
@@ -912,7 +1025,7 @@ class TestAutoCreate(BaseDataset):
     def test_string_fixed(self):
         """ Assignment of fixed-length byte string produces a fixed-length
         ascii dataset """
-        self.f['x'] = np.string_("Hello there")
+        self.f['x'] = np.bytes_("Hello there")
         ds = self.f['x']
         self.assert_string_type(ds, h5py.h5t.CSET_ASCII, variable=False)
         self.assertEqual(ds.id.get_type().get_size(), 11)
@@ -953,6 +1066,11 @@ class TestChunkIterator(BaseDataset):
         with self.assertRaises(TypeError):
             dset.iter_chunks()
 
+    def test_rank_mismatch(self):
+        dset = self.f.create_dataset("foo", shape=(100,), chunks=(32,))
+        with self.assertRaises(ValueError):
+            dset.iter_chunks((slice(19,67), 9))
+
     def test_1d(self):
         dset = self.f.create_dataset("foo", (100,), chunks=(32,))
         expected = ((slice(0,32,1),), (slice(32,64,1),), (slice(64,96,1),),
@@ -960,19 +1078,48 @@ class TestChunkIterator(BaseDataset):
         self.assertEqual(list(dset.iter_chunks()), list(expected))
         expected = ((slice(50,64,1),), (slice(64,96,1),), (slice(96,97,1),))
         self.assertEqual(list(dset.iter_chunks(np.s_[50:97])), list(expected))
+        expected = ((slice(0,32,1),), (slice(32,50,1),))
+        self.assertEqual(list(dset.iter_chunks(np.s_[:50])), list(expected))
+        expected = ((slice(96,97,1),),)
+        self.assertEqual(list(dset.iter_chunks(np.s_[96])), list(expected))
 
     def test_2d(self):
         dset = self.f.create_dataset("foo", (100,100), chunks=(32,64))
-        expected = ((slice(0, 32, 1), slice(0, 64, 1)), (slice(0, 32, 1),
-        slice(64, 100, 1)), (slice(32, 64, 1), slice(0, 64, 1)),
-        (slice(32, 64, 1), slice(64, 100, 1)), (slice(64, 96, 1),
-        slice(0, 64, 1)), (slice(64, 96, 1), slice(64, 100, 1)),
-        (slice(96, 100, 1), slice(0, 64, 1)), (slice(96, 100, 1),
-        slice(64, 100, 1)))
+        expected = (
+            (slice(0, 32, 1), slice(0, 64, 1)),
+            (slice(0, 32, 1), slice(64, 100, 1)),
+            (slice(32, 64, 1), slice(0, 64, 1)),
+            (slice(32, 64, 1), slice(64, 100, 1)),
+            (slice(64, 96, 1), slice(0, 64, 1)),
+            (slice(64, 96, 1), slice(64, 100, 1)),
+            (slice(96, 100, 1), slice(0, 64, 1)),
+            (slice(96, 100, 1), slice(64, 100, 1)),
+        )
         self.assertEqual(list(dset.iter_chunks()), list(expected))
-
         expected = ((slice(48, 52, 1), slice(40, 50, 1)),)
         self.assertEqual(list(dset.iter_chunks(np.s_[48:52,40:50])), list(expected))
+        expected = (
+            (slice(0, 32, 1), slice(40, 64, 1)),
+            (slice(0, 32, 1), slice(64, 100, 1)),
+            (slice(32, 52, 1), slice(40, 64, 1)),
+            (slice(32, 52, 1), slice(64, 100, 1)),
+        )
+        self.assertEqual(list(dset.iter_chunks(np.s_[:52,40:])), list(expected))
+        expected = (
+            (slice(96, 97, 1), slice(19, 64, 1)),
+            (slice(96, 97, 1), slice(64, 67, 1)),
+        )
+        self.assertEqual(list(dset.iter_chunks(np.s_[96,19:67])), list(expected))
+
+    def test_2d_partial_slice(self):
+        dset = self.f.create_dataset("foo", (5,5), chunks=(2,2))
+        expected = ((slice(3, 4, 1), slice(3, 4, 1)),
+                   (slice(3, 4, 1), slice(4, 5, 1)),
+                   (slice(4, 5, 1), slice(3, 4, 1)),
+                   (slice(4, 5, 1), slice(4, 5, 1)))
+        sel = slice(3,5)
+        self.assertEqual(list(dset.iter_chunks((sel, sel))), list(expected))
+
 
 
 class TestResize(BaseDataset):
@@ -1095,7 +1242,7 @@ class TestIter(BaseDataset):
         """ Iterating over a dataset yields rows """
         data = np.arange(30, dtype='f').reshape((10, 3))
         dset = self.f.create_dataset('foo', data=data)
-        for x, y in zip(dset, data):
+        for x, y in zip(dset, data, strict=True):
             self.assertEqual(len(x), 3)
             self.assertArrayEqual(x, y)
 
@@ -1224,7 +1371,7 @@ class TestStrings(BaseDataset):
         data = b"Hello\xef"
         ds[0] = data
         out = ds[0]
-        self.assertEqual(type(out), np.string_)
+        self.assertEqual(type(out), np.bytes_)
         self.assertEqual(out, data)
 
     def test_retrieve_vlen_unicode(self):
@@ -1244,7 +1391,7 @@ class TestStrings(BaseDataset):
 
         strwrap1 = ds.asstr('ascii')
         with self.assertRaises(UnicodeDecodeError):
-            out = strwrap1[0]
+            strwrap1[0]
 
         # Different errors parameter
         self.assertEqual(ds.asstr('ascii', 'ignore')[0], 'filte')
@@ -1537,11 +1684,6 @@ class TestZeroShape(BaseDataset):
         self.assertEqual(ds[()].shape, arr.shape)
         self.assertEqual(ds[()].dtype, arr.dtype)
 
-# https://github.com/h5py/h5py/issues/1492
-empty_regionref_xfail = pytest.mark.xfail(
-    h5py.version.hdf5_version_tuple == (1, 10, 6),
-    reason="Issue with empty region refs in HDF5 1.10.6",
-)
 
 class TestRegionRefs(BaseDataset):
 
@@ -1561,14 +1703,12 @@ class TestRegionRefs(BaseDataset):
         ref = self.dset.regionref[slic]
         self.assertArrayEqual(self.dset[ref], self.data[slic])
 
-    @empty_regionref_xfail
     def test_empty_region(self):
         ref = self.dset.regionref[:0]
         out = self.dset[ref]
         assert out.size == 0
         # Ideally we should preserve shape (0, 100), but it seems this is lost.
 
-    @empty_regionref_xfail
     def test_scalar_dataset(self):
         ds = self.f.create_dataset("scalar", data=1.0, dtype='f4')
         sid = h5py.h5s.create(h5py.h5s.SCALAR)
@@ -1763,6 +1903,13 @@ class TestVlen(BaseDataset):
 
         assert all(self.f['nc2'][0] == y[::2]), f"{self.f['nc2'][0]} != {y[::2]}"
 
+    def test_asstr_array_dtype(self):
+        dt = h5py.string_dtype(encoding='ascii')
+        fill_value = b'bar'
+        ds = self.f.create_dataset('x', (100,), dtype=dt, fillvalue=fill_value)
+        with pytest.raises(ValueError):
+            np.array(ds.asstr(), dtype=int)
+
 
 class TestLowOpen(BaseDataset):
 
@@ -1780,8 +1927,6 @@ class TestLowOpen(BaseDataset):
         self.assertIsInstance(dsid, h5py.h5d.DatasetID)
 
 
-@ut.skipUnless(h5py.version.hdf5_version_tuple >= (1, 10, 5),
-               "chunk info requires  HDF5 >= 1.10.5")
 def test_get_chunk_details():
     from io import BytesIO
     buf = BytesIO()
@@ -1939,9 +2084,9 @@ class TestCommutative(BaseDataset):
         dset = self.f.create_dataset("test", shape, dtype=float,
                                      data=np.random.rand(*shape))
 
-        # grab a value from the elements, ie dset[0]
+        # grab a value from the elements, ie dset[0, 0]
         # check that mask arrays are commutative wrt ==, !=
-        val = np.float64(dset[0])
+        val = np.float64(dset[0, 0])
 
         assert np.all((val == dset) == (dset == val))
         assert np.all((val != dset) == (dset != val))
@@ -1991,3 +2136,107 @@ class TestVirtualPrefix(BaseDataset):
         self.assertEqual(virtual_prefix, virtual_prefix_readback)
         self.assertIsInstance(dset, Dataset)
         self.assertEqual(dset.shape, (10, 3))
+
+
+def ds_str(file, shape=(10, )):
+    dt = h5py.string_dtype(encoding='ascii')
+    fill_value = b'fill'
+    return file.create_dataset('x', shape, dtype=dt, fillvalue=fill_value)
+
+
+def ds_fields(file, shape=(10, )):
+    dt = np.dtype([
+        ('foo', h5py.string_dtype(encoding='ascii')),
+        ('bar', np.float64),
+    ])
+    fill_value = np.asarray(('fill', 0.0), dtype=dt)
+    file['x'] = np.broadcast_to(fill_value, shape)
+    return file['x']
+
+
+view_getters = pytest.mark.parametrize(
+    "view_getter,make_ds",
+    [
+        (lambda ds: ds, ds_str),
+        (lambda ds: ds.astype(dtype=object), ds_str),
+        (lambda ds: ds.asstr(), ds_str),
+        (lambda ds: ds.fields("foo"), ds_fields),
+    ],
+    ids=["ds", "astype", "asstr", "fields"],
+)
+
+
+COPY_IF_NEEDED = False if NUMPY_RELEASE_VERSION < (2, 0) else None
+
+@pytest.mark.parametrize("copy", [True, COPY_IF_NEEDED])
+@view_getters
+def test_array_copy(view_getter, make_ds, copy, writable_file):
+    ds = make_ds(writable_file)
+    view = view_getter(ds)
+    np.array(view, copy=copy)
+
+
+@pytest.mark.skipif(
+    NUMPY_RELEASE_VERSION < (2, 0),
+    reason="forbidding copies requires numpy 2",
+)
+@view_getters
+def test_array_copy_false(view_getter, make_ds, writable_file):
+    ds = make_ds(writable_file)
+    view = view_getter(ds)
+    with pytest.raises(ValueError, match="memory allocation cannot be avoided"):
+        np.array(view, copy=False)
+
+
+@view_getters
+def test_array_dtype(view_getter, make_ds, writable_file):
+    ds = make_ds(writable_file)
+    view = view_getter(ds)
+    assert np.array(view, dtype='|S10').dtype == np.dtype('|S10')
+
+
+@view_getters
+def test_array_scalar(view_getter, make_ds, writable_file):
+    ds = make_ds(writable_file, shape=())
+    view = view_getter(ds)
+    assert isinstance(view[()], (bytes, str))
+    assert np.array(view).shape == ()
+
+
+@view_getters
+def test_array_nd(view_getter, make_ds, writable_file):
+    ds = make_ds(writable_file, shape=(5, 6))
+    view = view_getter(ds)
+    assert np.array(view).shape == (5, 6)
+
+
+@view_getters
+def test_view_properties(view_getter, make_ds, writable_file):
+    ds = make_ds(writable_file, shape=(5, 6))
+    view = view_getter(ds)
+    assert view.dtype == np.dtype(object)
+    assert view.ndim == 2
+    assert view.shape == (5, 6)
+    assert view.size == 30
+    assert len(view) == 5
+
+
+def test_concurrent_dataset_creation(writable_file):
+    N_THREADS = 25
+    N_DATASETS_PER_THREAD = 5
+    # Defines a thread barrier that will be spawned before parallel execution
+    # this increases the probability of concurrent access clashes.
+    barrier = threading.Barrier(N_THREADS)
+
+    def closure(ithread):
+        # Ensure that all threads reach this point before concurrent execution.
+        barrier.wait()
+        for j in range(N_DATASETS_PER_THREAD):
+            writable_file.create_dataset(f'concurrent_{ithread:02d}_{j:02d}', (1000,), dtype='i4')
+
+    with ThreadPoolExecutor(max_workers=N_THREADS) as executor:
+        futures = [executor.submit(closure, ithread) for ithread in range(N_THREADS)]
+
+    [f.result() for f in futures]
+    expected = set(f'concurrent_{i:02d}_{j:02d}' for i in range(N_THREADS) for j in range(N_DATASETS_PER_THREAD))
+    assert set(writable_file) == expected

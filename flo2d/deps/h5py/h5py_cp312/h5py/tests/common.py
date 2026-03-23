@@ -125,7 +125,7 @@ class TestCase(ut.TestCase):
                 normalized_arr_dtype = repack_fields(arr.dtype)
 
             assert normalized_dset_dtype == normalized_arr_dtype, \
-                "Dtype mismatch (%s vs %s)%s" % (normalized_dset_dtype, normalized_dset_dtype, message)
+                "Dtype mismatch (%s vs %s)%s" % (normalized_dset_dtype, normalized_arr_dtype, message)
 
             if not check_alignment:
                 if normalized_dset_dtype != dset.dtype:
@@ -141,7 +141,7 @@ class TestCase(ut.TestCase):
             assert np.all(np.abs(dset[...] - arr[...]) < precision), \
                 "Arrays differ by more than %.3f%s" % (precision, message)
         elif arr.dtype.kind == 'O':
-            for v1, v2 in zip(dset.flat, arr.flat):
+            for v1, v2 in zip(dset.flat, arr.flat, strict=True):
                 self.assertArrayEqual(v1, v2, message=message, precision=precision, check_alignment=check_alignment)
         else:
             assert np.all(dset[...] == arr[...]), \

@@ -105,15 +105,22 @@ class TestDriverRegistration(TestCase):
             fname = self.mktemp()
             h5py.File(fname, driver='new-driver', mode='w')
 
-        self.assertEqual(str(e.exception), 'Unknown driver type "new-driver"')
+        self.assertEqual(str(e.exception), "Unknown driver type 'new-driver'")
 
 
 class TestCache(TestCase):
+    def setUp(self):
+        MiB = 1024 * 1024
+        if h5py.version.hdf5_version_tuple < (2, 0, 0):
+            self.dflt_chunk_cache = MiB
+        else:
+            self.dflt_chunk_cache = 8 * MiB
+
     def test_defaults(self):
         fname = self.mktemp()
         f = h5py.File(fname, 'w')
         self.assertEqual(list(f.id.get_access_plist().get_cache()),
-                         [0, 521, 1048576, 0.75])
+                         [0, 521, self.dflt_chunk_cache, 0.75])
 
     def test_nbytes(self):
         fname = self.mktemp()
@@ -125,13 +132,13 @@ class TestCache(TestCase):
         fname = self.mktemp()
         f = h5py.File(fname, 'w', rdcc_nslots=125)
         self.assertEqual(list(f.id.get_access_plist().get_cache()),
-                         [0, 125, 1048576, 0.75])
+                         [0, 125, self.dflt_chunk_cache, 0.75])
 
     def test_w0(self):
         fname = self.mktemp()
         f = h5py.File(fname, 'w', rdcc_w0=0.25)
         self.assertEqual(list(f.id.get_access_plist().get_cache()),
-                         [0, 521, 1048576, 0.25])
+                         [0, 521, self.dflt_chunk_cache, 0.25])
 
 
 class TestFileObj(TestCase):
@@ -172,6 +179,11 @@ class TestFileObj(TestCase):
         finally:
             os.remove(fname)
 
+    @pytest.mark.filterwarnings(
+        # at least on Windows and MacOS, a resource warning may be emitted
+        # when this test returns
+        "ignore::ResourceWarning"
+    )
     def test_TemporaryFile(self):
         # in this test, we check explicitly that temp file gets
         # automatically deleted upon h5py.File.close()...
@@ -238,10 +250,12 @@ class TestFileObj(TestCase):
         # HDF5 expects read & write access to a file it's writing;
         # check that we get the correct exception on a write-only file object.
         fileobj = open(os.path.join(self.tempdir, 'a.h5'), 'wb')
+        f = h5py.File(fileobj, 'w')
+        group = f.create_group("group")
         with self.assertRaises(io.UnsupportedOperation):
-            f = h5py.File(fileobj, 'w')
-            group = f.create_group("group")
             group.create_dataset("data", data='foo', dtype=h5py.string_dtype())
+        f.close()
+        fileobj.close()
 
 
     def test_method_vanish(self):
@@ -266,8 +280,12 @@ class TestTrackOrder(TestCase):
         fname = self.mktemp()
         f = h5py.File(fname, 'w', track_order=True)  # creation order
         self.populate(f)
-        self.assertEqual(list(f),
-                         [str(i) for i in range(100)])
+        self.assertEqual(list(f), [str(i) for i in range(100)])
+        f.close()
+
+        # Check order tracking after reopening the file
+        f2 = h5py.File(fname)
+        self.assertEqual(list(f2), [str(i) for i in range(100)])
 
     def test_no_track_order(self):
         fname = self.mktemp()

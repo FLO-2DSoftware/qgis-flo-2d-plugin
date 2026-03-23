@@ -39,13 +39,7 @@ class Group(HLObject, MutableMappingHDF5):
                 raise ValueError("%s is not a GroupID" % bind)
             super().__init__(bind)
 
-    _gcpl_crt_order = h5p.create(h5p.GROUP_CREATE)
-    _gcpl_crt_order.set_link_creation_order(
-        h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
-    _gcpl_crt_order.set_attr_creation_order(
-        h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
-
-    def create_group(self, name, track_order=None):
+    def create_group(self, name, track_order=None, *, track_times=False):
         """ Create and return a new subgroup.
 
         Name may be absolute or relative.  Fails if the target name already
@@ -54,13 +48,26 @@ class Group(HLObject, MutableMappingHDF5):
         track_order
             Track dataset/group/attribute creation order under this group
             if True. If None use global default h5.get_config().track_order.
+        track_times: bool or None, default: False
+            If True, store timestamps for this group in the file.
+            If None, fall back to the default value.
         """
         if track_order is None:
             track_order = h5.get_config().track_order
 
         with phil:
             name, lcpl = self._e(name, lcpl=True)
-            gcpl = Group._gcpl_crt_order if track_order else None
+            gcpl = h5p.create(h5p.GROUP_CREATE)
+            if track_order:
+                order_flags = h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED
+                gcpl.set_link_creation_order(order_flags)
+                gcpl.set_attr_creation_order(order_flags)
+            if track_times is None:
+                track_times = False  # Allow explicit None to mean h5py's default
+            if track_times in (True, False):
+                gcpl.set_obj_track_times(track_times)
+            else:
+                raise TypeError("track_times must be either True, False, or None")
             gid = h5g.create(self.id, name, lcpl=lcpl, gcpl=gcpl)
             return Group(gid)
 
@@ -89,7 +96,10 @@ class Group(HLObject, MutableMappingHDF5):
 
         maxshape
             (Tuple or int) Make the dataset resizable up to this shape. Use None for
-            axes you want to be unlimited. Integers can be used for 1D shape.
+            axes within the tuple you want to be unlimited. Integers can be used for 1D shape.
+            For 1D datasets with unlimited maxshape, a shape tuple of length 1 must be
+            provided, ``(None,)``. Passing ``None`` sets ``maxshape` to `shape`, making the
+            dataset un-resizable, which is the default.
         compression
             (String or int) Compression strategy.  Legal values are 'gzip',
             'szip', 'lzf'.  If an integer in range(10), this indicates gzip
@@ -140,7 +150,7 @@ class Group(HLObject, MutableMappingHDF5):
             compresses the data before handing it to h5py.
         rdcc_nbytes
             Total size of the dataset's chunk cache in bytes. The default size
-            is 1024**2 (1 MiB).
+            is 1024**2 (1 MiB) for HDF5 before 2.0 and 8 MiB for HDF5 2.0 or later.
         rdcc_w0
             The chunk preemption policy for this dataset.  This must be
             between 0 and 1 inclusive and indicates the weighting according to
@@ -280,9 +290,9 @@ class Group(HLObject, MutableMappingHDF5):
             try:
                 dsid = dataset.open_dset(self, self._e(name), **kwds)
                 dset = dataset.Dataset(dsid)
-            except KeyError:
+            except KeyError as exc:
                 dset = self[name]
-                raise TypeError("Incompatible object (%s) already exists" % dset.__class__.__name__)
+                raise TypeError(f"Incompatible object ({dset.__class__.__name__}) already exists") from exc
 
             if shape != dset.shape:
                 if "maxshape" not in kwds:
@@ -411,8 +421,8 @@ class Group(HLObject, MutableMappingHDF5):
                     return {h5o.TYPE_GROUP: Group,
                             h5o.TYPE_DATASET: dataset.Dataset,
                             h5o.TYPE_NAMED_DATATYPE: datatype.Datatype}[typecode]
-                except KeyError:
-                    raise TypeError("Unknown object type")
+                except KeyError as exc:
+                    raise TypeError("Unknown object type") from exc
 
             elif getlink:
                 typecode = self.id.links.get_info(self._e(name), lapl=self._lapl).type
@@ -613,6 +623,9 @@ class Group(HLObject, MutableMappingHDF5):
     def visit(self, func):
         """ Recursively visit all names in this group and subgroups.
 
+        Note: visit ignores soft and external links. To visit those, use
+        visit_links.
+
         You supply a callable (function, method or callable object); it
         will be called exactly once for each link in this group and every
         group below it. Your callable must conform to the signature:
@@ -620,8 +633,8 @@ class Group(HLObject, MutableMappingHDF5):
             func(<member name>) => <None or return value>
 
         Returning None continues iteration, returning anything else stops
-        and immediately returns that value from the visit method.  No
-        particular order of iteration within groups is guaranteed.
+        and immediately returns that value from the visit method. The
+        iteration order is lexicographic.
 
         Example:
 
@@ -639,6 +652,9 @@ class Group(HLObject, MutableMappingHDF5):
     def visititems(self, func):
         """ Recursively visit names and objects in this group.
 
+        Note: visititems ignores soft and external links. To visit those, use
+        visititems_links.
+
         You supply a callable (function, method or callable object); it
         will be called exactly once for each link in this group and every
         group below it. Your callable must conform to the signature:
@@ -646,8 +662,8 @@ class Group(HLObject, MutableMappingHDF5):
             func(<member name>, <object>) => <None or return value>
 
         Returning None continues iteration, returning anything else stops
-        and immediately returns that value from the visit method.  No
-        particular order of iteration within groups is guaranteed.
+        and immediately returns that value from the visit method. The
+        iteration order is lexicographic.
 
         Example:
 
@@ -666,6 +682,65 @@ class Group(HLObject, MutableMappingHDF5):
                 name = self._d(name)
                 return func(name, self[name])
             return h5o.visit(self.id, proxy)
+
+    def visit_links(self, func):
+        """ Recursively visit all names in this group and subgroups.
+        Each link will be visited exactly once, regardless of its target.
+
+        You supply a callable (function, method or callable object); it
+        will be called exactly once for each link in this group and every
+        group below it. Your callable must conform to the signature:
+
+            func(<member name>) => <None or return value>
+
+        Returning None continues iteration, returning anything else stops
+        and immediately returns that value from the visit method. The
+        iteration order is lexicographic.
+
+        Example:
+
+        >>> # List the entire contents of the file
+        >>> f = File("foo.hdf5")
+        >>> list_of_names = []
+        >>> f.visit_links(list_of_names.append)
+        """
+        with phil:
+            def proxy(name):
+                """ Call the function with the text name, not bytes """
+                return func(self._d(name))
+            return self.id.links.visit(proxy)
+
+    def visititems_links(self, func):
+        """ Recursively visit links in this group.
+        Each link will be visited exactly once, regardless of its target.
+
+        You supply a callable (function, method or callable object); it
+        will be called exactly once for each link in this group and every
+        group below it. Your callable must conform to the signature:
+
+            func(<member name>, <link>) => <None or return value>
+
+        Returning None continues iteration, returning anything else stops
+        and immediately returns that value from the visit method. The
+        iteration order is lexicographic.
+
+        Example:
+
+        # Get a list of all softlinks in the file
+        >>> mylist = []
+        >>> def func(name, link):
+        ...     if isinstance(link, SoftLink):
+        ...         mylist.append(name)
+        ...
+        >>> f = File('foo.hdf5')
+        >>> f.visititems_links(func)
+        """
+        with phil:
+            def proxy(name):
+                """ Use the text name of the object, not bytes """
+                name = self._d(name)
+                return func(name, self.get(name, getlink=True))
+            return self.id.links.visit(proxy)
 
     @with_phil
     def __repr__(self):
