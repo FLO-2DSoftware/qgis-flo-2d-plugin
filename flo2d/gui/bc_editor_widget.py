@@ -20,7 +20,8 @@ from ..flo2d_tools.grid_tools import get_adjacent_cell, is_boundary_cell
 from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import get_BC_Border, is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style, qt_cursor_shape
+from ..utils import get_BC_Border, is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style, qt_cursor_shape, \
+    qsizepolicy_policy
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
@@ -221,8 +222,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             if time_stage_1:
                 for cell in time_stage_1:
                     rb = QgsRubberBand(self.canvas, gt)
-                    rb.setColor(QColor(Qt.cyan))
-                    fill_color = QColor(Qt.yellow)
+                    rb.setColor(QColor("cyan"))
+                    fill_color = QColor("yellow")
                     fill_color.setAlpha(0)
                     rb.setFillColor(fill_color)
                     rb.setWidth(2)
@@ -236,8 +237,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             if time_stage_2:
                 for cell in time_stage_2:
                     rb = QgsRubberBand(self.canvas, gt)
-                    rb.setColor(QColor(Qt.red))
-                    fill_color = QColor(Qt.red)
+                    rb.setColor(QColor("red"))
+                    fill_color = QColor("red")
                     fill_color.setAlpha(0)
                     rb.setFillColor(fill_color)
                     rb.setWidth(2)
@@ -250,7 +251,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def set_combos(self):
         sp = QSizePolicy()
-        sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
+        sp.setHorizontalPolicy(qsizepolicy_policy("MinimumExpanding"))
         self.bc_name_cbo = QComboBox(self)
         self.bc_name_cbo.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 

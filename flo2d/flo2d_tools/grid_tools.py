@@ -3142,7 +3142,7 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
         if mini == -9999:
             symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())
             symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
-            symbol.setColor(QColor(Qt.lightGray))
+            symbol.setColor(QColor("lightGray"))
             try:
                 symbol.setSize(1)
             except:
@@ -3224,7 +3224,7 @@ def render_grid_mannings(grid_lyr, show_nodata, mini, mini2, maxi):
         if mini == -9999:
             symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
             symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
-            symbol.setColor(QColor(Qt.lightGray))
+            symbol.setColor(QColor("lightGray"))
             try:
                 symbol.setSize(1)
             except:
@@ -3306,7 +3306,7 @@ def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
         if mini == -9999:
             symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
             symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
-            symbol.setColor(QColor(Qt.lightGray))
+            symbol.setColor(QColor("lightGray"))
             try:
                 symbol.setSize(1)
             except:

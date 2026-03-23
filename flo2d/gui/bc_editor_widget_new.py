@@ -365,8 +365,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if time_stage_1:
                 for cell in time_stage_1:
                     rb = QgsRubberBand(self.canvas, gt)
-                    rb.setColor(QColor(Qt.cyan))
-                    fill_color = QColor(Qt.yellow)
+                    rb.setColor(QColor("cyan"))
+                    fill_color = QColor("yellow")
                     fill_color.setAlpha(0)
                     rb.setFillColor(fill_color)
                     rb.setWidth(2)
@@ -380,8 +380,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if time_stage_2:
                 for cell in time_stage_2:
                     rb = QgsRubberBand(self.canvas, gt)
-                    rb.setColor(QColor(Qt.red))
-                    fill_color = QColor(Qt.red)
+                    rb.setColor(QColor("red"))
+                    fill_color = QColor("red")
                     fill_color.setAlpha(0)
                     rb.setFillColor(fill_color)
                     rb.setWidth(2)

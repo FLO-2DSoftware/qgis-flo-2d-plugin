@@ -28,7 +28,7 @@ from itertools import filterfalse
 from math import ceil
 
 from qgis.PyQt.QtCore import QRegularExpression, Qt, QEvent, QMetaType
-from qgis.PyQt.QtGui import QRegularExpressionValidator
+from qgis.PyQt.QtGui import QRegularExpressionValidator, QPainter, QKeySequence, QTextCursor
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QItemDelegate,
@@ -37,7 +37,10 @@ from qgis.PyQt.QtWidgets import (
     QStyledItemDelegate,
     QToolButton,
     QFrame,
-    QDialogButtonBox
+    QDialogButtonBox,
+    QDialog,
+    QFileDialog,
+    QSizePolicy
 )
 
 class NumericDelegate(QStyledItemDelegate):
@@ -565,7 +568,6 @@ def qt_dock_widget_area(name):
         return getattr(Qt.DockWidgetArea, name)
     return getattr(Qt, name)  # Qt5
 
-
 def dock_area_from_int(value):
     """
     Convert stored QSettings integer back to a dock area enum.
@@ -589,3 +591,52 @@ def qmeta_type(name):
     if hasattr(QMetaType, "Type"):  # Qt6
         return getattr(QMetaType.Type, name)
     return getattr(QMetaType, name)  # Qt5
+
+def qdialog_code(name):
+    """
+    Cross-compatible dialog result code lookup for Qt5/Qt6.
+    """
+    if hasattr(QDialog, "DialogCode"):  # Qt6
+        return getattr(QDialog.DialogCode, name)
+    return getattr(QDialog, name)  # Qt5
+
+def qt_keyboard_modifier(name):
+    if hasattr(Qt, "KeyboardModifier"):
+        return getattr(Qt.KeyboardModifier, name)
+    return getattr(Qt, name)
+
+def qpainter_render_hint(name):
+    """
+    Cross-compatible QPainter render hint lookup for Qt5/Qt6.
+    """
+    if hasattr(QPainter, "RenderHint"):  # Qt6
+        return getattr(QPainter.RenderHint, name)
+    return getattr(QPainter, name)  # Qt5
+
+def qkeysequence_standard_key(name):
+    """
+    Cross-compatible QKeySequence standard key lookup for Qt5/Qt6.
+    """
+    if hasattr(QKeySequence, "StandardKey"):  # Qt6
+        return getattr(QKeySequence.StandardKey, name)
+    return getattr(QKeySequence, name)  # Qt5
+
+def qtextcursor_move_operation(name):
+    if hasattr(QTextCursor, "MoveOperation"):  # Qt6
+        return getattr(QTextCursor.MoveOperation, name)
+    return getattr(QTextCursor, name)  # Qt5
+
+def mb_button(name):
+    if hasattr(QMessageBox, "StandardButton"):  # Qt6
+        return getattr(QMessageBox.StandardButton, name)
+    return getattr(QMessageBox, name)  # Qt5
+
+def qfiledialog_option(name):
+    if hasattr(QFileDialog, "Option"):  # Qt6
+        return getattr(QFileDialog.Option, name)
+    return getattr(QFileDialog, name)  # Qt5
+
+def qsizepolicy_policy(name):
+    if hasattr(QSizePolicy, "Policy"):  # Qt6
+        return getattr(QSizePolicy.Policy, name)
+    return getattr(QSizePolicy, name)   # Qt5

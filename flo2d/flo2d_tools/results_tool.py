@@ -80,7 +80,8 @@ class ResultsTool(QgsMapToolIdentify):
         ]
         # Overrides inherited method from QgsMapToolIdentify.
         # Creates a submenu and shows it where the user clicks the canvas.
-        res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
+        pos = e.pos()
+        res = self.identify(pos.x(), pos.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
         lyrs_found = OrderedDict()
         for i, item in enumerate(res):
             lyr_name = item.mLayer.name()

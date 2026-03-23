@@ -202,7 +202,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['buildings_areas']["qlyr"]
                     selected_areas_fid = int(area_cbo.currentText())
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -221,7 +221,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['spatialshallow']["qlyr"]
                     selected_areas_fid = int(area_cbo.currentText())
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -240,7 +240,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['fpfroude']["qlyr"]
                     selected_areas_fid = int(area_cbo.currentText())
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -259,7 +259,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['tolspatial']["qlyr"]
                     selected_areas_fid = int(area_cbo.currentText())
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -278,7 +278,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['user_roughness']["qlyr"]
                     selected_areas_fid = int(area_cbo.currentText())
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -298,7 +298,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['user_blocked_areas']["qlyr"]
                     selected_areas_fid = int(area_cbo.currentText())
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -314,7 +314,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['user_steep_slope_n_areas']["qlyr"]
                     selected_areas_fid = int(fid)
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(selected_areas_fid)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -322,7 +322,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             if eye_btn.isChecked():
                 lyr = self.lyrs.data['user_noexchange_chan_areas']["qlyr"]
                 selected_areas_fid = int(area_cbo.currentText())
-                self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                 feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                 x, y = feat.geometry().centroid().asPoint()
                 center_canvas(self.iface, x, y)
@@ -341,7 +341,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 if eye_btn.isChecked():
                     lyr = self.lyrs.data['user_lid_volume_areas']["qlyr"]
                     selected_areas_fid = int(area_cbo.currentText())
-                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
                     feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -367,7 +367,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             area_eye.setChecked(True)
             lyr = self.lyrs.data[area_lyr]["qlyr"]
             selected_areas_fid = int(area_cbo.currentText())
-            self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor("red"))
             feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)

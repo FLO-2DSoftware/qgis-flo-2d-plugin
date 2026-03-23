@@ -90,7 +90,7 @@ from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
-    qt_dock_widget_area, dock_area_from_int
+    qt_dock_widget_area, dock_area_from_int, qt_window_type
 
 from PIL import Image
 
@@ -1528,7 +1528,7 @@ class Flo2D(object):
                         answer = self.uc.customized_question("FLO-2D", msg)
                     else:
 
-                        answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
+                        answer = self.uc.customized_question("FLO-2D", msg, mb_button("Cancel"), mb_button("Cancel"))
                 # Geopackage exists at the original path
                 else:
                     msg += "Load the model?"
@@ -1989,11 +1989,11 @@ class Flo2D(object):
                             "FLO-2D",
                             "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
                             + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                            self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | QMessageBox.Cancel,
-                            QMessageBox.Cancel,
+                            self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | mb_button("Cancel"),
+                            mb_button("Cancel"),
                         )
 
-                        if add_new_colums == QMessageBox.Cancel:
+                        if add_new_colums == mb_button("Cancel"):
                             return
 
                         if add_new_colums == self.uc.msgbox_button("No"):
@@ -2178,11 +2178,11 @@ class Flo2D(object):
                 "FLO-2D",
                 "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
                 + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | QMessageBox.Cancel,
-                QMessageBox.Cancel,
+                self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | mb_button("Cancel"),
+                mb_button("Cancel"),
             )
 
-            if add_new_colums == QMessageBox.Cancel:
+            if add_new_colums == mb_button("Cancel"):
                 return
 
             if add_new_colums == self.uc.msgbox_button("No"):
@@ -4305,8 +4305,8 @@ class Flo2D(object):
             return
 
         dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
-        dlg_ms.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_ms.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        dlg_ms.setWindowFlag(qt_window_type("WindowMinimizeButtonHint"), True)
+        dlg_ms.setWindowFlag(qt_window_type("WindowMaximizeButtonHint"), True)
         repeat = True
         while repeat:
             dlg_ms.show()

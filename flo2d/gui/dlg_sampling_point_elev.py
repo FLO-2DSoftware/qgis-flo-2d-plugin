@@ -23,6 +23,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..misc import point_elev
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qtextcursor_move_operation
 
 uiDialog, qtBaseClass = load_ui("sampling_point_elev")
 
@@ -400,7 +401,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.uc.log_info(mesg)
         editor = self.console_edit
         cursor = editor.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(qtextcursor_move_operation("End"))
         if new_line:
             cursor.insertText(mesg + "\n")
         else:

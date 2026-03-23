@@ -25,6 +25,8 @@ import numpy as np
 
 import xml.etree.ElementTree as ET
 
+from ..utils import qt_window_type, qsizepolicy_policy
+
 uiDialog, qtBaseClass = load_ui("breach_hydrograph_tool")
 
 
@@ -39,7 +41,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.bc_editor = bc_editor
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | qt_window_type("WindowMinimizeButtonHint"))
 
         self.t_hr, self.Qt, self.Cv, self.Vs = None, None, None, None
         self.hyd_map = {}
@@ -327,7 +329,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         fig.patch.set_linewidth(0.8)
 
         canvas = FigureCanvas(fig)
-        canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        canvas.setSizePolicy(qsizepolicy_policy("Expanding"), qsizepolicy_policy("Expanding"))
         canvas.setMinimumHeight(220)
 
         self.verticalLayout.addWidget(canvas, stretch=1)

@@ -255,11 +255,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
                 + "Some functionality will be unavailable.\n\n"
                 + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | QMessageBox.Cancel,
-                QMessageBox.Cancel,
+                self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | mb_button("Cancel"),
+                mb_button("Cancel"),
             )
 
-            if add_new_colums == QMessageBox.Cancel:
+            if add_new_colums == mb_button("Cancel"):
                 return
 
         if field_index == -1:
@@ -1711,9 +1711,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 self.plot.plot.setTitle(title=f"Grid Element - {grid_element}")
                 self.plot.plot.setLabel("bottom", text="Time (hrs)")
                 self.plot.plot.setLabel("left", text="")
-                self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=qt_pen_style("SolidLine"))
-                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=qt_pen_style("SolidLine"), hide=True)
-                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water_Surface_Elevation']], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor("darkBlue"), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor("yellow"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water_Surface_Elevation']], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"), hide=True)
 
             except:
                 QApplication.restoreOverrideCursor()

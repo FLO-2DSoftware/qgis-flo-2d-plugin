@@ -53,7 +53,7 @@ class GenericCheckReportDialog(qtBaseClass, uiDialog):
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
     def show_next(self):
         """
@@ -69,7 +69,7 @@ class GenericCheckReportDialog(qtBaseClass, uiDialog):
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
     def show_grid(self):
         """
@@ -89,6 +89,6 @@ class GenericCheckReportDialog(qtBaseClass, uiDialog):
         x, y = self.currentCell.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-        self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+        self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
 

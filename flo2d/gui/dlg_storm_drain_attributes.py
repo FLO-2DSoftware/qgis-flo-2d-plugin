@@ -12,7 +12,7 @@ from qgis._core import QgsFeatureRequest
 from .ui_utils import load_ui, set_icon, center_canvas, zoom, zoom_cell_buffer
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import TimeSeriesDelegate, is_true, FloatDelegate, qt_item_role, qt_cursor_shape
+from ..utils import TimeSeriesDelegate, is_true, FloatDelegate, qt_item_role, qt_cursor_shape, qkeysequence_standard_key
 import csv
 import io
 import os
@@ -121,7 +121,7 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -586,7 +586,7 @@ class InletAttributes(qtBaseClass, uiDialog):
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
-                    self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), self.current_node, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), self.current_node, QColor("red"))
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -729,7 +729,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1313,7 +1313,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
-                    self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), self.current_node, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), self.current_node, QColor("red"))
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -1410,7 +1410,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1523,7 +1523,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Pump not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_pumps_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -1620,7 +1620,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1746,7 +1746,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Orifice not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_orifices_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -1853,7 +1853,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1985,7 +1985,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Weir not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -2122,7 +2122,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -2279,7 +2279,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Conduit not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -2421,7 +2421,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -2875,7 +2875,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
-                    self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), self.current_node, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), self.current_node, QColor("red"))
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -3496,9 +3496,9 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.inflow_time_series_tblw.setRowCount(0)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)
@@ -3682,9 +3682,9 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
             table_widget.removeRow(row)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)
@@ -4035,9 +4035,9 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.outfall_time_series_tblw.setRowCount(0)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)
@@ -4311,9 +4311,9 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
         self.curve_tblw.setRowCount(0)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)

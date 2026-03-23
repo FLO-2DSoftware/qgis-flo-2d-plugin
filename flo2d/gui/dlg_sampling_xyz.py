@@ -38,7 +38,7 @@ from ..user_communication import UserCommunication
 from ..utils import (
     second_smallest,
     set_min_max_elevs,
-    time_taken, qt_cursor_shape, qmeta_type,
+    time_taken, qt_cursor_shape, qmeta_type, qt_alignment_flag,
 )
 from .ui_utils import load_ui
 
@@ -135,7 +135,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             statBar.addWidget(statusLabel, 5)
             advanceBar = QProgressBar()
             advanceBar.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
-            advanceBar.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+            advanceBar.setAlignment(qt_alignment_flag("AlignCenter") | qt_alignment_flag("AlignVCenter"))
             advanceBar.setMinimum(0)
             statBar.addWidget(advanceBar, 2)
 

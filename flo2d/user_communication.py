@@ -32,7 +32,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.QtGui import QFont
 
-from flo2d.utils import qt_window_modality, qt_window_type, qt_alignment_flag
+from flo2d.utils import qt_window_modality, qt_window_type, qt_alignment_flag, mb_button, qsizepolicy_policy
 
 
 def is_file_locked(filepath):
@@ -95,7 +95,7 @@ class UserCommunication(object):
                     QMessageBox.Warning if type=="warning" else + \
                     QMessageBox.Critical if type=="error" else QMessageBox.Information
             msgBox.setIcon(icon)
-            horizontalSpacer = QSpacerItem(hSize, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            horizontalSpacer = QSpacerItem(hSize, 0, qsizepolicy_policy("Minimum"), qsizepolicy_policy("Expanding"))
             layout = msgBox.layout()
             layout.addItem(horizontalSpacer, layout.rowCount(), 0, 1, layout.columnCount())
             msgBox.setFont(QFont("Courier", 8))
@@ -212,7 +212,7 @@ class UserCommunication(object):
         msgBox.setWindowTitle(title)
         if msg != "":
             msgBox.setText(msg)
-        msgBox.setStandardButtons(self.msgbox_button("Yes") | self.msgbox_button("No") | QMessageBox.Close)
+        msgBox.setStandardButtons(self.msgbox_button("Yes") | self.msgbox_button("No") | mb_button("Close"))
         msgBox.setDefaultButton(self.msgbox_button("Yes"))
         buttonY = msgBox.button(self.msgbox_button("Yes"))
         buttonY.setText(text1)
@@ -282,7 +282,7 @@ class UserCommunication(object):
         pb.setMaximum(max)
         pb.setValue(init_value)
         pb.setFormat("%v of %m")
-        pb.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        pb.setAlignment(qt_alignment_flag("AlignCenter") | qt_alignment_flag("AlignVCenter"))
         pb.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
 
         pbm = self.iface.messageBar().createMessage(message)
@@ -342,10 +342,10 @@ class TwoInputsDialog(QDialog):
         first_input_layout = QHBoxLayout()
         first_input_layout.addWidget(self.first_label)
         first_input_layout.addWidget(self.first_input)
-        first_input_layout.setAlignment(Qt.AlignCenter)        
+        first_input_layout.setAlignment(qt_alignment_flag("AlignCenter"))        
               
         layout = QVBoxLayout(self)
-        layout.addWidget(self.label, alignment=Qt.AlignCenter)
+        layout.addWidget(self.label, alignment=qt_alignment_flag("AlignCenter"))
         layout.addSpacing(20)
         layout.addLayout(first_input_layout) 
               
@@ -358,7 +358,7 @@ class TwoInputsDialog(QDialog):
             second_input_layout = QHBoxLayout()
             second_input_layout.addWidget(self.second_label)
             second_input_layout.addWidget(self.second_input)
-            second_input_layout.setAlignment(Qt.AlignCenter)
+            second_input_layout.setAlignment(qt_alignment_flag("AlignCenter"))
             layout.addLayout(second_input_layout)
                        
         self.yes_button = QPushButton('Yes', self)
@@ -370,7 +370,7 @@ class TwoInputsDialog(QDialog):
         button_layout.addStretch(1)
         button_layout.addWidget(self.yes_button)
         button_layout.addWidget(self.no_button)
-        button_layout.setAlignment(Qt.AlignCenter)
+        button_layout.setAlignment(qt_alignment_flag("AlignCenter"))
 
         layout.addSpacing(20)
         layout.addLayout(button_layout)

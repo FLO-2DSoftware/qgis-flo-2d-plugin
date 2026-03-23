@@ -1972,9 +1972,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Channel Profile - {fid}")
         self.plot.plot.setLabel("bottom", text="Channel length")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=qt_pen_style("SolidLine"))
-        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"))
-        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
+        self.plot.add_item("Bed elevation", [sta, bed], col=QColor("black"), sty=qt_pen_style("SolidLine"))
+        self.plot.add_item("Left bank", [sta, lb], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+        self.plot.add_item("Right bank", [sta, rb], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
 
         try:  # Build table.
             data_model = StandardItemModel()
@@ -2141,20 +2141,20 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                     if i == 0:
                         self.plot.add_item(f"{scenario} - Bed elevation ({self.system_units[units][0]})", [sta, bed],
-                                           col=QColor(Qt.black), sty=qt_pen_style("SolidLine"))
+                                           col=QColor("black"), sty=qt_pen_style("SolidLine"))
                         self.plot.add_item(f"{scenario} - Left bank ({self.system_units[units][0]})", [sta, lb],
-                                           col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"))
+                                           col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
                         self.plot.add_item(f"{scenario} - Right bank ({self.system_units[units][0]})", [sta, rb],
-                                           col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
+                                           col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
                         self.plot.add_item(f"{scenario} - Max. Water ({self.system_units[units][0]})", [sta, max_water_elev],
                                            col=SCENARIO_COLOURS[i], sty=qt_pen_style("SolidLine"))
                     else:
                         self.plot.add_item(f"{scenario} - Bed elevation ({self.system_units[units][0]})", [sta, bed],
-                                           col=QColor(Qt.black), sty=qt_pen_style("SolidLine"), hide=True)
+                                           col=QColor("black"), sty=qt_pen_style("SolidLine"), hide=True)
                         self.plot.add_item(f"{scenario} - Left bank ({self.system_units[units][0]})", [sta, lb],
-                                           col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"), hide=True)
+                                           col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"), hide=True)
                         self.plot.add_item(f"{scenario} - Right bank ({self.system_units[units][0]})", [sta, rb],
-                                           col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"), hide=True)
+                                           col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"), hide=True)
                         self.plot.add_item(f"{scenario} - Max. Water ({self.system_units[units][0]})", [sta, max_water_elev],
                                            col=SCENARIO_COLOURS[i], sty=qt_pen_style("SolidLine"), hide=True)
                     if len(max_sed_con) > 0:
@@ -2492,26 +2492,26 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         max_shear_stress.append(data["max_shear_stress"])
                         max_surf_area.append(data["max_surf_area"])
 
-                self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor(Qt.black), sty=qt_pen_style("SolidLine"))
-                self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"))
-                self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor("black"), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
                 if len(max_sed_con) > 0:
-                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=qt_pen_style("SolidLine"))
-                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Concentration", [sta, max_con], col=QColor(Qt.red), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor("blue"), sty=qt_pen_style("SolidLine"))
+                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor("green"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor("gray"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Concentration", [sta, max_con], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
                 else:
-                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=qt_pen_style("SolidLine"))
-                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, max_flow_area], col=QColor(Qt.red), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, max_top_width], col=QColor(Qt.darkRed), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress], col=QColor(Qt.darkYellow), hide=True)
-                    self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, max_surf_area], col=QColor(Qt.darkMagenta), hide=True)
+                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor("blue"), sty=qt_pen_style("SolidLine"))
+                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor("green"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor("gray"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, max_flow_area], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter], col=QColor("yellow"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius], col=QColor("darkBlue"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, max_top_width], col=QColor("darkRed"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Width/Depth", [sta, max_width_depth], col=QColor("darkCyan"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Energy slope", [sta, max_energy_slope], col=QColor("magenta"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress], col=QColor("darkYellow"), hide=True)
+                    self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, max_surf_area], col=QColor("darkMagenta"), hide=True)
 
                 try:  # Build table.
 
@@ -2832,22 +2832,22 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.log_info("This channel cross section has no flow data!")
                     return
 
-                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [values[0], values[4]], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
-                self.plot.add_item(f"Elevation ({self.system_units[units][0]})", [values[0], values[1]], col=QColor(Qt.green), sty=qt_pen_style("SolidLine"), hide=True)
-                self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [values[0], values[2]], col=QColor(Qt.black), sty=qt_pen_style("SolidLine"), hide=True)
-                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [values[0], values[3]], col=QColor(Qt.darkGreen), sty=qt_pen_style("SolidLine"), hide=True)
-                self.plot.add_item(f"Froude", [values[0], values[5]], col=QColor(Qt.blue), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [values[0], values[4]], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Elevation ({self.system_units[units][0]})", [values[0], values[1]], col=QColor("green"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [values[0], values[2]], col=QColor("black"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [values[0], values[3]], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Froude", [values[0], values[5]], col=QColor("blue"), sty=qt_pen_style("SolidLine"), hide=True)
                 if len(values) == 7:
-                    self.plot.add_item(f"Concentration", [values[0], values[6]], col=QColor(Qt.red), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Concentration", [values[0], values[6]], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
                 else:
-                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [values[0], values[6]], col=QColor(Qt.red), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [values[0], values[7]], col=QColor(Qt.yellow), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [values[0], values[8]], col=QColor(Qt.darkBlue), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [values[0], values[9]], col=QColor(Qt.darkRed), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Width/Depth", [values[0], values[10]], col=QColor(Qt.darkCyan), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Energy slope", [values[0], values[11]], col=QColor(Qt.magenta), sty=qt_pen_style("SolidLine"), hide=True)
-                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [values[0], values[12]], col=QColor(Qt.darkYellow), hide=True)
-                    self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [values[0], values[13]], col=QColor(Qt.darkMagenta), hide=True)
+                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [values[0], values[6]], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [values[0], values[7]], col=QColor("yellow"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [values[0], values[8]], col=QColor("darkBlue"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [values[0], values[9]], col=QColor("darkRed"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Width/Depth", [values[0], values[10]], col=QColor("darkCyan"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Energy slope", [values[0], values[11]], col=QColor("magenta"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [values[0], values[12]], col=QColor("darkYellow"), hide=True)
+                    self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [values[0], values[13]], col=QColor("darkMagenta"), hide=True)
 
                 try:  # Build table.
                     if len(values) == 7:

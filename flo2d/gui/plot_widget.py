@@ -17,7 +17,8 @@ from qgis._core import QgsMessageLog
 from ..deps import safe_pyqtgraph as pg
 import numpy as np
 
-from ..utils import qt_pen_style, qframe_shape, qt_widget_attribute, qt_alignment_flag, qt_check_state
+from ..utils import qt_pen_style, qframe_shape, qt_widget_attribute, qt_alignment_flag, qt_check_state, \
+    qpainter_render_hint
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -33,7 +34,7 @@ class LegendLine(QWidget):
     # Custom paint handler
     def paintEvent(self, event):
         painter = QPainter(self) # Painter used to draw sample legend's sample line
-        painter.setRenderHint(QPainter.Antialiasing) # Enable anti-aliasing for smoother line edges.
+        painter.setRenderHint(qpainter_render_hint("Antialiasing")) # Enable anti-aliasing for smoother line edges.
         painter.setPen(self.pen) # Apply the stored pen
         y = self.height() // 2 # Draw the line centered vertically in the small widget
         painter.drawLine(2, y, self.width() - 2, y) # Draw a horizontal line with small left/right margins

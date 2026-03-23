@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import is_true, qdialogbuttonbox_button
+from ..utils import is_true, qdialogbuttonbox_button, qt_cursor_shape
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")

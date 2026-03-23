@@ -1149,7 +1149,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     if cell != "":
                         cell = int(cell)
                         if self.n_cells >= cell and cell > 0:
-                            self.lyrs.show_feat_rubber(self.grid.id(), cell, QColor(Qt.yellow))
+                            self.lyrs.show_feat_rubber(self.grid.id(), cell, QColor("yellow"))
                             self.currentCell = next(self.grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = self.currentCell.geometry().centroid().asPoint()
                             if (
@@ -2328,7 +2328,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                     if cell != "":
                         cell = int(cell)
                         if cell > 0:
-                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor("yellow"))
                             self.currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = self.currentCell.geometry().centroid().asPoint()
                             if (
@@ -3093,7 +3093,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
                     if cell != "":
                         cell = int(cell)
                         if len(grid) >= cell and cell > 0:
-                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor("yellow"))
                             self.currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = self.currentCell.geometry().centroid().asPoint()
                             if (

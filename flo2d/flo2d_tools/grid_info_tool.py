@@ -34,7 +34,8 @@ class GridInfoTool(QgsMapToolIdentify):
 
     def canvasReleaseEvent(self, e):
         try:
-            res = self.identify(e.x(), e.y(), [self.grid], QgsMapToolIdentify.ActiveLayer)
+            pos = e.pos()
+            res = self.identify(pos.x(), pos.y(), [self.grid], QgsMapToolIdentify.ActiveLayer)
             if res:
                 self.grid_elem_picked.emit(res[0].mFeature.id())
             else:

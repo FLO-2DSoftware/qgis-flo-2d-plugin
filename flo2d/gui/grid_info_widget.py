@@ -705,7 +705,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                         n_cells = number_of_elements(self.gutils, grid)
                         if n_cells > 0 and cell > 0:
                             if cell <= n_cells:
-                                self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                                self.lyrs.show_feat_rubber(grid.id(), cell, QColor("yellow"))
                                 feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                                 x, y = feat.geometry().centroid().asPoint()
                                 center_canvas(self.iface, x, y)

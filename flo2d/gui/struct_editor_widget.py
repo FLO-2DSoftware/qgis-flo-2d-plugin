@@ -993,7 +993,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.plot.plot.setTitle(title=f"Hydraulic Structure - {structure_name}")
             self.plot.plot.setLabel("bottom", text="Time (hrs)")
             self.plot.plot.setLabel("left", text="")
-            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
 
             try:  # Build table.
                 discharge_data_model = StandardItemModel()
