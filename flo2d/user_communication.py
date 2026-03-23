@@ -30,7 +30,9 @@ from qgis.PyQt.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,    
 )
-from PyQt5.QtGui import QFont
+from qgis.PyQt.QtGui import QFont
+
+from flo2d.utils import qt_window_modality, qt_window_type, qt_alignment_flag, mb_button, qsizepolicy_policy
 
 
 def is_file_locked(filepath):
@@ -52,6 +54,32 @@ class UserCommunication(object):
         self.iface = iface
         self.context = context
 
+    def msgbox_button(self, name):
+        """
+        Return a QMessageBox standard button that works in Qt5 and Qt6.
+        Example: msgbox_button("Yes"), msgbox_button("No"), msgbox_button("Ok")
+        """
+        if hasattr(QMessageBox, "StandardButton"):  # Qt6-style
+            return getattr(QMessageBox.StandardButton, name)
+        return getattr(QMessageBox, name)  # Qt5-style
+
+    def msgbox_role(self, name):
+        """
+        Cross-compatible QMessageBox button role lookup.
+        """
+        if hasattr(QMessageBox, "ButtonRole"):  # Qt6
+            return getattr(QMessageBox.ButtonRole, name)
+        return getattr(QMessageBox, name)  # Qt5
+
+    def msgbox_icon(self, name):
+        """
+        Cross-compatible QMessageBox icon lookup.
+        Example: msgbox_icon("Information"), msgbox_icon("Warning"), msgbox_icon("Critical")
+        """
+        if hasattr(QMessageBox, "Icon"):  # Qt6
+            return getattr(QMessageBox.Icon, name)
+        return getattr(QMessageBox, name)  # Qt5
+
     def show_info(self, msg):
         if self.iface is not None:
             QMessageBox.information(self.iface.mainWindow(), self.context, msg)
@@ -67,11 +95,11 @@ class UserCommunication(object):
                     QMessageBox.Warning if type=="warning" else + \
                     QMessageBox.Critical if type=="error" else QMessageBox.Information
             msgBox.setIcon(icon)
-            horizontalSpacer = QSpacerItem(hSize, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            horizontalSpacer = QSpacerItem(hSize, 0, qsizepolicy_policy("Minimum"), qsizepolicy_policy("Expanding"))
             layout = msgBox.layout()
             layout.addItem(horizontalSpacer, layout.rowCount(), 0, 1, layout.columnCount())
             msgBox.setFont(QFont("Courier", 8))
-            msgBox.exec_()            
+            msgBox.exec()            
         else:
             print(msg)
             
@@ -174,9 +202,9 @@ class UserCommunication(object):
             m = QMessageBox(parent)
             m.setWindowTitle(self.context)
             m.setText(msg)
-            m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
-            m.setDefaultButton(QMessageBox.Yes)
-            return True if m.exec_() == QMessageBox.Yes else False
+            m.setStandardButtons(self.msgbox_button("No") | self.msgbox_button("Yes"))
+            m.setDefaultButton(self.msgbox_button("Yes"))
+            return True if m.exec() == self.msgbox_button("Yes") else False
         else:
             print(msg)
 
@@ -185,25 +213,35 @@ class UserCommunication(object):
         msgBox.setWindowTitle(title)
         if msg != "":
             msgBox.setText(msg)
-        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close)
-        msgBox.setDefaultButton(QMessageBox.Yes)
-        buttonY = msgBox.button(QMessageBox.Yes)
+        msgBox.setStandardButtons(self.msgbox_button("Yes") | self.msgbox_button("No") | mb_button("Close"))
+        msgBox.setDefaultButton(self.msgbox_button("Yes"))
+        buttonY = msgBox.button(self.msgbox_button("Yes"))
         buttonY.setText(text1)
-        buttonN = msgBox.button(QMessageBox.No)
+        buttonN = msgBox.button(self.msgbox_button("No"))
         buttonN.setText(text2)
 
         # ret = msgBox.exec()
-        return msgBox.exec_()
+        return msgBox.exec()
 
     def customized_question(
         self,
         title,
         text,
-        standard_buttons=QMessageBox.No | QMessageBox.Yes,
-        default=QMessageBox.Yes,
-        icon=QMessageBox.Information,
+        standard_buttons=None,
+        default=None,
+        icon=None,
     ):
         if self.iface is not None:
+
+            if standard_buttons is None:
+                standard_buttons = self.msgbox_button("No") | self.msgbox_button("Yes")
+
+            if default is None:
+                default = self.msgbox_button("Yes")
+
+            if icon is None:
+                icon = self.msgbox_icon("Information")
+
             parent = self.iface.mainWindow()
             m = QMessageBox(parent)
             m.setWindowTitle(title)
@@ -212,12 +250,12 @@ class UserCommunication(object):
             m.setDefaultButton(default)
             m.setIcon(icon)
 
-            m.setWindowModality(Qt.ApplicationModal)
-            m.setWindowFlags(m.windowFlags() | Qt.WindowStaysOnTopHint)
+            m.setWindowModality(qt_window_modality("ApplicationModal"))
+            m.setWindowFlags(m.windowFlags() | qt_window_type("WindowStaysOnTopHint"))
             m.raise_()
             m.activateWindow()
 
-            return m.exec_()
+            return m.exec()
         else:
             print(text)
 
@@ -228,7 +266,7 @@ class UserCommunication(object):
         pb.setMinimum(minimum)
         pb.setMaximum(maximum)
         pb.setValue(init_value)
-        pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        pb.setAlignment(qt_alignment_flag("AlignLeft") | qt_alignment_flag("AlignVCenter"))
         pmb.layout().addWidget(pb)
         self.iface.messageBar().pushWidget(pmb, Qgis.Info)
         return pb
@@ -245,7 +283,7 @@ class UserCommunication(object):
         pb.setMaximum(max)
         pb.setValue(init_value)
         pb.setFormat("%v of %m")
-        pb.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        pb.setAlignment(qt_alignment_flag("AlignCenter") | qt_alignment_flag("AlignVCenter"))
         pb.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
 
         pbm = self.iface.messageBar().createMessage(message)
@@ -305,10 +343,10 @@ class TwoInputsDialog(QDialog):
         first_input_layout = QHBoxLayout()
         first_input_layout.addWidget(self.first_label)
         first_input_layout.addWidget(self.first_input)
-        first_input_layout.setAlignment(Qt.AlignCenter)        
+        first_input_layout.setAlignment(qt_alignment_flag("AlignCenter"))        
               
         layout = QVBoxLayout(self)
-        layout.addWidget(self.label, alignment=Qt.AlignCenter)
+        layout.addWidget(self.label, alignment=qt_alignment_flag("AlignCenter"))
         layout.addSpacing(20)
         layout.addLayout(first_input_layout) 
               
@@ -321,7 +359,7 @@ class TwoInputsDialog(QDialog):
             second_input_layout = QHBoxLayout()
             second_input_layout.addWidget(self.second_label)
             second_input_layout.addWidget(self.second_input)
-            second_input_layout.setAlignment(Qt.AlignCenter)
+            second_input_layout.setAlignment(qt_alignment_flag("AlignCenter"))
             layout.addLayout(second_input_layout)
                        
         self.yes_button = QPushButton('Yes', self)
@@ -333,7 +371,7 @@ class TwoInputsDialog(QDialog):
         button_layout.addStretch(1)
         button_layout.addWidget(self.yes_button)
         button_layout.addWidget(self.no_button)
-        button_layout.setAlignment(Qt.AlignCenter)
+        button_layout.setAlignment(qt_alignment_flag("AlignCenter"))
 
         layout.addSpacing(20)
         layout.addLayout(button_layout)

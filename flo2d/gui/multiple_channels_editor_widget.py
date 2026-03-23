@@ -3,9 +3,9 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_individual_multiple_channels import (
     IndividualMultipleChannelsDialog,
@@ -119,7 +119,7 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg_individual_multiple_channels = IndividualMultipleChannelsDialog(self.iface, self.lyrs)
-        save = dlg_individual_multiple_channels.exec_()
+        save = dlg_individual_multiple_channels.exec()
         if save:
             try:
                 if dlg_individual_multiple_channels.save_individual_multiple_chennels_data():
@@ -147,4 +147,4 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg_individual_simplified_multiple_channels = IndividualSimplifiedMultipleChannelsDialog(self.iface, self.lyrs)
-        dlg_individual_simplified_multiple_channels.exec_()
+        dlg_individual_simplified_multiple_channels.exec()

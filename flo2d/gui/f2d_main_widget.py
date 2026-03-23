@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QApplication, QFileDialog
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 

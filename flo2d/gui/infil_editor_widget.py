@@ -12,13 +12,13 @@ from collections import OrderedDict
 from itertools import chain
 from math import isnan
 
-from PyQt5.QtCore import QMetaType, QUrl
-from PyQt5.QtWidgets import QFileDialog
+from qgis.PyQt.QtCore import QMetaType, QUrl
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsLayerTreeRegistryBridge, \
     QgsMapLayer, QgsVectorFileWriter
 from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox,
                                  QInputDialog, QSpinBox, QProgressDialog,
@@ -29,7 +29,7 @@ from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 from ..geopackage_utils import GeoPackageUtils
 
 from ..user_communication import UserCommunication
-from ..utils import m_fdata
+from ..utils import m_fdata, qt_cursor_shape, qmeta_type
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 from ..misc.ssurgo_soils import SsurgoSoil
@@ -154,7 +154,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def show_global_params(self):
         self.iglobal.populate_infilglobals()
 
-        ok = self.iglobal.exec_()
+        ok = self.iglobal.exec()
         if ok:
             self.iglobal.save_imethod()
             self.write_global_params()
@@ -428,7 +428,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if imethod == 0:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
@@ -502,7 +502,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
     def calculate_green_ampt(self):
         dlg = GreenAmptDialog(self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         try:
@@ -590,11 +590,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
     def calculate_scs(self):
         dlg = SCSDialog(self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             if dlg.single_grp.isChecked():
@@ -722,7 +722,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
     def show_channel_dialog(self):
         hydcxx = self.spin_hydcxx.value()
         self.chan_dlg.set_chan_model(hydcxx)
-        ok = self.chan_dlg.exec_()
+        ok = self.chan_dlg.exec()
         if not ok:
             return
         self.chan_dlg.save_channel_params()
@@ -996,9 +996,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         # Verify if the user would like to save the intermediate calculation layers
         saveLayers = True
         answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
-                                      'Remove intermediate calculation layers?', QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
+                                      'Remove intermediate calculation layers?', self.uc.msgbox_button("Yes"),
+                                      self.uc.msgbox_button("No"))
+        if answer == self.uc.msgbox_button("Yes"):
             saveLayers = False
 
         try:
@@ -1077,9 +1077,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         temp_layers = []
         answer = QMessageBox.question(self.iface.mainWindow(), 'OSM land use',
                                       'Remove intermediate calculation layers?',
-                                      QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
+                                      self.uc.msgbox_button("Yes"),
+                                      self.uc.msgbox_button("No"))
+        if answer == self.uc.msgbox_button("Yes"):
             saveLayers = False
 
         # Create the progress Dialog
@@ -1400,11 +1400,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
                 # adding the fields
                 layer_provider = land_cover_vector.dataProvider()
-                layer_provider.addAttributes([QgsField("landuse_category", QMetaType.QString)])
-                layer_provider.addAttributes([QgsField("InitAbs", QMetaType.Double)])
-                layer_provider.addAttributes([QgsField("RTIMP", QMetaType.Double)])
-                layer_provider.addAttributes([QgsField("VegCov", QMetaType.Double)])
-                layer_provider.addAttributes([QgsField("Sat", QMetaType.QString)])
+                layer_provider.addAttributes([QgsField("landuse_category", qmeta_type("QString"))])
+                layer_provider.addAttributes([QgsField("InitAbs", qmeta_type("Double"))])
+                layer_provider.addAttributes([QgsField("RTIMP", qmeta_type("Double"))])
+                layer_provider.addAttributes([QgsField("VegCov", qmeta_type("Double"))])
+                layer_provider.addAttributes([QgsField("Sat", qmeta_type("QString"))])
                 land_cover_vector.updateFields()
 
                 # Check model's unit

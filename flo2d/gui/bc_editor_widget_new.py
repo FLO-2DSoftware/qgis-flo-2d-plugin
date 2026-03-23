@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from math import isnan
 
-from PyQt5.QtCore import QSettings, QUrl
-from PyQt5.QtGui import QColor, QDesktopServices
-from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog
+from qgis.PyQt.QtCore import QSettings, QUrl
+from qgis.PyQt.QtGui import QColor, QDesktopServices
+from qgis.PyQt.QtWidgets import QInputDialog, QApplication, QFileDialog
 from qgis._core import QgsProject, QgsFeatureRequest, QgsFeature, QgsGeometry, QgsPointXY
 from qgis._gui import QgsRubberBand
 
@@ -16,7 +16,7 @@ from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-from ..utils import is_number, m_fdata, set_BC_Border
+from ..utils import is_number, m_fdata, set_BC_Border, qt_item_role, qt_pen_style, qt_cursor_shape
 
 from ..flo2d_tools.grid_tools import get_adjacent_cell
 
@@ -365,8 +365,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if time_stage_1:
                 for cell in time_stage_1:
                     rb = QgsRubberBand(self.canvas, gt)
-                    rb.setColor(QColor(Qt.cyan))
-                    fill_color = QColor(Qt.yellow)
+                    rb.setColor(QColor("cyan"))
+                    fill_color = QColor("yellow")
                     fill_color.setAlpha(0)
                     rb.setFillColor(fill_color)
                     rb.setWidth(2)
@@ -380,8 +380,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if time_stage_2:
                 for cell in time_stage_2:
                     rb = QgsRubberBand(self.canvas, gt)
-                    rb.setColor(QColor(Qt.red))
-                    fill_color = QColor(Qt.red)
+                    rb.setColor(QColor("red"))
+                    fill_color = QColor("red")
                     fill_color.setAlpha(0)
                     rb.setFillColor(fill_color)
                     rb.setWidth(2)
@@ -633,10 +633,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             "Original Discharge",
             [self.ot, self.od],
             col=QColor("#7dc3ff"),
-            sty=Qt.DotLine,
+            sty=qt_pen_style("DotLine"),
         )
         self.plot.add_item("Current Discharge", [self.ot, self.od], col=QColor("#0018d4"))
-        self.plot.add_item("Original Mud", [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
+        self.plot.add_item("Original Mud", [self.ot, self.om], col=QColor("#cd904b"), sty=qt_pen_style("DotLine"))
         self.plot.add_item("Current Mud", [self.ot, self.om], col=QColor("#884800"))
 
     def save_inflow(self):
@@ -1455,7 +1455,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 return
 
         self.bc_type = "inflow"
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         in_inserted = self.schematize_inflows()
 
@@ -1490,7 +1490,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 return
 
         self.bc_type = "outflow"
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         out_inserted = self.schematize_outflows()
 
@@ -1526,7 +1526,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             ):
                 return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         out_inserted = self.schematize_outflows()
         in_inserted = self.schematize_inflows()
@@ -1552,7 +1552,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.uc.log_info(m)
 
     def schematize_outflows(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             self.gutils.execute("DELETE FROM outflow_cells;")
             total_inserted = 0
@@ -1625,7 +1625,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             return 0
 
     def schematize_inflows(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             del_qry = "DELETE FROM inflow_cells;"
             ins_qry = """INSERT INTO inflow_cells (inflow_fid, grid_fid)
@@ -2356,7 +2356,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self,
                 item,
@@ -2443,7 +2443,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         else:
             self.bc_type = type
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 if type == "inflow":
                     self.gutils.execute(f"DELETE FROM all_schem_bc WHERE type = 'inflow'")
                     self.gutils.execute(f"DELETE FROM inflow_cells")
@@ -2480,7 +2480,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             return
 
         self.bc_type = "outflow"
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         try:
             grid = self.lyrs.data["grid"]["qlyr"]

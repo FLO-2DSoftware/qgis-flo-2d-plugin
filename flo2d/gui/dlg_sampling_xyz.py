@@ -27,7 +27,6 @@ from qgis.PyQt.QtWidgets import (
     QFileDialog,
     QLabel,
     QProgressBar,
-    qApp,
 )
 
 from ..flo2d_tools.grid_tools import (
@@ -39,7 +38,7 @@ from ..user_communication import UserCommunication
 from ..utils import (
     second_smallest,
     set_min_max_elevs,
-    time_taken,
+    time_taken, qt_cursor_shape, qmeta_type, qt_alignment_flag,
 )
 from .ui_utils import load_ui
 
@@ -120,7 +119,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastLIDARDir", os.path.dirname(lidar_files[0]))
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             elevs = {}
             read_error = "Error reading files:\n\n"
             outside_grid, inside_grid = 0, 0
@@ -137,7 +136,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             statBar.addWidget(statusLabel, 5)
             advanceBar = QProgressBar()
             advanceBar.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
-            advanceBar.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+            advanceBar.setAlignment(qt_alignment_flag("AlignCenter") | qt_alignment_flag("AlignVCenter"))
             advanceBar.setMinimum(0)
             statBar.addWidget(advanceBar, 2)
 
@@ -199,7 +198,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             for i, line in enumerate(lines, 1):
                                 if int(i % step) == 0:
                                     advanceBar.setValue(i)
-                                    qApp.processEvents()
+                                    QApplication.processEvents()
 
                                 line = line.replace("\t", "")
                                 if n_commas == 0:  # No commas, values separated by spaces.
@@ -237,7 +236,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             self.uc.clear_bar_messages()
             statBar.removeWidget(statusLabel)
             statBar.removeWidget(advanceBar)
-            qApp.processEvents()
+            QApplication.processEvents()
             self.uc.bar_info("Updating grid elevations...")
             self.uc.log_info("Updating grid elevations...")
 
@@ -278,7 +277,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                 self.uc.show_info(read_error)
 
             if nope:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 elevs = [x[0] for x in cell_elev]
                 mini = -9999
                 mini2 = min(elevs)
@@ -341,11 +340,11 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         "Elevations from LIDAR files assigned to " + "{0:,d}".format(len(assigned)) + " cells."
                     )
 
-                ok = dlg.exec_()
+                ok = dlg.exec()
                 if not ok:
                     break
                 else:
-                    qApp.processEvents()
+                    QApplication.processEvents()
 
                     update_qry = "UPDATE grid SET elevation = ?  WHERE fid = ?;"
                     qry_values = []
@@ -366,8 +365,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         # add fields
                         pr.addAttributes(
                             [
-                                QgsField("elevation", QMetaType.Double),
-                                QgsField("grid", QMetaType.Int),
+                                QgsField("elevation", qmeta_type("Double")),
+                                QgsField("grid", qmeta_type("Int")),
                             ]
                         )
                         vl.updateFields()  # tell the vector layer to fetch changes from the provider
@@ -385,7 +384,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         vl.commitChanges()
                         QgsProject.instance().addMapLayer(vl)
 
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                         elevs = [x[0] for x in assigned]
                         mini = -9999
                         mini2 = min(elevs)
@@ -403,7 +402,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
                         try:
                             ini_time = time.time()
-                            QApplication.setOverrideCursor(Qt.WaitCursor)
+                            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                             zs = ZonalStatistics(
                                 self.gutils,
                                 self.grid,
@@ -456,7 +455,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                     # &&&&&&&&&&&&&&&&&&&&&&&&
 
                     # ini_time = time.time()
-                    # QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     #
                     # for this_cell in nope:
                     #
@@ -486,7 +485,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
                     elif dlg.assign_radio.isChecked():
                         ini_time = time.time()
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                         value = dlg.non_interpolated_value_dbox.value()
                         for this_cell in nope:
@@ -529,7 +528,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                     #     pass
 
                     # ini_time = time.time()
-                    # QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     #
                     # render_grid_elevations(self.grid, True);
                     #

@@ -15,10 +15,18 @@ from qgis.core import QgsMessageLog
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QEvent, QObject, QSize, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
+from qgis.PyQt.QtWidgets import QApplication, QTableView
+
+#Qt5
+try:
+    from qgis.PyQt.QtWidgets import QUndoCommand, QUndoStack
+# Qt6
+except ImportError:
+    from qgis.PyQt.QtGui import QUndoCommand, QUndoStack
+
 
 from ..user_communication import UserCommunication
-from ..utils import is_number
+from ..utils import is_number, qt_item_role, qt_cursor_shape, qevent_type, qt_keyboard_modifier
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("table_editor")
@@ -92,7 +100,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             QApplication.clipboard().setText(stream.getvalue())
 
     def paste(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.before_paste.emit()
         paste_str = QApplication.clipboard().text()
         rows = paste_str.split("\n")
@@ -126,7 +134,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                 ]
                 for col in range(len(columns)):
                     self.tview.model().item(sel_row + row, sel_col + col).setData(
-                        columns[col].strip(), role=Qt.EditRole
+                        columns[col].strip(), role=qt_item_role("EditRole")
                     )
             self.after_paste.emit()
             self.tview.model().dataChanged.emit(
@@ -191,8 +199,8 @@ class CommandItemEdit(QUndoCommand):
 
 class TableEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
-        if event.type() == QEvent.KeyPress:
-            if event.modifiers() & Qt.ControlModifier:
+        if event.type() == qevent_type("KeyPress"):
+            if event.modifiers() & qt_keyboard_modifier("ControlModifier"):
                 if event.key() == Qt.Key_C:
                     table_editor_widget = receiver.parent()
                     if isinstance(table_editor_widget, TableEditorWidget):
@@ -218,15 +226,15 @@ class StandardItem(QStandardItem):
     Subclass QStandardItem to reimplement setData to emit itemDataChanged.
     """
 
-    def setData(self, newValue, role=Qt.UserRole + 1):
-        if role == Qt.EditRole:
+    def setData(self, newValue, role=qt_item_role("UserRole") + 1):
+        if role == qt_item_role("EditRole"):
             oldValue = self.data(role)
             QStandardItem.setData(self, newValue, role)
             model = self.model()
             if model is not None and oldValue != newValue:
                 model.itemDataChanged.emit(self, oldValue, newValue, role)
             return
-        elif role == Qt.CheckStateRole:
+        elif role == qt_item_role("CheckStateRole"):
             oldValue = self.data(role)
             QStandardItem.setData(self, newValue, role)
             model = self.model()
@@ -264,7 +272,7 @@ class TableView(QTableView):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self,
                 item,

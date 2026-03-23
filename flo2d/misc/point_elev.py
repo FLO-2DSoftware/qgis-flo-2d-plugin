@@ -14,7 +14,7 @@ import tempfile
 import timeit
 import warnings
 
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 
 sys.path.append(os.path.dirname(__file__))
 from affine import Affine

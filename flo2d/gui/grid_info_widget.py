@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMenu
+from qgis.PyQt.QtWidgets import QMenu
 from qgis._core import QgsVectorLayerJoinInfo
 # FLO-2D Preprocessor tools for QGIS
 # Copyright Â© 2016 Lutra Consulting for FLO-2D
@@ -22,7 +22,7 @@ from ..utils import (
     is_number,
     m_fdata,
     second_smallest,
-    set_min_max_elevs, set_min_max_n_values,
+    set_min_max_elevs, set_min_max_n_values, qt_cursor_shape,
 )
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
@@ -154,7 +154,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     self.n_cells = number_of_elements(self.gutils, self.grid)
                     self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
 
-                    self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor(Qt.yellow))
+                    self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor("yellow"))
                 else:
                     self.idEdit.setText("")
                     self.elevEdit.setText("")
@@ -688,7 +688,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
 
     def find_cell(self, cell=None):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -705,7 +705,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                         n_cells = number_of_elements(self.gutils, grid)
                         if n_cells > 0 and cell > 0:
                             if cell <= n_cells:
-                                self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                                self.lyrs.show_feat_rubber(grid.id(), cell, QColor("yellow"))
                                 feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                                 x, y = feat.geometry().centroid().asPoint()
                                 center_canvas(self.iface, x, y)

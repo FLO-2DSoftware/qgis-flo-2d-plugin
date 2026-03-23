@@ -12,15 +12,23 @@ from qgis._core import QgsFeatureRequest
 from .ui_utils import load_ui, set_icon, center_canvas, zoom, zoom_cell_buffer
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import TimeSeriesDelegate, is_true, FloatDelegate
+from ..utils import TimeSeriesDelegate, is_true, FloatDelegate, qt_item_role, qt_cursor_shape, qkeysequence_standard_key
 import csv
 import io
 import os
 
-from PyQt5.QtCore import Qt, QSettings, pyqtSignal
-from PyQt5.QtGui import QColor, QKeySequence, QDoubleValidator
-from PyQt5.QtWidgets import QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
-    QFileDialog, QUndoStack
+from qgis.PyQt.QtCore import Qt, QSettings, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QKeySequence, QDoubleValidator
+from qgis.PyQt.QtWidgets import QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
+    QFileDialog
+
+#Qt5
+try:
+    from qgis.PyQt.QtWidgets import QUndoStack
+# Qt6
+except ImportError:
+    from qgis.PyQt.QtGui import QUndoStack
+
 from qgis._gui import QgsDockWidget
 
 uiDialog, qtBaseClass = load_ui("inlet_attributes")
@@ -113,7 +121,7 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -494,7 +502,7 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
         dlg_external_inflow.setWindowTitle("Inlet/Junction " + name)
-        save = dlg_external_inflow.exec_()
+        save = dlg_external_inflow.exec()
         if save:
             inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
             inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
@@ -537,7 +545,7 @@ class InletAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_inlets_junctions_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -549,7 +557,7 @@ class InletAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_inlets_junctions_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -560,7 +568,7 @@ class InletAttributes(qtBaseClass, uiDialog):
         Function to find a junction and populate the data
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -578,7 +586,7 @@ class InletAttributes(qtBaseClass, uiDialog):
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
-                    self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), self.current_node, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), self.current_node, QColor("red"))
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -721,7 +729,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1203,7 +1211,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         tidal_curve_name = self.tidal_curve.currentText()
         dlg = OutfallTidalCurveDialog(self.iface, tidal_curve_name)
         while True:
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if ok:
                 if dlg.values_ok:
                     dlg.save_curve()
@@ -1233,7 +1241,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         time_series_name = self.time_series.currentText()
         dlg = OutfallTimeSeriesDialog(self.iface, time_series_name)
         while True:
-            save = dlg.exec_()
+            save = dlg.exec()
             if save:
                 if dlg.values_ok:
                     dlg.save_time_series()
@@ -1264,7 +1272,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_outlets_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -1276,7 +1284,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_outlets_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -1287,7 +1295,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         Function to find a junction and populate the data
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -1305,7 +1313,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
-                    self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), self.current_node, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), self.current_node, QColor("red"))
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -1402,7 +1410,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1478,7 +1486,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_pumps_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -1490,7 +1498,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_pumps_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -1501,7 +1509,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         Function to find a pump and populate the data
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -1515,7 +1523,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Pump not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_pumps_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -1612,7 +1620,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1701,7 +1709,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_orifices_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -1713,7 +1721,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_orifices_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -1724,7 +1732,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         Function to find an orifice and populate the data
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -1738,7 +1746,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Orifice not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_orifices_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -1845,7 +1853,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -1940,7 +1948,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -1952,7 +1960,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -1963,7 +1971,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
         Function to find a weir and populate the data
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -1977,7 +1985,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Weir not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -2114,7 +2122,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -2234,7 +2242,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -2246,7 +2254,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -2257,7 +2265,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         Function to find a conduit and populate the data
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -2271,7 +2279,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
                 self.uc.log_info("Conduit not found!")
                 return
 
-            self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor(Qt.red))
+            self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor("red"))
             feat = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -2413,7 +2421,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         self.clear_rubber()
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), fid, QColor("red"))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -2721,7 +2729,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
 
         dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
         dlg_external_inflow.setWindowTitle("Storage Units " + name)
-        save = dlg_external_inflow.exec_()
+        save = dlg_external_inflow.exec()
         if save:
             inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
             inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
@@ -2795,7 +2803,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         tabular_curve_name = self.curve_name.currentText()
         dlg = StorageUnitTabularCurveDialog(self.iface, tabular_curve_name)
         while True:
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if ok:
                 if dlg.values_ok:
                     dlg.save_curve()
@@ -2826,7 +2834,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_storage_units_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -2838,7 +2846,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         """
         currentCell = next(self.user_swmm_storage_units_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
         if currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -2849,7 +2857,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         Function to find a storage unit and populate the data
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
@@ -2867,7 +2875,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
-                    self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), self.current_node, QColor(Qt.red))
+                    self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), self.current_node, QColor("red"))
                     feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
@@ -3010,7 +3018,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
     def select_inflow_pattern(self):
         pattern_name = self.swmm_inflow_pattern_cbo.currentText()
         dlg_inflow_pattern = InflowPatternDialog(self.iface, pattern_name)
-        save = dlg_inflow_pattern.exec_()
+        save = dlg_inflow_pattern.exec()
 
         pattern_name = dlg_inflow_pattern.get_name()
         if pattern_name != "":
@@ -3031,7 +3039,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         time_series_name = self.swmm_time_series_cbo.currentText()
         dlg = InflowTimeSeriesDialog(self.iface, time_series_name)
         while True:
-            save = dlg.exec_()
+            save = dlg.exec()
             if save:
                 if dlg.values_ok:
                     dlg.save_time_series()
@@ -3206,7 +3214,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                             if col == 2:
                                 data = str(data)
                             item = QTableWidgetItem()
-                            item.setData(Qt.DisplayRole, data)
+                            item.setData(qt_item_role("DisplayRole"), data)
                             self.inflow_time_series_tblw.setItem(row_number, col, item)
 
                     self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)
@@ -3394,7 +3402,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         # item.setData(Qt.DisplayRole, d)
 
         # Code for empty item
-        item.setData(Qt.DisplayRole, "")
+        item.setData(qt_item_role("DisplayRole"), "")
 
         self.inflow_time_series_tblw.setItem(row_number, 0, item)
 
@@ -3407,11 +3415,11 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
 
         # Code for starting time equal 00:00
         t = "00:00"
-        item.setData(Qt.DisplayRole, t)
+        item.setData(qt_item_role("DisplayRole"), t)
         self.inflow_time_series_tblw.setItem(row_number, 1, item)
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.inflow_time_series_tblw.setItem(row_number, 2, item)
 
         self.inflow_time_series_tblw.selectRow(row_number)
@@ -3439,7 +3447,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             QApplication.clipboard().setText(stream.getvalue())
 
     def paste(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # Get the clipboard text
         clipboard_text = QApplication.clipboard().text()
@@ -3488,9 +3496,9 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.inflow_time_series_tblw.setRowCount(0)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)
@@ -3537,7 +3545,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
             self.multipliers_tblw.setRowCount(SIMUL)
             for i in range(SIMUL):
                 itm = QTableWidgetItem()
-                itm.setData(Qt.EditRole, "1.0")
+                itm.setData(qt_item_role("EditRole"), "1.0")
                 self.multipliers_tblw.setItem(i, 0, itm)
         else:
             select_sql = "SELECT * FROM swmm_inflow_patterns WHERE pattern_name = ?"
@@ -3547,7 +3555,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
                     self.name_le.setText(row[1])
                     self.description_le.setText(row[2])
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, row[4])
+                    itm.setData(qt_item_role("EditRole"), row[4])
                     self.multipliers_tblw.setItem(i, 0, itm)
             else:
                 self.name_le.setText(self.pattern_name)
@@ -3555,7 +3563,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
                 self.multipliers_tblw.setRowCount(SIMUL)
                 for i in range(SIMUL):
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, "1.0")
+                    itm.setData(qt_item_role("EditRole"), "1.0")
                     self.multipliers_tblw.setItem(i, 0, itm)
 
     def save_pattern(self):
@@ -3612,7 +3620,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
             QApplication.clipboard().setText(clipboard_text)
 
     def paste(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # Get the clipboard text
         clipboard_text = QApplication.clipboard().text()
@@ -3674,9 +3682,9 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
             table_widget.removeRow(row)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)
@@ -3727,7 +3735,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_time_series_dialog(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.loading = True
         if self.time_series_name == "":
             self.use_table_radio.setChecked(True)
@@ -3789,7 +3797,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                             if col == 2: # Value
                                 data = str(data)
                             item = QTableWidgetItem()
-                            item.setData(Qt.DisplayRole, data)
+                            item.setData(qt_item_role("DisplayRole"), data)
                             self.outfall_time_series_tblw.setItem(row_number, col, item)
 
                     # self.outfall_time_series_tblw.sortItems(0, Qt.AscendingOrder)
@@ -3815,7 +3823,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         try:
             pass
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.uc.show_error("ERROR 140220.0807: reading time series data file failed!", e)
             QApplication.restoreOverrideCursor()
             return
@@ -3933,7 +3941,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         # item.setData(Qt.DisplayRole, d)
 
         # Code for empty item
-        item.setData(Qt.DisplayRole, "")
+        item.setData(qt_item_role("DisplayRole"), "")
 
         self.outfall_time_series_tblw.setItem(row_number, 0, item)
 
@@ -3946,11 +3954,11 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
 
         # Code for starting time equal 00:00
         t = "00:00"
-        item.setData(Qt.DisplayRole, t)
+        item.setData(qt_item_role("DisplayRole"), t)
         self.outfall_time_series_tblw.setItem(row_number, 1, item)
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.outfall_time_series_tblw.setItem(row_number, 2, item)
 
         self.outfall_time_series_tblw.selectRow(row_number)
@@ -3978,7 +3986,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             QApplication.clipboard().setText(stream.getvalue())
 
     def paste(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # Get the clipboard text
         clipboard_text = QApplication.clipboard().text()
@@ -4027,9 +4035,9 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.outfall_time_series_tblw.setRowCount(0)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)
@@ -4128,11 +4136,11 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
         row_number = self.curve_tblw.rowCount() - 1
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.curve_tblw.setItem(row_number, 0, item)
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
+        item.setData(qt_item_role("DisplayRole"), "0.0")
         self.curve_tblw.setItem(row_number, 1, item)
 
         self.curve_tblw.selectRow(row_number)
@@ -4160,7 +4168,7 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
 
         # Load file into table:
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             with open(curve_file, "r") as f1:
                 lines = f1.readlines()
             if len(lines) > 0:
@@ -4187,7 +4195,7 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             self.uc.show_error("ERROR 090422.0435: importing curve file failed!.\n", e)
             QApplication.restoreOverrideCursor()
 
@@ -4216,7 +4224,7 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
 
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(curve_file))
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         with open(curve_file, "w") as tfile:
             tfile.write("EPASWMM Curve Data")
             tfile.write("\n" + self.description_le.text())
@@ -4254,7 +4262,7 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
             QApplication.clipboard().setText(stream.getvalue())
 
     def paste(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # Get the clipboard text
         clipboard_text = QApplication.clipboard().text()
@@ -4303,9 +4311,9 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
         self.curve_tblw.setRowCount(0)
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
+        if event.matches(qkeysequence_standard_key("Copy")):
             self.copy_selection()
-        elif event.matches(QKeySequence.Paste):
+        elif event.matches(qkeysequence_standard_key("Paste")):
             self.paste()
         else:
             super().keyPressEvent(event)

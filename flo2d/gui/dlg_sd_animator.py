@@ -2,10 +2,10 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib import patches
 import numpy as np
-from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QWidget
+from qgis.PyQt.QtWidgets import QDockWidget, QVBoxLayout, QWidget
 from qgis._core import QgsTemporalController, QgsTemporalNavigationObject, QgsMessageLog
 from qgis.core import QgsProject, QgsDateTimeRange
-from PyQt5.QtCore import QDateTime, Qt
+from qgis.PyQt.QtCore import QDateTime, Qt
 
 
 class SDAnimator(QDockWidget):

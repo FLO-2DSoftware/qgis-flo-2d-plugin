@@ -20,6 +20,7 @@ from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsD
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui, set_icon
+from ..utils import qt_cursor_shape, qdialogbuttonbox_button
 
 uiDialog, qtBaseClass = load_ui("hazus")
 
@@ -36,7 +37,7 @@ class HazusDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.current_lyr = None
 
-        self.hazus_buttonBox.button(QDialogButtonBox.Save).setText("Compute")
+        self.hazus_buttonBox.button(qdialogbuttonbox_button("Save")).setText("Compute")
 
         self.setup_layers_comboxes()
         self.setup_statistics()
@@ -164,14 +165,14 @@ class HazusDialog(qtBaseClass, uiDialog):
 
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
             return
         try:
             pass
-            # QApplication.setOverrideCursor(Qt.WaitCursor)
+            # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             # res = dlg.probe_elevation()
             # QApplication.restoreOverrideCursor()
             # if res:
@@ -186,7 +187,7 @@ class HazusDialog(qtBaseClass, uiDialog):
     #             self.uc.bar_warn("WARNING 060319.1628: There is no grid! Please create it before running tool.")
     #             return
     #         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
-    #         ok = dlg.exec_()
+    #         ok = dlg.exec()
     #         if ok:
     #             pass
     #         else:
@@ -265,7 +266,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.uc.log_info(
                 "WARNING 060319.1632: Assignment of building areas to building polygons. Not implemented yet!"
             )
-            # QApplication.setOverrideCursor(Qt.WaitCursor)
+            # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             # grid_lyr = self.lyrs.data['grid']['qlyr']
             # user_building_areas_lyr = self.lyrs.data['buildings_areas']['qlyr']
             # evaluate_spatial_buildings_adjustment_factor(self.gutils, grid_lyr, user_building_areas_lyr)
@@ -426,7 +427,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             while repeat is True:
                 QApplication.restoreOverrideCursor()
                 dlg = SamplingBuildingsElevationsDialog(self.con, self.iface, self.lyrs)
-                ok = dlg.exec_()
+                ok = dlg.exec()
                 if ok:
                     pass
                 else:
@@ -437,7 +438,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                 mode = dlg.calc_cbo.currentText()
                 ID_field = dlg.ID_field_cbo.currentText()
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                 # Loop thru all features of layer of buildings to create list of
                 # elevations (mean, min, or max) for groups with same building id:
@@ -610,7 +611,7 @@ class HazusDialog(qtBaseClass, uiDialog):
     def compute_flow_depths(self):
         # try:
         building_name = "Intersection"
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         lyr = self.lyrs.get_layer_by_name(building_name, group=self.lyrs.group).layer()
         lyr.startEditing()
         fts = lyr.getFeatures()
@@ -691,7 +692,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                                 """
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             self.gutils.execute(del_statistics)
             cur = self.gutils.con.cursor()

@@ -17,7 +17,7 @@ from operator import itemgetter
 from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
-from PyQt5.QtCore import QMetaType
+from qgis.PyQt.QtCore import QMetaType
 from qgis._core import QgsField, QgsVectorDataProvider, QgsMessageLog
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from qgis.core import (
@@ -43,7 +43,7 @@ from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QProgressDialog
 
 from ..errors import Flo2dError, GeometryValidityErrors
 from ..gui.ui_utils import center_canvas, zoom_show_n_cells
-from ..utils import get_file_path, is_number
+from ..utils import get_file_path, is_number, qt_cursor_shape, qt_window_modality, qt_pen_style, qmeta_type
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None
@@ -436,7 +436,7 @@ class ZonalStatisticsOther(object):
 def debugMsg(msg_string):
     msgBox = QMessageBox()
     msgBox.setText(msg_string)
-    msgBox.exec_()
+    msgBox.exec()
 
 
 def show_error(msg):
@@ -461,7 +461,7 @@ def show_error(msg):
         + "On line "
         + line,
     )
-    ms_box.exec_()
+    ms_box.exec()
     ms_box.show()
 
 
@@ -1240,7 +1240,7 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
 
     prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100, iface.mainWindow())
     prog.setWindowTitle("FLO-2D")
-    prog.setWindowModality(Qt.WindowModal)
+    prog.setWindowModality(qt_window_modality("WindowModal"))
     prog.setMinimumDuration(0)
     prog.setValue(0)
     QApplication.processEvents()
@@ -1417,7 +1417,7 @@ def add_col_and_row_fields(grid):
     try:
         caps = grid.dataProvider().capabilities()
         if caps & QgsVectorDataProvider.AddAttributes:
-            grid.dataProvider().addAttributes([QgsField("col", QMetaType.Int), QgsField("row", QMetaType.Int)])
+            grid.dataProvider().addAttributes([QgsField("col", qmeta_type("Int")), QgsField("row", QMetaType.Int)])
             grid.updateFields()
         return True
     except:
@@ -1708,7 +1708,7 @@ def evaluate_arfwrf(gutils, grid, areas):
                 + "references to the NULL values may affect its related FLO-2D funtionality.",
             )
 
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
 
         return True
@@ -3068,7 +3068,7 @@ def render_grid_subdomains(grid_layer, render, unique_subdomains):
             myRangeList = []
             for subdomain_id, color in subdomain_colors.items():
                 symbol = QgsSymbol.defaultSymbol(grid_layer.geometryType())
-                symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+                symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
                 symbol.setColor(QColor(color))
                 try:
                     symbol.setSize(1)  # Symbol size here
@@ -3146,8 +3146,8 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
         myRangeList = []
         if mini == -9999:
             symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
-            symbol.setColor(QColor(Qt.lightGray))
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
+            symbol.setColor(QColor("lightGray"))
             try:
                 symbol.setSize(1)
             except:
@@ -3164,7 +3164,7 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
 
         for i in range(0, len(colors) - 2):
             symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
             symbol.setColor(QColor(colors[i]))
             try:
                 symbol.setSize(1)
@@ -3181,7 +3181,7 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
             high = high + step
 
         symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())
-        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
         symbol.setColor(QColor(colors[len(colors) - 1]))
         try:
             symbol.setSize(1)
@@ -3228,8 +3228,8 @@ def render_grid_mannings(grid_lyr, show_nodata, mini, mini2, maxi):
         myRangeList = []
         if mini == -9999:
             symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
-            symbol.setColor(QColor(Qt.lightGray))
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
+            symbol.setColor(QColor("lightGray"))
             try:
                 symbol.setSize(1)
             except:
@@ -3246,7 +3246,7 @@ def render_grid_mannings(grid_lyr, show_nodata, mini, mini2, maxi):
 
         for i in range(0, len(colors) - 2):
             symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
             symbol.setColor(QColor(colors[i]))
             try:
                 symbol.setSize(1)
@@ -3263,7 +3263,7 @@ def render_grid_mannings(grid_lyr, show_nodata, mini, mini2, maxi):
             high = high + step
 
         symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
-        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
         symbol.setColor(QColor(colors[len(colors) - 1]))
         try:
             symbol.setSize(1)
@@ -3310,8 +3310,8 @@ def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
         myRangeList = []
         if mini == -9999:
             symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
-            symbol.setColor(QColor(Qt.lightGray))
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
+            symbol.setColor(QColor("lightGray"))
             try:
                 symbol.setSize(1)
             except:
@@ -3328,7 +3328,7 @@ def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
 
         for i in range(0, len(colors) - 2):
             symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
             symbol.setColor(QColor(colors[i]))
             try:
                 symbol.setSize(1)
@@ -3345,7 +3345,7 @@ def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
             high = high + step
 
         symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
-        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(qt_pen_style("NoPen")))
         symbol.setColor(QColor(colors[len(colors) - 1]))
         try:
             symbol.setSize(1)
@@ -3374,9 +3374,9 @@ def render_grid(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
     prj = QgsProject.instance()
     prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
 
-def find_this_cell(iface, lyrs, uc, gutils, cell, color=Qt.yellow, zoom_in=False, clear_previous=True):
+def find_this_cell(iface, lyrs, uc, gutils, cell, color=QColor("yellow"), zoom_in=False, clear_previous=True):
     try:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         grid = lyrs.data["grid"]["qlyr"]
         if grid is not None:
             if grid:

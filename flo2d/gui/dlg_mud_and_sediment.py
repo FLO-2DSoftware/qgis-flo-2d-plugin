@@ -18,7 +18,7 @@ from qgis.PyQt.QtWidgets import (
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import FloatDelegate
+from ..utils import FloatDelegate, qt_item_role, qt_cursor_shape
 from .ui_utils import load_ui, set_icon
 from ..flo2d_tools.grid_tools import number_of_elements
 
@@ -526,7 +526,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 has_tal_cells = True
 
             if has_tal_res or has_tal_cells:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_warn("Schematized tailings data has been detected! "
                                   "The schematized tailings data will be deleted.")
                 self.uc.log_info("Schematized tailings data has been detected! "
@@ -549,7 +549,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 has_water_res = True
 
             if has_water_res:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_warn("Schematized reservoir data has been detected! "
                                   "The schematized reservoirs data will be deleted.")
                 self.uc.log_info("Schematized reservoir data has been detected! "
@@ -855,13 +855,13 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_size_fraction_tblw.setCellWidget(row_number, 0, combo)
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, 10)
+        item.setData(qt_item_role("DisplayRole"), 10)
         self.sed_size_fraction_tblw.setItem(row_number, 1, item)
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, 0.025)
+        item.setData(qt_item_role("DisplayRole"), 0.025)
         self.sed_size_fraction_tblw.setItem(row_number, 2, item)
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, str(max_dist_fid + 1))
+        item.setData(qt_item_role("DisplayRole"), str(max_dist_fid + 1))
         self.sed_size_fraction_tblw.setItem(row_number, 3, item)
 
         self.sed_size_fraction_tblw.selectRow(row_number)
@@ -879,16 +879,16 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         row_number = self.sed_rating_curve_tblw.rowCount() - 1
 
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, 0)
+        item.setData(qt_item_role("DisplayRole"), 0)
         self.sed_rating_curve_tblw.setItem(row_number, 1, item)
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, 1)
+        item.setData(qt_item_role("DisplayRole"), 1)
         self.sed_rating_curve_tblw.setItem(row_number, 2, item)
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, 0)
+        item.setData(qt_item_role("DisplayRole"), 0)
         self.sed_rating_curve_tblw.setItem(row_number, 3, item)
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, str(max_dist_fid + 1))
+        item.setData(qt_item_role("DisplayRole"), str(max_dist_fid + 1))
         self.sed_rating_curve_tblw.setItem(row_number, 4, item)
 
         self.sed_rating_curve_tblw.selectRow(row_number)
@@ -954,7 +954,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             for row_number, cell in enumerate(sed_group_cells):
                 self.sed_size_grid_tblw.insertRow(row_number)
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, cell[0])
+                item.setData(qt_item_role("DisplayRole"), cell[0])
                 self.sed_size_grid_tblw.setItem(row_number, 0, item)
         self.sed_size_grid_tblw.blockSignals(False)
 
@@ -981,13 +981,13 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 combo.setCurrentIndex(sf[0] - 1)
 
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, sf[1])
+                item.setData(qt_item_role("DisplayRole"), sf[1])
                 self.sed_size_fraction_tblw.setItem(row_number, 1, item)
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, sf[2])
+                item.setData(qt_item_role("DisplayRole"), sf[2])
                 self.sed_size_fraction_tblw.setItem(row_number, 2, item)
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, sf[3])
+                item.setData(qt_item_role("DisplayRole"), sf[3])
                 self.sed_size_fraction_tblw.setItem(row_number, 3, item)
 
                 if row_number == 0:
@@ -1028,24 +1028,24 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     for grid in grids:
                         self.sed_rating_curve_tblw.insertRow(row_number)
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, grid[0])
+                        item.setData(qt_item_role("DisplayRole"), grid[0])
                         # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         self.sed_rating_curve_tblw.setItem(row_number, 0, item)
 
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, rc[1])
+                        item.setData(qt_item_role("DisplayRole"), rc[1])
                         self.sed_rating_curve_tblw.setItem(row_number, 1, item)
 
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, rc[2])
+                        item.setData(qt_item_role("DisplayRole"), rc[2])
                         self.sed_rating_curve_tblw.setItem(row_number, 2, item)
 
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, rc[3])
+                        item.setData(qt_item_role("DisplayRole"), rc[3])
                         self.sed_rating_curve_tblw.setItem(row_number, 3, item)
 
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, rc[4])
+                        item.setData(qt_item_role("DisplayRole"), rc[4])
                         self.sed_rating_curve_tblw.setItem(row_number, 4, item)
 
                 if row_number == 0:
@@ -1070,7 +1070,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             for row_number, cell in enumerate(sed_rigid_cells):
                 self.sed_rigid_nodes_tblw.insertRow(row_number)
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, cell[0])
+                item.setData(qt_item_role("DisplayRole"), cell[0])
                 self.sed_rigid_nodes_tblw.setItem(row_number, 0, item)
         self.sed_rigid_nodes_tblw.blockSignals(False)
 
@@ -1090,7 +1090,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     n_rows = self.sed_size_grid_tblw.rowCount()
                     self.sed_size_grid_tblw.insertRow(n_rows)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, grid)
+                    itm.setData(qt_item_role("EditRole"), grid)
                     self.sed_size_grid_tblw.setItem(n_rows, 0, itm)
                     self.sed_size_grid_tblw.selectRow(n_rows)
                     self.sed_size_grid_tblw.setFocus()
@@ -1108,7 +1108,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     n_rows = self.sed_rigid_nodes_tblw.rowCount()
                     self.sed_rigid_nodes_tblw.insertRow(n_rows)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, grid)
+                    itm.setData(qt_item_role("EditRole"), grid)
                     self.sed_rigid_nodes_tblw.setItem(n_rows, 0, itm)
                     self.sed_rigid_nodes_tblw.selectRow(n_rows)
                     self.sed_rigid_nodes_tblw.setFocus()
@@ -1123,10 +1123,10 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             self.sed_size_fraction_dp_tblw.insertRow(n_rows)
 
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, "0.0")
+            item.setData(qt_item_role("DisplayRole"), "0.0")
             self.sed_size_fraction_dp_tblw.setItem(n_rows, 0, item)
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, "0.0")
+            item.setData(qt_item_role("DisplayRole"), "0.0")
             self.sed_size_fraction_dp_tblw.setItem(n_rows, 1, item)
 
             self.sed_size_fraction_dp_tblw.selectRow(n_rows)
@@ -1150,10 +1150,10 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     self.sed_rating_curve_dp_tblw.insertRow(n_rows)
 
                     item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, "0.0")
+                    item.setData(qt_item_role("DisplayRole"), "0.0")
                     self.sed_rating_curve_dp_tblw.setItem(n_rows, 0, item)
                     item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, "0.0")
+                    item.setData(qt_item_role("DisplayRole"), "0.0")
                     self.sed_rating_curve_dp_tblw.setItem(n_rows, 1, item)
 
                     self.sed_rating_curve_dp_tblw.selectRow(n_rows)

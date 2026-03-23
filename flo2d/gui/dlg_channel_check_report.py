@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # FLO-2D Preprocessor tools for QGIS
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis._core import QgsFeatureRequest
 
 # This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ class ChannelCheckReportDialog(qtBaseClass, uiDialog):
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
     def show_next(self):
         """
@@ -69,7 +69,7 @@ class ChannelCheckReportDialog(qtBaseClass, uiDialog):
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
     def show_grid(self):
         """
@@ -89,6 +89,6 @@ class ChannelCheckReportDialog(qtBaseClass, uiDialog):
         x, y = self.currentCell.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-        self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+        self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
 

@@ -27,22 +27,28 @@ from heapq import nsmallest
 from itertools import filterfalse
 from math import ceil
 
-from qgis.PyQt.QtCore import QRegExp, Qt
-from qgis.PyQt.QtGui import QRegExpValidator
+from qgis.PyQt.QtCore import QRegularExpression, Qt, QEvent, QMetaType
+from qgis.PyQt.QtGui import QRegularExpressionValidator, QPainter, QKeySequence, QTextCursor
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QItemDelegate,
     QLineEdit,
     QMessageBox,
     QStyledItemDelegate,
+    QToolButton,
+    QFrame,
+    QDialogButtonBox,
+    QDialog,
+    QFileDialog,
+    QSizePolicy
 )
 
 class NumericDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(NumericDelegate, self).createEditor(parent, option, index)
         if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[0-9]+.4[0-9]")
-            validator = QRegExpValidator(reg_ex, editor)
+            reg_ex = QRegularExpression("[0-9]+.4[0-9]")
+            validator = QRegularExpressionValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor
 
@@ -63,16 +69,16 @@ class NumericDelegate2(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(NumericDelegate2, self).createEditor(parent, option, index)
         if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[0-9]?[0-9]*[.][0-5][0-9]")
-            validator = QRegExpValidator(reg_ex, editor)
+            reg_ex = QRegularExpression("[0-9]?[0-9]*[.][0-5][0-9]")
+            validator = QRegularExpressionValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor
 
     def paint(self, painter, option, index):
-        value = index.model().data(index, Qt.EditRole)
+        value = index.model().data(index, qt_item_role("EditRole"))
         try:
             number = float(value)
-            painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 2))
+            painter.drawText(option.rect, qt_alignment_flag("AlignLeft"), "{:.{}f}".format(number, 2))
         except:
             QStyledItemDelegate.paint(self, painter, option, index)
 
@@ -82,8 +88,8 @@ class HourDelegate(QStyledItemDelegate):
         editor = super(HourDelegate, self).createEditor(parent, option, index)
         if index.column() == 0:
             if isinstance(editor, QLineEdit):
-                reg_ex = QRegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
-                validator = QRegExpValidator(reg_ex, editor)
+                reg_ex = QRegularExpression("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+                validator = QRegularExpressionValidator(reg_ex, editor)
                 editor.setValidator(validator)
         return editor
 
@@ -111,18 +117,18 @@ class TimeSeriesDelegate(QStyledItemDelegate):
         editor = super(TimeSeriesDelegate, self).createEditor(parent, option, index)
         if index.column() == 0:
             if isinstance(editor, QLineEdit):
-                reg_ex = QRegExp("^$|^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\\d\\d$")
-                validator = QRegExpValidator(reg_ex, editor)
+                reg_ex = QRegularExpression("^$|^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\\d\\d$")
+                validator = QRegularExpressionValidator(reg_ex, editor)
                 editor.setValidator(validator)
         if index.column() == 1:
             if isinstance(editor, QLineEdit):
-                reg_ex = QRegExp("^$|^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
-                validator = QRegExpValidator(reg_ex, editor)
+                reg_ex = QRegularExpression("^$|^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+                validator = QRegularExpressionValidator(reg_ex, editor)
                 editor.setValidator(validator)
         if index.column() == 2:
             if isinstance(editor, QLineEdit):
-                reg_ex = QRegExp("^$|^[0-9]{1,11}(?:\\.[0-9]{1,3})?$")
-                validator = QRegExpValidator(reg_ex, editor)
+                reg_ex = QRegularExpression("^$|^[0-9]{1,11}(?:\\.[0-9]{1,3})?$")
+                validator = QRegularExpressionValidator(reg_ex, editor)
                 editor.setValidator(validator)
         return editor
 
@@ -135,16 +141,16 @@ class FloatDelegate(QItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(FloatDelegate, self).createEditor(parent, option, index)
         if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[^a-zA-Z!·$%&/()=?¿><;:_¡^*][0-9]*\\.?[0-9]*")
-            validator = QRegExpValidator(reg_ex, editor)
+            reg_ex = QRegularExpression("[^a-zA-Z!·$%&/()=?¿><;:_¡^*][0-9]*\\.?[0-9]*")
+            validator = QRegularExpressionValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor
 
     def paint(self, painter, option, index):
-        value = index.model().data(index, Qt.EditRole)
+        value = index.model().data(index, qt_item_role("EditRole"))
         try:
             number = float(value)
-            painter.drawText(option.rect, Qt.AlignLeft, "{.3f}".format(number, self.nDecimals))
+            painter.drawText(option.rect, qt_alignment_flag("AlignLeft"), "{.3f}".format(number, self.nDecimals))
         except:
             QItemDelegate.paint(self, painter, option, index)
 
@@ -229,7 +235,7 @@ def m_fdata(model, i, j):
     """
     Return float of model data at index i, j. If the data cannot be converted to float, return NaN.
     """
-    d = model.data(model.index(i, j), Qt.DisplayRole)
+    d = model.data(model.index(i, j), qt_item_role("DisplayRole"))
     if is_number(d):
         return float(d)
     else:
@@ -342,7 +348,7 @@ def Msge(msg_string, icon):
     elif icon == "Warning":
         msgBox.setIcon(QMessageBox.Warning)
     msgBox.setText(msg_string)
-    msgBox.exec_()
+    msgBox.exec()
 
 
 def copy_tablewidget_selection(tablewidget):
@@ -457,3 +463,180 @@ def get_flo2dpro_release_date(file_path):
     date_str_dict = date.strftime("%Y-%m-%d")
 
     return date_str_dict
+
+def qt_item_role(name):
+    """
+    Cross-compatible Qt item data role lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "ItemDataRole"):  # Qt6
+        return getattr(Qt.ItemDataRole, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_pen_style(name):
+    """
+    Cross-compatible Qt pen style lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "PenStyle"):  # Qt6
+        return getattr(Qt.PenStyle, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_cursor_shape(name):
+    """
+    Cross-compatible Qt cursor shape lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "CursorShape"):  # Qt6
+        return getattr(Qt.CursorShape, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_toolbutton_popup_mode(name):
+    """
+    Cross-compatible QToolButton popup mode lookup for Qt5/Qt6.
+    """
+    if hasattr(QToolButton, "ToolButtonPopupMode"):  # Qt6
+        return getattr(QToolButton.ToolButtonPopupMode, name)
+    return getattr(QToolButton, name)  # Qt5
+
+def qt_window_modality(name):
+    """
+    Cross-compatible Qt window modality lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "WindowModality"):  # Qt6
+        return getattr(Qt.WindowModality, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_window_type(name):
+    """
+    Cross-compatible Qt window type / flag lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "WindowType"):  # Qt6
+        return getattr(Qt.WindowType, name)
+    return getattr(Qt, name)  # Qt5
+
+def qframe_shape(name):
+    """
+    Cross-compatible QFrame shape lookup for Qt5/Qt6.
+    """
+    if hasattr(QFrame, "Shape"):  # Qt6
+        return getattr(QFrame.Shape, name)
+    return getattr(QFrame, name)  # Qt5
+
+def qt_widget_attribute(name):
+    """
+    Cross-compatible Qt widget attribute lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "WidgetAttribute"):  # Qt6
+        return getattr(Qt.WidgetAttribute, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_alignment_flag(name):
+    """
+    Cross-compatible Qt alignment flag lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "AlignmentFlag"):  # Qt6
+        return getattr(Qt.AlignmentFlag, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_check_state(name):
+    """
+    Cross-compatible Qt check state lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "CheckState"):  # Qt6
+        return getattr(Qt.CheckState, name)
+    return getattr(Qt, name)  # Qt5
+
+def qevent_type(name):
+    """
+    Cross-compatible QEvent type lookup for Qt5/Qt6.
+    """
+    if hasattr(QEvent, "Type"):  # Qt6
+        return getattr(QEvent.Type, name)
+    return getattr(QEvent, name)  # Qt5
+
+def qt_item_flag(name):
+    """
+    Cross-compatible Qt item flag lookup for Qt5/Qt6.
+    """
+    if hasattr(Qt, "ItemFlag"):  # Qt6
+        return getattr(Qt.ItemFlag, name)
+    return getattr(Qt, name)  # Qt5
+
+def qt_dock_widget_area(name):
+    """
+    Qt5/Qt6-safe access to dock area enum members by name.
+    """
+    if hasattr(Qt, "DockWidgetArea"):  # Qt6
+        return getattr(Qt.DockWidgetArea, name)
+    return getattr(Qt, name)  # Qt5
+
+def dock_area_from_int(value):
+    """
+    Convert stored QSettings integer back to a dock area enum.
+    """
+    if hasattr(Qt, "DockWidgetArea"):  # Qt6
+        return Qt.DockWidgetArea(value)
+    return value  # Qt5 accepts the old value style
+
+def qdialogbuttonbox_button(name):
+    """
+    Cross-compatible QDialogButtonBox button lookup for Qt5/Qt6.
+    """
+    if hasattr(QDialogButtonBox, "StandardButton"):  # Qt6
+        return getattr(QDialogButtonBox.StandardButton, name)
+    return getattr(QDialogButtonBox, name)  # Qt5
+
+def qmeta_type(name):
+    """
+    Cross-compatible QMetaType.Type lookup for Qt5/Qt6.
+    """
+    if hasattr(QMetaType, "Type"):  # Qt6
+        return getattr(QMetaType.Type, name)
+    return getattr(QMetaType, name)  # Qt5
+
+def qdialog_code(name):
+    """
+    Cross-compatible dialog result code lookup for Qt5/Qt6.
+    """
+    if hasattr(QDialog, "DialogCode"):  # Qt6
+        return getattr(QDialog.DialogCode, name)
+    return getattr(QDialog, name)  # Qt5
+
+def qt_keyboard_modifier(name):
+    if hasattr(Qt, "KeyboardModifier"):
+        return getattr(Qt.KeyboardModifier, name)
+    return getattr(Qt, name)
+
+def qpainter_render_hint(name):
+    """
+    Cross-compatible QPainter render hint lookup for Qt5/Qt6.
+    """
+    if hasattr(QPainter, "RenderHint"):  # Qt6
+        return getattr(QPainter.RenderHint, name)
+    return getattr(QPainter, name)  # Qt5
+
+def qkeysequence_standard_key(name):
+    """
+    Cross-compatible QKeySequence standard key lookup for Qt5/Qt6.
+    """
+    if hasattr(QKeySequence, "StandardKey"):  # Qt6
+        return getattr(QKeySequence.StandardKey, name)
+    return getattr(QKeySequence, name)  # Qt5
+
+def qtextcursor_move_operation(name):
+    if hasattr(QTextCursor, "MoveOperation"):  # Qt6
+        return getattr(QTextCursor.MoveOperation, name)
+    return getattr(QTextCursor, name)  # Qt5
+
+def mb_button(name):
+    if hasattr(QMessageBox, "StandardButton"):  # Qt6
+        return getattr(QMessageBox.StandardButton, name)
+    return getattr(QMessageBox, name)  # Qt5
+
+def qfiledialog_option(name):
+    if hasattr(QFileDialog, "Option"):  # Qt6
+        return getattr(QFileDialog.Option, name)
+    return getattr(QFileDialog, name)  # Qt5
+
+def qsizepolicy_policy(name):
+    if hasattr(QSizePolicy, "Policy"):  # Qt6
+        return getattr(QSizePolicy.Policy, name)
+    return getattr(QSizePolicy, name)   # Qt5

@@ -10,8 +10,8 @@
 
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 from ..flo2dobjects import Reservoir, Tailings, TailingsReservoir, ChannelSegment
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication

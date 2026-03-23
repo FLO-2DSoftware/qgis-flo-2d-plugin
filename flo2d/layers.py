@@ -13,8 +13,8 @@ from collections import OrderedDict
 from os.path import normpath
 
 import processing
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QProgressDialog
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QProgressDialog
 from qgis.core import (
     QgsDefaultValue,
     QgsEditorWidgetSetup,
@@ -33,7 +33,7 @@ from qgis.PyQt.QtWidgets import QApplication
 from .errors import Flo2dError, Flo2dLayerInvalid, Flo2dLayerNotFound, Flo2dNotString
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
-from .utils import get_file_path, is_number
+from .utils import get_file_path, is_number, qt_check_state
 
 
 class Layers(object):
@@ -2052,11 +2052,7 @@ class Layers(object):
 
         # set visibility
         if not lyr_exists:
-            if visible:
-                vis = Qt.Checked
-            else:
-                vis = Qt.Unchecked
-            tree_lyr.setItemVisibilityChecked(vis)
+            tree_lyr.setItemVisibilityChecked(visible)
             tree_lyr.setExpanded(False)
         # preserve layer visibility for existing layers
 

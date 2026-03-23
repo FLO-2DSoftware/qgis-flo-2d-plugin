@@ -5,8 +5,8 @@ from itertools import combinations
 
 from ..deps import safe_h5py as h5py
 import numpy as np
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QFileDialog, QApplication, QProgressDialog, QMessageBox
 from qgis.PyQt.QtCore import NULL
 
 from .dlg_components import ComponentsDialog
@@ -160,7 +160,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         between domains such as upstream and downstream connections.
         """
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:
@@ -603,7 +603,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
 
         # try:
-        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        #     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         data, cell_size, man, coords, elev, hdf5_used, f1_used, f2_used = self.get_subdomain_data(subdomain_path)
         default_n = float(self.gutils.get_cont_par("MANNING"))

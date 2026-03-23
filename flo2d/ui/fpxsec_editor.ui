@@ -336,7 +336,7 @@
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a floodplain cross section.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="sizeAdjustPolicy">
-           <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+           <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
           </property>
          </widget>
         </item>

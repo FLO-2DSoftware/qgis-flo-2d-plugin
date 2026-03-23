@@ -531,7 +531,7 @@
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICURVTABLE(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set ICURVTABLE(I) = 0 for a structure rating curve.&lt;/p&gt;&lt;p&gt;Set ICURVTABLE(I) = 1 for a structure rating table.&lt;/p&gt;&lt;p&gt;Set ICULVTABLE(I) = 2 to use the culvert equations.&lt;/p&gt;&lt;p&gt;Range: 0 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="sizeAdjustPolicy">
-             <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+             <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
             </property>
            </widget>
           </item>

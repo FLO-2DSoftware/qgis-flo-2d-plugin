@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import is_true
+from ..utils import is_true, qdialogbuttonbox_button, qt_cursor_shape
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")
@@ -68,7 +68,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             "SEMICIRCULAR",
         )
 
-        self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText("Assign Selected Fields")
+        self.SDSF_buttonBox.button(qdialogbuttonbox_button("Save")).setText("Assign Selected Fields")
         self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlet_attributes)
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfall_attributes)
         self.strge_units_shapefile_cbo.currentIndexChanged.connect(self.populate_strge_units_attributes)
@@ -1241,7 +1241,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
         try:
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             line_layers = []
             point_layers = []
@@ -1359,7 +1359,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         if self.load_inlets:
             mame = ""
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fields = self.user_swmm_inlets_junctions_lyr.fields()
                 new_feats = []
                 outside_inlets = ""
@@ -1592,7 +1592,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def load_outfalls_from_shapefile(self):
         if self.load_outfalls:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fields = self.user_swmm_outlets_lyr.fields()
                 new_feats = []
                 outside_outfalls = ""
@@ -1726,7 +1726,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def load_strge_units_from_shapefile(self):
         if self.load_strge_units:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fields = self.user_swmm_strge_units_lyr.fields()
                 new_feats = []
                 outside_strge_units = ""
@@ -1909,7 +1909,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def load_conduits_from_shapefile(self):
         if self.load_conduits:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fields = self.user_swmm_conduits_lyr.fields()
                 new_feats = []
                 outside_conduits = ""
@@ -2177,7 +2177,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def load_pumps_from_shapefile(self):
         if self.load_pumps:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fields = self.user_swmm_pumps_lyr.fields()
                 new_feats = []
                 outside_pumps = ""
@@ -2349,7 +2349,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def load_orifices_from_shapefile(self):
         if self.load_orifices:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fields = self.user_swmm_orifices_lyr.fields()
                 new_feats = []
                 outside_orifices = ""
@@ -2518,7 +2518,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def load_weirs_from_shapefile(self):
         if self.load_weirs:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fields = self.user_swmm_weirs_lyr.fields()
                 new_feats = []
                 outside_weirs = ""

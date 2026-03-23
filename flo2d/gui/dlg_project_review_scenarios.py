@@ -8,8 +8,8 @@ from qgis._core import QgsApplication
 from ..flo2dobjects import ChannelSegment
 
 from ..deps import safe_h5py as h5py
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QFileDialog, QProgressDialog
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QFileDialog, QProgressDialog
 
 # FLO-2D Preprocessor tools for QGIS
 
@@ -22,6 +22,8 @@ from .ui_utils import load_ui
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..user_communication import UserCommunication, is_file_locked
 import numpy as np
+
+from ..utils import qt_cursor_shape
 
 uiDialog, qtBaseClass = load_ui("project_review_scenarios")
 
@@ -205,7 +207,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         dialog.setAcceptMode(QFileDialog.AcceptSave)
         dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
 
-        if not dialog.exec_():
+        if not dialog.exec():
             return
 
         file_path = dialog.selectedFiles()[0]
@@ -253,7 +255,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             self.uc.log_info("No scenarios selected")
             return False
 
-        QgsApplication.setOverrideCursor(Qt.WaitCursor)
+        QgsApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         if self.stormdrain_chbox.isChecked():
             self.process_swmmrpt(scenarios, processed_results_file)

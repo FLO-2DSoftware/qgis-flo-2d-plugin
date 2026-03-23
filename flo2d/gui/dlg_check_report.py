@@ -6,8 +6,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis._core import QgsFeatureRequest
 from flo2d.gui.ui_utils import load_ui, center_canvas, zoom_show_n_cells
 
@@ -53,7 +53,7 @@ class GenericCheckReportDialog(qtBaseClass, uiDialog):
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
     def show_next(self):
         """
@@ -69,7 +69,7 @@ class GenericCheckReportDialog(qtBaseClass, uiDialog):
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+            self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
     def show_grid(self):
         """
@@ -89,6 +89,6 @@ class GenericCheckReportDialog(qtBaseClass, uiDialog):
         x, y = self.currentCell.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom_show_n_cells(self.iface, int(self.cell_size), 30)
-        self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
+        self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor("yellow"))
 
 

@@ -5,8 +5,8 @@ import traceback
 
 from ..deps import safe_h5py as h5py
 
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog
 from qgis.PyQt.QtCore import NULL
 
 from .dlg_components import ComponentsDialog
@@ -14,6 +14,7 @@ from .ui_utils import load_ui
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication, is_file_locked
+from ..utils import qt_cursor_shape
 
 uiDialog, qtBaseClass = load_ui("export_multiple_domains")
 
@@ -138,7 +139,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             - 4: NO CONNECTIVITY
         """
         s = QSettings()
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # Figure out the export method
         # 0 -> MULTIDOMAIN.DAT
@@ -238,10 +239,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
 
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 s.setValue("FLO-2D/lastGdsDir", self.export_directory_le.text())
 
                 if dlg_components.data_rb.isChecked():
@@ -654,7 +655,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 #         new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                 #         self.files_used = new_files_used
                 #         if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
-                #             QApplication.setOverrideCursor(Qt.ArrowCursor)
+                #             QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 #             if self.uc.question(
                 #                     "There are no simple multiple channel cells in the project but\n"
                 #                     + "there is a SIMPLE_MULT.DAT file in the directory.\n"
@@ -667,7 +668,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 #         new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                 #         self.files_used = new_files_used
                 #         if os.path.isfile(outdir + r"\MULT.DAT"):
-                #             QApplication.setOverrideCursor(Qt.ArrowCursor)
+                #             QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 #             if self.uc.question(
                 #                     "There are no multiple channel cells in the project but\n"
                 #                     + "there is a MULT.DAT file in the directory.\n"
@@ -678,13 +679,13 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 #             QApplication.restoreOverrideCursor()
 
                 # if self.files_used != "":
-                #     QApplication.setOverrideCursor(Qt.ArrowCursor)
+                #     QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 #     info = "Files exported to\n" + str(export_folder) + "\n\n" + self.files_used
                 #     self.uc.show_info(info)
                 #     QApplication.restoreOverrideCursor()
                 #
                 # if self.f2g.export_messages != "":
-                #     QApplication.setOverrideCursor(Qt.ArrowCursor)
+                #     QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 #     info = "WARNINGS 100424.0613:\n\n" + self.f2g.export_messages
                 #     self.uc.show_info(info)
                 #     QApplication.restoreOverrideCursor()

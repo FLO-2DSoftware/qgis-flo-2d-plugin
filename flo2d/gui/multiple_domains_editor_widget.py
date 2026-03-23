@@ -1,9 +1,9 @@
 #  -*- coding: utf-8 -*-
 import itertools
 import os
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
+from qgis.PyQt.QtCore import Qt, QUrl
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
 from qgis.PyQt.QtCore import NULL
 from qgis._core import QgsFeatureRequest, QgsFeature
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
@@ -11,6 +11,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui, center_canvas
 from ..deps import safe_h5py as h5py
+from ..utils import qt_cursor_shape, qt_window_modality
 
 uiDialog, qtBaseClass = load_ui("multiple_domains_editor")
 
@@ -197,10 +198,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         # Check if there is data on the domain_cells and ask you if he wants to override
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         pd = QProgressDialog("Schematizing the subdomains...", "Cancel", 0, 0)
-        pd.setWindowModality(Qt.WindowModal)
+        pd.setWindowModality(qt_window_modality("WindowModal"))
         pd.setMinimumDuration(0)
         pd.setRange(0, 0)
         pd.show()
@@ -333,7 +334,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         needed.
         """
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         self.gutils.clear_tables("schema_md_cells")
         self.gutils.clear_tables("mult_domains_methods")
@@ -459,7 +460,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         domains.
         """
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:
@@ -493,7 +494,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                         msg = f"Name '{name_adj}' already exists in the geopackage.\n\n"
                         msg += "Would you like to replace it?"
                         answer = self.uc.customized_question("FLO-2D", msg)
-                        if answer == QMessageBox.Yes:
+                        if answer == self.uc.msgbox_button("Yes"):
                             self.gutils.execute(f"DELETE FROM mult_domains_methods WHERE subdomain_name = '{name_adj}'")
                             self.gutils.execute(f"DELETE FROM mult_domains_con WHERE subdomain_name = '{name_adj}'")
                             self.gutils.execute(f"INSERT INTO mult_domains_methods (subdomain_name, fid_method) VALUES ('{name_adj}', {name[0]})")

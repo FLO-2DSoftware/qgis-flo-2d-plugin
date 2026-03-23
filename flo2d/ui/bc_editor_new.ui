@@ -859,7 +859,7 @@
            <number>15</number>
           </property>
           <property name="sizeAdjustPolicy">
-           <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+           <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
           </property>
          </widget>
         </item>

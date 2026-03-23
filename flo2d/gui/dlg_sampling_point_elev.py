@@ -14,8 +14,8 @@ import time
 import traceback
 from subprocess import PIPE, STDOUT, Popen
 
-from PyQt5.QtGui import QTextCursor
-from qgis.PyQt.QtCore import QSettings, pyqtSignal, Qt
+from qgis.PyQt.QtGui import QTextCursor
+from qgis.PyQt.QtCore import QSettings, pyqtSignal
 from qgis.PyQt.QtWidgets import QFileDialog
 
 from ..flo2d_tools.grid_tools import grid_has_empty_elev, raster2grid
@@ -23,6 +23,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..misc import point_elev
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qtextcursor_move_operation, qt_window_modality
 
 uiDialog, qtBaseClass = load_ui("sampling_point_elev")
 
@@ -42,7 +43,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.grid = None
         self.cell_size = float(cell_size)
         self.setupUi(self)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowModality(qt_window_modality("WindowModal"))
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")
@@ -401,7 +402,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.uc.log_info(mesg)
         editor = self.console_edit
         cursor = editor.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(qtextcursor_move_operation("End"))
         if new_line:
             cursor.insertText(mesg + "\n")
         else:

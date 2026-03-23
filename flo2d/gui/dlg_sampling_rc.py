@@ -10,7 +10,7 @@ import os
 import tempfile
 
 import processing
-from PyQt5.QtWidgets import QProgressDialog, QApplication
+from qgis.PyQt.QtWidgets import QProgressDialog, QApplication
 from osgeo import gdal, osr
 from qgis._core import QgsWkbTypes, QgsFeatureRequest, QgsCoordinateReferenceSystem, QgsProject, \
     QgsVectorLayer, QgsProcessingFeatureSourceDefinition

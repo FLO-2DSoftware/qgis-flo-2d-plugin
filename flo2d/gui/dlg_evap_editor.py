@@ -14,6 +14,7 @@ from ..flo2dobjects import Evaporation
 from ..geopackage_utils import GeoPackageUtils
 from .plot_widget import PlotWidget
 from .ui_utils import load_ui
+from ..utils import qt_item_role
 
 uiDialog, qtBaseClass = load_ui("evaporation_editor")
 
@@ -153,8 +154,8 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         x = []
         y = []
         for i in range(dm.rowCount()):
-            x.append(float(dm.data(dm.index(i, 0), Qt.DisplayRole)))
-            y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
+            x.append(float(dm.data(dm.index(i, 0), qt_item_role("DisplayRole"))))
+            y.append(float(dm.data(dm.index(i, 1), qt_item_role("DisplayRole"))))
         # self.plotWidget.add_new_plot([x, y]) # Commented on 21st June 2025
         # self.plotWidget.add_org_plot([x, y]) # Commented on 21st June 2025
         self.plotWidget.add_item("Evaporation", [x, y])  # Change made on 21st June 2025.

@@ -9,15 +9,17 @@ import os.path
 # of the License, or (at your option) any later version
 
 import processing
-from PyQt5.QtCore import QMetaType, QUrl, Qt
-from PyQt5.QtWidgets import QFileDialog, QApplication
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QMetaType, QUrl, Qt
+from qgis.PyQt.QtWidgets import QFileDialog, QApplication
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis._analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsRasterLayer, QgsUnitTypes
+
+from ..utils import qt_cursor_shape, qmeta_type
 
 uiDialog, qtBaseClass = load_ui("pre_processing_widget")
 
@@ -119,7 +121,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
             return
         output_raster_name = os.path.splitext(os.path.basename(output_raster))[0]
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         # Prepare the raster calculator entry
         raster_entry = QgsRasterCalculatorEntry()
@@ -308,7 +310,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         # adjust the elevations
         channel_pv = self.channel_layer.dataProvider()
-        channel_pv.addAttributes([QgsField("Elevation", QMetaType.Double)])
+        channel_pv.addAttributes([QgsField("Elevation", qmeta_type("Double"))])
         self.channel_layer.updateFields()
         self.channel_layer.commitChanges()
 
@@ -429,7 +431,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         # adjust the elevations
         reservoir_pv = reservoir.dataProvider()
-        reservoir_pv.addAttributes([QgsField("Elevation", QMetaType.Double)])
+        reservoir_pv.addAttributes([QgsField("Elevation", qmeta_type("Double"))])
         reservoir.updateFields()
 
         QgsProject.instance().addMapLayers([reservoir])
@@ -461,7 +463,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         file_dialog.setNameFilter("GeoTIFF files (*.tif *.tiff);;All files (*.*)")
         file_dialog.setDefaultSuffix("tif")
 
-        if file_dialog.exec_():
+        if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0]
         else:
             self.uc.show_warn("Save canceled.")

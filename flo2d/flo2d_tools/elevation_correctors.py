@@ -7,7 +7,7 @@ import functools
 import time
 from collections import defaultdict
 
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis._core import QgsMessageLog, QgsSpatialIndex
 from qgis.analysis import QgsZonalStatistics
 from qgis.core import (
@@ -19,7 +19,7 @@ from qgis.core import (
     QgsVectorLayer,
     QgsWkbTypes,
 )
-from PyQt5.QtCore import QMetaType
+from qgis.PyQt.QtCore import QMetaType
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -37,6 +37,7 @@ from .grid_tools import (
     spatial_index,
 )
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
+from ..utils import qmeta_type
 
 
 def timer(func):
@@ -91,7 +92,7 @@ class ElevationCorrector(object):
 
     def add_virtual_sum(self, layer):
         expr = self.field_expression.format(self.ELEVATION_FIELD, self.CORRECTION_FIELD)
-        field = QgsField(self.VIRTUAL_SUM, QMetaType.Double)
+        field = QgsField(self.VIRTUAL_SUM, qmeta_type("Double"))
         layer.addExpressionField(expr, field)
 
     def remove_virtual_sum(self, layer):
@@ -309,7 +310,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Elevation Polygon."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 
@@ -358,7 +359,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Elevation Polygon & Elevation points."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 
@@ -408,7 +409,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Elevation Polygon."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 
@@ -472,7 +473,7 @@ class GridElevation(ElevationCorrector):
                 "Error",
                 "Please, define Blocked Areas."
             )
-            ms_box.exec_()
+            ms_box.exec()
             ms_box.show()
             return
 

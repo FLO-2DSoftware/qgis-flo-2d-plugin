@@ -16,9 +16,9 @@ import traceback
 from collections import OrderedDict
 from math import isnan
 
-from PyQt5.QtWidgets import QProgressDialog
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtCore import QUrl  
+from qgis.PyQt.QtWidgets import QProgressDialog
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QUrl  
 from qgis._gui import QgsDockWidget
 from qgis.core import (
     QgsCoordinateTransform,
@@ -57,7 +57,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_tributaries import TributariesDialog
 from ..misc.project_review_utils import hychan_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata
+from ..utils import is_number, m_fdata, qt_item_role, qt_pen_style, qt_cursor_shape, qt_item_flag, qt_dock_widget_area
 from .plot_widget import PlotWidget
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import (
@@ -69,7 +69,7 @@ from .ui_utils import (
 
 uiDialog, qtBaseClass = load_ui("xs_editor")
 
-ChannelRole = Qt.UserRole + 1
+ChannelRole = qt_item_role("UserRole") + 1
 
 
 class CrossSectionDelegate(QStyledItemDelegate):
@@ -304,7 +304,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.xs_cbo.addItem("Non Schematized")
             row_index = self.xs_cbo.model().rowCount() - 1
             flags = self.xs_cbo.model().item(row_index).flags()
-            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
             self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
             for xs_fid in non_schematized_xs:
                 name = xs_name_dict[xs_fid]
@@ -321,7 +321,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.xs_cbo.addItem(channel_name)
             row_index = self.xs_cbo.model().rowCount() - 1
             flags = self.xs_cbo.model().item(row_index).flags()
-            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
             self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
             for tup in cross_sections:
                 xs_fid = tup[0]
@@ -748,7 +748,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # Create the Schematized Left Bank (Channel Segments), joining cells intersecting
         # the User Left Bank Line, with arrows from one cell centroid to the next:
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             cs.create_schematized_channels()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -772,7 +772,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             cs.copy_features_from_user_channel_layer_to_schematized_channel_layer()
             cs.copy_features_from_user_xsections_layer_to_schematized_xsections_layer()
             self.gutils.create_xs_type_n_r_t_v_tables()
@@ -789,7 +789,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         if not self.gutils.is_table_empty("chan_elems"):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 cs.make_distance_table()
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
@@ -810,7 +810,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         # Fill the chan_interior_nodes table
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.fill_chan_interior_nodes_table()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -848,7 +848,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             msg = ""
 
@@ -1098,7 +1098,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 plot_dock = QgsDockWidget()
                 plot_dock.setWindowTitle("FLO-2D Channel Check Report")
                 plot_dock.setWidget(dlg_channel_report)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), plot_dock)
                 dlg_channel_report.report_te.insertPlainText(msg)
 
                 grid_errors = list(set(
@@ -1107,7 +1107,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 dlg_channel_report.error_grids_cbo.addItems(grid_errors)
                 dlg_channel_report.show()
                 while True:
-                    ok = dlg_channel_report.exec_()
+                    ok = dlg_channel_report.exec()
                     if ok:
                         break
                     else:
@@ -1219,7 +1219,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         Function to interpolate channel elevation
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
             if xs_survey:
                 if self.save_xsec_dot_dat_with_only_user_cross_sections():
@@ -1317,13 +1317,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             #                         QMessageBox().Ok | QMessageBox().Cancel)
                             msg.addButton(
                                 QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"),
-                                QMessageBox.YesRole,
+                                self.uc.msgbox_button("Yes"),
                             )
-                            msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
+                            msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), self.uc.msgbox_role("NoRole"))
                             msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                             msg.setDefaultButton(QMessageBox().Cancel)
                             msg.setIcon(QMessageBox.Question)
-                            ret = msg.exec_()
+                            ret = msg.exec()
                             if ret == 0:
                                 s = QSettings()
                                 last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -1518,7 +1518,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def save_chan_dot_dat_with_zero_natural_cross_sections(self):
         # check if there are any channels defined
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.gutils.is_table_empty("chan"):
                 QApplication.restoreOverrideCursor()
                 return []
@@ -1583,7 +1583,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
             if outdir:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 chan = os.path.join(outdir, "CHAN.DAT")
                 if os.path.isfile(chan):
                     os.remove(chan)
@@ -1730,7 +1730,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         if outdir:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 xsec = os.path.join(outdir, "XSEC.DAT")
                 with open(xsec, "w") as x:
                     for fid, nxsecnum, name in chan_n:
@@ -1757,7 +1757,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 if not os.path.exists(outdir):
                     os.mkdir(outdir)
                 if outdir:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     chanbank = os.path.join(outdir, "CHANBANK.DAT")
                     with open(chanbank, "w") as cb:
                         for rb in rbanks:
@@ -1774,7 +1774,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Could not run interpolation under current operation system!")
             return -1
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             s = QSettings()
             self.project_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
             self.exe_dir = s.value("FLO-2D/last_flopro", "")
@@ -1812,7 +1812,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Could not run CHANRIGHTBANK.EXE under current operation system!")
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if os.path.isfile(self.exe_dir + "\\CHANRIGHTBANK.EXE"):
                 chanrightbank = ChanRightBankExecutor(self.exe_dir, self.project_dir)
                 return_code = chanrightbank.run()
@@ -1845,7 +1845,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("CHANRIGHTBANK.EXE failed!")
 
     def interpolate_xs_values(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 060319.1756: Interpolation of cross-sections values failed!")
@@ -1972,9 +1972,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Channel Profile - {fid}")
         self.plot.plot.setLabel("bottom", text="Channel length")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item("Bed elevation", [sta, bed], col=QColor("black"), sty=qt_pen_style("SolidLine"))
+        self.plot.add_item("Left bank", [sta, lb], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+        self.plot.add_item("Right bank", [sta, rb], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
 
         try:  # Build table.
             data_model = StandardItemModel()
@@ -2052,7 +2052,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             # Check if this is a Project Review Scenarios or regular plot
             if use_prs == '1' and os.path.exists(processed_results_file):
@@ -2141,22 +2141,22 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                     if i == 0:
                         self.plot.add_item(f"{scenario} - Bed elevation ({self.system_units[units][0]})", [sta, bed],
-                                           col=QColor(Qt.black), sty=Qt.SolidLine)
+                                           col=QColor("black"), sty=qt_pen_style("SolidLine"))
                         self.plot.add_item(f"{scenario} - Left bank ({self.system_units[units][0]})", [sta, lb],
-                                           col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+                                           col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
                         self.plot.add_item(f"{scenario} - Right bank ({self.system_units[units][0]})", [sta, rb],
-                                           col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+                                           col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
                         self.plot.add_item(f"{scenario} - Max. Water ({self.system_units[units][0]})", [sta, max_water_elev],
-                                           col=SCENARIO_COLOURS[i], sty=Qt.SolidLine)
+                                           col=SCENARIO_COLOURS[i], sty=qt_pen_style("SolidLine"))
                     else:
                         self.plot.add_item(f"{scenario} - Bed elevation ({self.system_units[units][0]})", [sta, bed],
-                                           col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+                                           col=QColor("black"), sty=qt_pen_style("SolidLine"), hide=True)
                         self.plot.add_item(f"{scenario} - Left bank ({self.system_units[units][0]})", [sta, lb],
-                                           col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+                                           col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"), hide=True)
                         self.plot.add_item(f"{scenario} - Right bank ({self.system_units[units][0]})", [sta, rb],
-                                           col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
+                                           col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"), hide=True)
                         self.plot.add_item(f"{scenario} - Max. Water ({self.system_units[units][0]})", [sta, max_water_elev],
-                                           col=SCENARIO_COLOURS[i], sty=Qt.SolidLine, hide=True)
+                                           col=SCENARIO_COLOURS[i], sty=qt_pen_style("SolidLine"), hide=True)
                     if len(max_sed_con) > 0:
                         self.plot.add_item(f"{scenario} - Velocity ({self.system_units[units][1]})", [sta, max_velocity],
                                            col=SCENARIO_COLOURS[i], sty=SCENARIO_STYLES[1], hide=True)
@@ -2492,26 +2492,26 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         max_shear_stress.append(data["max_shear_stress"])
                         max_surf_area.append(data["max_surf_area"])
 
-                self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-                self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+                self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor("black"), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
                 if len(max_sed_con) > 0:
-                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
-                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Concentration", [sta, max_con], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor("blue"), sty=qt_pen_style("SolidLine"))
+                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor("green"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor("gray"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Concentration", [sta, max_con], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
                 else:
-                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
-                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress], col=QColor(Qt.darkYellow), hide=True)
-                    self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, max_surf_area], col=QColor(Qt.darkMagenta), hide=True)
+                    self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor("blue"), sty=qt_pen_style("SolidLine"))
+                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor("green"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Froude", [sta, max_froude], col=QColor("gray"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, max_flow_area], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter], col=QColor("yellow"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius], col=QColor("darkBlue"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, max_top_width], col=QColor("darkRed"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Width/Depth", [sta, max_width_depth], col=QColor("darkCyan"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Energy slope", [sta, max_energy_slope], col=QColor("magenta"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress], col=QColor("darkYellow"), hide=True)
+                    self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, max_surf_area], col=QColor("darkMagenta"), hide=True)
 
                 try:  # Build table.
 
@@ -2649,7 +2649,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         use_prs = self.gutils.get_cont_par("USE_SCENARIOS")
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             # Check if this is a Project Review Scenarios or regular plot
             if use_prs == '1' and os.path.exists(processed_results_file):
@@ -2832,22 +2832,22 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.log_info("This channel cross section has no flow data!")
                     return
 
-                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [values[0], values[4]], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-                self.plot.add_item(f"Elevation ({self.system_units[units][0]})", [values[0], values[1]], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [values[0], values[2]], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [values[0], values[3]], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Froude", [values[0], values[5]], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [values[0], values[4]], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
+                self.plot.add_item(f"Elevation ({self.system_units[units][0]})", [values[0], values[1]], col=QColor("green"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [values[0], values[2]], col=QColor("black"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [values[0], values[3]], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Froude", [values[0], values[5]], col=QColor("blue"), sty=qt_pen_style("SolidLine"), hide=True)
                 if len(values) == 7:
-                    self.plot.add_item(f"Concentration", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Concentration", [values[0], values[6]], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
                 else:
-                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [values[0], values[7]], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [values[0], values[8]], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [values[0], values[9]], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Width/Depth", [values[0], values[10]], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Energy slope", [values[0], values[11]], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [values[0], values[12]], col=QColor(Qt.darkYellow), hide=True)
-                    self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [values[0], values[13]], col=QColor(Qt.darkMagenta), hide=True)
+                    self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [values[0], values[6]], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [values[0], values[7]], col=QColor("yellow"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [values[0], values[8]], col=QColor("darkBlue"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Top width ({self.system_units[units][0]})", [values[0], values[9]], col=QColor("darkRed"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Width/Depth", [values[0], values[10]], col=QColor("darkCyan"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Energy slope", [values[0], values[11]], col=QColor("magenta"), sty=qt_pen_style("SolidLine"), hide=True)
+                    self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [values[0], values[12]], col=QColor("darkYellow"), hide=True)
+                    self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [values[0], values[13]], col=QColor("darkMagenta"), hide=True)
 
                 try:  # Build table.
                     if len(values) == 7:
@@ -3053,7 +3053,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
         # dlg.debug_run_btn.setVisible(False)
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
-        # ok = dlg.exec_()
+        # ok = dlg.exec()
         # if not ok:
         #     return
         s = QSettings()
@@ -3064,7 +3064,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             # Export CONT, TOPO, CHAN and XSEC to temp folder
             self.f2g.export_cont_toler_dat(outdir)
             self.f2g.export_mannings_n_topo_dat(outdir, None)
@@ -3164,7 +3164,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("WARNING 160821.0931: There are no schematized channel cross sections.")
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
             xs_lyr = self.lyrs.data["chan_elems"]["qlyr"]
@@ -3245,7 +3245,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
             dlg_tributaries = TributariesDialog(self.iface, self.lyrs, confluences)
-            save = dlg_tributaries.exec_()
+            save = dlg_tributaries.exec()
             if save:
                 dlg_tributaries.save()
 
@@ -3270,7 +3270,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.clear_tables("chan_confluences")
             self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
             self.uc.bar_info("Confluences deleted!")

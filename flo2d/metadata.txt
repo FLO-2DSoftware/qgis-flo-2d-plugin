@@ -1,14 +1,18 @@
 [general]
 name=FLO-2D
-version=2.1.0
-qgisMinimumVersion=3.22
-qgisMaximumVersion=3.99
+version=2.2.0
+qgisMinimumVersion=3.28
+qgisMaximumVersion=4.99
+supportsQt6=True
 description=FLO-2D tools for QGIS
 author=FLO-2D
 email=contact@flo-2d.com
 about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and display data used by the FLO-2D Flood Model. The Plugin can import project data, generate data and ex-port appropriately formatted FLO-2D data input files for a FLO-2D Project. The FLO-2D-Plugin reference manual, installed on your computer with the software, describes the assumptions, functions, and processes applied in the QGIS Plugin. A companion manual, the FLO-2D QGIS Plugin User’s Manual, describes the workflow, outlines the data structure and presents tutorials for the Plugin. It does not address the functionality and use of the FLO-2D model which has a separate set of reference manuals.
 
 changelog=
+ <p>2.2.0
+ - General
+    Added full support to Qt6
  <p>2.1.0
  - Breach Hydrograph Tool
     Added the breach hydrograph tool to generate water and tailings outflow breach hydrographs

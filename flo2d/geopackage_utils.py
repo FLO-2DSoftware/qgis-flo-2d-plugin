@@ -15,7 +15,7 @@ import traceback
 from collections import defaultdict
 from functools import wraps
 
-from PyQt5.QtWidgets import QProgressDialog, QApplication
+from qgis.PyQt.QtWidgets import QProgressDialog, QApplication
 from osgeo import ogr, gdal
 from qgis.PyQt.QtCore import NULL
 from qgis._core import QgsVectorLayer, QgsProject, QgsRasterLayer

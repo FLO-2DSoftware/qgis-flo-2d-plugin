@@ -1,9 +1,11 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QApplication
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QApplication
 
 from ..deps import safe_h5py as h5py
 import numpy as np
+
+from ..utils import qt_pen_style, qt_cursor_shape
 
 SCENARIO_COLOURS = [
     QColor("#1f77b4"),  # blue
@@ -14,11 +16,11 @@ SCENARIO_COLOURS = [
 ]
 
 SCENARIO_STYLES = [
-    Qt.SolidLine,
-    Qt.DashLine,
-    Qt.DotLine,
-    Qt.DashDotLine,
-    Qt.DashDotDotLine,
+    qt_pen_style("SolidLine"),
+    qt_pen_style("DashLine"),
+    qt_pen_style("DotLine"),
+    qt_pen_style("DashDotLine"),
+    qt_pen_style("DashDotDotLine"),
 ]
 
 
@@ -104,7 +106,7 @@ def hychan_dataframe_from_hdf5_scenarios(hdf5_file, mode):
     with h5py.File(hdf5_file, 'r') as hdf:
         for j in range(1, 6):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 fid_dict = {}
                 if mode == "peaks":
                     dataset_path = hdf[f"Scenario {j}/Channels/Profiles"]
@@ -136,7 +138,7 @@ def crossq_dataframe_from_hdf5_scenarios(hdf5_file, grid_element):
     with h5py.File(hdf5_file, 'r') as hdf:
         for j in range(1, 6):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 dataset = hdf[f"Scenario {j}/Floodplain Cross Sections/Cells/{grid_element}"][()]
                 time_series = hdf[f"Scenario {j}/Floodplain Cross Sections/Time Series"][()]
 

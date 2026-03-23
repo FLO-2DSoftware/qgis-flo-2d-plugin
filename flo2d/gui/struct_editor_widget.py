@@ -14,7 +14,7 @@ import re
 from collections import OrderedDict
 from math import isnan
 
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis._gui import QgsDockWidget
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import (
@@ -23,7 +23,7 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog
-from PyQt5.QtCore import QUrl
+from qgis.PyQt.QtCore import QUrl
 
 from .dlg_check_report import GenericCheckReportDialog
 from ..flo2dobjects import Structure
@@ -31,7 +31,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
 from ..misc.project_review_utils import hydrostruct_dataframe_from_hdf5_scenarios, SCENARIO_COLOURS, SCENARIO_STYLES
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata
+from ..utils import is_number, m_fdata, qt_pen_style, qt_cursor_shape, qt_dock_widget_area
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
@@ -267,7 +267,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 return
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             del_qry = "DELETE FROM struct WHERE fid NOT IN (SELECT fid FROM user_struct);"
             self.gutils.execute(del_qry)
@@ -430,7 +430,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             plot_dock = QgsDockWidget()
             plot_dock.setWindowTitle("FLO-2D Hydraulic Structures Check Report")
             plot_dock.setWidget(dlg_structures_report)
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), plot_dock)
             dlg_structures_report.report_te.insertPlainText(msg)
 
             grid_errors = list(set(
@@ -441,7 +441,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             dlg_structures_report.error_grids_cbo.addItems(grid_errors)
             dlg_structures_report.show()
             while True:
-                ok = dlg_structures_report.exec_()
+                ok = dlg_structures_report.exec()
                 if ok:
                     break
                 else:
@@ -491,7 +491,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 return
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 s.setValue("FLO-2D/ImportStructTable", os.path.dirname(rating_files[0]))
                 for file in rating_files:
                     file_name, file_ext = os.path.splitext(os.path.basename(file))
@@ -534,7 +534,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                                 )
                                 self.rating_cbo.setCurrentIndex(1)
 
-                            QApplication.setOverrideCursor(Qt.WaitCursor)
+                            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     else:
                         # There is no structure with name 'file_name'.
                         tables_out += file_name + "\n"
@@ -841,7 +841,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
         dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
-        save = dlg_bridge.exec_()
+        save = dlg_bridge.exec()
         if save:
             if dlg_bridge.save_bridge_variables():
                 self.uc.show_info("Bridge variables saved for '" + self.struct_cbo.currentText() + "'")
@@ -881,7 +881,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         if use_prs == '1' and os.path.exists(processed_results_file):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 dict_df = hydrostruct_dataframe_from_hdf5_scenarios(processed_results_file, struct_name)
 
                 # Clear the plots
@@ -993,7 +993,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.plot.plot.setTitle(title=f"Hydraulic Structure - {structure_name}")
             self.plot.plot.setLabel("bottom", text="Time (hrs)")
             self.plot.plot.setLabel("left", text="")
-            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
 
             try:  # Build table.
                 discharge_data_model = StandardItemModel()
@@ -1069,7 +1069,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         #             if j == 5:
         #                 color = Qt.blue
         #             self.plot.add_item(f"Discharge ({self.system_units[units][2]}) - Scenario {j}", [time_list, discharge_list],
-        #                                col=QColor(color), sty=Qt.SolidLine)
+        #                                col=QColor(color), sty=qt_pen_style("SolidLine"))
         #
         #             headers.extend([f"Discharge ({self.system_units[units][2]}) - Scenario {j}"])
         #             discharge_data_model.setHorizontalHeaderLabels(headers)

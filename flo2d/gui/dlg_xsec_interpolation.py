@@ -13,6 +13,7 @@ from qgis.PyQt.QtWidgets import QDialogButtonBox, QFileDialog
 
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qdialogbuttonbox_button
 
 uiDialog, qtBaseClass = load_ui("interpolate_xsections")
 
@@ -34,7 +35,7 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
         # self.set_previous_paths()
         self.surveyed_lbl.setText(str(xs_survey[0]))
         self.non_surveyed_lbl.setText(str(xs_survey[1]))
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Interpolate")
+        self.buttonBox.button(qdialogbuttonbox_button("Ok")).setText("Interpolate")
         # s = QSettings()
         # last_dir = s.value("FLO-2D/lastGdsDir", "")
         # outdir = last_dir + "/temp/"

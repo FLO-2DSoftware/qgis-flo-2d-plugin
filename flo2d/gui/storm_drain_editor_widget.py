@@ -18,7 +18,7 @@ from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES
 
 from ..deps import safe_h5py as h5py
 
-from PyQt5.QtWidgets import QStyledItemDelegate, QGraphicsRectItem
+from qgis.PyQt.QtWidgets import QStyledItemDelegate, QGraphicsRectItem
 from qgis._core import QgsFeatureRequest, QgsDistanceArea
 from qgis._gui import QgsDockWidget
 from qgis.core import (
@@ -57,7 +57,6 @@ from qgis.PyQt.QtWidgets import (
     QAction,
     QMenu,
     QToolButton,
-    qApp,
 )
 
 from ..deps import safe_pyqtgraph as pg
@@ -72,7 +71,9 @@ from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
-from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
+from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, \
+    qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag, qt_dock_widget_area, qmeta_type, qdialog_code, \
+    qfiledialog_option
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -80,7 +81,7 @@ from ..flo2d_ie.flo2d_parser import ParseDAT
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-SDTableRole = Qt.UserRole + 1
+SDTableRole = qt_item_role("UserRole") + 1
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
 
@@ -390,7 +391,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         menu.addAction(action2)
         menu.triggered.connect(lambda action: self.add_type4_data(action.text()))
         self.SD_add_one_type4_btn.setMenu(menu)
-        self.SD_add_one_type4_btn.setPopupMode(QToolButton.InstantPopup)
+        self.SD_add_one_type4_btn.setPopupMode(qt_toolbutton_popup_mode("InstantPopup"))
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
@@ -779,7 +780,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.log_info(msg)
                 return False
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             inlets = []
             outlets = []
@@ -911,11 +912,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
                 return False
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             s = QSettings()
             lastDir = s.value("FLO-2D/lastGdsDir", "")
-            qApp.processEvents()
+            QApplication.processEvents()
 
             shapefile = lastDir + "/SD Conduits.shp"
             name = "SD Conduits"
@@ -928,25 +929,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             # define fields for feature attributes. A QgsFields object is needed
             fields = QgsFields()
-            fields.append(QgsField("name", QMetaType.QString))
-            fields.append(QgsField("inlet", QMetaType.QString))
-            fields.append(QgsField("outlet", QMetaType.QString))
-            fields.append(QgsField("length", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("manning", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("inlet_off", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("outlet_off", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("init_flow", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("max_flow", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("inletLoss", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("outletLoss", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("meanLoss", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("flapLoss", QMetaType.Bool))
-            fields.append(QgsField("XSshape", QMetaType.QString))
-            fields.append(QgsField("XSMaxDepth", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom2", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom3", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom4", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSbarrels", QMetaType.Int, "int", 10, 4))
+            fields.append(QgsField("name", qmeta_type("QString")))
+            fields.append(QgsField("inlet", qmeta_type("QString")))
+            fields.append(QgsField("outlet", qmeta_type("QString")))
+            fields.append(QgsField("length", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("manning", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("inlet_off", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("outlet_off", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("init_flow", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("max_flow", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("inletLoss", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("outletLoss", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("meanLoss", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("flapLoss", qmeta_type("Bool")))
+            fields.append(QgsField("XSshape", qmeta_type("QString")))
+            fields.append(QgsField("XSMaxDepth", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSgeom2", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSgeom3", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSgeom4", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSbarrels", qmeta_type("Int"), "int", 10, 4))
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
@@ -1090,7 +1091,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         updated_weirs = 0
 
         error_msg = "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             """
             Create an ordered dictionary "storm_drain.INP_groups".
@@ -1107,7 +1108,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             ret = storm_drain.split_INP_groups_dictionary_by_tags()
             if ret == 3:
                 # No coordinates in INP file
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_warn(
                     "WARNING 060319.1729: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
@@ -1125,7 +1126,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             storm_drain.add_OUTFALLS_to_INP_nodes_dictionary() 
                       
             if storm_drain.add_coordinates_INP_nodes_dictionary() == 0:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_warn(
                     "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
@@ -1143,7 +1144,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         complete_or_create = "Create New"
                     else:
                         
-                        QApplication.setOverrideCursor(Qt.ArrowCursor)
+                        QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                         complete_or_create = self.import_INP_action()
                         QApplication.restoreOverrideCursor()
                         
@@ -1201,7 +1202,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         )
 
                 except Exception as e:
-                    QApplication.setOverrideCursor(Qt.ArrowCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                     self.uc.show_error(
                         "ERROR 020219.0812: Reading storm drain inflows from SWMM input data failed!"
                         + "\n__________________________________________________",
@@ -1236,7 +1237,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 i = 0
 
                 except Exception as e:
-                    QApplication.setOverrideCursor(Qt.ArrowCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                     self.uc.show_error(
                         "ERROR 280219.1046: Reading storm drain paterns from SWMM input data failed!"
                         + "\n__________________________________________________",
@@ -1294,7 +1295,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
 
                 except Exception as e:
-                    QApplication.setOverrideCursor(Qt.ArrowCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                     self.uc.show_error(
                         "ERROR 290220.1727: Reading storm drain time series from SWMM input data failed!"
                         + "\n__________________________________________________",
@@ -1351,7 +1352,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             self.gutils.execute(insert_other_curves_sql, (curve[0], curve[1], curve[4], curve[2], curve[3]))     
 
                 except Exception as e:
-                    QApplication.setOverrideCursor(Qt.ArrowCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                     self.uc.show_error(
                         "ERROR 241121.0547: Reading storm drain pump curve data from SWMM input data failed!"
                         + "\n__________________________________________________",
@@ -1360,7 +1361,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     QApplication.restoreOverrideCursor()
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             self.uc.show_error("ERROR 080618.0448: reading SWMM input file failed!", e)
             QApplication.restoreOverrideCursor()
             return False
@@ -1369,7 +1370,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             
         # INLET/JUNCTIONS: Create User Inlets and Junctions layers:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             """
             Creates Storm Drain Inlets/Junctions layer (Users layers).
@@ -1606,7 +1607,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_inlets_junctions_lyr.blockSignals(False)
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             self.uc.show_error(
                 "ERROR 060319.1610: Creating Storm Drain Inlets/Junctions layer failed!\n\n"
                 + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
@@ -1618,7 +1619,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
         # OUTLETS: Create User Outlets layers:
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             """
             Creates Storm Drain Outfalls layer (Users layers).
@@ -1788,7 +1789,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_outlets_lyr.blockSignals(False)
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             self.uc.show_error(
                 "ERROR 060319.1610: Creating Storm Drain Outfalls layer failed!\n\n"
                 + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
@@ -1803,7 +1804,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if complete_or_create == "Create New":
             remove_features(self.user_swmm_storage_units_lyr)
             
-        QApplication.setOverrideCursor(Qt.WaitCursor)       
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))       
         try:
             """
             Creates Storm Drain Storage Units layer (Users layers).
@@ -1998,7 +1999,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_storage_units_lyr.blockSignals(False)
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             self.uc.show_error(
                 "ERROR 300124.1109: Creating Storm Drain Storage Units layer failed!\n\n"
                 + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
@@ -2021,7 +2022,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_conduits_lyr)
         
         if storm_drain.INP_conduits:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             try:
                 """
                 Creates Storm Drain Conduits layer (Users layers)
@@ -2251,7 +2252,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_conduits_lyr.blockSignals(False)
 
             except Exception as e:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
                 QApplication.restoreOverrideCursor()
             finally:
@@ -2266,7 +2267,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_pumps_lyr)
 
         if storm_drain.INP_pumps:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             try:
                 """
                 Creates Storm Drain Pumps layer (Users layers)
@@ -2415,7 +2416,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_pumps_lyr.blockSignals(False)
 
             except Exception as e:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_error("ERROR 050618.1805: creation of Storm Drain Pumps layer failed!", e)
                 QApplication.restoreOverrideCursor()
             finally:
@@ -2429,7 +2430,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_orifices_lyr)
 
         if storm_drain.INP_orifices:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             try:
                 """
                 Creates Storm Drain Orifices layer (Users layers)
@@ -2595,7 +2596,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_orifices_lyr.blockSignals(False)
 
             except Exception as e:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_error("ERROR 310322.0853: creation of Storm Drain Orifices layer failed!", e)
                 QApplication.restoreOverrideCursor()
             finally:
@@ -2609,7 +2610,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_weirs_lyr)
 
         if storm_drain.INP_weirs:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             try:
                 """
                 Creates Storm Drain Weirs layer (Users layers)
@@ -2783,7 +2784,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_weirs_lyr.blockSignals(False)
 
             except Exception as e:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 self.uc.show_error("ERROR 080422.1115: creation of Storm Drain Weirs layer failed!", e)
                 QApplication.restoreOverrideCursor()
             finally:
@@ -2834,7 +2835,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.gutils.clear_tables("swmm_control")
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             """
             This portion of the code saves the SWMM control data to the geopackage 
 
@@ -2916,7 +2917,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if error_msg != "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
             self.uc.show_critical(error_msg)
 
-        QApplication.setOverrideCursor(Qt.ArrowCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
         if complete_or_create == "Create New":
             msg = (
                 "Importing Storm Drain data finished!\n\n"
@@ -3001,7 +3002,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if storm_drain.status_report:
             result2 = ScrollMessageBox2(QMessageBox.Warning, "Storm Drain import status", storm_drain.status_report)
-            result2.exec_()
+            result2.exec()
             
         if skipped_inlets != 0:
             self.uc.show_warn("File " + Path(swmm_file).name + " has [SUBCATCHMENTS].\n\n" + 
@@ -3015,9 +3016,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.restoreOverrideCursor()
 
-        QApplication.setOverrideCursor(Qt.ArrowCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
         dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-        ok = dlg_INP_groups.exec_()
+        ok = dlg_INP_groups.exec()
         if ok:
             self.uc.bar_info("Storm Drain control data saved!")
             self.uc.log_info("Storm Drain control data saved!")
@@ -3034,12 +3035,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             + "or you prefer to erase it and create new storm drains from the .INP file?\n"
         )
 
-        msg.addButton(QPushButton("Keep existing and complete"), QMessageBox.YesRole)
-        msg.addButton(QPushButton("Create new Storm Drains"), QMessageBox.NoRole)
+        msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
+        msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
         msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
         msg.setDefaultButton(QMessageBox().Cancel)
         msg.setIcon(QMessageBox.Question)
-        ret = msg.exec_()
+        ret = msg.exec()
         if ret == 0:
             return "Keep and Complete"
         elif ret == 1:
@@ -3084,7 +3085,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         None,
                         "Select directory where SWMM.INP file will be exported",
                         directory=last_dir,
-                        options=QFileDialog.ShowDirsOnly,
+                        options=qfiledialog_option("ShowDirsOnly"),
                     )
                     if not swmm_dir:
                         return                    
@@ -3096,7 +3097,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 swmm_file = swmm_dir + r"\SWMM.INP"
                 if os.path.isfile(swmm_file):
-                    QApplication.setOverrideCursor(Qt.ArrowCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                     replace = self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?")
                     QApplication.restoreOverrideCursor()
                     if not replace:
@@ -3120,9 +3121,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             # Show dialog with [TITLE], [OPTIONS], and [REPORT], with values taken from existing .INP file (if selected),
             # and project units, start date, report start.
-            # QApplication.setOverrideCursor(Qt.ArrowCursor)
+            # QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             # dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-            # ok = dlg_INP_groups.exec_()
+            # ok = dlg_INP_groups.exec()
             # QApplication.restoreOverrideCursor()
             # if ok:
             start_date = NULL
@@ -4110,7 +4111,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     ini_file.write("\nSaved=1")
                     ini_file.write("\nCurrent=1")
 
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
             if set_dat_dir:
                 self.uc.bar_info(f"SWMM.INP exported to {swmm_dir}")
                 self.uc.log_info(f"SWMM.INP exported to {swmm_dir}")
@@ -4216,7 +4217,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         )
 
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             link_fields = layer.fields()
             link_inlet_fld_idx = link_fields.lookupField(link_inlet)
             link_outlet_fld_idx = link_fields.lookupField(link_outlet)
@@ -4364,7 +4365,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(rating_files[0]))
         # update lastSWMMDir
         last_dir = s.value("FLO-2D/lastSWMMDir", "")
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             errors0 = []
             errors1 = []
@@ -4692,7 +4693,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         dlg_shapefile = StormDrainShapefile(self.con, self.iface, self.lyrs)
         dlg_shapefile.components_tabWidget.setCurrentPage = 0
-        save = dlg_shapefile.exec_()
+        save = dlg_shapefile.exec()
         if save:
             try:
                 if dlg_shapefile.saveSelected:
@@ -4725,7 +4726,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         try:
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             # Clear the plot
             self.plot.plot.legend = None
@@ -4863,7 +4864,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 data = OrderedDict()
                 # Read RPT file.
                 try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                     pd = ParseDAT()
                     par = pd.single_parser(RPT_file)
@@ -4943,10 +4944,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 depthRPT.append(row[3] if not row[3] is None else float("NaN"))
                                 percent_fullRPT.append(row[4] if not row[4] is None else float("NaN"))
 
-                            self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-                            self.plot.add_item(f"Percent Full (%)", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+                            self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+                            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
+                            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor("darkMagenta"), sty=qt_pen_style("SolidLine"), hide=True)
+                            self.plot.add_item(f"Percent Full (%)", [timeRPT, percent_fullRPT], col=QColor("darkGray"), sty=qt_pen_style("SolidLine"), hide=True)
 
                             # self.plot.plot.setLabel("left", text="Units of measurement: " + units)
                             QApplication.restoreOverrideCursor()
@@ -5153,7 +5154,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 SWMMQINtimeSeries = []
                 SWMMOUTFINtimeSeries = []
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                 pd = ParseDAT()
                 par = pd.single_parser(RPT_file)
@@ -5299,7 +5300,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
             )
@@ -5310,7 +5311,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
             )
@@ -5321,7 +5322,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
             )
@@ -5344,7 +5345,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.SD_type4_cbo.addItem("Rating Tables")
             row_index = self.SD_type4_cbo.model().rowCount() - 1
             flags = self.SD_type4_cbo.model().item(row_index).flags()
-            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
             self.SD_type4_cbo.model().item(row_index).setData(True,  SDTableRole)
             for row in sd_rating_tables:
                 rt_fid, name = [x if x is not None else "" for x in row]
@@ -5362,8 +5363,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.SD_type4_cbo.addItem("Culvert Equations")
             row_index = self.SD_type4_cbo.model().rowCount() - 1
             flags = self.SD_type4_cbo.model().item(row_index).flags()
-            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
-            self.SD_type4_cbo.model().item(row_index).setData(True,  Qt.UserRole + 1)
+            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~qt_item_flag("ItemIsSelectable"))
+            self.SD_type4_cbo.model().item(row_index).setData(True,  qt_item_role("UserRole") + 1)
             for culv in culverts:
                 fid, grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
                 if name and name != "":
@@ -5408,7 +5409,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         try:
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             s = QSettings()
             GDS_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -5704,7 +5705,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             {'name': [grid, invert_elevation, max_depth, length_accumulated, xs_max_depth_connected, in_offset, out_offset]}
             {'I1-37-30-20': [13881, 1399.38, 8.0, 0, 0, 0, 0]}
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         units = 'meters' if self.gutils.get_cont_par("METRIC") == "1" else 'feet'
         manhole_diameter = 1.5 if self.gutils.get_cont_par("METRIC") == "1" else 5
 
@@ -5900,7 +5901,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             if rpt_file:
                 self.sd_animator = SDAnimator(self.iface, existing_nodes_dict, rpt_file, units, manhole_diameter, mh_pop)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.sd_animator)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.sd_animator)
                 self.sd_animator.setFloating(True)
                 self.sd_animator.setGeometry(100, 100, 800, 600)
                 QApplication.restoreOverrideCursor()
@@ -6040,15 +6041,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.plot.plot.setTitle(title="Node - " + node + " (grid " + grid + ")")
             self.plot.plot.setLabel("bottom", text="Time (hours)")
 
-            self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-            self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor("darkMagenta"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor("darkGray"), sty=qt_pen_style("SolidLine"), hide=True)
             if SWMMOUTFINtimeseries:
-                self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor("black"), sty=qt_pen_style("SolidLine"), hide=True)
             if SWMMQINtimeSeries:
-                self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor("blue"), sty=qt_pen_style("SolidLine"), hide=True)
+                self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"), hide=True)
 
             try: # Build table.
                 discharge_data_model = StandardItemModel()
@@ -6420,9 +6421,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             "Assign Max. Depth", txt, "All Nodes", "Selected Nodes"
         )
 
-        if dialog == QMessageBox.Yes:
+        if dialog == self.uc.msgbox_button("Yes"):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                 # Inlet/Junctions
                 self.user_swmm_inlets_junctions_lyr.startEditing()
@@ -6511,9 +6512,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             finally:
                 QApplication.restoreOverrideCursor()
 
-        elif dialog == QMessageBox.No:
+        elif dialog == self.uc.msgbox_button("No"):
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                 if self.user_swmm_inlets_junctions_lyr.selectedFeatureCount() > 0 or self.user_swmm_storage_units_lyr.selectedFeatureCount():
 
@@ -6636,13 +6637,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                      "for all links (conduits, pumps, orifices, and weirs)?",
                                      "Find a node located at a distance\nless than this from the link (in " + distance_units + " )",
                                      self.buffer_distance, "", 5)
-            if dialog.exec() == QMessageBox.Accepted:
+            if dialog.exec() == qdialog_code("Accepted"):
                 self.buffer_distance = dialog.first_input.value()
             else:
                 return
 
             fields = QgsFields()
-            fields.append(QgsField(name='name', type=QMetaType.QString))
+            fields.append(QgsField(name='name', type=qmeta_type("QString")))
 
             pr = SD_all_nodes_layer.dataProvider()
 
@@ -6673,7 +6674,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if self.no_nodes != "":
                 msg = "The following nodes (inlets or outlets) could not" + "\n" + "be found for the indicated links:\n\n" + self.no_nodes
                 result2 = ScrollMessageBox2(QMessageBox.Warning, "Missing inlets and outlets", msg)
-                result2.exec_()
+                result2.exec()
             else:
                 success = " Success! all inlets and outlets nodes where assigned.\n\n"
 
@@ -6920,11 +6921,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             sql = "UPDATE swmmflo_culvert SET cdiameter=?, typec=?, typeen=?, cubase=?, multbarrels=? WHERE name = ?;"
             
-            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), Qt.DisplayRole)
-            typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), Qt.DisplayRole)
-            typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), Qt.DisplayRole)
-            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), Qt.DisplayRole)
-            multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), Qt.DisplayRole)
+            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), qt_item_role("DisplayRole"))
+            typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), qt_item_role("DisplayRole"))
+            typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), qt_item_role("DisplayRole"))
+            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), qt_item_role("DisplayRole"))
+            multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), qt_item_role("DisplayRole"))
             
             self.gutils.execute(sql , (cdiameter ,typec ,typeen ,cubase ,multbarrels, name))
             
@@ -7326,7 +7327,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not curve_files:
             return
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(curve_files[0]))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             del_sql = "DELETE FROM swmm_pumps_curve_data WHERE pump_curve_name = ?"
             data_sql = "INSERT INTO swmm_pumps_curve_data (pump_curve_name, pump_curve_type, description, x_value, y_value) VALUES (?, ?, ?, ?, ?)"
@@ -7414,7 +7415,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Function to open and retrieve the data from the sd_control table
         """
         dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-        ok = dlg_INP_groups.exec_()
+        ok = dlg_INP_groups.exec()
         if ok:
             self.uc.bar_info("Storm Drain control data saved!")
             self.uc.log_info("Storm Drain control data saved!")
@@ -7602,7 +7603,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Function to find an object in the whole storm drain system
         """
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             sd_object = self.object_le.text()
             table, column_name = self.find_object_in_sd_tables(sd_object)
 
@@ -7656,7 +7657,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Show the dialog
                 dlg = dock_dialogs.get(table)(self.con, self.iface, self.lyrs)
 
-                self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+                self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
                 if f2d_dock:
                     self.iface.mainWindow().tabifyDockWidget(f2d_dock, dlg.dock_widget)
                 dlg.dock_widget.setFloating(False)
@@ -7768,7 +7769,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"External Inflow - {time_series_name}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
 
         try:  # Build table.
             discharge_data_model = StandardItemModel()

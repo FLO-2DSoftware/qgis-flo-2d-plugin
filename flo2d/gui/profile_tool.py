@@ -10,16 +10,16 @@
 
 from operator import itemgetter
 
-from PyQt5.QtCore import QUrl
+from qgis.PyQt.QtCore import QUrl
 from qgis.core import QgsFeatureRequest, QgsProject, QgsRaster
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QDesktopServices
 
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2dobjects import ChannelSegment
 from ..user_communication import UserCommunication
-from ..utils import is_number
+from ..utils import is_number, qt_pen_style
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("profile_tool")
@@ -180,20 +180,20 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
             self.plot.plot.setLabel("bottom", text="Channel length")
             self.plot.plot.setLabel("left", text="")
-            self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-            self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-            self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-            self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, water], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Froude", [sta, froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, w_perim], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, top_w], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Width/Depth", [sta, width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Energy slope", [sta, energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, shear_stress], col=QColor(Qt.darkYellow), hide=True)
-            self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, surf_area], col=QColor(Qt.darkMagenta), hide=True)
+            self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor("black"), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, water], col=QColor("blue"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, velocity], col=QColor("green"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Froude", [sta, froude], col=QColor("gray"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, flow_area], col=QColor("red"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, w_perim], col=QColor("yellow"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, hyd_radius], col=QColor("darkBlue"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, top_w], col=QColor("darkRed"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Width/Depth", [sta, width_depth], col=QColor("darkCyan"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Energy slope", [sta, energy_slope], col=QColor("magenta"), sty=qt_pen_style("SolidLine"), hide=True)
+            self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, shear_stress], col=QColor("darkYellow"), hide=True)
+            self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, surf_area], col=QColor("darkMagenta"), hide=True)
 
             try:  # Build table.
                 data_model = StandardItemModel()
@@ -262,9 +262,9 @@ class ProfileTool(qtBaseClass, uiDialog):
 
         else:
             self.plot.plot.addLegend()
-            self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-            self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-            self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor("black"), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor("darkGreen"), sty=qt_pen_style("SolidLine"))
+            self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor("darkYellow"), sty=qt_pen_style("SolidLine"))
             self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
             self.plot.plot.setLabel("bottom", text="Channel length")
             self.plot.plot.setLabel("left", text="Elevation")

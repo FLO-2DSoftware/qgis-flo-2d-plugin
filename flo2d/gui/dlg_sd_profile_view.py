@@ -1,11 +1,12 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QVBoxLayout
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QVBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 
 
 from flo2d.gui.ui_utils import load_ui
+from flo2d.utils import qt_window_type
 
 uiDialog, qtBaseClass = load_ui("sd_profile_view")
 
@@ -23,7 +24,7 @@ class SDProfileView(qtBaseClass, uiDialog):
         self.layout.setObjectName("Storm Drain View")
         self.setWindowTitle("Storm Drain Profile View")
         self.setLayout(self.layout)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | qt_window_type("WindowMaximizeButtonHint"))
 
         self.ax = self.canvas.figure.add_subplot(1, 1, 1)
         self.ax.spines[['right', 'top']].set_visible(False)

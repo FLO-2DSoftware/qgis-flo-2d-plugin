@@ -13,13 +13,13 @@ import traceback
 from datetime import datetime
 from math import isnan
 
-from PyQt5.QtWidgets import QProgressDialog
+from qgis.PyQt.QtWidgets import QProgressDialog
 from qgis.core import QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices, QStandardItem, QStandardItemModel
 
 from .dlg_sampling_raincellraw import SamplingRaincellRawDialog
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
@@ -28,7 +28,8 @@ from ..flo2dobjects import Rain
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, get_flo2dpro_release_date, second_smallest, set_min_max_elevs
+from ..utils import is_number, m_fdata, get_flo2dpro_release_date, second_smallest, set_min_max_elevs, qt_item_role, \
+    qt_cursor_shape
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect
 
@@ -78,7 +79,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         Slot used to push changes of existing items onto undoStack.
         """
-        if role == Qt.EditRole:
+        if role == qt_item_role("EditRole"):
             command = CommandItemEdit(
                 self,
                 item,
@@ -165,7 +166,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             if not realtime_file:
                 return
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             s.setValue("FLO-2D/lastASC", os.path.dirname(realtime_file))
 
@@ -326,13 +327,13 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg = SamplingRaincellRawDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             dlg.process_raincellraw()
         else:
             return
         # try:
-        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        #     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         #     res = dlg.probe_roughness()
         #     QApplication.restoreOverrideCursor()
         #     if res:
@@ -458,7 +459,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         s.setValue("FLO-2D/lastPredefinedSeriesDir", os.path.dirname(predefined_files[0]))
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if not self.rain:
                 return
             for file in predefined_files:
@@ -596,7 +597,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
         cell_size = self.get_cell_size()
         dlg = SamplingRainDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
@@ -609,7 +610,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 del_cells = "DELETE FROM rain_arf_cells;"
                 self.gutils.execute(del_cells)
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             res = dlg.probe_rain()
 
             delete_null = """DELETE FROM rain_arf_cells WHERE arf IS NULL;"""
@@ -816,7 +817,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         Delete all realtime rainfall data from the database.
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.gutils.clear_tables("raincell", "raincell_data")
         self.uc.bar_info("Realtime Rainfall (RAINCELL.DAT) deleted successfully!")
         self.uc.log_info("Realtime Rainfall (RAINCELL.DAT) deleted successfully!")
@@ -826,7 +827,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         Delete all realtime rainfall data from the database.
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.gutils.clear_tables("raincell", "raincellraw", "flo2d_raincell")
         self.uc.bar_info("Realtime Rainfall (RAINCELLRAW.DAT) deleted successfully!")
         self.uc.log_info("Realtime Rainfall (RAINCELLRAW.DAT) deleted successfully!")

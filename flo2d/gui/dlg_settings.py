@@ -12,7 +12,7 @@ import time
 from itertools import chain
 
 import qgis
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis._core import QgsProject
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
@@ -37,7 +37,7 @@ from ..geopackage_utils import (
 )
 from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from ..user_communication import UserCommunication
-from ..utils import is_number, get_plugin_version, get_flo2dpro_version
+from ..utils import is_number, get_plugin_version, get_flo2dpro_version, qt_cursor_shape
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("settings")
@@ -305,7 +305,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 answer = self.uc.customized_question("WARNING 060319.1655",
                     "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
                 )
-                if answer == QMessageBox.Yes:
+                if answer == self.uc.msgbox_button("Yes"):
                     continue
                 else:
                     self.proj_lab.setText("----")
@@ -337,7 +337,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 answer = self.uc.customized_question("WARNING 060319.1655",
                     "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
                 )
-                if answer == QMessageBox.Yes:
+                if answer == self.uc.msgbox_button("Yes"):
                     continue
                 else:
                     self.proj_lab.setText("----")
@@ -382,7 +382,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
         self.set_other_global_defaults(con)
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
         self.gutils.execute(sql, (srsid,))
@@ -419,7 +419,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
             # dlg.debug_run_btn.setVisible(False)
-            ok = dlg.exec_()
+            ok = dlg.exec()
             if not ok:
                 return
             flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
@@ -499,7 +499,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.con = database_connect(self.gpkg_path)
         self.uc.log_info("Connected to {}".format(self.gpkg_path))
         self.uc.log_info("{0:.3f} seconds => connecting".format(time.time() - start_time))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.gutils = GeoPackageUtils(self.con, self.iface)
         # Check if file is GeoPackage.
         if self.gutils.check_gpkg():

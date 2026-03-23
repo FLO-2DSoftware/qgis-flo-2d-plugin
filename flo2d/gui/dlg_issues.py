@@ -9,7 +9,7 @@
 
 import os
 
-from PyQt5.QtWidgets import QDockWidget
+from qgis.PyQt.QtWidgets import QDockWidget
 from qgis.core import *
 from qgis.core import (
     QgsFeature,
@@ -29,7 +29,6 @@ from qgis.PyQt.QtWidgets import (
     QFileDialog,
     QProgressDialog,
     QTableWidgetItem,
-    qApp,
 )
 
 from ..flo2d_tools.grid_tools import (
@@ -38,7 +37,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import copy_tablewidget_selection
+from ..utils import copy_tablewidget_selection, qt_item_role, qt_cursor_shape, qt_dock_widget_area, qmeta_type
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_show_n_cells
 
 # from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
@@ -89,7 +88,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         """
         Opens the dock widgets
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         if self.current_project_radio.isChecked():
             try:
@@ -104,7 +103,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
 
                 dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, 1000000, "All", "All")
                 dlg_conflicts.dock_widget.setFloating(False)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_conflicts.dock_widget)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), dlg_conflicts.dock_widget)
                 dlg_conflicts.dock_widget.show()
                 self.lyrs.clear_rubber()
                 QApplication.restoreOverrideCursor()
@@ -137,7 +136,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
                         + " cells references that are outside the grid !"
                     )
                 dlg_issues.dock_widget.setFloating(False)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_issues.dock_widget)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), dlg_issues.dock_widget)
                 dlg_issues.dock_widget.show()
                 self.lyrs.clear_rubber()
                 QApplication.restoreOverrideCursor()
@@ -159,7 +158,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
 
                 dlg_levee_crests = LeveeCrestsDialog(self.con, self.iface, self.lyrs)
                 dlg_levee_crests.dock_widget.setFloating(False)
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_levee_crests.dock_widget)
+                self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), dlg_levee_crests.dock_widget)
                 dlg_levee_crests.dock_widget.show()
                 self.lyrs.clear_rubber()
                 QApplication.restoreOverrideCursor()
@@ -321,7 +320,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.uc.log_info(os.path.basename(debug_file) + " is empty!")
                 return False
             else:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 s.setValue("FLO-2D/lastDEBUGDir", os.path.dirname(debug_file))
                 self.debug_directory = os.path.dirname(debug_file)
 
@@ -415,8 +414,8 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
     def import_other_issues_files(self):
         QApplication.restoreOverrideCursor()
         dlg_issues_files = IssuesFiles(self.con, self.iface, self.lyrs)
-        ok = dlg_issues_files.exec_()
-        # QApplication.setOverrideCursor(Qt.WaitCursor)
+        ok = dlg_issues_files.exec()
+        # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         if ok:
             for lyr in QgsProject.instance().mapLayers().values():
                 if lyr.name() == "Depressed Elements":
@@ -480,7 +479,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("Depressed Elements")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -538,7 +537,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("Channel Bank Elev Differences")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -612,7 +611,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("Floodplain Rim Differences")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -688,7 +687,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("ARF_ADJUSTMENT")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -748,7 +747,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("UndergOUTFALLS")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -830,7 +829,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("CHAN_INTERIOR_NODES")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -887,7 +886,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.lyrs.remove_layer_by_name("ManholePop")
 
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
@@ -962,7 +961,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 self.elements_cbo.addItem(x[0].strip())
 
     def codes_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.loadIssues()
         QApplication.restoreOverrideCursor()
 
@@ -998,7 +997,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             self.uc.log_info("Manhole cover pop off (ManholePop.OUT)")
             codes = "9007"
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         first, second = "", ""
         codes = codes.split(" ")
@@ -1021,38 +1020,38 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         rowPosition = self.description_tblw.rowCount()
                         self.description_tblw.insertRow(rowPosition)
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[0].strip())
+                        itm.setData(qt_item_role("EditRole"), item[0].strip())
                         self.description_tblw.setItem(rowPosition, 0, itm)
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[1].strip())
+                        itm.setData(qt_item_role("EditRole"), item[1].strip())
                         self.description_tblw.setItem(rowPosition, 1, itm)
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[2])
+                        itm.setData(qt_item_role("EditRole"), item[2])
                         self.description_tblw.setItem(rowPosition, 2, itm)
                     elif second != "" and int(item[1]) >= int(first) and int(item[1]) <= int(second):
                         rowPosition = self.description_tblw.rowCount()
                         self.description_tblw.insertRow(rowPosition)
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[0].strip())
+                        itm.setData(qt_item_role("EditRole"), item[0].strip())
                         self.description_tblw.setItem(rowPosition, 0, itm)
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[1].strip())
+                        itm.setData(qt_item_role("EditRole"), item[1].strip())
                         self.description_tblw.setItem(rowPosition, 1, itm)
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[2])
+                        itm.setData(qt_item_role("EditRole"), item[2])
                         self.description_tblw.setItem(rowPosition, 2, itm)
             elif first == "All":
                 for item in self.errors:
                     rowPosition = self.description_tblw.rowCount()
                     self.description_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[0].strip())
+                    itm.setData(qt_item_role("EditRole"), item[0].strip())
                     self.description_tblw.setItem(rowPosition, 0, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[1].strip())
+                    itm.setData(qt_item_role("EditRole"), item[1].strip())
                     self.description_tblw.setItem(rowPosition, 1, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[2])
+                    itm.setData(qt_item_role("EditRole"), item[2])
                     self.description_tblw.setItem(rowPosition, 2, itm)
 
             if self.description_tblw.rowCount() > 0:
@@ -1081,13 +1080,13 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     rowPosition = self.description_tblw.rowCount()
                     self.description_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[0].strip())
+                    itm.setData(qt_item_role("EditRole"), item[0].strip())
                     self.description_tblw.setItem(rowPosition, 0, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[1].strip())
+                    itm.setData(qt_item_role("EditRole"), item[1].strip())
                     self.description_tblw.setItem(rowPosition, 1, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[2])
+                    itm.setData(qt_item_role("EditRole"), item[2])
                     self.description_tblw.setItem(rowPosition, 2, itm)
 
             self.find_cell(cell)
@@ -1103,13 +1102,13 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     rowPosition = self.description_tblw.rowCount()
                     self.description_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[0].strip())
+                    itm.setData(qt_item_role("EditRole"), item[0].strip())
                     self.description_tblw.setItem(rowPosition, 0, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[1].strip())
+                    itm.setData(qt_item_role("EditRole"), item[1].strip())
                     self.description_tblw.setItem(rowPosition, 1, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[2])
+                    itm.setData(qt_item_role("EditRole"), item[2])
                     self.description_tblw.setItem(rowPosition, 2, itm)
             self.elements_cbo.setCurrentIndex(0)
             self.issues_codes_cbo.setCurrentIndex(0)
@@ -1144,13 +1143,13 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if self.grid is not None:
                 if self.grid:
                     if cell != "":
                         cell = int(cell)
                         if self.n_cells >= cell and cell > 0:
-                            self.lyrs.show_feat_rubber(self.grid.id(), cell, QColor(Qt.yellow))
+                            self.lyrs.show_feat_rubber(self.grid.id(), cell, QColor("yellow"))
                             self.currentCell = next(self.grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = self.currentCell.geometry().centroid().asPoint()
                             if (
@@ -1189,7 +1188,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
     def zoom_in(self):
         if self.currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
@@ -1198,7 +1197,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
     def zoom_out(self):
         if self.currentCell:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
@@ -1222,7 +1221,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 f.append(
                     QgsField(
                         field[0],
-                        QMetaType.Int if field[1] == "I" else QMetaType.Double if field[1] == "D" else QMetaType.QString,
+                        qmeta_type("Int") if field[1] == "I" else qmeta_type("Double") if field[1] == "D" else qmeta_type("QString"),
                     )
                 )
 
@@ -2131,11 +2130,11 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         self.create_current_conflicts_layer()
 
     def create_current_conflicts_layer(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         s = QSettings()
         lastDir = s.value("FLO-2D/lastGdsDir", "")
-        qApp.processEvents()
+        QApplication.processEvents()
         features = []
         for e in self.errors:
             if int(e[0]) > 1:
@@ -2164,8 +2163,8 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
-            f.append(QgsField(fields[2][0], QMetaType.Int))
-            f.append(QgsField(fields[3][0], QMetaType.QString))
+            f.append(QgsField(fields[2][0], qmeta_type("Int")))
+            f.append(QgsField(fields[3][0], qmeta_type("QString")))
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
@@ -2231,7 +2230,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         self.loadIssuePairs()
 
     def loadIssuePairs(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.description_tblw.setRowCount(0)
         comp1 = self.component1_cbo.currentText()
         comp2 = self.component2_cbo.currentText()
@@ -2250,10 +2249,10 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                 rowPosition = self.description_tblw.rowCount()
                 self.description_tblw.insertRow(rowPosition)
                 itm = QTableWidgetItem()
-                itm.setData(Qt.EditRole, item[0].strip())
+                itm.setData(qt_item_role("EditRole"), item[0].strip())
                 self.description_tblw.setItem(rowPosition, 0, itm)
                 itm = QTableWidgetItem()
-                itm.setData(Qt.EditRole, item[3])
+                itm.setData(qt_item_role("EditRole"), item[3])
                 self.description_tblw.setItem(rowPosition, 2, itm)
             else:
                 self.lyrs.clear_rubber()
@@ -2270,7 +2269,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def elements_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.description_tblw.setRowCount(0)
         nElems = self.elements_cbo.count()
         if nElems > 0:
@@ -2280,10 +2279,10 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                     rowPosition = self.description_tblw.rowCount()
                     self.description_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[0].strip())
+                    itm.setData(qt_item_role("EditRole"), item[0].strip())
                     self.description_tblw.setItem(rowPosition, 0, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[3])
+                    itm.setData(qt_item_role("EditRole"), item[3])
                     self.description_tblw.setItem(rowPosition, 2, itm)
             self.component1_cbo.setCurrentIndex(0)
             self.component2_cbo.setCurrentIndex(0)
@@ -2292,7 +2291,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def errors_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.description_tblw.setRowCount(0)
         nElems = self.errors_cbo.count()
         if nElems > 0:
@@ -2305,10 +2304,10 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                     rowPosition = self.description_tblw.rowCount()
                     self.description_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[0].strip())
+                    itm.setData(qt_item_role("EditRole"), item[0].strip())
                     self.description_tblw.setItem(rowPosition, 0, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[3])
+                    itm.setData(qt_item_role("EditRole"), item[3])
                     self.description_tblw.setItem(rowPosition, 2, itm)
                 else:
                     self.lyrs.clear_rubber()
@@ -2322,14 +2321,14 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
                     if cell != "":
                         cell = int(cell)
                         if cell > 0:
-                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor("yellow"))
                             self.currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = self.currentCell.geometry().centroid().asPoint()
                             if (
@@ -2833,11 +2832,11 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.create_levee_crests_conflicts_layer()
 
     def create_levee_crests_conflicts_layer(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         s = QSettings()
         lastDir = s.value("FLO-2D/lastGdsDir", "")
-        qApp.processEvents()
+        QApplication.processEvents()
         features = []
         for e in self.levee_crests:
             pnt = self.gutils.single_centroid(e[1])
@@ -2873,12 +2872,12 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
 
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
-            f.append(QgsField(fields[2][0], QMetaType.Int))
-            f.append(QgsField(fields[3][0], QMetaType.Int))
-            f.append(QgsField(fields[4][0], QMetaType.Double))
-            f.append(QgsField(fields[5][0], QMetaType.Double))
-            f.append(QgsField(fields[6][0], QMetaType.Int))
-            f.append(QgsField(fields[7][0], QMetaType.Double))
+            f.append(QgsField(fields[2][0], qmeta_type("Int")))
+            f.append(QgsField(fields[3][0], qmeta_type("Int")))
+            f.append(QgsField(fields[4][0], qmeta_type("Double")))
+            f.append(QgsField(fields[5][0], qmeta_type("Double")))
+            f.append(QgsField(fields[6][0], qmeta_type("Int")))
+            f.append(QgsField(fields[7][0], qmeta_type("Double")))
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
@@ -2938,7 +2937,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.errors_cbo.model().sort(0)
 
     def loadLeveeCrests(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.crest_tblw.setRowCount(0)
 
         pd = QProgressDialog("Checking levees errors...", None, 0, len(self.levee_crests))
@@ -2965,37 +2964,37 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
 
             itm = QTableWidgetItem()
             itm.setBackground(color1)
-            itm.setData(Qt.EditRole, item[0].strip())
+            itm.setData(qt_item_role("EditRole"), item[0].strip())
             self.crest_tblw.setItem(rowPosition, 0, itm)
 
             itm = QTableWidgetItem()
             itm.setBackground(color1)
-            itm.setData(Qt.EditRole, item[1])
+            itm.setData(qt_item_role("EditRole"), item[1])
             self.crest_tblw.setItem(rowPosition, 0, itm)
 
             itm = QTableWidgetItem()
             itm.setBackground(color1)
-            itm.setData(Qt.EditRole, item[2])
+            itm.setData(qt_item_role("EditRole"), item[2])
             self.crest_tblw.setItem(rowPosition, 1, itm)
 
             itm = QTableWidgetItem()
             itm.setBackground(color1)
-            itm.setData(Qt.EditRole, item[3])
+            itm.setData(qt_item_role("EditRole"), item[3])
             self.crest_tblw.setItem(rowPosition, 2, itm)
 
             itm = QTableWidgetItem()
             itm.setBackground(color1)
-            itm.setData(Qt.EditRole, item[4])
+            itm.setData(qt_item_role("EditRole"), item[4])
             self.crest_tblw.setItem(rowPosition, 3, itm)
 
             itm = QTableWidgetItem()
             itm.setBackground(color2)
-            itm.setData(Qt.EditRole, item[5])
+            itm.setData(qt_item_role("EditRole"), item[5])
             self.crest_tblw.setItem(rowPosition, 4, itm)
 
             itm = QTableWidgetItem()
             itm.setBackground(color2)
-            itm.setData(Qt.EditRole, item[6])
+            itm.setData(qt_item_role("EditRole"), item[6])
             self.crest_tblw.setItem(rowPosition, 5, itm)
 
             self.elements_cbo.setCurrentIndex(0)
@@ -3010,7 +3009,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def elements_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.crest_tblw.setRowCount(0)
         nElems = self.elements_cbo.count()
         if nElems > 0:
@@ -3024,40 +3023,40 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
                         self.crest_tblw.insertRow(rowPosition)
 
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[0].strip())
+                        itm.setData(qt_item_role("EditRole"), item[0].strip())
                         self.crest_tblw.setItem(rowPosition, 0, itm)
 
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[1])
+                        itm.setData(qt_item_role("EditRole"), item[1])
                         self.crest_tblw.setItem(rowPosition, 0, itm)
 
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[2])
+                        itm.setData(qt_item_role("EditRole"), item[2])
                         self.crest_tblw.setItem(rowPosition, 1, itm)
 
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[3])
+                        itm.setData(qt_item_role("EditRole"), item[3])
                         self.crest_tblw.setItem(rowPosition, 2, itm)
 
                         itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[4])
+                        itm.setData(qt_item_role("EditRole"), item[4])
                         self.crest_tblw.setItem(rowPosition, 3, itm)
 
                         itm = QTableWidgetItem()
                         itm.setBackground(Qt.lightGray)
-                        itm.setData(Qt.EditRole, item[5])
+                        itm.setData(qt_item_role("EditRole"), item[5])
                         self.crest_tblw.setItem(rowPosition, 4, itm)
 
                         itm = QTableWidgetItem()
                         itm.setBackground(Qt.lightGray)
-                        itm.setData(Qt.EditRole, item[6])
+                        itm.setData(qt_item_role("EditRole"), item[6])
                         self.crest_tblw.setItem(rowPosition, 5, itm)
 
                 self.find_cell(cell)
         QApplication.restoreOverrideCursor()
 
     def errors_cbo_activated(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.crest_tblw.setRowCount(0)
         nElems = self.errors_cbo.count()
         if nElems > 0:
@@ -3070,10 +3069,10 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
                     rowPosition = self.crest_tblw.rowCount()
                     self.crest_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[0].strip())
+                    itm.setData(qt_item_role("EditRole"), item[0].strip())
                     self.crest_tblw.setItem(rowPosition, 0, itm)
                     itm = QTableWidgetItem()
-                    itm.setData(Qt.EditRole, item[3])
+                    itm.setData(qt_item_role("EditRole"), item[3])
                     self.crest_tblw.setItem(rowPosition, 2, itm)
                 else:
                     self.lyrs.clear_rubber()
@@ -3087,14 +3086,14 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
                     if cell != "":
                         cell = int(cell)
                         if len(grid) >= cell and cell > 0:
-                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor("yellow"))
                             self.currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = self.currentCell.geometry().centroid().asPoint()
                             if (

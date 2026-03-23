@@ -15,6 +15,7 @@ from qgis.PyQt.QtCore import Qt
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qdialogbuttonbox_button
 
 uiDialog, qtBaseClass = load_ui("sampling_variable_into_grid")
 
@@ -32,7 +33,7 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")
         self.current_lyr = None
-        self.sampling_point_field_into_grid_field_buttonBox.button(QDialogButtonBox.Ok).setText(
+        self.sampling_point_field_into_grid_field_buttonBox.button(qdialogbuttonbox_button("Ok")).setText(
             "Assign to selected grid field"
         )
         self.setup_layer_cbo()

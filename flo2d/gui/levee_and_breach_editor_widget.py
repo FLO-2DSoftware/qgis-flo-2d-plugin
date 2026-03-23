@@ -9,8 +9,8 @@
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_breach import (
     GlobalBreachDialog,
@@ -19,7 +19,7 @@ from ..gui.dlg_breach import (
     LeveeFragilityCurvesDialog,
 )
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
+from ..utils import float_or_zero, qt_cursor_shape
 from .ui_utils import load_ui, set_icon
 from .dlg_breach import repaint_levee
 
@@ -119,7 +119,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             return
         else:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 self.gutils.clear_tables("levee_data", "levee_general", "levee_failure", "levee_fragility")
 
             except Exception as e:
@@ -152,7 +152,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             return
         else:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 self.gutils.clear_tables("breach", "breach_global", "breach_cells", "breach_fragility_curves")
 
             except Exception as e:
@@ -200,10 +200,10 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         dlg_individual_levees = IndividualLeveesDialog(self.iface, self.lyrs)
         QApplication.restoreOverrideCursor()
-        close = dlg_individual_levees.exec_()
+        close = dlg_individual_levees.exec()
         self.lyrs.clear_rubber()
 
     def show_global_breach_dialog(self):
@@ -217,7 +217,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         dlg_global_breach.weir = self.weir_coefficient_dbox.value()
         dlg_global_breach.time = self.time_to_initial_failure_dbox.value()
 
-        save = dlg_global_breach.exec_()
+        save = dlg_global_breach.exec()
         if save:
             try:
                 if dlg_global_breach.save_breach_global_data():
@@ -245,7 +245,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg_individual_breach = IndividualBreachDialog(self.iface, self.lyrs)
-        save = dlg_individual_breach.exec_()
+        save = dlg_individual_breach.exec()
         if save:
             try:
                 if dlg_individual_breach.save_individual_breach_data():
@@ -270,7 +270,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
 
         """
         dlg_levee_fragility = LeveeFragilityCurvesDialog(self.iface, self.lyrs)
-        save = dlg_levee_fragility.exec_()
+        save = dlg_levee_fragility.exec()
         if save:
             try:
                 if dlg_levee_fragility.save_current_probability_table():

@@ -9,7 +9,7 @@
 
 from collections import OrderedDict
 
-from PyQt5.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox
 
@@ -17,7 +17,7 @@ from .dlg_mud_and_sediment import MudAndSedimentDialog
 from .rain_editor_widget import RainEditorWidget
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
+from ..utils import float_or_zero, qt_cursor_shape
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("cont_toler")
@@ -542,7 +542,7 @@ class ContToler(qtBaseClass, uiDialog):
 
     def save_parameters_JJ(self):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             if self.use_time_interval_grp.isChecked():
                 if not self.ENDTIMTEP.value() > self.STARTIMTEP.value():

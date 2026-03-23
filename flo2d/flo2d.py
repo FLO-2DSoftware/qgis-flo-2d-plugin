@@ -17,7 +17,7 @@ import time
 import traceback
 from contextlib import contextmanager
 
-from PyQt5.QtWidgets import QToolButton, QProgressDialog, QPushButton
+from qgis.PyQt.QtWidgets import QToolButton, QProgressDialog, QPushButton
 from osgeo import gdal, ogr
 from qgis._core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsRasterLayer
 from qgis.core import NULL, QgsProject, QgsWkbTypes
@@ -36,8 +36,7 @@ from qgis.PyQt.QtWidgets import (
     QApplication,
     QFileDialog,
     QMenu,
-    QMessageBox,
-    qApp,
+    QMessageBox
 )
 from qgis.utils import plugins
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
@@ -90,7 +89,8 @@ from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
-from .utils import get_flo2dpro_version, get_plugin_version
+from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
+    qt_dock_widget_area, dock_area_from_int, qt_window_type
 
 from PIL import Image
 
@@ -290,7 +290,7 @@ class Flo2D(object):
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
                 toolButton.setIcon(QIcon(self.plugin_dir + tool_button_mapping[text][0]))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
+                toolButton.setPopupMode(qt_toolbutton_popup_mode("InstantPopup"))
 
                 if len(tool_button_mapping[text]) >= 3 and tool_button_mapping[text][2]:
                     toolButton.setCheckable(True)
@@ -652,34 +652,34 @@ class Flo2D(object):
 
     def add_docks_to_iface(self):
         s = QSettings("FLO2D")
-        ma = s.value("dock/area", Qt.RightDockWidgetArea, type=int)
-        ta = s.value("table_dock/area", Qt.BottomDockWidgetArea, type=int)
-        pa = s.value("plot_dock/area", Qt.BottomDockWidgetArea, type=int)
-        ga = s.value("grid_info_dock/area", Qt.TopDockWidgetArea, type=int)
+        ma = s.value("dock/area", 0, type=int)
+        ta = s.value("table_dock/area", 0, type=int)
+        pa = s.value("plot_dock/area", 0, type=int)
+        ga = s.value("grid_info_dock/area", 0, type=int)
 
         if ma == 0:
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), self.f2d_dock)
             self.f2d_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(ma, self.f2d_dock)
+            self.iface.addDockWidget(dock_area_from_int(ma), self.f2d_dock)
 
         if ta == 0:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
             self.f2d_table_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(ta, self.f2d_table_dock)
+            self.iface.addDockWidget(dock_area_from_int(ta), self.f2d_table_dock)
 
         if pa == 0:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
             self.f2d_plot_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(pa, self.f2d_plot_dock)
+            self.iface.addDockWidget(dock_area_from_int(pa), self.f2d_plot_dock)
 
         if ga == 0:
-            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("TopDockWidgetArea"), self.f2d_grid_info_dock)
             self.f2d_grid_info_dock.setFloating(True)
         else:
-            self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
+            self.iface.addDockWidget(dock_area_from_int(ga), self.f2d_grid_info_dock)
 
     def unload(self):
         """
@@ -818,7 +818,7 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
-        result = dlg_settings.exec_()
+        result = dlg_settings.exec()
         if result and dlg_settings.con:
             dlg_settings.write()
             self.con = dlg_settings.con
@@ -875,7 +875,7 @@ class Flo2D(object):
         if not gpkg_path:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(gpkg_path))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
 
@@ -889,7 +889,7 @@ class Flo2D(object):
             if not self.gutils.check_gpkg_version():
                 QApplication.restoreOverrideCursor()
                 if self.uc.question("This GeoPackage is outdated. Would you like to update it?"):
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     # Create an updated geopackage and copy old package data to it
                     plugin_v = get_plugin_version()
                     original_base_path = gpkg_path[:-5]
@@ -942,9 +942,9 @@ class Flo2D(object):
                     dlg_update_gpkg.cellSizeDSpinBox.setValue(cell_size)
                     dlg_update_gpkg.show()
                     QApplication.restoreOverrideCursor()
-                    result = dlg_update_gpkg.exec_()
+                    result = dlg_update_gpkg.exec()
                     if result:
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                         dlg_update_gpkg.write()
                         dlg_settings.set_default_controls(
                             self.con)  # TODO: This should be on the geopackage_utils and not on the settings
@@ -1044,7 +1044,7 @@ class Flo2D(object):
 
             if not self.project.read(uri):
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                 if not dlg_settings.connect(gpkg_path):
                     return
@@ -1082,7 +1082,7 @@ class Flo2D(object):
         Function to save a FLO-2D project into a geopackage
         """
 
-        # QApplication.setOverrideCursor(Qt.WaitCursor)
+        # QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             gpkg_path = self.gutils.get_gpkg_path()
         except AttributeError:
@@ -1095,7 +1095,7 @@ class Flo2D(object):
         checked_layers = False
         not_added = []
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         for layer_id, layer in layers.items():
             if self.check_layer_source(layer, gpkg_path):
                 if not checked_layers:
@@ -1107,20 +1107,20 @@ class Flo2D(object):
                     QApplication.restoreOverrideCursor()
                     answer = self.uc.customized_question("FLO-2D", msg)
                     dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
-                    if answer == QMessageBox.Yes:
+                    if answer == self.uc.msgbox_button("Yes"):
                         dlg_gpkg_management.show()
                         while True:
-                            ok = dlg_gpkg_management.exec_()
+                            ok = dlg_gpkg_management.exec()
                             if ok:
-                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                                 dlg_gpkg_management.save_layers()
                                 QApplication.restoreOverrideCursor()
                                 return
                             else:
                                 return
 
-                    elif answer == QMessageBox.No:
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                    elif answer == self.uc.msgbox_button("No"):
+                        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                         dlg_gpkg_management.populate_user_lyrs()
                         dlg_gpkg_management.save_layers()
                         QApplication.restoreOverrideCursor()
@@ -1158,7 +1158,7 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:
@@ -1528,15 +1528,15 @@ class Flo2D(object):
                         answer = self.uc.customized_question("FLO-2D", msg)
                     else:
 
-                        answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
+                        answer = self.uc.customized_question("FLO-2D", msg, mb_button("Cancel"), mb_button("Cancel"))
                 # Geopackage exists at the original path
                 else:
                     msg += "Load the model?"
                     QApplication.restoreOverrideCursor()
                     answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.Yes:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    qApp.processEvents()
+                if answer == self.uc.msgbox_button("Yes"):
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
+                    QApplication.processEvents()
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     if not dlg_settings.connect(old_gpkg):
                         return
@@ -1562,9 +1562,9 @@ class Flo2D(object):
                 msg += "Load the model?"
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
-                if answer == QMessageBox.Yes:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    qApp.processEvents()
+                if answer == self.uc.msgbox_button("Yes"):
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
+                    QApplication.processEvents()
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     if not dlg_settings.connect(new_gpkg):
                         return
@@ -1590,7 +1590,7 @@ class Flo2D(object):
             msg += "Would you like to load the geopackage?"
             QApplication.restoreOverrideCursor()
             answer = self.uc.customized_question("FLO-2D", msg)
-            if answer == QMessageBox.Yes:
+            if answer == self.uc.msgbox_button("Yes"):
                 s = QSettings()
                 last_gpkg_dir = s.value("FLO-2D/lastGpkgDir", "")
                 gpkg_path, __ = QFileDialog.getOpenFileName(
@@ -1603,8 +1603,8 @@ class Flo2D(object):
                     return
 
                 self.new_gpkg = gpkg_path
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                qApp.processEvents()
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
+                QApplication.processEvents()
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                 if not dlg_settings.connect(new_gpkg):
                     return
@@ -1676,7 +1676,7 @@ class Flo2D(object):
         progDialog.show()
         i = 0
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         for call in calls:
 
             i += 1
@@ -1872,10 +1872,10 @@ class Flo2D(object):
                 return
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
                 try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                     if "Channels" not in dlg_components.components:
                         import_calls.remove("import_chan")
@@ -1989,14 +1989,14 @@ class Flo2D(object):
                             "FLO-2D",
                             "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
                             + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-                            QMessageBox.Cancel,
+                            self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | mb_button("Cancel"),
+                            mb_button("Cancel"),
                         )
 
-                        if add_new_colums == QMessageBox.Cancel:
+                        if add_new_colums == mb_button("Cancel"):
                             return
 
-                        if add_new_colums == QMessageBox.No:
+                        if add_new_colums == self.uc.msgbox_button("No"):
                             return
                         else:
                             if add_col_and_row_fields(grid_lyr):
@@ -2134,7 +2134,7 @@ class Flo2D(object):
             self.gutils.enable_geom_triggers()
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         empty = self.f2g.is_table_empty("grid")
         if not empty:
             QApplication.restoreOverrideCursor()
@@ -2147,7 +2147,7 @@ class Flo2D(object):
                 self.gutils.enable_geom_triggers()
                 return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
         self.f2g.clear_gpkg_tables()
 
@@ -2178,14 +2178,14 @@ class Flo2D(object):
                 "FLO-2D",
                 "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
                 + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-                QMessageBox.Cancel,
+                self.uc.msgbox_button("Yes") | self.uc.msgbox_button("No") | mb_button("Cancel"),
+                mb_button("Cancel"),
             )
 
-            if add_new_colums == QMessageBox.Cancel:
+            if add_new_colums == mb_button("Cancel"):
                 return
 
-            if add_new_colums == QMessageBox.No:
+            if add_new_colums == self.uc.msgbox_button("No"):
                 return
             else:
                 if add_col_and_row_fields(grid_lyr):
@@ -2193,13 +2193,13 @@ class Flo2D(object):
         else:
             cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
             if cell is None:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                 proceed = self.uc.question(
                     "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                 )
                 QApplication.restoreOverrideCursor()
                 if proceed:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
                     QApplication.restoreOverrideCursor()
                 else:
@@ -2257,9 +2257,9 @@ class Flo2D(object):
             "Select import method", msg, " Several Components", " One Single Component"
         )
 
-        if imprt == QMessageBox.Yes:
+        if imprt == self.uc.msgbox_button("Yes"):
             self.import_selected_components()
-        elif imprt == QMessageBox.No:
+        elif imprt == self.uc.msgbox_button("No"):
             self.import_selected_components2()
 
     @connection_required
@@ -2323,13 +2323,13 @@ class Flo2D(object):
                 self.uc.show_info("There is no grid defined!")
                 self.gutils.enable_geom_triggers()
                 return
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
             QApplication.restoreOverrideCursor()
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
                 try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
                     if "Channels" not in dlg_components.components:
                         import_calls.remove("import_chan")
@@ -2577,7 +2577,7 @@ class Flo2D(object):
 
         if self.f2g.set_parser(fname):
             call_string = file_to_import_calls[bname]
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             try:
                 method = getattr(self.f2g, call_string)
                 if call_string == "import_swmminp":
@@ -2685,7 +2685,7 @@ class Flo2D(object):
 
             s.setValue("FLO-2D/lastGdsDir", outdir)
             self.f2d_widget.setup_project_folder()
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             export_calls = ["export_arf",
                             "export_breach",
@@ -2757,7 +2757,7 @@ class Flo2D(object):
                     break
 
             QApplication.restoreOverrideCursor()
-            ok = dlg_components.exec_()
+            ok = dlg_components.exec()
             if ok:
 
                 if not export_type:
@@ -2768,7 +2768,7 @@ class Flo2D(object):
                         export_type = "data"
                         s.setValue("FLO-2D/quickRun", "data")
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                 if export_type == "data":
 
                     if dlg_components.remove_files_chbox.isChecked():
@@ -2816,7 +2816,7 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
-                                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                                 if self.uc.question(
                                         "There are no simple multiple channel cells in the project but\n"
                                         + "there is a SIMPLE_MULT.DAT file in the directory.\n"
@@ -2829,7 +2829,7 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
-                                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                                QApplication.setOverrideCursor(qt_cursor_shape("ArrowCursor"))
                                 if self.uc.question(
                                         "There are no multiple channel cells in the project but\n"
                                         + "there is a MULT.DAT file in the directory.\n"
@@ -3119,7 +3119,7 @@ class Flo2D(object):
         if not attached_gpkg:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(attached_gpkg))
             self.gutils.copy_from_other(attached_gpkg)
 
@@ -3151,7 +3151,7 @@ class Flo2D(object):
                 self.uc.log_info("There is no grid! Please create it before running tool.")
                 return False
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
 
             self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format="DAT")
             s = QSettings()
@@ -3189,13 +3189,13 @@ class Flo2D(object):
                         + "or you prefer to erase it and create new storm drains from the .INP file?\n"
                     )
 
-                    msg.addButton(QPushButton("Keep existing and complete"), QMessageBox.YesRole)
-                    msg.addButton(QPushButton("Create new Storm Drains"), QMessageBox.NoRole)
+                    msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
+                    msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
                     msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                     msg.setDefaultButton(QMessageBox().Cancel)
                     msg.setIcon(QMessageBox.Question)
-                    ret = msg.exec_()
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    ret = msg.exec()
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     if ret == 0:
                         self.f2g.import_swmminp(swmm_file=fname, delete_existing=False)
                     elif ret == 1:
@@ -3234,7 +3234,7 @@ class Flo2D(object):
         Function to import multiple domains into the FLO-2D project
         """
         dlg = ImportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             dlg.import_global_domain()
             self.setup_dock_widgets()
@@ -3248,7 +3248,7 @@ class Flo2D(object):
         Function to export multiple domains into the FLO-2D project
         """
         dlg = ExportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if not ok:
             return
         else:
@@ -3258,12 +3258,12 @@ class Flo2D(object):
     def import_from_ras(self):
         self.uncheck_all_info_tools()
         dlg = RasImportDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
+        ok = dlg.exec()
         if ok:
             pass
         else:
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         try:
             dlg.import_geometry()
             # self.setup_dock_widgets()
@@ -3297,9 +3297,9 @@ class Flo2D(object):
         try:
             dlg_control = ContToler(self.con, self.iface, self.lyrs)
             while True:
-                save = dlg_control.exec_()
+                save = dlg_control.exec()
                 if save:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     try:
                         self.f2d_widget.rain_editor.rain_properties()
                         if dlg_control.save_parameters_JJ():
@@ -3330,10 +3330,10 @@ class Flo2D(object):
                 info_ac = ac
 
         if self.f2d_table_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
 
         if self.f2d_plot_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
@@ -3362,7 +3362,7 @@ class Flo2D(object):
                 info_ac = ac
 
         if self.f2d_grid_info_dock is not None:
-            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("TopDockWidgetArea"), self.f2d_grid_info_dock)
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
@@ -3399,10 +3399,10 @@ class Flo2D(object):
                 info_ac = ac
 
         if self.f2d_table_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
 
         if self.f2d_plot_dock is not None:
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+            self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
 
         tool = self.canvas.mapTool()
         if tool == self.results_tool:
@@ -3543,7 +3543,7 @@ class Flo2D(object):
             self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
         else:
             dlg = InletAttributes(self.con, self.iface, self.lyrs)
-            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
             self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
             dlg.dock_widget.setFloating(False)
             dlg.populate_attributes(fid)
@@ -3574,7 +3574,7 @@ class Flo2D(object):
             self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
         else:
             dlg = OutletAttributes(self.con, self.iface, self.lyrs)
-            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
             self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
             dlg.dock_widget.setFloating(False)
             dlg.populate_attributes(fid)
@@ -3604,7 +3604,7 @@ class Flo2D(object):
             self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, storage_unit_name[0])
         else:
             dlg = StorageUnitAttributes(self.con, self.iface, self.lyrs)
-            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
             self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
             dlg.dock_widget.setFloating(False)
             dlg.populate_attributes(fid)
@@ -3634,7 +3634,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Weir: " + str(weir_name[0]))
 
         dlg = WeirAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
@@ -3662,7 +3662,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Orifice: " + str(orifice_name[0]))
 
         dlg = OrificeAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
@@ -3690,7 +3690,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Pump: " + str(pump_name[0]))
 
         dlg = PumpAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
@@ -3718,7 +3718,7 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Conduit: " + str(conduit_name[0]))
 
         dlg = ConduitAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), dlg.dock_widget)
         self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
@@ -3922,7 +3922,7 @@ class Flo2D(object):
         dlg_levee_elev.show()
 
         while True:
-            ok = dlg_levee_elev.exec_()
+            ok = dlg_levee_elev.exec()
             if ok:
                 if dlg_levee_elev.methods:
                     if 1 in dlg_levee_elev.methods:
@@ -3934,7 +3934,7 @@ class Flo2D(object):
 
         # try:
         #             start = datetime.now()
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         n_elements_total = 1
         n_levee_directions_total = 0
         n_fail_features_total = 0
@@ -4089,8 +4089,8 @@ class Flo2D(object):
                     + "Would you like to delete them?"
                 )
                 m.setDetailedText(dletes)
-                m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
-                m.setDefaultButton(QMessageBox.Yes)
+                m.setStandardButtons(self.uc.msgbox_button("No") | self.uc.msgbox_button("Yes"))
+                m.setDefaultButton(self.uc.msgbox_button("Yes"))
 
                 # Spacer                        width, height, h policy, v policy
                 # horizontalSpacer = QSpacerItem(0, 300, QSizePolicy.Preferred, QSizePolicy.Preferred)
@@ -4109,8 +4109,8 @@ class Flo2D(object):
                 #                     m.setMinimumSize(1000,1000)
 
                 #                     m.setInformativeText(dletes + '\n\nWould you like to delete them?')
-                q = m.exec_()
-                if q == QMessageBox.Yes:
+                q = m.exec()
+                if q == self.uc.msgbox_button("Yes"):
                     #                     q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' +
                     #                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')
                     #                     if q:
@@ -4217,7 +4217,7 @@ class Flo2D(object):
         dlg_breach_hydrograph_tool.show()
 
         while True:
-            ok = dlg_breach_hydrograph_tool.exec_()
+            ok = dlg_breach_hydrograph_tool.exec()
             if ok:
                 break
             else:
@@ -4237,7 +4237,7 @@ class Flo2D(object):
         dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
         dlg_prs.show()
         while True:
-            ok = dlg_prs.exec_()
+            ok = dlg_prs.exec()
             if ok:
                 break
             else:
@@ -4273,7 +4273,7 @@ class Flo2D(object):
         #         self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
 
         dlg_hazus = HazusDialog(self.con, self.iface, self.lyrs)
-        save = dlg_hazus.exec_()
+        save = dlg_hazus.exec()
         if save:
             try:
                 self.uc.bar_info("Hazus Flooding Analysis performed!")
@@ -4291,7 +4291,7 @@ class Flo2D(object):
         dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
         dlg_errors.show()
         while True:
-            ok = dlg_errors.exec_()
+            ok = dlg_errors.exec()
             if ok:
                 break
             else:
@@ -4305,12 +4305,12 @@ class Flo2D(object):
             return
 
         dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
-        dlg_ms.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_ms.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        dlg_ms.setWindowFlag(qt_window_type("WindowMinimizeButtonHint"), True)
+        dlg_ms.setWindowFlag(qt_window_type("WindowMaximizeButtonHint"), True)
         repeat = True
         while repeat:
             dlg_ms.show()
-            ok = dlg_ms.exec_()
+            ok = dlg_ms.exec()
             if ok:
                 if dlg_ms.ok_to_save():
                     try:
@@ -4365,7 +4365,7 @@ class Flo2D(object):
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         if check_components:
             converter_dlg.check_imported_components(True)
-        ok = converter_dlg.exec_()
+        ok = converter_dlg.exec()
         if ok:
             if converter_dlg.methods:
                 pass
@@ -4375,7 +4375,7 @@ class Flo2D(object):
                 return
         else:
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         methods_numbers = sorted(converter_dlg.methods)
         msg = ""
         for no in methods_numbers:
@@ -4393,7 +4393,7 @@ class Flo2D(object):
     def user2schematic(self):
         self.uncheck_all_info_tools
         converter_dlg = User2SchemaDialog(self.con, self.iface, self.lyrs, self.uc)
-        ok = converter_dlg.exec_()
+        ok = converter_dlg.exec()
         if ok:
             if converter_dlg.methods:
                 pass
@@ -4402,7 +4402,7 @@ class Flo2D(object):
                 return
         else:
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         for no in sorted(converter_dlg.methods):
             converter_dlg.methods[no]()
         self.setup_dock_widgets()
