@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-from .common import TestCase
+from .common import ut, TestCase
 
 
 class TestDatasetSwmrRead(TestCase):

@@ -52,10 +52,6 @@ _COMP_FILTERS = {'gzip': h5z.FILTER_DEFLATE,
                 'shuffle': h5z.FILTER_SHUFFLE,
                 'fletcher32': h5z.FILTER_FLETCHER32,
                 'scaleoffset': h5z.FILTER_SCALEOFFSET }
-_FILL_TIME_ENUM = {'alloc': h5d.FILL_TIME_ALLOC,
-                   'never': h5d.FILL_TIME_NEVER,
-                   'ifset': h5d.FILL_TIME_IFSET,
-                   }
 
 DEFAULT_GZIP = 4
 DEFAULT_SZIP = ('nn', 8)
@@ -150,7 +146,7 @@ class Gzip(FilterRefBase):
 
 def fill_dcpl(plist, shape, dtype, chunks, compression, compression_opts,
               shuffle, fletcher32, maxshape, scaleoffset, external,
-              allow_unknown_filter=False, *, fill_time=None):
+              allow_unknown_filter=False):
     """ Generate a dataset creation property list.
 
     Undocumented and subject to change without warning.
@@ -173,10 +169,10 @@ def fill_dcpl(plist, shape, dtype, chunks, compression, compression_opts,
             return
         try:
             tpl = tuple(tpl)
-        except TypeError as exc:
-            raise TypeError(f'{name!r} argument must be None or a sequence object') from exc
+        except TypeError:
+            raise TypeError('"%s" argument must be None or a sequence object' % name)
         if len(tpl) != len(shape):
-            raise ValueError(f'{name!r} must have same rank as dataset shape')
+            raise ValueError('"%s" must have same rank as dataset shape' % name)
 
     rq_tuple(chunks, 'chunks')
     rq_tuple(maxshape, 'maxshape')
@@ -208,8 +204,8 @@ def fill_dcpl(plist, shape, dtype, chunks, compression, compression_opts,
             err = "SZIP options must be a 2-tuple ('ec'|'nn', even integer 0-32)"
             try:
                 szmethod, szpix = compression_opts
-            except TypeError as exc:
-                raise TypeError(err) from exc
+            except TypeError:
+                raise TypeError(err)
             if szmethod not in ('ec', 'nn'):
                 raise ValueError(err)
             if not (0<szpix<=32 and szpix%2 == 0):
@@ -263,14 +259,7 @@ def fill_dcpl(plist, shape, dtype, chunks, compression, compression_opts,
 
     if chunks is not None:
         plist.set_chunk(chunks)
-
-    if fill_time is not None:
-        if (ft := _FILL_TIME_ENUM.get(fill_time)) is not None:
-            plist.set_fill_time(ft)
-        else:
-            msg = ("fill_time must be one of the following choices: 'alloc', "
-                   f"'never' or 'ifset', but it is {fill_time}.")
-            raise ValueError(msg)
+        plist.set_fill_time(h5d.FILL_TIME_ALLOC)  # prevent resize glitch
 
     # scale-offset must come before shuffle and compression
     if scaleoffset is not None:
@@ -306,23 +295,16 @@ def fill_dcpl(plist, shape, dtype, chunks, compression, compression_opts,
 
     return plist
 
-def get_filter_name(code):
-    """
-    Return the name of the compression filter for a given filter identifier.
-
-    Undocumented and subject to change without warning.
-    """
-    filters = {h5z.FILTER_DEFLATE: 'gzip', h5z.FILTER_SZIP: 'szip',
-               h5z.FILTER_SHUFFLE: 'shuffle', h5z.FILTER_FLETCHER32: 'fletcher32',
-               h5z.FILTER_LZF: 'lzf', h5z.FILTER_SCALEOFFSET: 'scaleoffset'}
-    return filters.get(code, str(code))
-
 def get_filters(plist):
     """ Extract a dictionary of active filters from a DCPL, along with
     their settings.
 
     Undocumented and subject to change without warning.
     """
+
+    filters = {h5z.FILTER_DEFLATE: 'gzip', h5z.FILTER_SZIP: 'szip',
+               h5z.FILTER_SHUFFLE: 'shuffle', h5z.FILTER_FLETCHER32: 'fletcher32',
+               h5z.FILTER_LZF: 'lzf', h5z.FILTER_SCALEOFFSET: 'scaleoffset'}
 
     pipeline = {}
 
@@ -350,7 +332,7 @@ def get_filters(plist):
             if len(vals) == 0:
                 vals = None
 
-        pipeline[get_filter_name(code)] = vals
+        pipeline[filters.get(code, str(code))] = vals
 
     return pipeline
 

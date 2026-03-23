@@ -39,7 +39,13 @@ class Group(HLObject, MutableMappingHDF5):
                 raise ValueError("%s is not a GroupID" % bind)
             super().__init__(bind)
 
-    def create_group(self, name, track_order=None, *, track_times=False):
+    _gcpl_crt_order = h5p.create(h5p.GROUP_CREATE)
+    _gcpl_crt_order.set_link_creation_order(
+        h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
+    _gcpl_crt_order.set_attr_creation_order(
+        h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
+
+    def create_group(self, name, track_order=None):
         """ Create and return a new subgroup.
 
         Name may be absolute or relative.  Fails if the target name already
@@ -48,26 +54,13 @@ class Group(HLObject, MutableMappingHDF5):
         track_order
             Track dataset/group/attribute creation order under this group
             if True. If None use global default h5.get_config().track_order.
-        track_times: bool or None, default: False
-            If True, store timestamps for this group in the file.
-            If None, fall back to the default value.
         """
         if track_order is None:
             track_order = h5.get_config().track_order
 
         with phil:
             name, lcpl = self._e(name, lcpl=True)
-            gcpl = h5p.create(h5p.GROUP_CREATE)
-            if track_order:
-                order_flags = h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED
-                gcpl.set_link_creation_order(order_flags)
-                gcpl.set_attr_creation_order(order_flags)
-            if track_times is None:
-                track_times = False  # Allow explicit None to mean h5py's default
-            if track_times in (True, False):
-                gcpl.set_obj_track_times(track_times)
-            else:
-                raise TypeError("track_times must be either True, False, or None")
+            gcpl = Group._gcpl_crt_order if track_order else None
             gid = h5g.create(self.id, name, lcpl=lcpl, gcpl=gcpl)
             return Group(gid)
 
@@ -96,10 +89,7 @@ class Group(HLObject, MutableMappingHDF5):
 
         maxshape
             (Tuple or int) Make the dataset resizable up to this shape. Use None for
-            axes within the tuple you want to be unlimited. Integers can be used for 1D shape.
-            For 1D datasets with unlimited maxshape, a shape tuple of length 1 must be
-            provided, ``(None,)``. Passing ``None`` sets ``maxshape` to `shape`, making the
-            dataset un-resizable, which is the default.
+            axes you want to be unlimited. Integers can be used for 1D shape.
         compression
             (String or int) Compression strategy.  Legal values are 'gzip',
             'szip', 'lzf'.  If an integer in range(10), this indicates gzip
@@ -150,7 +140,7 @@ class Group(HLObject, MutableMappingHDF5):
             compresses the data before handing it to h5py.
         rdcc_nbytes
             Total size of the dataset's chunk cache in bytes. The default size
-            is 1024**2 (1 MiB) for HDF5 before 2.0 and 8 MiB for HDF5 2.0 or later.
+            is 1024**2 (1 MiB).
         rdcc_w0
             The chunk preemption policy for this dataset.  This must be
             between 0 and 1 inclusive and indicates the weighting according to
@@ -290,9 +280,9 @@ class Group(HLObject, MutableMappingHDF5):
             try:
                 dsid = dataset.open_dset(self, self._e(name), **kwds)
                 dset = dataset.Dataset(dsid)
-            except KeyError as exc:
+            except KeyError:
                 dset = self[name]
-                raise TypeError(f"Incompatible object ({dset.__class__.__name__}) already exists") from exc
+                raise TypeError("Incompatible object (%s) already exists" % dset.__class__.__name__)
 
             if shape != dset.shape:
                 if "maxshape" not in kwds:
@@ -421,8 +411,8 @@ class Group(HLObject, MutableMappingHDF5):
                     return {h5o.TYPE_GROUP: Group,
                             h5o.TYPE_DATASET: dataset.Dataset,
                             h5o.TYPE_NAMED_DATATYPE: datatype.Datatype}[typecode]
-                except KeyError as exc:
-                    raise TypeError("Unknown object type") from exc
+                except KeyError:
+                    raise TypeError("Unknown object type")
 
             elif getlink:
                 typecode = self.id.links.get_info(self._e(name), lapl=self._lapl).type
@@ -633,8 +623,8 @@ class Group(HLObject, MutableMappingHDF5):
             func(<member name>) => <None or return value>
 
         Returning None continues iteration, returning anything else stops
-        and immediately returns that value from the visit method. The
-        iteration order is lexicographic.
+        and immediately returns that value from the visit method.  No
+        particular order of iteration within groups is guaranteed.
 
         Example:
 
@@ -662,8 +652,8 @@ class Group(HLObject, MutableMappingHDF5):
             func(<member name>, <object>) => <None or return value>
 
         Returning None continues iteration, returning anything else stops
-        and immediately returns that value from the visit method. The
-        iteration order is lexicographic.
+        and immediately returns that value from the visit method.  No
+        particular order of iteration within groups is guaranteed.
 
         Example:
 
@@ -694,8 +684,8 @@ class Group(HLObject, MutableMappingHDF5):
             func(<member name>) => <None or return value>
 
         Returning None continues iteration, returning anything else stops
-        and immediately returns that value from the visit method. The
-        iteration order is lexicographic.
+        and immediately returns that value from the visit method.  No
+        particular order of iteration within groups is guaranteed.
 
         Example:
 
@@ -721,8 +711,8 @@ class Group(HLObject, MutableMappingHDF5):
             func(<member name>, <link>) => <None or return value>
 
         Returning None continues iteration, returning anything else stops
-        and immediately returns that value from the visit method. The
-        iteration order is lexicographic.
+        and immediately returns that value from the visit method.  No
+        particular order of iteration within groups is guaranteed.
 
         Example:
 

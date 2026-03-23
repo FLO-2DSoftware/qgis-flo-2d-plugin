@@ -11,9 +11,8 @@
     Implements high-level support for HDF5 file objects.
 """
 
-import inspect
-import os
 import sys
+import os
 from warnings import warn
 
 from .compat import filename_decode, filename_encode
@@ -42,10 +41,6 @@ if hdf5_version >= (1, 11, 4):
 if hdf5_version >= (1, 13, 0):
     libver_dict.update({'v114': h5f.LIBVER_V114})
     libver_dict_r.update({h5f.LIBVER_V114: 'v114'})
-
-if hdf5_version >= (2, 0, 0):
-    libver_dict.update({'v200': h5f.LIBVER_V200})
-    libver_dict_r.update({h5f.LIBVER_V200: 'v200'})
 
 
 def _set_fapl_mpio(plist, **kwargs):
@@ -113,12 +108,10 @@ def registered_drivers():
     return frozenset(_drivers)
 
 
-def make_fapl(
-    driver, libver=None, rdcc_nslots=None, rdcc_nbytes=None, rdcc_w0=None,
-    locking=None, page_buf_size=None, min_meta_keep=0, min_raw_keep=0,
-    alignment_threshold=1, alignment_interval=1, meta_block_size=None,
-    **kwds
-):
+def make_fapl(driver, libver, rdcc_nslots, rdcc_nbytes, rdcc_w0, locking,
+              page_buf_size, min_meta_keep, min_raw_keep,
+              alignment_threshold, alignment_interval, meta_block_size,
+              **kwds):
     """ Set up a file access property list """
     plist = h5p.create(h5p.FILE_ACCESS)
 
@@ -151,6 +144,10 @@ def make_fapl(
         plist.set_meta_block_size(int(meta_block_size))
 
     if locking is not None:
+        if hdf5_version < (1, 12, 1) and (hdf5_version[:2] != (1, 10) or hdf5_version[2] < 7):
+            raise ValueError(
+                "HDF5 version >= 1.12.1 or 1.10.x >= 1.10.7 required for file locking.")
+
         if locking in ("false", False):
             plist.set_file_locking(False, ignore_when_disabled=False)
         elif locking in ("true", True):
@@ -170,8 +167,8 @@ def make_fapl(
 
     try:
         set_fapl = _drivers[driver]
-    except KeyError as exc:
-        raise ValueError(f'Unknown driver type {driver!r}') from exc
+    except KeyError:
+        raise ValueError('Unknown driver type "%s"' % driver)
     else:
         if driver == 'ros3':
             token = kwds.pop('session_token', None)
@@ -186,35 +183,32 @@ def make_fapl(
     return plist
 
 
-def make_fcpl(track_order=False, track_times=False, fs_strategy=None, fs_persist=False,
+def make_fcpl(track_order=False, fs_strategy=None, fs_persist=False,
               fs_threshold=1, fs_page_size=None):
     """ Set up a file creation property list """
-    plist = h5p.create(h5p.FILE_CREATE)
-    if track_order:
-        plist.set_link_creation_order(
-            h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
-        plist.set_attr_creation_order(
-            h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
-    if track_times is None:
-        track_times = False  # Allow explicit None to mean h5py's default
-    if track_times in (True, False):
-        plist.set_obj_track_times(track_times)
-    else:
-        raise TypeError("track_times must be either True or False")
-    if fs_strategy:
-        strategies = {
-            'fsm': h5f.FSPACE_STRATEGY_FSM_AGGR,
-            'page': h5f.FSPACE_STRATEGY_PAGE,
-            'aggregate': h5f.FSPACE_STRATEGY_AGGR,
-            'none': h5f.FSPACE_STRATEGY_NONE
-        }
-        fs_strat_num = strategies.get(fs_strategy, -1)
-        if fs_strat_num == -1:
-            raise ValueError("Invalid file space strategy type")
+    if track_order or fs_strategy:
+        plist = h5p.create(h5p.FILE_CREATE)
+        if track_order:
+            plist.set_link_creation_order(
+                h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
+            plist.set_attr_creation_order(
+                h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
+        if fs_strategy:
+            strategies = {
+                'fsm': h5f.FSPACE_STRATEGY_FSM_AGGR,
+                'page': h5f.FSPACE_STRATEGY_PAGE,
+                'aggregate': h5f.FSPACE_STRATEGY_AGGR,
+                'none': h5f.FSPACE_STRATEGY_NONE
+            }
+            fs_strat_num = strategies.get(fs_strategy, -1)
+            if fs_strat_num == -1:
+                raise ValueError("Invalid file space strategy type")
 
-        plist.set_file_space_strategy(fs_strat_num, fs_persist, fs_threshold)
-        if fs_page_size and fs_strategy == 'page':
-            plist.set_file_space_page_size(int(fs_page_size))
+            plist.set_file_space_strategy(fs_strat_num, fs_persist, fs_threshold)
+            if fs_page_size and fs_strategy == 'page':
+                plist.set_file_space_page_size(int(fs_page_size))
+    else:
+        plist = None
     return plist
 
 
@@ -229,7 +223,7 @@ def make_fid(name, mode, userblock_size, fapl, fcpl=None, swmr=False):
         try:
             userblock_size = int(userblock_size)
         except (TypeError, ValueError):
-            raise ValueError("User block size must be an integer") from None
+            raise ValueError("User block size must be an integer")
         if fcpl is None:
             fcpl = h5p.create(h5p.FILE_CREATE)
         fcpl.set_userblock(userblock_size)
@@ -383,8 +377,7 @@ class File(Group):
                  rdcc_nslots=None, rdcc_nbytes=None, rdcc_w0=None, track_order=None,
                  fs_strategy=None, fs_persist=False, fs_threshold=1, fs_page_size=None,
                  page_buf_size=None, min_meta_keep=0, min_raw_keep=0, locking=None,
-                 alignment_threshold=1, alignment_interval=1, meta_block_size=None,
-                 *, track_times=False, **kwds):
+                 alignment_threshold=1, alignment_interval=1, meta_block_size=None, **kwds):
         """Create a new file object.
 
         See the h5py user guide for a detailed explanation of the options.
@@ -404,26 +397,16 @@ class File(Group):
             recommended), 'core', 'sec2', 'direct', 'stdio', 'mpio', 'ros3'.
         libver
             Library version bounds.  Supported values: 'earliest', 'v108',
-            'v110', 'v112', 'v114', 'v200' and 'latest' depending on the
-            version of libhdf5 h5py is built against.
+            'v110', 'v112'  and 'latest'. The 'v108', 'v110' and 'v112'
+            options can only be specified with the HDF5 1.10.2 library or later.
         userblock_size
             Desired size of user block.  Only allowed when creating a new
             file (mode w, w- or x).
         swmr
             Open the file in SWMR read mode. Only used when mode = 'r'.
-        rdcc_nslots
-            The number of chunk slots in the raw data chunk cache for this
-            file. Increasing this value reduces the number of cache collisions,
-            but slightly increases the memory used. Due to the hashing
-            strategy, this value should ideally be a prime number. As a rule of
-            thumb, this value should be at least 10 times the number of chunks
-            that can fit in rdcc_nbytes bytes. For maximum performance, this
-            value should be set approximately 100 times that number of
-            chunks. The default value is 521. Applies to all datasets unless individually changed.
         rdcc_nbytes
-            Total size of the dataset chunk cache in bytes. The default size per
-            dataset is 1024**2 (1 MiB) for HDF5 before 2.0 and 8 MiB for HDF5
-            2.0 and later. Applies to all datasets unless individually changed.
+            Total size of the dataset chunk cache in bytes. The default size
+            is 1024**2 (1 MiB) per dataset. Applies to all datasets unless individually changed.
         rdcc_w0
             The chunk preemption policy for all datasets.  This must be
             between 0 and 1 inclusive and indicates the weighting according to
@@ -436,12 +419,18 @@ class File(Group):
             this can be safely set to 1.  Otherwise, this should be set lower
             depending on how often you re-read or re-write the same data.  The
             default value is 0.75. Applies to all datasets unless individually changed.
+        rdcc_nslots
+            The number of chunk slots in the raw data chunk cache for this
+            file. Increasing this value reduces the number of cache collisions,
+            but slightly increases the memory used. Due to the hashing
+            strategy, this value should ideally be a prime number. As a rule of
+            thumb, this value should be at least 10 times the number of chunks
+            that can fit in rdcc_nbytes bytes. For maximum performance, this
+            value should be set approximately 100 times that number of
+            chunks. The default value is 521. Applies to all datasets unless individually changed.
         track_order
             Track dataset/group/attribute creation order under root group
             if True. If None use global default h5.get_config().track_order.
-        track_times: bool or None, default: False
-            If True, store timestamps for this group in the file.
-            If None, fall back to the default value.
         fs_strategy
             The file space handling strategy to be used.  Only allowed when
             creating a new file (mode w, w- or x).  Defined as:
@@ -487,6 +476,8 @@ class File(Group):
                 The HDF5_USE_FILE_LOCKING environment variable can override
                 this parameter.
 
+            Only available with HDF5 >= 1.12.1 or 1.10.x >= 1.10.7.
+
         alignment_threshold
             Together with ``alignment_interval``, this property ensures that
             any file object greater than or equal in size to the alignment
@@ -497,19 +488,17 @@ class File(Group):
             This property should be used in conjunction with
             ``alignment_threshold``. See the description above. For more
             details, see
-            https://support.hdfgroup.org/documentation/hdf5/latest/group___f_a_p_l.html#gab99d5af749aeb3896fd9e3ceb273677a
+            https://portal.hdfgroup.org/display/HDF5/H5P_SET_ALIGNMENT
 
         meta_block_size
             Set the current minimum size, in bytes, of new metadata block allocations.
-            See https://support.hdfgroup.org/documentation/hdf5/latest/group___f_a_p_l.html#ga8822e3dedc8e1414f20871a87d533cb1
+            See https://portal.hdfgroup.org/display/HDF5/H5P_SET_META_BLOCK_SIZE
 
         Additional keywords
             Passed on to the selected file driver.
         """
         if driver == 'ros3':
-            if not ros3:
-                raise ValueError("h5py was built without ROS3 support, can't use ros3 driver")
-            if hdf5_version < (2, 0, 0):
+            if ros3:
                 from urllib.parse import urlparse
                 url = urlparse(name)
                 if url.scheme == 's3':
@@ -520,6 +509,13 @@ class File(Group):
                 elif url.scheme not in ('https', 'http'):
                     raise ValueError(f'{name}: S3 location must begin with '
                                      'either "https://", "http://", or "s3://"')
+            else:
+                raise ValueError(
+                    "h5py was built without ROS3 support, can't use ros3 driver")
+
+        if locking is not None and hdf5_version < (1, 12, 1) and (
+                hdf5_version[:2] != (1, 10) or hdf5_version[2] < 7):
+            raise ValueError("HDF5 version >= 1.12.1 or 1.10.x >= 1.10.7 required for file locking options.")
 
         if isinstance(name, _objects.ObjectID):
             if fs_strategy:
@@ -560,9 +556,9 @@ class File(Group):
                                  alignment_interval=alignment_interval,
                                  meta_block_size=meta_block_size,
                                  **kwds)
-                fcpl = make_fcpl(track_order=track_order, track_times=track_times,
-                                 fs_strategy=fs_strategy, fs_persist=fs_persist,
-                                 fs_threshold=fs_threshold, fs_page_size=fs_page_size)
+                fcpl = make_fcpl(track_order=track_order, fs_strategy=fs_strategy,
+                                 fs_persist=fs_persist, fs_threshold=fs_threshold,
+                                 fs_page_size=fs_page_size)
                 fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
 
             if isinstance(libver, tuple):
@@ -571,53 +567,6 @@ class File(Group):
                 self._libver = (libver, 'latest')
 
         super().__init__(fid)
-
-    _in_memory_file_counter = 0
-
-    @classmethod
-    @with_phil
-    def in_memory(cls, file_image=None, **kwargs):
-        """Create an HDF5 file in memory, without an underlying file
-
-        file_image
-            The initial file contents as bytes (or anything that supports the
-            Python buffer interface). HDF5 takes a copy of this data.
-        block_size
-            Chunk size for new memory alloactions (default 64 KiB).
-
-        Other keyword arguments are like File(), although name, mode,
-        driver and locking can't be passed.
-        """
-        for k in ('driver', 'locking', 'backing_store'):
-            if k in kwargs:
-                raise TypeError(
-                    f"File.in_memory() got an unexpected keyword argument {k!r}"
-                )
-        fcpl_kwargs = {}
-        for k in inspect.signature(make_fcpl).parameters:
-            if k in kwargs:
-                fcpl_kwargs[k] = kwargs.pop(k)
-        fcpl = make_fcpl(**fcpl_kwargs)
-
-        fapl = make_fapl(driver="core", backing_store=False, **kwargs)
-        if file_image:
-            if fcpl_kwargs:
-                kw = ', '.join(fcpl_kwargs)
-                raise TypeError(f"{kw} parameters cannot be used with file_image")
-            fapl.set_file_image(file_image)
-
-        # We have to give HDF5 a filename, but it should never use it.
-        # This is a hint both in memory, and in case a bug ever creates a file.
-        # The name also needs to be different from any other open file;
-        # we use a simple counter (protected by the 'phil' lock) for this.
-        name = b"h5py_in_memory_nonfile_%d"  % cls._in_memory_file_counter
-        cls._in_memory_file_counter += 1
-
-        if file_image:
-            fid = h5f.open(name, h5f.ACC_RDWR, fapl=fapl)
-        else:
-            fid = h5f.create(name, h5f.ACC_EXCL, fapl=fapl, fcpl=fcpl)
-        return cls(fid)
 
     def close(self):
         """ Close the file.  All open objects become invalid """

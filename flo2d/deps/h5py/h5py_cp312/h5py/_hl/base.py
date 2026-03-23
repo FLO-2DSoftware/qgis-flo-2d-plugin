@@ -25,13 +25,13 @@ import numpy as np
 # lock acquisition.
 from .._objects import phil, with_phil
 from .. import h5d, h5i, h5r, h5p, h5f, h5t, h5s
-from .compat import filename_encode
+from .compat import fspath, filename_encode
 
 
 def is_hdf5(fname):
     """ Determine if a file is valid HDF5 (False if it doesn't exist). """
     with phil:
-        fname = os.path.abspath(os.fspath(fname))
+        fname = os.path.abspath(fspath(fname))
 
         if os.path.isfile(fname):
             return h5f.is_hdf5(filename_encode(fname))
@@ -102,9 +102,6 @@ def is_float16_dtype(dt):
 def array_for_new_object(data, specified_dtype=None):
     """Prepare an array from data used to create a new dataset or attribute"""
 
-    if not isinstance(specified_dtype, (np.dtype, type(None))):
-        specified_dtype = np.dtype(specified_dtype)
-
     # We mostly let HDF5 convert data as necessary when it's written.
     # But if we are going to a float16 datatype, pre-convert in python
     # to workaround a bug in the conversion.
@@ -131,7 +128,11 @@ def array_for_new_object(data, specified_dtype=None):
 
 def default_lapl():
     """ Default link access property list """
-    return None
+    lapl = h5p.create(h5p.LINK_ACCESS)
+    fapl = h5p.create(h5p.FILE_ACCESS)
+    fapl.set_fclose_degree(h5f.CLOSE_STRONG)
+    lapl.set_elink_fapl(fapl)
+    return lapl
 
 
 def default_lcpl():
@@ -354,6 +355,7 @@ class HLObject(CommonStateObject):
     def __bool__(self):
         with phil:
             return bool(self.id)
+    __nonzero__ = __bool__
 
     def __getnewargs__(self):
         """Disable pickle.

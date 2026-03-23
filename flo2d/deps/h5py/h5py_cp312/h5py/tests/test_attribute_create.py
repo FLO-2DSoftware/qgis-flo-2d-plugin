@@ -14,7 +14,7 @@
 import numpy as np
 from .. import h5t, h5a
 
-from .common import TestCase
+from .common import ut, TestCase
 
 class TestArray(TestCase):
 

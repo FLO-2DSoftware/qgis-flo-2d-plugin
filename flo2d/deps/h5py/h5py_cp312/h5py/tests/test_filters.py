@@ -34,7 +34,8 @@ class TestFilters(TestCase):
 
         References:
         - GitHub issue #953
-        - https://forum.hdfgroup.org/t/fletcher32-checksum-error-with-szip-compression-and-64bit-data/4141
+        - https://lists.hdfgroup.org/pipermail/
+          hdf-forum_lists.hdfgroup.org/2018-January/010753.html
         """
         self.f.create_dataset("test_data",
                               data=np.zeros(10000, dtype=np.float64),

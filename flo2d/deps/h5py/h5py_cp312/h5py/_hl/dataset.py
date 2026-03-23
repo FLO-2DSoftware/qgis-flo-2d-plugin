@@ -13,7 +13,6 @@
 
 import posixpath as pp
 import sys
-from abc import ABC, abstractmethod
 
 import numpy
 
@@ -39,8 +38,7 @@ def make_new_dset(parent, shape=None, dtype=None, data=None, name=None,
                   fillvalue=None, scaleoffset=None, track_times=False,
                   external=None, track_order=None, dcpl=None, dapl=None,
                   efile_prefix=None, virtual_prefix=None, allow_unknown_filter=False,
-                  rdcc_nslots=None, rdcc_nbytes=None, rdcc_w0=None, *,
-                  fill_time=None):
+                  rdcc_nslots=None, rdcc_nbytes=None, rdcc_w0=None):
     """ Return a new low-level dataset identifier """
 
     # Convert data to a C-contiguous ndarray
@@ -66,10 +64,8 @@ def make_new_dset(parent, shape=None, dtype=None, data=None, name=None,
     # Validate chunk shape
     if isinstance(chunks, int) and not isinstance(chunks, bool):
         chunks = (chunks,)
-    # Logically, the following `zip` could be strict, but it's happening
-    # before we've done checks elsewhere that raise more descriptive errors
     if isinstance(chunks, tuple) and any(
-        chunk > dim for dim, chunk in zip(tmp_shape, chunks, strict=False) if dim is not None
+        chunk > dim for dim, chunk in zip(tmp_shape, chunks) if dim is not None
     ):
         errmsg = "Chunk shape must not be greater than data shape in any dimension. "\
                  "{} is not compatible with {}".format(chunks, shape)
@@ -108,17 +104,7 @@ def make_new_dset(parent, shape=None, dtype=None, data=None, name=None,
     dcpl = filters.fill_dcpl(
         dcpl or h5p.create(h5p.DATASET_CREATE), shape, dtype,
         chunks, compression, compression_opts, shuffle, fletcher32,
-        maxshape, scaleoffset, external, allow_unknown_filter,
-        fill_time=fill_time)
-
-    # Check that compression roundtrips correctly if it was specified
-    if compression is not None:
-        if isinstance(compression, filters.FilterRefBase):
-            compression = compression.filter_id
-        if isinstance(compression, int):
-            compression = filters.get_filter_name(compression)
-        if compression not in filters.get_filters(dcpl):
-            raise ValueError(f'compression {compression!r} not in filters {filters.get_filters(dcpl)!r}')
+        maxshape, scaleoffset, external, allow_unknown_filter)
 
     if fillvalue is not None:
         # prepare string-type dtypes for fillvalue
@@ -210,78 +196,41 @@ def open_dset(parent, name, dapl=None, efile_prefix=None, virtual_prefix=None,
     return dset_id
 
 
-
-class AbstractView(ABC):
-    _dset: "Dataset"
-
-    def __init__(self, dset):
-        self._dset = dset
-
-    def __len__(self):
-        return len(self._dset)
-
-    @property
-    @abstractmethod
-    def dtype(self):
-        ...  # pragma: nocover
-
-    @property
-    def ndim(self):
-        return self._dset.ndim
-
-    @property
-    def shape(self):
-        return self._dset.shape
-
-    @property
-    def size(self):
-        return self._dset.size
-
-    @abstractmethod
-    def __getitem__(self, idx):
-        ...  # pragma: nocover
-
-    def __array__(self, dtype=None, copy=None):
-        if copy is False:
-            raise ValueError(
-                f"{self.__class__.__name__}.__array__ received {copy=} "
-                "but memory allocation cannot be avoided on read"
-            )
-
-        # If self.ndim == 0, convert np.generic back to np.ndarray
-        return numpy.asarray(self[()], dtype=dtype or self.dtype)
-
-class AsTypeView(AbstractView):
+class AstypeWrapper:
     """Wrapper to convert data on reading from a dataset.
     """
     def __init__(self, dset, dtype):
-        super().__init__(dset)
-        self._dtype = dtype
+        self._dset = dset
+        self._dtype = numpy.dtype(dtype)
 
-    @property
-    def dtype(self):
-        return self._dtype
+    def __getitem__(self, args):
+        return self._dset.__getitem__(args, new_dtype=self._dtype)
 
-    def __getitem__(self, idx):
-        return self._dset.__getitem__(idx, new_dtype=self._dtype)
+    def __len__(self):
+        """ Get the length of the underlying dataset
 
-    def __array__(self, dtype=None, copy=None):
-        return self._dset.__array__(dtype or self._dtype, copy)
+        >>> length = len(dataset.astype('f8'))
+        """
+        return len(self._dset)
+
+    def __array__(self, dtype=None):
+        data = self[:]
+        if dtype is not None:
+            data = data.astype(dtype)
+        return data
 
 
-class AsStrView(AbstractView):
+class AsStrWrapper:
     """Wrapper to decode strings on reading the dataset"""
     def __init__(self, dset, encoding, errors='strict'):
-        super().__init__(dset)
+        self._dset = dset
+        if encoding is None:
+            encoding = h5t.check_string_dtype(dset.dtype).encoding
         self.encoding = encoding
         self.errors = errors
 
-    @property
-    def dtype(self):
-        return numpy.dtype(object)
-
-    def __getitem__(self, idx):
-        bytes_arr = self._dset[idx]
+    def __getitem__(self, args):
+        bytes_arr = self._dset[args]
         # numpy.char.decode() seems like the obvious thing to use. But it only
         # accepts numpy string arrays, not object arrays of bytes (which we
         # return from HDF5 variable-length strings). And the numpy
@@ -295,31 +244,48 @@ class AsStrView(AbstractView):
             b.decode(self.encoding, self.errors) for b in bytes_arr.flat
         ], dtype=object).reshape(bytes_arr.shape)
 
+    def __len__(self):
+        """ Get the length of the underlying dataset
 
-class FieldsView(AbstractView):
+        >>> length = len(dataset.asstr())
+        """
+        return len(self._dset)
+
+    def __array__(self):
+        return numpy.array([
+            b.decode(self.encoding, self.errors) for b in self._dset
+        ], dtype=object).reshape(self._dset.shape)
+
+
+class FieldsWrapper:
     """Wrapper to extract named fields from a dataset with a struct dtype"""
+    extract_field = None
 
     def __init__(self, dset, prior_dtype, names):
-        super().__init__(dset)
+        self._dset = dset
         if isinstance(names, str):
             self.extract_field = names
             names = [names]
-        else:
-            self.extract_field = None
         self.read_dtype = readtime_dtype(prior_dtype, names)
 
-    @property
-    def dtype(self):
-        t = self.read_dtype
-        if self.extract_field is not None:
-            t = t[self.extract_field]
-        return t
+    def __array__(self, dtype=None):
+        data = self[:]
+        if dtype is not None:
+            data = data.astype(dtype)
+        return data
 
-    def __getitem__(self, idx):
-        data = self._dset.__getitem__(idx, new_dtype=self.read_dtype)
+    def __getitem__(self, args):
+        data = self._dset.__getitem__(args, new_dtype=self.read_dtype)
         if self.extract_field is not None:
             data = data[self.extract_field]
         return data
+
+    def __len__(self):
+        """ Get the length of the underlying dataset
+
+        >>> length = len(dataset.fields(['x', 'y']))
+        """
+        return len(self._dset)
 
 
 def readtime_dtype(basetype, names):
@@ -369,34 +335,16 @@ class ChunkIterator:
         if source_sel is None:
             # select over entire dataset
             self._sel = tuple(
-                slice(0, self._shape[dim]) for dim in range(rank)
+                slice(0, self._shape[dim])
+                for dim in range(rank)
             )
         else:
-            if isinstance(source_sel, (slice, int)):
-                sel = [source_sel]
+            if isinstance(source_sel, slice):
+                self._sel = (source_sel,)
             else:
-                sel = list(source_sel)
-            if len(sel) != rank:
-                raise ValueError("Invalid selection - selection region must have same rank as dataset")
-            for dim, s in enumerate(sel):
-                start: int | None
-                stop: int | None
-                step: int | None
-                match s:
-                    case int():
-                        start = s
-                        stop = s + 1
-                        step = None
-                    case slice():
-                        start = s.start or 0
-                        stop = s.stop or self._shape[dim]
-                        step = s.step
-                    case _:
-                        # TODO: use typing.assert_never when Python 3.10 is dropped
-                        raise AssertionError(f'{s}: Selection object must be a slice or integer')
-                sel[dim] = slice(start, stop, step)
-                self._sel = tuple(sel)
-
+                self._sel = source_sel
+        if len(self._sel) != rank:
+            raise ValueError("Invalid selection - selection region must have same rank as dataset")
         self._chunk_index = []
         for dim in range(rank):
             s = self._sel[dim]
@@ -457,19 +405,7 @@ class Dataset(HLObject):
 
         >>> double_precision = dataset.astype('f8')[0:100:2]
         """
-        dtype = numpy.dtype(dtype)
-        if dtype == self.dtype:
-            return self
-
-        if dtype.kind == "T":
-            string_info = h5t.check_string_dtype(self.dtype)
-            if string_info is None:
-                raise TypeError(
-                    f"dset.astype({dtype}) can only be used on datasets with "
-                    "an HDF5 string datatype"
-                )
-
-        return AsTypeView(self, dtype)
+        return AstypeWrapper(self, dtype)
 
     def asstr(self, encoding=None, errors='strict'):
         """Get a wrapper to read string data as Python strings:
@@ -479,12 +415,6 @@ class Dataset(HLObject):
         The parameters have the same meaning as in ``bytes.decode()``.
         If ``encoding`` is unspecified, it will use the encoding in the HDF5
         datatype (either ascii or utf-8).
-
-        .. note::
-           On NumPy 2.0 and later, it is recommended to use native NumPy
-           variable-width strings instead:
-
-           >>> str_array = dataset.astype('T')[:]
         """
         string_info = h5t.check_string_dtype(self.dtype)
         if string_info is None:
@@ -494,7 +424,7 @@ class Dataset(HLObject):
             )
         if encoding is None:
             encoding = string_info.encoding
-        return AsStrView(self, encoding, errors=errors)
+        return AsStrWrapper(self, encoding, errors=errors)
 
     def fields(self, names, *, _prior_dtype=None):
         """Get a wrapper to read a subset of fields from a compound data type:
@@ -507,7 +437,7 @@ class Dataset(HLObject):
         """
         if _prior_dtype is None:
             _prior_dtype = self.dtype
-        return FieldsView(self, _prior_dtype, names)
+        return FieldsWrapper(self, _prior_dtype, names)
 
     if MPI:
         @property
@@ -703,20 +633,6 @@ class Dataset(HLObject):
         """Check if extent type is empty"""
         return self._extent_type == h5s.NULL
 
-    @cached_property
-    def _dcpl(self):
-        """
-        The dataset creation property list used when this dataset was created.
-        """
-        return self.id.get_create_plist()
-
-    @cached_property
-    def _filters(self):
-        """
-        The active filters of the dataset.
-        """
-        return filters.get_filters(self._dcpl)
-
     @with_phil
     def __init__(self, bind, *, readonly=False):
         """ Create a new Dataset object by binding to a low-level DatasetID.
@@ -725,7 +641,9 @@ class Dataset(HLObject):
             raise ValueError("%s is not a DatasetID" % bind)
         super().__init__(bind)
 
+        self._dcpl = self.id.get_create_plist()
         self._dxpl = h5p.create(h5p.DATASET_XFER)
+        self._filters = filters.get_filters(self._dcpl)
         self._readonly = readonly
         self._cache_props = {}
 
@@ -753,7 +671,7 @@ class Dataset(HLObject):
                 try:
                     newlen = int(size)
                 except TypeError:
-                    raise TypeError("Argument must be a single int if axis is specified") from None
+                    raise TypeError("Argument must be a single int if axis is specified")
                 size = list(self.shape)
                 size[axis] = newlen
 
@@ -1131,16 +1049,11 @@ class Dataset(HLObject):
                 self.id.write(mspace, fspace, source, dxpl=self._dxpl)
 
     @with_phil
-    def __array__(self, dtype=None, copy=None):
+    def __array__(self, dtype=None):
         """ Create a Numpy array containing the whole dataset.  DON'T THINK
         THIS MEANS DATASETS ARE INTERCHANGEABLE WITH ARRAYS.  For one thing,
         you have to read the whole dataset every time this method is called.
         """
-        if copy is False:
-            raise ValueError(
-                f"Dataset.__array__ received {copy=} "
-                "but memory allocation cannot be avoided on read"
-            )
         arr = numpy.zeros(self.shape, dtype=self.dtype if dtype is None else dtype)
 
         # Special case for (0,)*-shape datasets
@@ -1153,33 +1066,39 @@ class Dataset(HLObject):
     @with_phil
     def __repr__(self):
         if not self:
-            return "<Closed HDF5 dataset>"
-
-        if self.name is None:
-            name = "(anonymous)"
+            r = '<Closed HDF5 dataset>'
         else:
-            name = pp.basename(pp.normpath(self.name))
-            name = f'"{name}"'
+            if self.name is None:
+                namestr = '("anonymous")'
+            else:
+                name = pp.basename(pp.normpath(self.name))
+                namestr = '"%s"' % (name if name != '' else '/')
+            r = '<HDF5 dataset %s: shape %s, type "%s">' % (
+                namestr, self.shape, self.dtype.str
+            )
+        return r
 
-        return f'<HDF5 dataset {name}: shape {self.shape}, type "{self.dtype.str}">'
+    if hasattr(h5d.DatasetID, "refresh"):
+        @with_phil
+        def refresh(self):
+            """ Refresh the dataset metadata by reloading from the file.
 
-    @with_phil
-    def refresh(self):
-        """ Refresh the dataset metadata by reloading from the file.
+            This is part of the SWMR features and only exist when the HDF5
+            library version >=1.9.178
+            """
+            self._id.refresh()
+            self._cache_props.clear()
 
-        This is part of the SWMR features.
-        """
-        self._id.refresh()
-        self._cache_props.clear()
+    if hasattr(h5d.DatasetID, "flush"):
+        @with_phil
+        def flush(self):
+            """ Flush the dataset data and metadata to the file.
+            If the dataset is chunked, raw data chunks are written to the file.
 
-    @with_phil
-    def flush(self):
-        """ Flush the dataset data and metadata to the file.
-        If the dataset is chunked, raw data chunks are written to the file.
-
-        This is part of the SWMR features.
-        """
-        self._id.flush()
+            This is part of the SWMR features and only exist when the HDF5
+            library version >=1.9.178
+            """
+            self._id.flush()
 
     if vds_support:
         @property

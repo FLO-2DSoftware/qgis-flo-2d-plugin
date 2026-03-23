@@ -15,6 +15,7 @@
 """
 
 import numpy
+import uuid
 
 from .. import h5, h5s, h5t, h5a, h5p
 from . import base

@@ -18,5 +18,5 @@ def pytest_collection_modifyitems(config, items):
     if config.getoption('--no-network'):
         nonet = pytest.mark.skip(reason='No Internet')
         for item in items:
-            if 'network' in item.keywords:
+            if 'nonetwork' in item.keywords:
                 item.add_marker(nonet)
