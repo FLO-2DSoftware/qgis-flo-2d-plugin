@@ -37,6 +37,7 @@ from .grid_tools import (
     spatial_index,
 )
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
+from ..utils import qmeta_type
 
 
 def timer(func):
@@ -91,7 +92,7 @@ class ElevationCorrector(object):
 
     def add_virtual_sum(self, layer):
         expr = self.field_expression.format(self.ELEVATION_FIELD, self.CORRECTION_FIELD)
-        field = QgsField(self.VIRTUAL_SUM, QMetaType.Double)
+        field = QgsField(self.VIRTUAL_SUM, qmeta_type("Double"))
         layer.addExpressionField(expr, field)
 
     def remove_virtual_sum(self, layer):

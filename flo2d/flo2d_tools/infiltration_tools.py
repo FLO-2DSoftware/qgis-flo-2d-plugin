@@ -36,6 +36,7 @@ from .grid_tools import (
 
 from subprocess import PIPE, STDOUT, Popen
 from ..flo2d_tools.grid_tools import raster2grid
+from ..utils import qmeta_type
 
 
 class InfiltrationCalculator(object):
@@ -201,11 +202,11 @@ class InfiltrationCalculator(object):
                 land_soil_features = {}
                 land_soil_index = QgsSpatialIndex()
                 land_soil_fields = QgsFields()
-                land_soil_fields.append(QgsField("rtimp", QMetaType.Double))
-                land_soil_fields.append(QgsField("dthetan", QMetaType.Double))
-                land_soil_fields.append(QgsField("dthetad", QMetaType.Double))
-                land_soil_fields.append(QgsField("psif", QMetaType.Double))
-                land_soil_fields.append(QgsField("saturation", QMetaType.QString))
+                land_soil_fields.append(QgsField("rtimp", qmeta_type("Double")))
+                land_soil_fields.append(QgsField("dthetan", qmeta_type("Double")))
+                land_soil_fields.append(QgsField("dthetad", qmeta_type("Double")))
+                land_soil_fields.append(QgsField("psif", qmeta_type("Double")))
+                land_soil_fields.append(QgsField("saturation", qmeta_type("Double")))
 
                 land_soil_fid = 0
 

@@ -72,7 +72,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, \
-    qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag, qt_dock_widget_area
+    qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag, qt_dock_widget_area, qmeta_type
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -928,25 +928,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             # define fields for feature attributes. A QgsFields object is needed
             fields = QgsFields()
-            fields.append(QgsField("name", QMetaType.QString))
-            fields.append(QgsField("inlet", QMetaType.QString))
-            fields.append(QgsField("outlet", QMetaType.QString))
-            fields.append(QgsField("length", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("manning", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("inlet_off", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("outlet_off", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("init_flow", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("max_flow", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("inletLoss", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("outletLoss", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("meanLoss", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("flapLoss", QMetaType.Bool))
-            fields.append(QgsField("XSshape", QMetaType.QString))
-            fields.append(QgsField("XSMaxDepth", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom2", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom3", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSgeom4", QMetaType.Double, "double", 10, 4))
-            fields.append(QgsField("XSbarrels", QMetaType.Int, "int", 10, 4))
+            fields.append(QgsField("name", qmeta_type("QString")))
+            fields.append(QgsField("inlet", qmeta_type("QString")))
+            fields.append(QgsField("outlet", qmeta_type("QString")))
+            fields.append(QgsField("length", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("manning", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("inlet_off", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("outlet_off", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("init_flow", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("max_flow", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("inletLoss", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("outletLoss", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("meanLoss", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("flapLoss", qmeta_type("Bool")))
+            fields.append(QgsField("XSshape", qmeta_type("QString")))
+            fields.append(QgsField("XSMaxDepth", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSgeom2", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSgeom3", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSgeom4", qmeta_type("Double"), "double", 10, 4))
+            fields.append(QgsField("XSbarrels", qmeta_type("Int"), "int", 10, 4))
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
@@ -6642,7 +6642,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
 
             fields = QgsFields()
-            fields.append(QgsField(name='name', type=QMetaType.QString))
+            fields.append(QgsField(name='name', type=qmeta_type("QString")))
 
             pr = SD_all_nodes_layer.dataProvider()
 

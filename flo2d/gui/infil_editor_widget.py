@@ -29,7 +29,7 @@ from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 from ..geopackage_utils import GeoPackageUtils
 
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, qt_cursor_shape
+from ..utils import m_fdata, qt_cursor_shape, qmeta_type
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 from ..misc.ssurgo_soils import SsurgoSoil
@@ -1400,11 +1400,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
                 # adding the fields
                 layer_provider = land_cover_vector.dataProvider()
-                layer_provider.addAttributes([QgsField("landuse_category", QMetaType.QString)])
-                layer_provider.addAttributes([QgsField("InitAbs", QMetaType.Double)])
-                layer_provider.addAttributes([QgsField("RTIMP", QMetaType.Double)])
-                layer_provider.addAttributes([QgsField("VegCov", QMetaType.Double)])
-                layer_provider.addAttributes([QgsField("Sat", QMetaType.QString)])
+                layer_provider.addAttributes([QgsField("landuse_category", qmeta_type("QString"))])
+                layer_provider.addAttributes([QgsField("InitAbs", qmeta_type("Double"))])
+                layer_provider.addAttributes([QgsField("RTIMP", qmeta_type("Double"))])
+                layer_provider.addAttributes([QgsField("VegCov", qmeta_type("Double"))])
+                layer_provider.addAttributes([QgsField("Sat", qmeta_type("QString"))])
                 land_cover_vector.updateFields()
 
                 # Check model's unit

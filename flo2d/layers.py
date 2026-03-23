@@ -2052,11 +2052,7 @@ class Layers(object):
 
         # set visibility
         if not lyr_exists:
-            if visible:
-                vis = qt_check_state("Checked")
-            else:
-                vis = qt_check_state("Unchecked")
-            tree_lyr.setItemVisibilityChecked(vis)
+            tree_lyr.setItemVisibilityChecked(visible)
             tree_lyr.setExpanded(False)
         # preserve layer visibility for existing layers
 

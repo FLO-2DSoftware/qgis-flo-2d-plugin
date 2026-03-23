@@ -19,6 +19,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_walls_shapefile import WallsShapefile
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qdialogbuttonbox_button
 
 uiDialog, qtBaseClass = load_ui("levees_elevation")
 
@@ -37,7 +38,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.corrector.setup_layers()
         self.methods = {}
 
-        self.levees_tool_buttonBox.button(QDialogButtonBox.Ok).setText("Create Schematic Layers from User Levees")
+        self.levees_tool_buttonBox.button(qdialogbuttonbox_button("Ok")).setText("Create Schematic Layers from User Levees")
         # connections
         self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
         self.elev_points_chbox.stateChanged.connect(self.points_checked)

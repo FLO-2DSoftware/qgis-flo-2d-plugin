@@ -38,7 +38,7 @@ from ..user_communication import UserCommunication
 from ..utils import (
     second_smallest,
     set_min_max_elevs,
-    time_taken, qt_cursor_shape,
+    time_taken, qt_cursor_shape, qmeta_type,
 )
 from .ui_utils import load_ui
 
@@ -364,8 +364,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         # add fields
                         pr.addAttributes(
                             [
-                                QgsField("elevation", QMetaType.Double),
-                                QgsField("grid", QMetaType.Int),
+                                QgsField("elevation", qmeta_type("Double")),
+                                QgsField("grid", qmeta_type("Int")),
                             ]
                         )
                         vl.updateFields()  # tell the vector layer to fetch changes from the provider

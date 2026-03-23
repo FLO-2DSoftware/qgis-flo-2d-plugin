@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, qt_cursor_shape
+from ..utils import float_or_zero, qt_cursor_shape, qdialogbuttonbox_button
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("walls_shapefile")
@@ -46,7 +46,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
         # try to get grid layer
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
 
-        self.walls_to_levees_buttonbox.button(QDialogButtonBox.Save).setText("Add Walls to User Levee Lines")
+        self.walls_to_levees_buttonbox.button(qdialogbuttonbox_button("Save")).setText("Add Walls to User Levee Lines")
         self.walls_shapefile_cbo.currentIndexChanged.connect(self.populate_inlets_attributes)
 
         # Connections to clear inlets fields.

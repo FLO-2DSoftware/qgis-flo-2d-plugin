@@ -19,7 +19,7 @@ from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsRasterLayer, QgsUnitTypes
 
-from ..utils import qt_cursor_shape
+from ..utils import qt_cursor_shape, qmeta_type
 
 uiDialog, qtBaseClass = load_ui("pre_processing_widget")
 
@@ -310,7 +310,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         # adjust the elevations
         channel_pv = self.channel_layer.dataProvider()
-        channel_pv.addAttributes([QgsField("Elevation", QMetaType.Double)])
+        channel_pv.addAttributes([QgsField("Elevation", qmeta_type("Double"))])
         self.channel_layer.updateFields()
         self.channel_layer.commitChanges()
 
@@ -431,7 +431,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         # adjust the elevations
         reservoir_pv = reservoir.dataProvider()
-        reservoir_pv.addAttributes([QgsField("Elevation", QMetaType.Double)])
+        reservoir_pv.addAttributes([QgsField("Elevation", qmeta_type("Double"))])
         reservoir.updateFields()
 
         QgsProject.instance().addMapLayers([reservoir])

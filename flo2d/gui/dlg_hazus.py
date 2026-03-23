@@ -20,7 +20,7 @@ from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsD
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui, set_icon
-from ..utils import qt_cursor_shape
+from ..utils import qt_cursor_shape, qdialogbuttonbox_button
 
 uiDialog, qtBaseClass = load_ui("hazus")
 
@@ -37,7 +37,7 @@ class HazusDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.current_lyr = None
 
-        self.hazus_buttonBox.button(QDialogButtonBox.Save).setText("Compute")
+        self.hazus_buttonBox.button(qdialogbuttonbox_button("Save")).setText("Compute")
 
         self.setup_layers_comboxes()
         self.setup_statistics()

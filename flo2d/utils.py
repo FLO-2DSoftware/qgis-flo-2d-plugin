@@ -27,7 +27,7 @@ from heapq import nsmallest
 from itertools import filterfalse
 from math import ceil
 
-from qgis.PyQt.QtCore import QRegularExpression, Qt, QEvent
+from qgis.PyQt.QtCore import QRegularExpression, Qt, QEvent, QMetaType
 from qgis.PyQt.QtGui import QRegularExpressionValidator
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -36,7 +36,8 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
     QStyledItemDelegate,
     QToolButton,
-    QFrame
+    QFrame,
+    QDialogButtonBox
 )
 
 class NumericDelegate(QStyledItemDelegate):
@@ -572,3 +573,19 @@ def dock_area_from_int(value):
     if hasattr(Qt, "DockWidgetArea"):  # Qt6
         return Qt.DockWidgetArea(value)
     return value  # Qt5 accepts the old value style
+
+def qdialogbuttonbox_button(name):
+    """
+    Cross-compatible QDialogButtonBox button lookup for Qt5/Qt6.
+    """
+    if hasattr(QDialogButtonBox, "StandardButton"):  # Qt6
+        return getattr(QDialogButtonBox.StandardButton, name)
+    return getattr(QDialogButtonBox, name)  # Qt5
+
+def qmeta_type(name):
+    """
+    Cross-compatible QMetaType.Type lookup for Qt5/Qt6.
+    """
+    if hasattr(QMetaType, "Type"):  # Qt6
+        return getattr(QMetaType.Type, name)
+    return getattr(QMetaType, name)  # Qt5

@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import is_true
+from ..utils import is_true, qdialogbuttonbox_button
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")
@@ -68,7 +68,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             "SEMICIRCULAR",
         )
 
-        self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText("Assign Selected Fields")
+        self.SDSF_buttonBox.button(qdialogbuttonbox_button("Save")).setText("Assign Selected Fields")
         self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlet_attributes)
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfall_attributes)
         self.strge_units_shapefile_cbo.currentIndexChanged.connect(self.populate_strge_units_attributes)
