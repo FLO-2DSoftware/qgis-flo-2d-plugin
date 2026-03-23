@@ -13,6 +13,7 @@ changelog=
  <p>2.2.0
  - General
     Added full support to Qt6
+    Fixed the numpy error on Python 3.12
  <p>2.1.0
  - Breach Hydrograph Tool
     Added the breach hydrograph tool to generate water and tailings outflow breach hydrographs
