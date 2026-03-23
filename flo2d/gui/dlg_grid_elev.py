@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
+from qgis.PyQt.QtCore import Qt
 
 from ..flo2d_tools.elevation_correctors import ExternalElevation, GridElevation
 from ..geopackage_utils import GeoPackageUtils
@@ -19,10 +20,11 @@ uiDialog, qtBaseClass = load_ui("grid_elevation")
 
 class GridCorrectionDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
+        self.setWindowModality(Qt.WindowModal)
         self.con = con
         self.lyrs = lyrs
         self.gutils = GeoPackageUtils(con, iface)

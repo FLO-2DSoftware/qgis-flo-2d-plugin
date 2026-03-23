@@ -20,18 +20,18 @@ from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtWidgets import QDialogButtonBox
 
 from .ui_utils import load_ui
-from ..utils import qdialogbuttonbox_button
+from ..utils import qdialogbuttonbox_button, qt_window_modality
 
 uiDialog, qtBaseClass = load_ui("create_grid")
 
 
 class CreateGridDialog(qtBaseClass, uiDialog):
-    def __init__(self, lyrs):
-        super().__init__()
-        qtBaseClass.__init__(self)
+    def __init__(self, iface, lyrs):
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowModality(qt_window_modality("WindowModal"))
         self.ok_btn = self.buttonBox.button(qdialogbuttonbox_button("Ok"))
         self.ok_btn.setEnabled(False)
         self.cellSizeSpinBox.valueChanged.connect(lambda v: self.ok_btn.setEnabled(v != 0))

@@ -489,7 +489,7 @@ class InfiltrationCalculator(object):
             self.fill_nodata()
         else:
             pass
-        sampler = raster2grid(self.grid_lyr, temp_file_path)
+        sampler = raster2grid(self.grid_lyr, temp_file_path, iface)
 
         grid_params = {}
         for cn, gid in sampler:

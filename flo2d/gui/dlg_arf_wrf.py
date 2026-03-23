@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from qgis._core import QgsWkbTypes
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -8,8 +7,9 @@ from qgis._core import QgsWkbTypes
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-
+from qgis._core import QgsWkbTypes
 from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
+from qgis.PyQt.QtCore import Qt
 
 from .ui_utils import load_ui
 
@@ -17,11 +17,12 @@ uiDialog, qtBaseClass = load_ui("evaluate_blocked_areas")
 
 
 class EvaluateReductionFactorsDialog(qtBaseClass, uiDialog):
-    def __init__(self, lyrs):
-        qtBaseClass.__init__(self)
+    def __init__(self, iface, lyrs):
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowModality(Qt.WindowModal)
         self.collapse_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)
         self.arf_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)
         self.wrf_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)

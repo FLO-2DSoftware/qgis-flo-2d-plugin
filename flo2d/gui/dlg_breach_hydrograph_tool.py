@@ -756,7 +756,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         # TODO add a cellsize check
         # Create the grid
-        square_grid(self.gutils, bl, None)
+        square_grid(self.gutils, bl, self.iface, None)
         sample_elev = SamplingElevDialog(self.con, self.iface, self.lyrs, cellSize)
         sample_elev.probe_elevation(elev_raster)
         sample_roughness = SamplingRoughnessDialog(self.con, self.iface, self.lyrs, cellSize)
