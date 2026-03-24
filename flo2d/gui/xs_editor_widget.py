@@ -515,7 +515,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         elif xs_type == "Trapezoidal":
             self._create_trapezoidal_xy()
         self.plot.update_item("Cross-section", [self.xi, self.yi])
-        self.plot.plot.autoRange()
+        self.plot.plot.setXRange(min(self.xi), max(self.xi))
+        self.plot.plot.setYRange(min(self.yi), max(self.yi))
 
     def _create_rectangular_xy(self):
         data = []
