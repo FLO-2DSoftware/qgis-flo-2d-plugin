@@ -413,6 +413,11 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
 
     def compute(self):
         self.console_edit.clear()
+        # Validate source file
+        if not hasattr(self, "src_file") or not self.src_file:
+            self.uc.show_warn("Please a source raster or CSV file before running.")
+            self.uc.log_info("Source raster or CSV file not selected.")
+            return
         starttime = time.asctime()
         self.log_message("Performing Computation ...")
         self.log_message(starttime)
