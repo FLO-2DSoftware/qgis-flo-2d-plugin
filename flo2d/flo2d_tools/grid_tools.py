@@ -1143,11 +1143,12 @@ def raster2grid(grid, out_raster, iface, request=None):
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
 
-    # pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), iface.mainWindow())
-    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount())
-    pd.setModal(True)
+    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), iface.mainWindow())
+    pd.setWindowTitle("FLO-2D")
+    pd.setWindowModality(Qt.WindowModal)
+    pd.setMinimumDuration(0)
     pd.setValue(0)
-    pd.forceShow()
+
     i = 0
 
     for feat in features:
@@ -1163,7 +1164,8 @@ def raster2grid(grid, out_raster, iface, request=None):
         i += 1
         pd.setValue(i)
 
-
+    pd.close()
+    pd.deleteLater()
 
 def rasters2centroids(vlayer, request, *raster_paths):
     """
@@ -1240,10 +1242,9 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
 
     prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100, iface.mainWindow())
     prog.setWindowTitle("FLO-2D")
-    prog.setWindowModality(qt_window_modality("WindowModal"))
+    prog.setWindowModality(Qt.WindowModal)
     prog.setMinimumDuration(0)
     prog.setValue(0)
-    QApplication.processEvents()
 
     # Update UI about ~200 times max
     update_every = max(1, total_candidates // 200)
@@ -1313,6 +1314,7 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
             QApplication.processEvents()
             if prog.wasCanceled():
                 prog.close()
+                prog.deleteLater()
                 return
 
         n = row[0]
@@ -1356,6 +1358,7 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
 
     prog.setValue(100)
     prog.close()
+    prog.deleteLater()
 
 
 def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None):
