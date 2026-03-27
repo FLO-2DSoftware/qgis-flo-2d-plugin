@@ -117,7 +117,11 @@ class Flo2D(object):
         self.crs_widget = QgsProjectionSelectionWidget()
         # initialize locale
         s = QSettings()
-        locale = s.value("locale/userLocale")[0:2]
+        locale = s.value("locale/userLocale")
+        if not locale:
+            locale = "en"
+        else:
+            locale = locale[0:2]
         locale_path = os.path.join(self.plugin_dir, "i18n", "Flo2D_{}.qm".format(locale))
 
         if os.path.exists(locale_path):

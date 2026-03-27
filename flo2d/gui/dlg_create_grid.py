@@ -131,7 +131,7 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         # Load the selected layer
         uri = self.external_lyr_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
         self.cell_size_cbo.setLayer(self.current_lyr)
 
         # Smart field auto-selection

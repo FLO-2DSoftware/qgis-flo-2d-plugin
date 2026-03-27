@@ -216,7 +216,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 del rb
 
             grid = self.lyrs.data["grid"]["qlyr"]
-            lyr = self.lyrs.get_layer_tree_item(grid.id()).layer()
+            lyr = self.lyrs.get_layer_by_id(lyr_id)
             gt = lyr.geometryType()
 
             if time_stage_1:

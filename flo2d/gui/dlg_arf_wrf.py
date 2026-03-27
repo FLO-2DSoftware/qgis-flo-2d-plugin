@@ -54,7 +54,7 @@ class EvaluateReductionFactorsDialog(qtBaseClass, uiDialog):
             return
         uri = self.external_lyr_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
         self.collapse_cbo.setLayer(self.current_lyr)
         self.arf_cbo.setLayer(self.current_lyr)
         self.wrf_cbo.setLayer(self.current_lyr)

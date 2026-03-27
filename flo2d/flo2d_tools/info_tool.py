@@ -162,7 +162,7 @@ class InfoTool(QgsMapToolIdentify):
         self.clear_rubber()
 
     def show_rubber(self, lyr_id, fid):
-        lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        lyr = self.lyrs.get_layer_by_id(lyr_id)
         gt = lyr.geometryType()
         self.clear_rubber()
         self.rb = QgsRubberBand(self.canvas, gt)

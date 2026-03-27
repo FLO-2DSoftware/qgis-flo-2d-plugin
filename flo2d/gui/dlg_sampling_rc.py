@@ -122,7 +122,7 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
         """
         uri = self.lyr_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.current_lyr = self.lyrs.gget_layer_by_id(lyr_id)
 
         if isinstance(self.current_lyr, QgsVectorLayer):
             self.point_lyr_field_cbo.setHidden(False)

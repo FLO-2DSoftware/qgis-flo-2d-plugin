@@ -70,7 +70,7 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
             return
         uri = self.srcLayerCbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
         self.srcFieldCbo.setLayer(self.current_lyr)
 
     def browse_src_data(self):
