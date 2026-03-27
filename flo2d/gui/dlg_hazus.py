@@ -117,7 +117,7 @@ class HazusDialog(qtBaseClass, uiDialog):
     def populate_lists_with_buildigns_attributes(self, idx):
         uri = self.buildings_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
         self.ground_elev_buildings_field_FieldCbo.clear()
         self.ground_elev_buildings_field_FieldCbo.setLayer(self.current_lyr)
@@ -131,7 +131,7 @@ class HazusDialog(qtBaseClass, uiDialog):
     def populate_statistics_fields(self, idx):
         uri = self.buildings_layer_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
         self.building_ID_FieldCbo.clear()
         self.building_ID_FieldCbo.setLayer(self.current_lyr)

@@ -1989,6 +1989,19 @@ class Layers(object):
         # try:
         # check if the layer is already loaded
         lyr_exists = self.layer_exists_in_group(uri, group)
+
+        if subgroup:
+            grp = self.get_subgroup(group, subgroup)
+            if subgroup != "User Layers" and subgroup != "Schematic Layers":
+                grp.setExpanded(False)
+                if self.ilg is not None:
+                    self.ilg.hideGroup(subgroup)
+            if subsubgroup:
+                grp = self.get_subgroup(subgroup, subsubgroup)
+                grp.setExpanded(False)
+        else:
+            grp = self.get_group(group)
+
         if not lyr_exists:
             start_time = time.time()
             vlayer = QgsVectorLayer(uri, name, provider)
@@ -2013,21 +2026,6 @@ class Layers(object):
             )
             # get target tree group
             start_time = time.time()
-            if subgroup:
-                grp = self.get_subgroup(group, subgroup)
-                if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
-                    grp.setExpanded(False)
-                    if self.ilg is not None:
-                        self.ilg.hideGroup(subgroup)
-                else:
-                    pass
-                if subsubgroup:
-                    grp = self.get_subgroup(subgroup, subsubgroup)
-                    grp.setExpanded(False)
-                else:
-                    pass
-            else:
-                grp = self.get_group(group)
             # add layer to the tree group
             tree_lyr = grp.addLayer(vlayer)
             self.uc.log_info(
@@ -2035,15 +2033,20 @@ class Layers(object):
             )
         else:
             start_time = time.time()
-            if subgroup:
-                grp = self.get_subgroup(group, subgroup)
-                if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
-                    grp.setExpanded(False)
-                    if self.ilg is not None:
-                        self.ilg.hideGroup(subgroup)
-                else:
-                    pass
-            tree_lyr = self.get_layer_tree_item(lyr_exists)
+
+            # First try to get the layer tree node
+            tree_lyr = self.root.findLayer(lyr_exists)
+
+            # If the tree node is missing, recover from the project registry
+            if tree_lyr is None:
+                existing_layer = QgsProject.instance().mapLayer(lyr_exists)
+
+                if existing_layer is None:
+                    msg = f"Layer {lyr_exists} was reported as existing, but it was not found in QgsProject."
+                    raise Flo2dLayerNotFound(msg)
+
+                # Reinsert the missing layer-tree node into the target group
+                tree_lyr = grp.addLayer(existing_layer)
             self.update_layer_extents(tree_lyr.layer())
             self.uc.log_info(
                 "\t{0:.3f} seconds => loading {1} - only update extents".format(time.time() - start_time, name)
@@ -2188,6 +2191,15 @@ class Layers(object):
             return layeritem
         else:
             raise Flo2dLayerNotFound("Layer id not specified")
+
+    def get_layer_by_id(self, layer_id):
+        if not layer_id:
+            raise Flo2dLayerNotFound("Layer id not specified")
+
+        layer = QgsProject.instance().mapLayer(layer_id)
+        if layer is None:
+            raise Flo2dLayerNotFound(f"Layer {layer_id} not found in project")
+        return layer
 
     def get_layer_by_name(self, name, group=None):
         try:
@@ -2449,7 +2461,7 @@ class Layers(object):
                 readonly=data["readonly"],
                 advanced=data["advanced"]
             )
-            l = self.get_layer_tree_item(lyr_id).layer()
+            l = self.get_layer_by_id(lyr_id)
             if lyr == "blocked_cells":
                 self.update_style_blocked(lyr_id)
             if data["attrs_edit_widgets"]:
@@ -2627,7 +2639,7 @@ class Layers(object):
             7: (-s / 2.414, -s, -s, -s / 2.414),
             8: (-s, s / 2.414, -s / 2.414, s),
         }
-        lyr = self.get_layer_tree_item(lyr_id).layer()
+        lyr = self.get_layer_by_id(lyr_id)
         sym = lyr.renderer().symbol()
         for nr in range(1, sym.symbolLayerCount()):
             exp = "make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))"
@@ -2643,7 +2655,7 @@ class Layers(object):
         sym.symbolLayer(0).setGeometryExpression(exp_arf)
 
     def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0), clear=True):
-        lyr = self.get_layer_tree_item(lyr_id).layer()
+        lyr = self.get_layer_by_id(lyr_id)
         gt = lyr.geometryType()
         if clear:
             self.clear_rubber()
