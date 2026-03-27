@@ -1221,9 +1221,11 @@ class Flo2D(object):
                 s = QSettings()
                 s.setValue("FLO-2D/lastGdsDir", project_dir)
                 s.setValue("FLO-2D/last_flopro", flo2d_dir)
-                self.f2d_widget.setup_project_folder()
 
-                if project_dir != "" and flo2d_dir != "":
+                if self.f2d_widget:
+                    self.f2d_widget.setup_project_folder()
+
+                if project_dir != "" or flo2d_dir != "":
                     s.setValue("FLO-2D/run_settings", True)
 
                     flopro_dir = s.value("FLO-2D/last_flopro")
