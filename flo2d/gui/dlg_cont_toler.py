@@ -258,7 +258,7 @@ class ContToler(qtBaseClass, uiDialog):
                     "type": "r",
                     "dat": "CONT",
                     "min": 0,
-                    "max": 0.50,
+                    "max": 0.70,
                     "dec": 2,
                 },
             ],
