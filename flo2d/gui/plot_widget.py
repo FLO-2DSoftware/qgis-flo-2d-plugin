@@ -18,7 +18,7 @@ from ..deps import safe_pyqtgraph as pg
 import numpy as np
 
 from ..utils import qt_pen_style, qframe_shape, qt_widget_attribute, qt_alignment_flag, qt_check_state, \
-    qpainter_render_hint
+    qpainter_render_hint, qt_mouse_button
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -124,13 +124,13 @@ class PlotWidget(QWidget):
 
     # Handle mouse press on the legend panel
     def legend_mouse_press(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == qt_mouse_button("LeftButton"):
             self.drag_offset = event.pos() # Record where inside the panel the click occurred
             event.accept() # Mark event as handled
 
     # Handle mouse movement while dragging the legend
     def legend_mouse_move(self, event):
-        if self.drag_offset is not None and (event.buttons() & Qt.LeftButton): # Only move if dragging is active and left mouse button is still pressed
+        if self.drag_offset is not None and (event.buttons() & qt_mouse_button("LeftButton")): # Only move if dragging is active and left mouse button is still pressed
             new_pos = self.legend_proxy.pos() + (event.pos() - self.drag_offset) # Compute new position by adding drag delta to the current legend position
             self.legend_proxy.setPos(new_pos) # Reposition legend panel
             event.accept() # Mark event as handled

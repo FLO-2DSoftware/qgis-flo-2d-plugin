@@ -346,7 +346,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 return
             uri = self.inlets_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields:
             string_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_name_FieldCbo')                            
@@ -411,7 +411,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             
             uri = self.outfalls_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields:
             string_combos = [self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_name_FieldCbo'),
@@ -468,7 +468,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 return
             uri = self.strge_units_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields:
             string_combos = [self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_name_FieldCbo'),
@@ -529,7 +529,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 return
             uri = self.conduits_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields:
             string_combos = [self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_name_FieldCbo'),
@@ -591,7 +591,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 return
             uri = self.pumps_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields:
             string_combos = [self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_name_FieldCbo'),
@@ -641,7 +641,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 return
             uri = self.orifices_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields:
             string_combos = [self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_name_FieldCbo'),
@@ -697,7 +697,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 return
             uri = self.weirs_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields:
             string_combos = [self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_name_FieldCbo'),

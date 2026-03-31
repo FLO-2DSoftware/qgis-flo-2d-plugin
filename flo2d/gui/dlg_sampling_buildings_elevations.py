@@ -53,7 +53,7 @@ class SamplingBuildingsElevationsDialog(qtBaseClass, uiDialog):
     def populate_fields_cbo(self, idx):
         uri = self.buildings_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
         self.field_to_uniformize_cbo.setLayer(self.current_lyr)
         self.field_to_uniformize_cbo.setCurrentIndex(0)
         self.ID_field_cbo.setLayer(self.current_lyr)

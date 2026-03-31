@@ -103,7 +103,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
         try:
             uri = self.walls_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+            self.current_lyr = self.lyrs.gget_layer_by_id(lyr_id)
 
             for combo_inlets in self.walls_fields_groupBox.findChildren(QComboBox):
                 combo_inlets.clear()
