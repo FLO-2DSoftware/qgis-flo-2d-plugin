@@ -65,7 +65,7 @@ class TINInterpolator(object):
         self.lyr_data = QgsInterpolator.LayerData()
         self.lyr_data.interpolationAttribute = index
         self.lyr_data.source = self.lyr
-        self.lyr_data.sourceType = 0
+        self.lyr_data.sourceType = QgsInterpolator.SourcePoints
         self.lyr_data.useZValue = False
         self.interpolator = QgsTinInterpolator([self.lyr_data])
 
