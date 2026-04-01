@@ -5,7 +5,7 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
+import math
 import os
 import tempfile
 
@@ -13,8 +13,8 @@ import processing
 from qgis.PyQt.QtWidgets import QProgressDialog, QApplication
 from osgeo import gdal, osr
 from qgis._core import QgsWkbTypes, QgsFeatureRequest, QgsCoordinateReferenceSystem, QgsProject, \
-    QgsVectorLayer, QgsProcessingFeatureSourceDefinition
-from qgis.core import QgsRasterLayer
+    QgsVectorLayer, QgsProcessingFeatureSourceDefinition, QgsPointXY, QgsGeometry
+from qgis.core import QgsRasterLayer, QgsMapLayerType
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
 
@@ -86,313 +86,318 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
 
         self.current_lyr = None
-        self.points_index = None
-        self.points_feats = None
-        self.populate_point_shape_cbo()
+        # self.shape_field = None
+        # self.points_index = None
+        # self.points_feats = None
+        self.populate_layers_cbo()
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
 
         # connections
-        self.lyr_cbo.currentIndexChanged.connect(self.populate_fields_cbo)
-        self.browseSrcBtn.clicked.connect(self.browse_src_pointshape)
+        self.shape_lyr_cbo.currentIndexChanged.connect(self.populate_fields_cbo)
 
-    def populate_point_shape_cbo(self):
+    def populate_layers_cbo(self):
         """
-        Get loaded point shapes into combobox.
+        Get loaded layers into the combobox.
         """
-        try:
-            v_lyrs = self.lyrs.list_group_vlayers()
-            for l in v_lyrs:
-                if l.geometryType() == QgsWkbTypes.PointGeometry:
-                    if l.featureCount() != 0:
-                        self.lyr_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
-                else:
-                    pass
+        self.raster_lyr_cbo.clear()
+        self.shape_lyr_cbo.clear()
+        self.shape_field_cbo.clear()
 
-            r_lyrs = self.lyrs.list_group_rlayers()
-            for l in r_lyrs:
-                self.lyr_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+        gpkg_path = self.gutils.get_gpkg_path()
+        gpkg_path_adj = gpkg_path.replace("\\", "/")
 
-            self.populate_fields_cbo(self.lyr_cbo.currentIndex())
-        except Exception as e:
-            pass
+        for l in QgsProject.instance().mapLayers().values():
+            layer_source_adj = l.source().replace("\\", "/")
+            if gpkg_path_adj not in layer_source_adj:
+                if l.type() == QgsMapLayerType.RasterLayer:
+                    self.raster_lyr_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                elif l.type() == QgsMapLayerType.VectorLayer and l.geometryType() == QgsWkbTypes.PointGeometry:
+                    self.shape_lyr_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+
+        self.populate_fields_cbo(0)
 
     def populate_fields_cbo(self, idx):
         """
         Populate the field based on the selected point shape
         """
-        uri = self.lyr_cbo.itemData(idx)
+        uri = self.shape_lyr_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        shape_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-        if isinstance(self.current_lyr, QgsVectorLayer):
-            self.point_lyr_field_cbo.setHidden(False)
-            self.label_3.setHidden(False)
-            self.power_sb.setHidden(False)
-            self.label_4.setHidden(False)
-            self.neighbors_sb.setHidden(False)
-            self.label_5.setHidden(False)
-            self.point_lyr_field_cbo.setLayer(self.current_lyr)
-            self.point_lyr_field_cbo.setCurrentIndex(0)
-        elif isinstance(self.current_lyr, QgsRasterLayer):
-            self.point_lyr_field_cbo.setHidden(True)
-            self.label_3.setHidden(True)
-            self.power_sb.setHidden(True)
-            self.label_4.setHidden(True)
-            self.neighbors_sb.setHidden(True)
-            self.label_5.setHidden(True)
-            self.point_lyr_field_cbo.setCurrentIndex(-1)
-
-    def browse_src_pointshape(self):
-        """
-        Users pick a source point shape not loaded into project.
-        """
-        s = QSettings()
-        last_dtm_shape_dir = s.value("FLO-2D/lastGdsDir", "")
-        self.src, __ = QFileDialog.getOpenFileName(None, "Choose elevation point shape...",
-                                                   directory=last_dtm_shape_dir)
-        if not self.src:
-            return
-        if self.lyr_cbo.findData(self.src) == -1:
-            bname = os.path.basename(self.src)
-            self.lyr_cbo.addItem(bname, self.src)
-            self.lyr_cbo.setCurrentIndex(len(self.lyr_cbo) - 1)
+        self.shape_field_cbo.setLayer(shape_lyr)
+        self.shape_field_cbo.setCurrentIndex(0)
 
     def create_elev_rc(self):
         """
-        Function to create the outrc
+        Function to add data to the outrc table
         """
 
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         self.gutils.clear_tables('outrc')
 
+        if self.raster_rb.isChecked():
+            uri = self.raster_lyr_cbo.itemData(self.raster_lyr_cbo.currentIndex())
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        elif self.vector_rb.isChecked():
+            uri = self.shape_lyr_cbo.itemData(self.shape_lyr_cbo.currentIndex())
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            field = self.shape_field_cbo.currentField()
+            vector_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+
+            xs = []
+            ys = []
+
+            for i, feat in enumerate(vector_lyr.getFeatures()):
+                pt = feat.geometry().asPoint()
+                xs.append(round(pt.x(), 10))
+                ys.append(round(pt.y(), 10))
+
+                if i + 1 >= 200:
+                    break
+
+            unique_x = sorted(set(xs))
+            unique_y = sorted(set(ys))
+
+            x_pixel_size = min(
+                unique_x[i + 1] - unique_x[i]
+                for i in range(len(unique_x) - 1)
+                if unique_x[i + 1] > unique_x[i]
+            )
+
+            y_pixel_size = min(
+                unique_y[i + 1] - unique_y[i]
+                for i in range(len(unique_y) - 1)
+                if unique_y[i + 1] > unique_y[i]
+            )
+
+            feats = list(vector_lyr.getFeatures())
+
+            pt1 = feats[0].geometry().asPoint()
+            pt2 = feats[1].geometry().asPoint()
+
+            extent = vector_lyr.extent()
+
+            extent.setXMinimum(extent.xMinimum() - x_pixel_size / 2.0)
+            extent.setXMaximum(extent.xMaximum() + x_pixel_size / 2.0)
+            extent.setYMinimum(extent.yMinimum() - y_pixel_size / 2.0)
+            extent.setYMaximum(extent.yMaximum() + y_pixel_size / 2.0)
+
+            output_raster = os.path.join(tempfile.gettempdir(), "shape_raster.tif")
+
+            params = {
+                'INPUT': vector_lyr,
+                'FIELD': field,
+                'BURN': 0,
+                'USE_Z': False,
+                'UNITS': 1,
+                'WIDTH': x_pixel_size,
+                'HEIGHT': y_pixel_size,
+                'EXTENT': extent,
+                'NODATA': -9999,
+                'OPTIONS': '',
+                'DATA_TYPE': 5,
+                'INIT': None,
+                'INVERT': False,
+                'EXTRA': '',
+                'OUTPUT': output_raster
+            }
+
+            result = processing.run("gdal:rasterize", params)
+
+            temp_raster_path = result["OUTPUT"]
+            self.current_lyr = QgsRasterLayer(temp_raster_path, "Rasterized Layer")
+            if self.current_lyr.isValid():
+                QgsProject.instance().addMapLayer(self.current_lyr)
+
+        else:
+            self.uc.bar_warn("Please select a valid layer type.")
+            self.uc.log_info("Please select a valid layer type.")
+            return
+
+        if self.incremental_rb.isChecked():
+            method = "incremental"
+        elif self.direct_rb.isChecked():
+            method = "direct"
+        else:
+            self.uc.bar_warn("Please select a valid method.")
+            self.uc.log_info("Please select a valid method.")
+            return
+
+        x_samples = self.x_samples_sb.value()
+        y_samples = self.y_samples_sb.value()
+        number_intervals = self.number_intervals_sb.value()
+
         outrc_rcdata = []
 
-        grid_extent = self.grid_lyr.extent()
-        xMaximum = grid_extent.xMaximum()
-        yMaximum = grid_extent.yMaximum() - 0.5
-        xMinimum = grid_extent.xMinimum() + 0.5
-        yMinimum = grid_extent.yMinimum()
+        features = self.grid_lyr.getFeatures()
 
-        subcells = processing.run("native:creategrid", {'TYPE': 0,
-                                                        'EXTENT': f'{xMinimum},{xMaximum},{yMaximum},{yMinimum} [{self.grid_lyr.crs().authid()}]',
-                                                        'HSPACING': 1, 'VSPACING': 1, 'HOVERLAY': 0, 'VOVERLAY': 0,
-                                                        'CRS': QgsCoordinateReferenceSystem(
-                                                            self.grid_lyr.crs().authid()),
-                                                        'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
+        for feat in features:
+            geom = feat.geometry()
+            if geom is None or geom.isEmpty():
+                self.uc.bar_warn("No features found. Please create it before running tool.")
+                self.uc.log_info("No features found. Please create it before running tool.")
+                continue
 
-        grid_elements = list(self.grid_lyr.getFeatures())
+            cell_area = geom.area()
 
-        n_cells = number_of_elements(self.gutils, self.grid_lyr)
+            points = self.generate_subcell_centers(geom, rows=y_samples, cols=x_samples)
+            if not points:
+                self.uc.bar_warn(f"No valid points generated for feature ID {feat.id()}. Skipping.")
+                self.uc.log_info(f"No valid points generated for feature ID {feat.id()}. Skipping.")
+                continue
 
-        progDialog = QProgressDialog("Creating rating tables...", None, 0, n_cells)
-        progDialog.setModal(True)
-        progDialog.setValue(0)
-        progDialog.forceShow()
+            elevations = self.sample_raster_values(self.current_lyr, points, band=1)
+            if not elevations:
+                self.uc.bar_warn(f"No valid elevation samples for feature ID {feat.id()}. Skipping.")
+                self.uc.log_info(f"No valid elevation samples for feature ID {feat.id()}. Skipping.")
+                continue
 
-        if isinstance(self.current_lyr, QgsVectorLayer):
+            table = self.build_stage_volume_table(
+                grid_id=feat.id(),
+                method=method,
+                elevations=elevations,
+                cell_area=cell_area,
+                intervals=number_intervals
+            )
 
-            # Prepare the DTM points in a way that it can run the IDW
-            dtm_points_array = np.empty((0, 3), dtype=float)
-            dtm_points = self.current_lyr.getFeatures()
-            for dtm_point in dtm_points:
-                dtm_point_attribute = dtm_point.attributes()
-                dtm_point_geometry = dtm_point.geometry()
-                x = dtm_point_geometry.asPoint().x()
-                y = dtm_point_geometry.asPoint().y()
-                dtm_points_array = np.append(dtm_points_array,
-                                             [[x, y, dtm_point_attribute[self.point_lyr_field_cbo.currentIndex()]]],
-                                             axis=0)
+            if not table:
+                self.uc.bar_error(f"Failed to build stage-volume table for feature ID {feat.id()}. Skipping.")
+                self.uc.log_info(f"Failed to build stage-volume table for feature ID {feat.id()}. Skipping.")
+                continue
 
-            if len(dtm_points_array) / len(grid_elements) < self.min_dtm_sb.value():
-                self.uc.log_info("Not sufficient DTM points to run this process!")
-                self.uc.bar_info("Not sufficient DTM points to run this process!")
-                return
-
-            for j, grid in enumerate(grid_elements):
-                grid_geometry = grid.geometry()
-                grid_fid = grid.attributes()[0]
-
-                elevations = []
-                x_coords = []
-                y_coords = []
-
-                subcell_centroids = subcells.getFeatures()
-
-                for subcell in subcell_centroids:
-                    if subcell.geometry().intersects(grid_geometry):
-                        subcell_geometry = subcell.geometry()
-                        x = subcell_geometry.asPoint().x()
-                        y = subcell_geometry.asPoint().y()
-                        elevation_interpolated = idw_interpolation(dtm_points_array,
-                                                                   np.array([x, y]),
-                                                                   self.power_sb.value(),
-                                                                   self.neighbors_sb.value())
-                        x_coords.append(x)
-                        y_coords.append(y)
-                        elevations.append(elevation_interpolated)
-
-                # Convert the lists to numpy arrays
-                x = np.array(x_coords)
-                y = np.array(y_coords)
-                elevation = np.array(elevations)
-
-                # Define the grid size
-                x_unique = np.unique(x)
-                y_unique = np.unique(y)
-
-                x_res = len(x_unique)
-                y_res = len(y_unique)
-
-                # Create an empty array for the raster
-                raster_array = np.full((y_res, x_res), np.nan)
-
-                # Fill the array with elevation data
-                for i in range(len(elevation)):
-                    x_idx = np.where(x_unique == x[i])[0][0]
-                    y_idx = np.where(y_unique == y[i])[0][0]
-                    raster_array[y_idx, x_idx] = elevation[i]
-
-                # Replace np.nan with some nodata value if needed, e.g., -9999
-                nodata_value = -9999
-                raster_array = np.nan_to_num(raster_array, nan=nodata_value)
-
-                # Create the raster file in a temporary location
-                temp_file = tempfile.NamedTemporaryFile(suffix='.tif', delete=False)
-                temp_file_path = temp_file.name
-                temp_file.close()  # We only need the name
-
-                driver = gdal.GetDriverByName('GTiff')
-                dataset = driver.Create(temp_file_path, x_res, y_res, 1, gdal.GDT_Float32)
-
-                # Define the geotransform and projection
-                x_min, x_max = x_unique.min(), x_unique.max()
-                y_min, y_max = y_unique.min(), y_unique.max()
-
-                pixel_width = (x_max - x_min) / (x_res - 1)
-                pixel_height = (y_max - y_min) / (y_res - 1)
-                geotransform = (x_min, pixel_width, 0, y_min, 0, pixel_height)
-                dataset.SetGeoTransform(geotransform)
-
-                # Define a spatial reference
-                srs = osr.SpatialReference()
-                epsg_code = int(QgsProject.instance().crs().authid().split(":")[1])
-                srs.ImportFromEPSG(epsg_code)
-                dataset.SetProjection(srs.ExportToWkt())
-
-                # Write the data to the raster band
-                band = dataset.GetRasterBand(1)
-                band.WriteArray(raster_array)
-                band.SetNoDataValue(nodata_value)
-
-                # Flush and close the dataset
-                dataset.FlushCache()
-                dataset = None
-
-                # Load the temporary raster file into QGIS
-                raster_layer = QgsRasterLayer(temp_file_path, "Temporary Raster")
-
-                elev_sorted = sorted(elevations)
-                max_elev = max(elevations)
-                min_elev = min(elevations)
-                dh = (max_elev - min_elev) / self.subd_sb.value()
-
-                # Organize the elevation ranges
-                elev_ranges = [round(min_elev + dh * i, 3) for i in range(self.subd_sb.value() + 1)]
-                volume = []
-                for elev_range in elev_ranges:
-                    if round(elev_range, 2) == round(min_elev, 2):
-                        volume.append(round(0, 3))
-                    else:
-                        vol = processing.run("native:rastersurfacevolume",
-                                             {'INPUT': raster_layer,
-                                              'BAND': 1,
-                                              'LEVEL': float(elev_range),
-                                              'METHOD': 1,
-                                              'OUTPUT_HTML_FILE': 'TEMPORARY_OUTPUT'}
-                                             )['VOLUME'] * (- 1)
-
-                        volume.append(round(vol, 3))
-
-                # Prepare data for insertion
-                data = [(grid_fid, elev, vol) for elev, vol in zip(elev_ranges, volume)]
-                outrc_rcdata.extend(data)  # Extend outrc_rcdata with data for current grid
-
-                del raster_layer
-                os.remove(temp_file_path)
-
-                progDialog.setValue(j + 1)
-
-        elif isinstance(self.current_lyr, QgsRasterLayer):
-
-            for j, grid in enumerate(grid_elements):
-
-                grid_fid = grid.attributes()[0]
-                self.grid_lyr.selectByIds([grid_fid])
-
-                raster_on_grid = processing.run("gdal:cliprasterbymasklayer",
-                               {'INPUT': self.current_lyr,
-                                'MASK': QgsProcessingFeatureSourceDefinition(
-                                        self.grid_lyr.id(),
-                                        selectedFeaturesOnly=True, featureLimit=-1,
-                                        geometryCheck=QgsFeatureRequest.GeometryAbortOnInvalid),
-                                'SOURCE_CRS': None,
-                                'TARGET_CRS': QgsProject.instance().crs(),
-                                'TARGET_EXTENT': None,
-                                'NODATA': None,
-                                'ALPHA_BAND': False,
-                                'CROP_TO_CUTLINE': True,
-                                'KEEP_RESOLUTION': False,
-                                'SET_RESOLUTION': False,
-                                'X_RESOLUTION': None,
-                                'Y_RESOLUTION': None,
-                                'MULTITHREADING': False,
-                                'OPTIONS': '',
-                                'DATA_TYPE': 0,
-                                'EXTRA': '',
-                                'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
-
-                raster_on_grid = QgsRasterLayer(raster_on_grid)
-                provider = raster_on_grid.dataProvider()
-                band = 1  # Assuming band 1 is the elevation
-                stats = provider.bandStatistics(band)
-                n_elements = stats.elementCount
-                if n_elements < self.min_dtm_sb.value():
-                    continue
-                min_elev = stats.minimumValue
-                max_elev = stats.maximumValue
-                dh = (max_elev - min_elev) / self.subd_sb.value()
-
-                # Organize the elevation ranges
-                elev_ranges = [round(min_elev + dh * i, 3) for i in range(self.subd_sb.value() + 1)]
-                volume = []
-                for elev_range in elev_ranges:
-                    if round(elev_range, 2) == round(min_elev, 2):
-                        volume.append(round(0, 3))
-                    else:
-                        vol = processing.run("native:rastersurfacevolume",
-                                             {'INPUT': raster_on_grid,
-                                              'BAND': 1,
-                                              'LEVEL': elev_range,
-                                              'METHOD': 1,
-                                              'OUTPUT_HTML_FILE': 'TEMPORARY_OUTPUT'}
-                                             )['VOLUME'] * (- 1)
-
-                        volume.append(round(vol, 3))
-
-                # Prepare data for insertion
-                data = [(grid_fid, elev, vol) for elev, vol in zip(elev_ranges, volume)]
-                outrc_rcdata.extend(data)  # Extend outrc_rcdata with data for current grid
-
-                QApplication.processEvents()
-                progDialog.setValue(j + 1)
-
-                self.grid_lyr.removeSelection()
+            outrc_rcdata.extend(table)  # Extend outrc_rcdata with data for current grid
 
         # Execute the insert operation outside the loop
         if len(outrc_rcdata) > 0:
             self.gutils.execute_many("INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES (?, ?, ?);", outrc_rcdata)
             self.uc.log_info("Surface Water Rating Tables (OUTRC) created!")
             self.uc.bar_info("Surface Water Rating Tables (OUTRC) created!")
+
+    def generate_subcell_centers(self, geom, rows=5, cols=5):
+        """
+        Generate centers of a structured rows x cols subdivision
+        inside the grid cell.
+        """
+        points = []
+
+        bbox = geom.boundingBox()
+        xmin = bbox.xMinimum()
+        xmax = bbox.xMaximum()
+        ymin = bbox.yMinimum()
+        ymax = bbox.yMaximum()
+
+        if cols < 2 or rows < 2:
+            return points
+
+        dx = (xmax - xmin) / (cols - 1)
+        dy = (ymax - ymin) / (rows - 1)
+
+        for row in range(rows):
+            y = ymin + row * dy
+            for col in range(cols):
+                x = xmin + col * dx
+                pt = QgsPointXY(x, y)
+                pt_geom = QgsGeometry.fromPointXY(pt)
+
+                if geom.intersects(pt_geom):
+                    points.append(pt)
+
+        return points
+
+    def sample_raster_values(self, raster_layer, points, band=1):
+
+        values = []
+        provider = raster_layer.dataProvider()
+
+        for i, pt in enumerate(points):
+
+            value, ok = provider.sample(pt, band)
+
+            if ok and value is not None:
+                try:
+                    values.append(float(value))
+                except Exception as e:
+                    self.uc.bar_error(f"Conversion error!")
+                    self.uc.log_info(f"Conversion error: {e}")
+
+        return values
+
+    def build_stage_volume_table(self, grid_id, method, elevations, cell_area, intervals=10):
+        """
+        Build stage-volume table using either:
+
+        method="incremental"
+            GDS cumulative storage accumulation
+            (subcell-based volume increments)
+
+        method="direct"
+            Depth integration method
+            (average depth multiplied by cell area)
+        """
+
+        if not elevations:
+            return []
+
+        if cell_area <= 0:
+            return []
+
+        z_min = min(elevations)
+        z_max = max(elevations)
+
+        if z_max <= z_min:
+            return [(grid_id, z_min, 0.0)]
+
+        dz = (z_max - z_min) / float(intervals)
+        table = []
+
+        if method == "incremental":
+
+            elevations = sorted(float(z) for z in elevations)
+            n = len(elevations)
+
+            if n == 0:
+                return []
+
+            subcell_area = cell_area / float(n)
+            volume = 0.0
+
+            for k in range(intervals + 1):
+
+                stage = z_min + k * dz
+                submerged_count = 0
+
+                for z in elevations:
+                    if z <= stage:
+                        submerged_count += 1
+                    else:
+                        break
+
+                if k > 0:
+                    volume += submerged_count * subcell_area * dz
+
+                table.append((grid_id, round(stage, 4), round(volume,4)))
+
+        else:
+
+            n = len(elevations)
+
+            for i in range(intervals + 1):
+
+                stage = z_min + i * dz
+                total_depth = 0.0
+
+                for z in elevations:
+                    water_depth = max(0.0, stage - z)
+                    total_depth += water_depth
+
+                avg_depth = total_depth / n
+                volume = avg_depth * cell_area
+                table.append((grid_id, round(stage, 4), round(volume,4)))
+
+        return table
+

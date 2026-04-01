@@ -98,12 +98,18 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         group_infil_menu.addMenu(group_infil_hor_menu)
 
         group_areas_menu = QMenu("Areas", self)
+        menu.addMenu(group_areas_menu)
+
         group_areas_menu.addAction("Tolerance", lambda: self.render_areas("tolspatial_cells", "tol"))
         group_areas_menu.addAction("Froude", lambda: self.render_areas("fpfroude_cells", "froudefp"))
         group_areas_menu.addAction("Shallow-n", lambda: self.render_areas("spatialshallow_cells", "shallow_n"))
         group_areas_menu.addAction("Steep Slope-n", lambda: self.render_areas("steep_slope_n_cells", None))
         group_areas_menu.addAction("LID Volume", lambda: self.render_areas("lid_volume_cells", "volume"))
-        menu.addMenu(group_areas_menu)
+
+        group_outrc_menu = QMenu("Surface Water Rating Tables", self)
+        group_outrc_menu.addAction("Depth", lambda: self.render_areas("outrc", "depthrt"))
+        group_outrc_menu.addAction("Volume", lambda: self.render_areas("outrc", "volrt"))
+        group_areas_menu.addMenu(group_outrc_menu)
 
         menu.addAction("Rain ARF", self.render_rainfall)
 
@@ -383,6 +389,20 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             if not field_name:
                 areas = [0, 1]
                 field_name = "global"
+            # Render the maximum
+            elif layer_name == "outrc":
+                areas = [x[0] for x in self.gutils.execute(f"""
+                SELECT 
+                    MAX(area.{field_name}) AS max
+                FROM 
+                    {layer_name} AS area
+                JOIN
+                    grid AS G
+                ON 
+                    area.grid_fid = G.fid
+                GROUP BY 
+                    area.grid_fid;
+                """).fetchall()]
             else:
                 areas = [x[0] for x in self.gutils.execute(f"""
                 SELECT 
@@ -397,6 +417,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 mini = min(areas)
                 mini2 = second_smallest(areas)
                 maxi = max(areas)
+                self.uc.log_info(str(maxi))
                 render_grid(
                     self.grid,
                     True,
