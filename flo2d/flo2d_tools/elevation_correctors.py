@@ -7,6 +7,7 @@ import functools
 import time
 from collections import defaultdict
 
+from qgis.utils import iface
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis._core import QgsMessageLog, QgsSpatialIndex
 from qgis.analysis import QgsZonalStatistics
@@ -308,7 +309,9 @@ class GridElevation(ElevationCorrector):
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Elevation Polygon."
+                "Please, define Elevation Polygon.",
+                QMessageBox.Ok,
+                iface.mainWindow()
             )
             ms_box.exec()
             ms_box.show()
@@ -357,7 +360,9 @@ class GridElevation(ElevationCorrector):
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Elevation Polygon & Elevation points."
+                "Please, define Elevation Polygon & Elevation points.",
+                QMessageBox.Ok,
+                iface.mainWindow()
             )
             ms_box.exec()
             ms_box.show()
@@ -409,7 +414,9 @@ class GridElevation(ElevationCorrector):
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Elevation Polygon."
+                "Please, define Elevation Polygon.",
+                QMessageBox.Ok,
+                iface.mainWindow()
             )
             ms_box.exec()
             ms_box.show()
@@ -473,7 +480,9 @@ class GridElevation(ElevationCorrector):
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Blocked Areas."
+                "Please, define Blocked Areas.",
+                QMessageBox.Ok,
+                iface.mainWindow()
             )
             ms_box.exec()
             ms_box.show()
