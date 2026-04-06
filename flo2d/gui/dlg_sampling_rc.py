@@ -121,11 +121,12 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
         Populate the field based on the selected point shape
         """
         uri = self.shape_lyr_cbo.itemData(idx)
-        lyr_id = self.lyrs.layer_exists_in_group(uri)
-        shape_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        if uri is not None:
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            shape_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-        self.shape_field_cbo.setLayer(shape_lyr)
-        self.shape_field_cbo.setCurrentIndex(0)
+            self.shape_field_cbo.setLayer(shape_lyr)
+            self.shape_field_cbo.setCurrentIndex(0)
 
     def create_elev_rc(self):
         """
@@ -211,8 +212,8 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
 
             temp_raster_path = result["OUTPUT"]
             self.current_lyr = QgsRasterLayer(temp_raster_path, "Rasterized Layer")
-            if self.current_lyr.isValid():
-                QgsProject.instance().addMapLayer(self.current_lyr)
+            # if self.current_lyr.isValid():
+            #     QgsProject.instance().addMapLayer(self.current_lyr)
 
         else:
             self.uc.bar_warn("Please select a valid layer type.")
@@ -226,6 +227,15 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
         else:
             self.uc.bar_warn("Please select a valid method.")
             self.uc.log_info("Please select a valid method.")
+            return
+
+        if self.depth_rb.isChecked():
+            depth_wse = "depth"
+        elif self.wse_rb.isChecked():
+            depth_wse = "wse"
+        else:
+            self.uc.bar_warn("Please select a valid depth/wse option.")
+            self.uc.log_info("Please select a valid depth/wse option.")
             return
 
         x_samples = self.x_samples_sb.value()
@@ -262,6 +272,7 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                 method=method,
                 elevations=elevations,
                 cell_area=cell_area,
+                depth_wse=depth_wse,
                 intervals=number_intervals
             )
 
@@ -327,7 +338,7 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
 
         return values
 
-    def build_stage_volume_table(self, grid_id, method, elevations, cell_area, intervals=10):
+    def build_stage_volume_table(self, grid_id, method, elevations, cell_area, depth_wse, intervals=10):
         """
         Build stage-volume table using either:
 
@@ -369,6 +380,7 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
             for k in range(intervals + 1):
 
                 stage = z_min + k * dz
+                depth = stage - z_min
                 submerged_count = 0
 
                 for z in elevations:
@@ -380,7 +392,10 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                 if k > 0:
                     volume += submerged_count * subcell_area * dz
 
-                table.append((grid_id, round(stage, 4), round(volume,4)))
+                if depth_wse == "wse":
+                    table.append((grid_id, round(stage, 4), round(volume,4)))
+                elif depth_wse == "depth":
+                    table.append((grid_id, round(depth, 4), round(volume,4)))
 
         else:
 
@@ -397,7 +412,10 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
 
                 avg_depth = total_depth / n
                 volume = avg_depth * cell_area
-                table.append((grid_id, round(stage, 4), round(volume,4)))
+                if depth_wse == "wse":
+                    table.append((grid_id, round(stage, 4), round(volume,4)))
+                elif depth_wse == "depth":
+                    table.append((grid_id, round(avg_depth, 4), round(volume,4)))
 
         return table
 
