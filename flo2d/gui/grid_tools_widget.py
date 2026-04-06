@@ -745,9 +745,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 method = correct_dlg.run_external
 
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
-            method()
+            result = method()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning grid elevation finished!")
+            if result:
+                self.uc.show_info("Assigning grid elevation finished!")
+            else:
+                self.uc.log_info("Elevation Polygon & Elevation points not defined.")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())

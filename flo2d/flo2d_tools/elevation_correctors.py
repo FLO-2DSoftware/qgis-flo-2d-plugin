@@ -361,7 +361,7 @@ class GridElevation(ElevationCorrector):
             )
             ms_box.exec()
             ms_box.show()
-            return
+            return False
 
         if self.only_selected is True:
             request = self.request
@@ -400,6 +400,8 @@ class GridElevation(ElevationCorrector):
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
         self.remove_virtual_sum(self.user_points)
+
+        return True
 
     def tin_elevation_within_polygons(self):
 
