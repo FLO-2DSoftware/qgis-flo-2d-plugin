@@ -43,7 +43,6 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.grid = None
         self.cell_size = float(cell_size)
         self.setupUi(self)
-        self.setWindowModality(qt_window_modality("WindowModal"))
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")

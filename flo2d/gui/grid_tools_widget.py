@@ -165,12 +165,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         create_grid_dlg = CreateGridDialog(self.iface, self.lyrs)
         ok = create_grid_dlg.exec()
         if not ok:
+            for w in QApplication.topLevelWidgets():
+                if isinstance(w, QProgressDialog):
+                    w.close()
+                    w.deletelater()
+            create_grid_dlg.deleteLater()
             return
 
         # get value from dialog spinbox
         dlg_cell_size = create_grid_dlg.cell_size()
 
-        # try:
+        # try
         if not self.lyrs.save_edits_and_proceed("Computational Domain"):
             return
         if create_grid_dlg.use_external_layer():
@@ -305,6 +310,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
         self.uc.log_info(grid_summary)
         self.uc.show_info(grid_summary)
+
+        create_grid_dlg.deleteLater()
+
+
 
         # else:
         #     # Update grid_lyr:
