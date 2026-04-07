@@ -36,6 +36,7 @@ from qgis.core import (
     QgsSpatialIndex,
     QgsSymbol,
 )
+from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QProgressDialog
@@ -800,7 +801,7 @@ def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_gr
     allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
 
-    pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount())
+    pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount(), iface.mainWindow())
     pd.setModal(True)
     pd.setValue(0)
     pd.forceShow()
@@ -1500,7 +1501,7 @@ def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgre
     # regionPadding = 50 # amount, in ft probably, to pad region extents to prevent boundary effects
 
     if showProgress == True:
-        progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100)
+        progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100, iface.mainWindow())
         progDialog.setModal(True)
         progDialog.setValue(0)
         progDialog.show()
