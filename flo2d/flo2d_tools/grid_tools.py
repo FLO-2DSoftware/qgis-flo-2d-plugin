@@ -1267,6 +1267,8 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
                 QApplication.processEvents()
                 if prog.wasCanceled():
                     prog.close()
+                    QApplication.processEvents()
+                    prog.deleteLater()
                     return
 
             pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
@@ -1318,6 +1320,7 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
             QApplication.processEvents()
             if prog.wasCanceled():
                 prog.close()
+                QApplication.processEvents()
                 prog.deleteLater()
                 return
 
@@ -1363,6 +1366,7 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
         prog.setValue(100)
 
     prog.close()
+    QApplication.processEvents()
     prog.deleteLater()
 
 
