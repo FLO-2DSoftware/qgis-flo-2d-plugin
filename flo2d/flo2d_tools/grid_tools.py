@@ -834,6 +834,9 @@ def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_gr
         i += 1
         pd.setValue(i)
 
+    pd.close()
+    pd.deleteLater()
+
 def poly2poly(base_polygons, polygons, request, area_percent, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
@@ -1357,7 +1360,8 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
         drop_temp_table_query = "DROP TABLE temp_table;"
         gutils.execute(drop_temp_table_query)
 
-    prog.setValue(100)
+        prog.setValue(100)
+
     prog.close()
     prog.deleteLater()
 
@@ -1531,6 +1535,7 @@ def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgre
                     break
         if showProgress == True:
             progDialog.close()
+            progDialog.deleteLater()
 
 
 def geos2geosGenerator(gutils, grid, inputFC, *valueColumnNames, extraFC=None):
