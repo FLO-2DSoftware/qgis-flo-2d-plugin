@@ -727,6 +727,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 )
 
     def correct_elevation(self):
+        correct_dlg = None
         try:
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
@@ -773,6 +774,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 + "\n___________________________________________________",
                 e,
             )
+        finally:
+            if correct_dlg is not None:
+                correct_dlg.close()
+                correct_dlg.deleteLater()
 
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
