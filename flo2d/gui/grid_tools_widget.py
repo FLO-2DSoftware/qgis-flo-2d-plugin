@@ -425,7 +425,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         cell_size = self.get_cell_size()
         dlg = SamplingPointElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec()
+
+        try:
+            dlg.exec()
+        finally:
+            dlg.close()
+            dlg.deleteLater()
 
     def xyz_elevation(self):
         try:
