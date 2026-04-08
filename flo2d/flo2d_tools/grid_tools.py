@@ -1871,61 +1871,56 @@ def calculate_arfwrf(grid, areas):
 
         features = grid.getFeatures()
 
-        try:
-            for feat in features:
-                geom = feat.geometry()
-                fids = index.intersects(geom.boundingBox())
+        for feat in features:
+            geom = feat.geometry()
+            fids = index.intersects(geom.boundingBox())
 
-                for fid in fids:
-                    f = allfeatures[fid]
-                    fgeom = f.geometry()
-                    if f["calc_arf"] == NULL or f["calc_wrf"] == NULL:
-                        was_null = True
-                    farf = int(round(1 if f["calc_arf"] == NULL else f["calc_arf"]))
-                    fwrf = int(round(1 if f["calc_wrf"] == NULL else f["calc_wrf"]))
-                    fcol = int(round(0 if f["collapse"] == NULL else f["collapse"]))
-                    inter = fgeom.intersects(geom)
-                    if inter is True:
-                        areas_intersection = fgeom.intersection(geom)
-                        arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
-                        centroid = geom.centroid()
-                        centroid_wkt = centroid.asWkt()
-                        # Totally Blocked
-                        if arf >= 0.9:
-                            if fcol == 1:
-                                yield (centroid_wkt, -feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
-                            else:
-                                yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
-                            continue
-                        # elif arf < 0.1:
-                        #     yield (centroid_wkt, feat.id(), f.id(), 0) + (full_wrf if fwrf == 1 else empty_wrf), was_null
-                        #     continue
-                        elif arf == 0:
-                            continue
-                        else:
-                            pass
-                        grid_center = centroid.asPoint()
-                        wrf_s = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
-                        wrf_geoms = (
-                            QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)]) for x1, y1, x2, y2 in wrf_s
-                        )
-                        if fwrf == 1:
-                            wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
-                        else:
-                            wrf = empty_wrf
-                        # Partially Blocked
+            for fid in fids:
+                f = allfeatures[fid]
+                fgeom = f.geometry()
+                if f["calc_arf"] == NULL or f["calc_wrf"] == NULL:
+                    was_null = True
+                farf = int(round(1 if f["calc_arf"] == NULL else f["calc_arf"]))
+                fwrf = int(round(1 if f["calc_wrf"] == NULL else f["calc_wrf"]))
+                fcol = int(round(0 if f["collapse"] == NULL else f["collapse"]))
+                inter = fgeom.intersects(geom)
+                if inter is True:
+                    areas_intersection = fgeom.intersection(geom)
+                    arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
+                    centroid = geom.centroid()
+                    centroid_wkt = centroid.asWkt()
+                    # Totally Blocked
+                    if arf >= 0.9:
                         if fcol == 1:
-                            yield (centroid_wkt, feat.id(), f.id(), -arf) + tuple(wrf), was_null
+                            yield (centroid_wkt, -feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
                         else:
-                            yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
+                            yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        continue
+                    # elif arf < 0.1:
+                    #     yield (centroid_wkt, feat.id(), f.id(), 0) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                    #     continue
+                    elif arf == 0:
+                        continue
                     else:
                         pass
-                i += 1
-                pd.setValue(i)
-
-        finally:
-            pd.close()
-            pd.deleteLater()
+                    grid_center = centroid.asPoint()
+                    wrf_s = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
+                    wrf_geoms = (
+                        QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)]) for x1, y1, x2, y2 in wrf_s
+                    )
+                    if fwrf == 1:
+                        wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
+                    else:
+                        wrf = empty_wrf
+                    # Partially Blocked
+                    if fcol == 1:
+                        yield (centroid_wkt, feat.id(), f.id(), -arf) + tuple(wrf), was_null
+                    else:
+                        yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
+                else:
+                    pass
+            i += 1
+            pd.setValue(i)
 
     except:
         show_error(
