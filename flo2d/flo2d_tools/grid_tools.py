@@ -1928,12 +1928,6 @@ def calculate_arfwrf(grid, areas):
             "_______________________________________________________________________________"
         )
 
-    finally:
-        try:
-            pd.close()
-            pd.deleteLater()
-        except:
-            pass
 
 def evaluate_spatial_tolerance(gutils, grid, areas):
     """
