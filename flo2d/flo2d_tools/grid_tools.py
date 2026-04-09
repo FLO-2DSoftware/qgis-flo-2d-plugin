@@ -1851,7 +1851,9 @@ def calculate_arfwrf(grid, areas):
         full_wrf = (1,) * 8
         features.rewind()
 
-        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features))
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+
+        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features), parent)
         pd.setModal(True)
         pd.setValue(0)
         pd.forceShow()
@@ -1915,6 +1917,10 @@ def calculate_arfwrf(grid, areas):
             "ERROR 060319.1606: Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n"
             "_______________________________________________________________________________"
         )
+
+    finally:
+        pd.close()
+        pd.deleteLater()
 
 
 def evaluate_spatial_tolerance(gutils, grid, areas):
