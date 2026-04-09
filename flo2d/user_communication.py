@@ -196,9 +196,10 @@ class UserCommunication(object):
         else:
             print(msg)
 
-    def question(self, msg):
+    def question(self, msg, parent=None):
         if self.iface is not None:
-            parent = self.iface.mainWindow()
+            if parent is None:
+                parent = self.iface.mainWindow()
             m = QMessageBox(parent)
             m.setWindowTitle(self.context)
             m.setText(msg)

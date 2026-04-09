@@ -830,12 +830,11 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             return
 
         if unit_weight_dam <= 0:
-            self.uc.log_info("Unit Weight of Dam Material must be positive and greater than 0.")
-            self.uc.bar_warn("Unit Weight of Dam Material must be positive and greater than 0.")
-            return
+            cydamh = ""
+        else:
+            cydamh = str(round(cohesion_dam_material / (unit_weight_dam * dam_height), 4))
 
-        cydamh = cohesion_dam_material / (unit_weight_dam * dam_height)
-        self.cydamh_le.setText(str(round(cydamh, 4)))
+        self.cydamh_le.setText(cydamh)
 
         friction_angle_dam_material = self.friction_angle_dam_material_dsb.value()
         reservoir_lvl = self.reservoir_lvl_cbo.currentIndex()
@@ -1050,6 +1049,13 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         for p in allowed:
             if p > current:
+                # Add a message for no Breach Condition
+                if p == 3:
+                    if self.static_breach_type_lbl.text() in ["No Breach", "---"] and self.hyd_breach_type_lbl.text() in ["No Breach", "---"] and self.seismic_breach_type_lbl.text() in ["No Breach", "---"]:
+                        q = "No breach occurs under given conditions.\n\nWould you like to proceed with estimating a breach hydrograph?"
+                        self.uc.log_info("No breach occurs under given conditions. Would you like to proceed with estimating a breach hydrograph?")
+                        if not self.uc.question(q, self):
+                            return
                 self.stackedWidget.setCurrentIndex(min(p, max_index))
                 return
 
@@ -1139,10 +1145,11 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Baseflow must be positive or equal to 0.")
             return
 
-        if self.gutils.get_cont_par("METRIC") == "1":
-            g = 9.81  # m/s2
-        else:
-            g = 32.2  # ft/s2
+        g = 9.81  # m/s2
+
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            dam_volume = dam_volume * 0.764555 # yd3 to m3
+            dam_height = dam_height * 0.3048 # ft to m
 
         if self.froehlich_1995_rb.isChecked():
             peak_discharge = 0.607 * pow(dam_volume, 0.295) * pow(dam_height, 1.24)
@@ -1185,6 +1192,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         hydrograph_length = 2.0 * dam_volume / peak_discharge / 3600.0  # hours
 
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            peak_discharge = peak_discharge * 35.3147  # m3/s to cfs
+            ave_breach_width = ave_breach_width * 3.28084  # m to ft
+
         if peak_discharge is not None:
             self.peak_discharge_le.setText(str(round(peak_discharge, 2)))
         if time_to_peak is not None:
@@ -1205,6 +1216,11 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         dam_volume = self.dam_volume_dsb.value()
         T_total = float(self.hyd_length_le.text())
 
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            peak_discharge = peak_discharge * 0.0283168  # cfs to m3/s
+            dam_volume = dam_volume * 0.764555  # yd3 to m3
+            baseflow = baseflow * 0.0283168  # cfs to m3/s
+
         if self.tr66_rb.isChecked():
             self.t_hr, self.Qt = self.tr66_hydrograph(peak_discharge, time_to_peak, dam_volume, T_total, baseflow)
 
@@ -1222,11 +1238,19 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         # --------------------------------------------------
         # Compute total volume under the hydrograph
         # --------------------------------------------------
-        t_sec = np.asarray(self.t_hr) * 3600.0  # hours → seconds
-        Qt = np.asarray(self.Qt)
+        t_sec = np.asarray(self.t_hr) * 3600.0
 
-        total_volume = np.trapz(Qt, t_sec)  # m³
-        ratio = round(total_volume / dam_volume, 2)
+        Qt_metric = np.asarray(self.Qt)
+        total_volume_m3 = np.trapz(Qt_metric, t_sec)
+        ratio = round(total_volume_m3 / dam_volume, 2)
+
+        if not self.gutils.get_cont_par("METRIC") == "1":
+            self.Qt = [x / 0.0283168 for x in self.Qt]  # display only
+            total_volume_display = total_volume_m3 / 0.764555  # m3 -> yd3
+        else:
+            total_volume_display = total_volume_m3
+
+        ratio = round(total_volume_m3 / dam_volume, 2)
         # --------------------------------------------------
 
         fig = Figure(figsize=(6, 3.5), dpi=100)
@@ -1236,10 +1260,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         ax.set_xlabel("Time (hrs)")
         if self.gutils.get_cont_par("METRIC") == "1":
             ax.set_ylabel("Discharge (m³/s)")
-            ax.set_title(f"Total Volume = {total_volume:,.1f} m³ ({ratio})")
+            ax.set_title(f"Total Volume = {total_volume_display:,.1f} m³ ({ratio})")
         else:
             ax.set_ylabel("Discharge (cfs)")
-            ax.set_title(f"Total Volume = {total_volume:,.1f} yd³ ({ratio})")
+            ax.set_title(f"Total Volume = {total_volume_display:,.1f} yd³ ({ratio})")
 
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)

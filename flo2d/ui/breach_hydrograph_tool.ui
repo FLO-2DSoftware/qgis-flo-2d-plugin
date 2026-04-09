@@ -677,6 +677,11 @@
             </item>
             <item row="4" column="4">
              <widget class="QLabel" name="label_17">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Unit weight of tailings dam material</string>
               </property>
@@ -697,6 +702,11 @@
             </item>
             <item row="2" column="4">
              <widget class="QLabel" name="label_15">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Tailings Unit Weight (UW)</string>
               </property>
@@ -726,6 +736,11 @@
             </item>
             <item row="6" column="4">
              <widget class="QLabel" name="label_19">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Friction Angle of Dam Material (ɸ)</string>
               </property>
@@ -749,6 +764,11 @@
             </item>
             <item row="3" column="4">
              <widget class="QLabel" name="label_16">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Tailings Dam Material</string>
               </property>
@@ -884,6 +904,11 @@
             </item>
             <item row="4" column="0">
              <widget class="QLabel" name="label_8">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Depth to Bedrock from Base (DB)</string>
               </property>
@@ -907,6 +932,11 @@
             </item>
             <item row="6" column="0">
              <widget class="QLabel" name="label_10">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>SPT Blow Count (N)</string>
               </property>
@@ -917,6 +947,11 @@
             </item>
             <item row="8" column="0">
              <widget class="QLabel" name="label_12">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Tailings Material</string>
               </property>
@@ -1009,6 +1044,11 @@
             </item>
             <item row="7" column="0">
              <widget class="QLabel" name="label_11">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Unit weight of foundation soil below base of dam</string>
               </property>
@@ -1032,6 +1072,11 @@
             </item>
             <item row="1" column="4">
              <widget class="QLabel" name="label_14">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Friction Angle of Tailings (PHI)</string>
               </property>
@@ -1087,6 +1132,11 @@
             </item>
             <item row="3" column="0">
              <widget class="QLabel" name="label_7">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Water Surface Freeboard (F)</string>
               </property>
@@ -1142,6 +1192,11 @@
             </item>
             <item row="5" column="4">
              <widget class="QLabel" name="label_18">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Cohesion of Dam Material</string>
               </property>
@@ -1359,6 +1414,11 @@
             </item>
             <item row="7" column="4">
              <widget class="QLabel" name="label_20">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Tailings Dam Downstream Slope</string>
               </property>
@@ -1388,6 +1448,11 @@
                 <height>0</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Depth to Saturated Tailings from Tailings Surface (DGW)</string>
               </property>
@@ -1401,6 +1466,11 @@
             </item>
             <item row="5" column="0">
              <widget class="QLabel" name="label_9">
+              <property name="font">
+               <font>
+                <italic>true</italic>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Foundation Soil Below Base</string>
               </property>
