@@ -14655,6 +14655,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     row[0] = int(row[0])
                     row[4] = int(row[4])
                     for value in row:
+                        if value in [None, "None"]:
+                            value = -9999
                         levee_group.datasets["BREACH_GLOBAL"].data.append([value])
 
             if local_rows:
