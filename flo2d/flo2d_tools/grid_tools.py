@@ -1851,7 +1851,7 @@ def calculate_arfwrf(grid, areas):
         full_wrf = (1,) * 8
         features.rewind()
 
-        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features), iface.mainWindow())
+        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features))
         pd.setModal(True)
         pd.setValue(0)
         pd.forceShow()
