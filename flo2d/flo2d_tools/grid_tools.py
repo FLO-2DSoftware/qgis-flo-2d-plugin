@@ -16,6 +16,7 @@ from collections import defaultdict
 from operator import itemgetter
 from subprocess import PIPE, STDOUT, Popen
 
+from qgis.utils import iface
 import numpy as np
 from qgis.PyQt.QtCore import QMetaType
 from qgis._core import QgsField, QgsVectorDataProvider, QgsMessageLog
@@ -1850,7 +1851,7 @@ def calculate_arfwrf(grid, areas):
         full_wrf = (1,) * 8
         features.rewind()
 
-        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features))
+        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features), iface.mainWindow())
         pd.setModal(True)
         pd.setValue(0)
         pd.forceShow()
