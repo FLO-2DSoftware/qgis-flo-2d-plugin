@@ -31,7 +31,6 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowModality(qt_window_modality("WindowModal"))
         self.ok_btn = self.buttonBox.button(qdialogbuttonbox_button("Ok"))
         self.ok_btn.setEnabled(False)
         self.cellSizeSpinBox.valueChanged.connect(lambda v: self.ok_btn.setEnabled(v != 0))
@@ -207,7 +206,7 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         s = QSettings()
         last_elev_raster_dir = s.value("FLO-2D/lastElevRasterDir", "")
         src_file, __ = QFileDialog.getOpenFileName(
-            None,
+            self,
             "Choose elevation raster...",
             directory=last_elev_raster_dir,
             filter="Elev (*.tif )",
