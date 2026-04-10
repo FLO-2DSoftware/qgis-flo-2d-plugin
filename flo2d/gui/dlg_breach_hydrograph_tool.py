@@ -8,6 +8,7 @@ from qgis.PyQt.QtWidgets import QListWidgetItem, QSizePolicy, QFileDialog
 from qgis._core import QgsProject, QgsWkbTypes, QgsVectorLayer, QgsFeature, QgsGeometry
 from qgis.core import QgsMapLayerType
 
+from .dlg_breach_failure import BreachFailureDialog
 from .dlg_sampling_elev import SamplingElevDialog
 from .dlg_sampling_raster_roughness import SamplingRoughnessDialog
 from ..flo2d_ie.breach_hydrographs import TAILINGS_HYDROGRAPHS, TAILINGS_SEDIMENT_CV
@@ -17,7 +18,6 @@ from ..flo2dobjects import Inflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
-from qgis.PyQt.QtCore import Qt, NULL
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -49,6 +49,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         self.check_dam_type()
 
+        self.cpfm_btn.clicked.connect(self.open_failure_mode_dialog)
+
         self.cancel_btn.clicked.connect(self.close_dialog)
         self.next_btn.clicked.connect(self.next_page)
         self.previous_btn.clicked.connect(self.previous_page)
@@ -74,29 +76,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         self.populate_information()
         self.stackedWidget.currentChanged.connect(self.populate_information)
-
-        # Hydrologic
-        self.input_flood_volume_dsb.valueChanged.connect(self.check_hydrologic_failure)
-        self.spillway_chbox.stateChanged.connect(self.check_hydrologic_failure)
-        self.max_allow_head_dsb.valueChanged.connect(self.check_hydrologic_failure)
-        self.pmf_wse_dsb.valueChanged.connect(self.check_hydrologic_failure)
-
-        # Static
-        self.reservoir_lvl_cbo.currentIndexChanged.connect(self.check_static_failure)
-
-        # Seismic
-        self.eq_mag_dsb.valueChanged.connect(self.check_seismic_failure)
-        self.peak_ground_acc_dsb.valueChanged.connect(self.check_seismic_failure)
-        self.soft_lyr_chbox.toggled.connect(self.check_seismic_failure)
-        self.depth_to_layer_dsb.valueChanged.connect(self.check_seismic_failure)
-        self.blow_continuous_dsb.valueChanged.connect(self.check_seismic_failure)
-        self.drop_rb.toggled.connect(self.check_seismic_failure)
-        self.automatic_rb.toggled.connect(self.check_seismic_failure)
-        self.fine_content_cbo.currentIndexChanged.connect(self.check_seismic_failure)
-
-        self.hydrologic_grp.toggled.connect(lambda checked: checked and self.group_toggled(0))
-        self.static_grp.toggled.connect(lambda checked: checked and self.group_toggled(1))
-        self.seismic_grp.toggled.connect(lambda checked: checked and self.group_toggled(2))
 
         self.slope_lvl_table = {
             (0, 0): (-0.0048, 0.140),
@@ -129,6 +108,18 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
     def tailings_help(self):
         QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/toolbar/flo-2d-parameters/Breach%20Hydrograph%20Tool.html#tailings-dams"))
+
+    def open_failure_mode_dialog(self):
+        """
+        Function to call the Breach Failure Mode dialog
+        """
+
+        dlg = BreachFailureDialog(self.con, self.iface)
+        ok = dlg.exec()
+        if ok:
+            pass
+        else:
+            return
 
     def add_water_ts_to_inflow(self):
         """
@@ -243,11 +234,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.rico_unit_lbl.setText("m³")
             self.piciullo_unit_lbl.setText("m³")
             self.piciullo_unit_lbl_2.setText("m³")
-            self.aval_sto_unit_lbl.setText("m³")
-            self.input_vol_unit_lbl.setText("m³")
-            self.max_allow_head_unit_lbl.setText("m")
-            self.pmf_unit_lbl.setText("m")
-            self.depth_to_crest_unit_lbl.setText("m")
 
             self.pd_unit_lbl.setText("cms")
             self.ttp_unit_lbl.setText("hrs")
@@ -280,11 +266,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.rico_unit_lbl.setText("yd³")
             self.piciullo_unit_lbl.setText("yd³")
             self.piciullo_unit_lbl_2.setText("yd³")
-            self.aval_sto_unit_lbl.setText("yd³")
-            self.input_vol_unit_lbl.setText("yd³")
-            self.max_allow_head_unit_lbl.setText("ft")
-            self.pmf_unit_lbl.setText("ft")
-            self.depth_to_crest_unit_lbl.setText("ft")
 
             self.pd_unit_lbl.setText("cfs")
             self.ttp_unit_lbl.setText("hrs")
@@ -876,14 +857,14 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.piciullo1_dsb.setText(str(int(piciullo1 * 1307950)))
             self.piciullo2_dsb.setText(str(int(piciullo2 * 1.30795)))
 
-        # Hydrologic Failure Check
-        self.check_hydrologic_failure()
-
-        # Static Failure Check
-        self.check_static_failure()
-
-        # Seismic Failure Check
-        self.check_seismic_failure()
+        # # Hydrologic Failure Check
+        # self.check_hydrologic_failure()
+        #
+        # # Static Failure Check
+        # self.check_static_failure()
+        #
+        # # Seismic Failure Check
+        # self.check_seismic_failure()
 
         # Save Options
         self.tal_select_volume_cbo.clear()
@@ -904,131 +885,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
                 volume = volume * 1.30795
             item = f"{name} - {round(volume, 2)}"
             self.tal_select_volume_cbo.addItem(item, [str(volume)])
-
-    def check_static_failure(self):
-        """
-        Function to check for static failure of tailings dams.
-        """
-        foundation_soil = self.soil_bellow_base_cbo.currentIndex()
-        spt_count = self.spt_count_sb.value()
-        cydamh = self.cydamh_le.text()
-        if cydamh == "":
-            cydamh = 0
-        else:
-            cydamh = float(cydamh)
-
-        slope_failure = self.slope_failure_le.text()
-        if slope_failure == "":
-            slope_failure = 0
-        else:
-            slope_failure = float(slope_failure)
-
-        breach_type = "No Breach"
-
-        if foundation_soil == 0:  # Granular
-            if spt_count < 10:
-                breach_type = "Dam Breach by Foundation Failure"
-        elif foundation_soil == 1: # Cohesive
-            if spt_count < 8:
-                breach_type = "Dam Breach by Foundation Failure"
-
-        if cydamh < slope_failure:
-            breach_type = "Dam Breach by Slope Instability"
-
-        self.static_breach_type_lbl.setText(breach_type)
-
-    def check_hydrologic_failure(self):
-        """
-        Function to check for hydrologic failure of tailings dams.
-        """
-
-        tot_imp_vol = self.tot_imp_vol_dsb.value()
-        imp_tal_vol = self.imp_tal_vol_dsb.value()
-        available_storage = tot_imp_vol - imp_tal_vol
-        input_flood_volume = self.input_flood_volume_dsb.value()
-        spillway = self.spillway_chbox.isChecked()
-        max_allow_head = self.max_allow_head_dsb.value()
-        pmf_wse = self.pmf_wse_dsb.value()
-
-        breach_type = "No Breach"
-
-        if input_flood_volume > available_storage:
-            if spillway:
-                if pmf_wse > max_allow_head:
-                    breach_type = "Dam Breach by Erosion"
-            else:
-                breach_type = "Dam Breach"
-
-        self.hyd_breach_type_lbl.setText(str(breach_type))
-
-    def check_seismic_failure(self):
-        """
-        Function to check for seismic failure of tailings dams.
-        """
-        breach_type = "No Breach"
-
-        drop_hammer = True
-
-        if self.drop_rb.isChecked():
-            drop_hammer = True
-        if self.automatic_rb.isChecked():
-            drop_hammer = False
-
-        spt_blow_count = self.blow_continuous_dsb.value()
-        n60 = 0
-
-        if not drop_hammer:
-            n60 = 1.33 * spt_blow_count
-
-        # TODO check this code with Noemi
-        VES = 0.04
-        Cn = 0.77 * math.log10(20 / VES)
-
-        N160 = Cn * n60
-        CorrectedN160 = N160
-
-        fines_content = self.fine_content_cbo.currentIndex()
-
-        if fines_content == 0:
-            CorrectedN160 += 1
-        elif fines_content == 1:
-            CorrectedN160 += 2
-        elif fines_content == 2:
-            CorrectedN160 += 4
-        elif fines_content == 3:
-            CorrectedN160 += 5
-
-        depth_to_layer = self.depth_to_layer_dsb.value()
-        unit_weight_dam = self.unit_weight_dam_dsb.value()
-        unit_weight_found = self.unit_weight_found_dsb.value()
-        dam_height = self.dam_height_2_dsb.value()
-        freeboard_from_surface = self.water_surface_freeboard_dsb.value()
-
-        total_stress = depth_to_layer * (unit_weight_dam * dam_height + unit_weight_found * (depth_to_layer - dam_height))
-        effective_stress = total_stress - (depth_to_layer - freeboard_from_surface) * 62.4
-
-        if depth_to_layer <= 30:
-            stress_red_factor = 1 - 0.00765 * (depth_to_layer / 3)
-        else:
-            stress_red_factor = 1.174 - 0.0267 * (depth_to_layer / 3.0)
-
-        peak_ground_acc = self.peak_ground_acc_dsb.value()
-        cyclic_shear_stress_ratio = (0.65 * peak_ground_acc * total_stress) / (effective_stress * stress_red_factor)
-
-        liquefaction_potential_boundary = 0.01125 * N160
-
-        depth_to_sat_tailings = self.depth_to_saturated_dsb.value()
-        depth_to_bedrock = self.depth_to_bedrock_dsb.value()
-        eq_mag = self.eq_mag_dsb.value()
-
-        if peak_ground_acc > 0.22 and CorrectedN160 < 14 and depth_to_sat_tailings < 10 and freeboard_from_surface > 10 and cyclic_shear_stress_ratio > liquefaction_potential_boundary:
-            breach_type = "Dam Breach by Liquefaction"
-        else:
-            deformation_of_crest = (dam_height + depth_to_bedrock) * math.exp(6.07 * peak_ground_acc + 0.57 * eq_mag - 8)
-            if deformation_of_crest > freeboard_from_surface:
-                breach_type = "Dam Breach by Deformation of Crest"
-
-        self.seismic_breach_type_lbl.setText(str(breach_type))
 
     def next_page(self):
         """
@@ -1609,7 +1465,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             "m_fTotalImpoundmentVolume": self.tot_imp_vol_dsb.value(),
             "m_fImpoundedTailingsVolume": self.imp_tal_vol_dsb.value(),
             "m_fAvailableStorage": self.available_storage_le.text(),
-            "m_fInputFloodEventVolume": self.input_flood_volume_dsb.value(),
             "m_fUnitWeightOfFoundation": self.unit_weight_found_dsb.value(),
             "m_fUnitWeights": self.unit_weight_dam_dsb.value(),
             "m_fCohesion": self.cohesion_dam_material_dsb.value(),
@@ -1631,9 +1486,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             "m_CYHValue": self.cydamh_le.text(),
             "m_fPeakGroundAcceleration": self.peak_ground_acc_dsb.value(),
             "m_fDepthToLayer": self.depth_to_layer_dsb.value(),
-            "m_FailureMode": failure_mode,
             "m_Failure": failure,
-            "m_bHaveSpillway": spillway,
             "m_FoundationSoil": foundation_soil,
             "m_DownstreamSlopeRatio": slope,
             "m_ReservoirLevel": reservoir_lvl,
@@ -1807,67 +1660,6 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             self.tailings_dam_slope_cbo.setCurrentIndex(4)
         elif slope == "DSR_401":
             self.tailings_dam_slope_cbo.setCurrentIndex(5)
-
-        # Hydrologic
-        self.input_flood_volume_dsb.setValue(tailings_data["m_fInputFloodEventVolume"])
-        self.spillway_chbox.setChecked(tailings_data["m_bHaveSpillway"])
-        self.max_allow_head_dsb.setValue(tailings_data["m_fMaxAllowableHead"])
-        self.pmf_wse_dsb.setValue(tailings_data["m_fPMGWSE"])
-
-        # Static
-        reservoir_lvl = tailings_data["m_ReservoirLevel"]
-        if reservoir_lvl == "High":
-            self.reservoir_lvl_cbo.setCurrentIndex(0)
-        elif reservoir_lvl == "Medium":
-            self.reservoir_lvl_cbo.setCurrentIndex(1)
-        elif reservoir_lvl == "Low":
-            self.reservoir_lvl_cbo.setCurrentIndex(2)
-        pore_pressure = tailings_data["m_PorePressure"]
-        if pore_pressure == "HighHigh":
-            self.pore_pressure_cbo.setCurrentIndex(0)
-        elif pore_pressure == "High":
-            self.pore_pressure_cbo.setCurrentIndex(1)
-        elif pore_pressure == "Low":
-            self.pore_pressure_cbo.setCurrentIndex(2)
-
-        # Seismic
-        self.eq_mag_dsb.setValue(tailings_data["m_fEarthquakeMagnitude"])
-        self.peak_ground_acc_dsb.setValue(tailings_data["m_fPeakGroundAcceleration"])
-        self.soft_lyr_chbox.setChecked(tailings_data["m_bContinuosSoftLayer"])
-        self.depth_to_layer_dsb.setValue(tailings_data["m_fDepthToLayer"])
-        self.blow_continuous_dsb.setValue(tailings_data["m_fBlowCount"])
-        hammer_type = tailings_data["m_bDropHammer"]
-        if hammer_type:
-            self.drop_rb.setChecked(True)
-            self.automatic_rb.setChecked(False)
-        else:
-            self.drop_rb.setChecked(False)
-            self.automatic_rb.setChecked(True)
-        fine_contents = tailings_data["m_FinesContent"]
-        if fine_contents == "eFC_0":
-            self.fine_content_cbo.setCurrentIndex(0)
-        elif fine_contents == "eFC_10":
-            self.fine_content_cbo.setCurrentIndex(1)
-        elif fine_contents == "eFC_25":
-            self.fine_content_cbo.setCurrentIndex(2)
-        elif fine_contents == "eFC_50":
-            self.fine_content_cbo.setCurrentIndex(3)
-        elif fine_contents == "eFC_75":
-            self.fine_content_cbo.setCurrentIndex(4)
-
-        failure_mode = tailings_data["m_FailureMode"]
-        if failure_mode in ["Hydrolic", "Hydrologic"]:
-            self.hydrologic_grp.setChecked(True)
-            self.static_grp.setChecked(False)
-            self.seismic_grp.setChecked(False)
-        elif failure_mode == "Static":
-            self.hydrologic_grp.setChecked(False)
-            self.static_grp.setChecked(True)
-            self.seismic_grp.setChecked(False)
-        elif failure_mode == "Seismic":
-            self.hydrologic_grp.setChecked(False)
-            self.static_grp.setChecked(False)
-            self.seismic_grp.setChecked(True)
 
         # Save Options
         self.tal_event_time_le.setText(str(tailings_data["m_fEventTime"]))
