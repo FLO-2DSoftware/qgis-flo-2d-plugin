@@ -801,7 +801,7 @@ def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_gr
     allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
 
-    parent = iface.mainWindow() if iface.mainWindow() else None
+    parent = iface.mainWindow() if iface and iface.mainWindow() else None
 
     pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount(), parent)
     pd.setModal(True)
