@@ -1153,10 +1153,9 @@ def raster2grid(grid, out_raster, iface, request=None):
     parent = iface.mainWindow() if iface and iface.mainWindow() else None
 
     pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), parent)
-    pd.setWindowTitle("FLO-2D")
-    pd.setWindowModality(Qt.WindowModal)
-    pd.setMinimumDuration(0)
+    pd.setModal(True)
     pd.setValue(0)
+    pd.forceShow()
 
     i = 0
 
@@ -1251,10 +1250,9 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
     total_candidates = cols * rows
 
     prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100, iface.mainWindow())
-    prog.setWindowTitle("FLO-2D")
-    prog.setWindowModality(Qt.WindowModal)
-    prog.setMinimumDuration(0)
+    prog.setModal(True)
     prog.setValue(0)
+    prog.forceShow()
 
     # Update UI about ~200 times max
     update_every = max(1, total_candidates // 200)
@@ -1517,12 +1515,10 @@ def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgre
 
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
 
-        progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100,
-                                     parent)
+        progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100, parent)
         progDialog.setModal(True)
         progDialog.setValue(0)
-        progDialog.show()
-        QApplication.processEvents()
+        progDialog.forceShow()
 
     while regionCounter < regionCount:
         for row in range(rowCount):
