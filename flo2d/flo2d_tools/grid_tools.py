@@ -801,13 +801,15 @@ def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_gr
     allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
 
-    pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount())
+    parent = iface.mainWindow() if iface.mainWindow() else None
+
+    pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount(), parent)
     pd.setModal(True)
     pd.setValue(0)
     pd.forceShow()
     i = 0
     QApplication.processEvents()
-    
+
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
@@ -833,6 +835,10 @@ def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_gr
             yield values
         i += 1
         pd.setValue(i)
+
+    pd.close()
+    pd.deleteLater()
+
 
 def poly2poly(base_polygons, polygons, request, area_percent, *columns):
     """
@@ -1144,11 +1150,14 @@ def raster2grid(grid, out_raster, iface, request=None):
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
 
-    # pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), iface.mainWindow())
-    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount())
-    pd.setModal(True)
+    parent = iface.mainWindow() if iface and iface.mainWindow() else None
+
+    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), parent)
+    pd.setWindowTitle("FLO-2D")
+    pd.setWindowModality(Qt.WindowModal)
+    pd.setMinimumDuration(0)
     pd.setValue(0)
-    pd.forceShow()
+
     i = 0
 
     for feat in features:
@@ -1164,6 +1173,8 @@ def raster2grid(grid, out_raster, iface, request=None):
         i += 1
         pd.setValue(i)
 
+    pd.close()
+    pd.deleteLater()
 
 
 def rasters2centroids(vlayer, request, *raster_paths):
@@ -1241,10 +1252,9 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
 
     prog = QProgressDialog("Creating grid (1/3)...", "Cancel", 0, 100, iface.mainWindow())
     prog.setWindowTitle("FLO-2D")
-    prog.setWindowModality(qt_window_modality("WindowModal"))
+    prog.setWindowModality(Qt.WindowModal)
     prog.setMinimumDuration(0)
     prog.setValue(0)
-    QApplication.processEvents()
 
     # Update UI about ~200 times max
     update_every = max(1, total_candidates // 200)
@@ -1263,6 +1273,8 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
                 QApplication.processEvents()
                 if prog.wasCanceled():
                     prog.close()
+                    QApplication.processEvents()
+                    prog.deleteLater()
                     return
 
             pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
@@ -1285,7 +1297,6 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
             y_tmp -= cellsize
         x += cellsize
     prog.setValue(100)
-
 
     # Reuse the SAME progress dialog, just change message
     prog.setLabelText("Writing grid elements (2/3)...")
@@ -1314,6 +1325,8 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
             QApplication.processEvents()
             if prog.wasCanceled():
                 prog.close()
+                QApplication.processEvents()
+                prog.deleteLater()
                 return
 
         n = row[0]
@@ -1355,8 +1368,11 @@ def square_grid(gutils, boundary, iface, upper_left_coords=None):
         drop_temp_table_query = "DROP TABLE temp_table;"
         gutils.execute(drop_temp_table_query)
 
-    prog.setValue(100)
+        prog.setValue(100)
+
     prog.close()
+    QApplication.processEvents()
+    prog.deleteLater()
 
 
 def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None):
@@ -1498,7 +1514,11 @@ def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgre
     # regionPadding = 50 # amount, in ft probably, to pad region extents to prevent boundary effects
 
     if showProgress == True:
-        progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100)
+
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+
+        progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100,
+                                     parent)
         progDialog.setModal(True)
         progDialog.setValue(0)
         progDialog.show()
@@ -1528,6 +1548,7 @@ def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgre
                     break
         if showProgress == True:
             progDialog.close()
+            progDialog.deleteLater()
 
 
 def geos2geosGenerator(gutils, grid, inputFC, *valueColumnNames, extraFC=None):
