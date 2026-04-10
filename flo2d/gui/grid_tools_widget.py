@@ -757,10 +757,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 method = correct_dlg.run_external
 
             result = method()
-            if result:
-                self.uc.show_info("Assigning grid elevation finished!")
-            else:
-                self.uc.log_info("Elevation Polygon & Elevation points not defined.")
+
+            if not result:
+                return
+
+            self.uc.show_info("Assigning grid elevation finished!")
+            self.uc.log_info("Assigning grid elevation finished!")
+
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
