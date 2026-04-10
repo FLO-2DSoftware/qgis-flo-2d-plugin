@@ -73,7 +73,6 @@ from .ui_utils import load_ui, set_icon
 
 from ..gui.dlg_rgh import RGHDialog
 
-
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
 
 
@@ -165,12 +164,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         create_grid_dlg = CreateGridDialog(self.iface, self.lyrs)
         ok = create_grid_dlg.exec()
         if not ok:
+            for w in QApplication.topLevelWidgets():
+                if isinstance(w, QProgressDialog):
+                    w.close()
+                    w.deletelater()
+            create_grid_dlg.deleteLater()
             return
 
         # get value from dialog spinbox
         dlg_cell_size = create_grid_dlg.cell_size()
 
-        # try:
+        # try
         if not self.lyrs.save_edits_and_proceed("Computational Domain"):
             return
         if create_grid_dlg.use_external_layer():
@@ -306,6 +310,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.uc.log_info(grid_summary)
         self.uc.show_info(grid_summary)
 
+        create_grid_dlg.deleteLater()
+
         # else:
         #     # Update grid_lyr:
         #     grid_lyr = self.lyrs.data["grid"]["qlyr"]
@@ -416,7 +422,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         cell_size = self.get_cell_size()
         dlg = SamplingPointElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec()
+
+        try:
+            dlg.exec()
+        finally:
+            dlg.close()
+            dlg.deleteLater()
 
     def xyz_elevation(self):
         try:
@@ -713,6 +724,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 )
 
     def correct_elevation(self):
+        correct_dlg = None
         try:
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
@@ -759,6 +771,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 + "\n___________________________________________________",
                 e,
             )
+        finally:
+            if correct_dlg is not None:
+                correct_dlg.close()
+                correct_dlg.deleteLater()
 
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
@@ -1906,7 +1922,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                                           names='Time, Depth, Velocity, Water_Surface_Elevation')
 
         return data
-
 
     def eval_rgh(self):
         if self.gutils.is_table_empty("grid"):
