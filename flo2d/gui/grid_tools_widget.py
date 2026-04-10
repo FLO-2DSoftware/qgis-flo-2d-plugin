@@ -756,15 +756,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     return
                 method = correct_dlg.run_external
 
-            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             result = method()
-            QApplication.restoreOverrideCursor()
             if result:
                 self.uc.show_info("Assigning grid elevation finished!")
             else:
                 self.uc.log_info("Elevation Polygon & Elevation points not defined.")
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
                 "ERROR 060319.1607: Assigning grid elevation aborted! Please check your input layers."
