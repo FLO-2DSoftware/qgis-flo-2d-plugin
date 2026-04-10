@@ -1,5 +1,7 @@
 import math
 
+from qgis._core import QgsMessageLog
+
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 
@@ -15,6 +17,8 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.setupUi(self)
 
+        self.dam_height = None
+
         # Hydrologic
         self.input_flood_volume_dsb.valueChanged.connect(self.check_hydrologic_failure)
         self.spillway_chbox.stateChanged.connect(self.check_hydrologic_failure)
@@ -23,6 +27,10 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
 
         # Static
         self.reservoir_lvl_cbo.currentIndexChanged.connect(self.check_static_failure)
+        self.cohesion_dam_material_dsb.valueChanged.connect(self.check_static_failure)
+        self.unit_weight_dam_dsb.valueChanged.connect(self.check_static_failure)
+        self.soil_bellow_base_cbo.currentIndexChanged.connect(self.check_static_failure)
+        self.spt_count_sb.valueChanged.connect(self.check_static_failure)
 
         # Seismic
         self.eq_mag_dsb.valueChanged.connect(self.check_seismic_failure)
@@ -40,10 +48,65 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
 
         self.populate_units_lbls()
 
+        self.slope_lvl_table = {
+            (0, 0): (-0.0048, 0.140),
+            (1, 0): (-0.0041, 0.140),
+            (2, 0): (-0.0034, 0.140),
+
+            (0, 1): (-0.0051, 0.120),
+            (1, 1): (-0.0042, 0.120),
+            (2, 1): (-0.0033, 0.120),
+
+            (0, 2): (-0.0055, 0.110),
+            (1, 2): (-0.0043, 0.110),
+            (2, 2): (-0.0032, 0.110),
+
+            (0, 3): (-0.0061, 0.100),
+            (1, 3): (-0.0046, 0.100),
+            (2, 3): (-0.0031, 0.100),
+
+            (0, 4): (-0.0062, 0.090),
+            (1, 4): (-0.0047, 0.090),
+            (2, 4): (-0.0031, 0.090),
+
+            (0, 5): (-0.0065, 0.085),
+            (1, 5): (-0.0048, 0.085),
+            (2, 5): (-0.0031, 0.085),
+        }
+
+        self.close_btn.clicked.connect(self.close_dialog)
+
+    def close_dialog(self):
+        """
+        Function to close the dialog.
+        """
+        self.close()
+
     def check_static_failure(self):
         """
         Function to check for static failure of tailings dams.
         """
+
+        cohesion_dam_material = self.cohesion_dam_material_dsb.value()
+        unit_weight_dam = self.unit_weight_dam_dsb.value()
+
+        if unit_weight_dam <= 0:
+            cydamh = ""
+        else:
+            cydamh = str(round(cohesion_dam_material / (unit_weight_dam * self.dam_height), 4))
+
+        self.cydamh_le.setText(cydamh)
+
+        friction_angle_dam_material = self.friction_angle_dam_material_dsb.value()
+        reservoir_lvl = self.reservoir_lvl_cbo.currentIndex()
+        tailings_dam_slope = self.tailings_dam_slope_cbo.currentIndex()
+
+        slope, level = self.slope_lvl_table[(reservoir_lvl, tailings_dam_slope)]
+
+        slope_failure = slope * friction_angle_dam_material + level
+
+        self.slope_failure_le.setText(str(round(slope_failure, 4)))
+
         foundation_soil = self.soil_bellow_base_cbo.currentIndex()
         spt_count = self.spt_count_sb.value()
         cydamh = self.cydamh_le.text()
@@ -77,9 +140,7 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
         Function to check for hydrologic failure of tailings dams.
         """
 
-        tot_imp_vol = self.tot_imp_vol_dsb.value()
-        imp_tal_vol = self.imp_tal_vol_dsb.value()
-        available_storage = tot_imp_vol - imp_tal_vol
+        available_storage = float(self.available_storage_le.text())
         input_flood_volume = self.input_flood_volume_dsb.value()
         spillway = self.spillway_chbox.isChecked()
         max_allow_head = self.max_allow_head_dsb.value()
@@ -134,13 +195,12 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
             CorrectedN160 += 5
 
         depth_to_layer = self.depth_to_layer_dsb.value()
-        unit_weight_dam = self.unit_weight_dam_dsb.value()
+        unit_weight_dam = self.unit_weight_dam_2_dsb.value()
         unit_weight_found = self.unit_weight_found_dsb.value()
-        dam_height = self.dam_height_2_dsb.value()
         freeboard_from_surface = self.water_surface_freeboard_dsb.value()
 
         total_stress = depth_to_layer * (
-                    unit_weight_dam * dam_height + unit_weight_found * (depth_to_layer - dam_height))
+                    unit_weight_dam * self.dam_height + unit_weight_found * (depth_to_layer - self.dam_height))
         effective_stress = total_stress - (depth_to_layer - freeboard_from_surface) * 62.4
 
         if depth_to_layer <= 30:
@@ -160,7 +220,7 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
         if peak_ground_acc > 0.22 and CorrectedN160 < 14 and depth_to_sat_tailings < 10 and freeboard_from_surface > 10 and cyclic_shear_stress_ratio > liquefaction_potential_boundary:
             breach_type = "Dam Breach by Liquefaction"
         else:
-            deformation_of_crest = (dam_height + depth_to_bedrock) * math.exp(
+            deformation_of_crest = (self.dam_height + depth_to_bedrock) * math.exp(
                 6.07 * peak_ground_acc + 0.57 * eq_mag - 8)
             if deformation_of_crest > freeboard_from_surface:
                 breach_type = "Dam Breach by Deformation of Crest"
@@ -180,6 +240,18 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
             self.pmf_unit_lbl.setText("m")
             self.depth_to_crest_unit_lbl.setText("m")
 
+            self.dam_uw_unit_lbl.setText("KN/m³")
+            self.dam_uw_unit_2_lbl.setText("KN/m³")
+            self.cohesion_unit_lbl.setText("KN/m²")
+
+            self.friction_angle_unit_lbl.setText("°")
+            self.found_uw_unit_lbl.setText("KN/m³")
+
+            self.wsf_unit_lbl.setText("m")
+
+            self.depth_bedrock_unit_lbl.setText("m")
+            self.depth_to_sat_unit_lbl.setText("m")
+
         else:
 
             self.aval_sto_unit_lbl.setText("yd³")
@@ -187,3 +259,15 @@ class BreachFailureDialog(qtBaseClass, uiDialog):
             self.max_allow_head_unit_lbl.setText("ft")
             self.pmf_unit_lbl.setText("ft")
             self.depth_to_crest_unit_lbl.setText("ft")
+
+            self.dam_uw_unit_lbl.setText("lb/ft³")
+            self.dam_uw_unit_2_lbl.setText("lb/ft³")
+            self.cohesion_unit_lbl.setText("lb/ft²")
+
+            self.friction_angle_unit_lbl.setText("°")
+            self.found_uw_unit_lbl.setText("lb/ft³")
+
+            self.wsf_unit_lbl.setText("ft")
+
+            self.depth_bedrock_unit_lbl.setText("ft")
+            self.depth_to_sat_unit_lbl.setText("ft")

@@ -414,294 +414,6 @@
             <bool>false</bool>
            </property>
            <layout class="QGridLayout" name="gridLayout_8">
-            <item row="5" column="3">
-             <spacer name="horizontalSpacer_32">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="7" column="6">
-             <widget class="QLabel" name="cohesion_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="4">
-             <widget class="QLabel" name="label_6">
-              <property name="toolTip">
-               <string>Impounded Tailings Volume (Vi)</string>
-              </property>
-              <property name="text">
-               <string>Impounded Tailings Volume</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0" colspan="7">
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1">
-             <widget class="QComboBox" name="soil_bellow_base_cbo">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <item>
-               <property name="text">
-                <string>Granular Soils</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Cohesive Soils</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="3" column="4">
-             <widget class="QLabel" name="label_16">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Tailings Dam Material</string>
-              </property>
-              <property name="text">
-               <string>Tailings Dam Material</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_7">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Water Surface Freeboard (F)</string>
-              </property>
-              <property name="text">
-               <string>Water Surface Freeboard</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1">
-             <widget class="QDoubleSpinBox" name="depth_to_bedrock_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>99999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="4">
-             <widget class="QLabel" name="label_19">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Friction Angle of Dam Material (ɸ)</string>
-              </property>
-              <property name="text">
-               <string>Friction Angle of Dam Material</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="tailings_tot_imp_vol_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="1">
-             <widget class="QComboBox" name="tailings_material_cbo">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="0">
-             <widget class="QLabel" name="label_11">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Unit weight of foundation soil below base of dam</string>
-              </property>
-              <property name="text">
-               <string>Unit Weight of Foundation</string>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="6">
-             <widget class="QLabel" name="friction_angle_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_4">
-              <property name="minimumSize">
-               <size>
-                <width>185</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Tailings Dam Height (H)</string>
-              </property>
-              <property name="text">
-               <string>Dam Height</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="5">
-             <widget class="QDoubleSpinBox" name="unit_weight_dam_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>99999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="3">
-             <spacer name="horizontalSpacer_33">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="9" column="1">
-             <widget class="QComboBox" name="tailings_unit_weight_cbo">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_8">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Depth to Bedrock from Base (DB)</string>
-              </property>
-              <property name="text">
-               <string>Depth to Bedrock from Base</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QDoubleSpinBox" name="water_surface_freeboard_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>99999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="5">
              <widget class="QDoubleSpinBox" name="imp_tal_vol_dsb">
               <property name="minimumSize">
@@ -721,139 +433,8 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="2">
-             <widget class="QLabel" name="depth_bedrock_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="6">
-             <widget class="QLabel" name="depth_to_sat_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="6">
-             <widget class="QLabel" name="dam_uw_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="5">
-             <widget class="QComboBox" name="friction_angle_tailings_cbo">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="4">
-             <widget class="QLabel" name="label_20">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Tailings Dam Downstream Slope</string>
-              </property>
-              <property name="text">
-               <string>Tailings Dam Downstream Slope</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="0">
-             <widget class="QLabel" name="label_9">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Foundation Soil Below Base</string>
-              </property>
-              <property name="text">
-               <string>Foundation Soil Below Base</string>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="5">
-             <widget class="QComboBox" name="tailings_dam_slope_cbo">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <item>
-               <property name="text">
-                <string>1.5:1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>2.0:1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>2.5:1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>3.0:1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>3.5:1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>4.0:1</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="7" column="3">
-             <spacer name="horizontalSpacer_34">
+            <item row="1" column="3">
+             <spacer name="horizontalSpacer_28">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -865,48 +446,16 @@
               </property>
              </spacer>
             </item>
-            <item row="7" column="4">
-             <widget class="QLabel" name="label_18">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Cohesion of Dam Material</string>
+            <item row="0" column="6">
+             <widget class="QLabel" name="tailings_imp_vol_unit_lbl">
+              <property name="minimumSize">
+               <size>
+                <width>30</width>
+                <height>0</height>
+               </size>
               </property>
               <property name="text">
-               <string>Cohesion of Dam Material</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="4">
-             <widget class="QLabel" name="label_14">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Friction Angle of Tailings (PHI)</string>
-              </property>
-              <property name="text">
-               <string>Friction Angle of Tailings</string>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="0">
-             <widget class="QLabel" name="label_12">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Tailings Material</string>
-              </property>
-              <property name="text">
-               <string>Tailings Material</string>
+               <string>-</string>
               </property>
              </widget>
             </item>
@@ -929,21 +478,8 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="3">
-             <spacer name="horizontalSpacer_30">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="7" column="5">
-             <widget class="QDoubleSpinBox" name="cohesion_dam_material_dsb">
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="dam_height_2_dsb">
               <property name="minimumSize">
                <size>
                 <width>125</width>
@@ -961,8 +497,44 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="2">
-             <widget class="QLabel" name="wsf_unit_lbl">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="toolTip">
+               <string>Total Impoundment Volume (Vt)</string>
+              </property>
+              <property name="text">
+               <string>Total Impoundment Volume</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <widget class="QLabel" name="label_6">
+              <property name="toolTip">
+               <string>Impounded Tailings Volume (Vi)</string>
+              </property>
+              <property name="text">
+               <string>Impounded Tailings Volume</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_4">
+              <property name="minimumSize">
+               <size>
+                <width>185</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Tailings Dam Height (H)</string>
+              </property>
+              <property name="text">
+               <string>Dam Height</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QLabel" name="tailings_tot_imp_vol_unit_lbl">
               <property name="minimumSize">
                <size>
                 <width>30</width>
@@ -974,33 +546,16 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="0">
-             <widget class="QLabel" name="label_10">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>SPT Blow Count (N)</string>
+            <item row="0" column="2">
+             <widget class="QLabel" name="tailings_dam_height_unit_lbl">
+              <property name="minimumSize">
+               <size>
+                <width>30</width>
+                <height>0</height>
+               </size>
               </property>
               <property name="text">
-               <string>SPT Blow Count</string>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="0">
-             <widget class="QLabel" name="label_15">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Tailings Unit Weight (UW)</string>
-              </property>
-              <property name="text">
-               <string>Tailings Unit Weight</string>
+               <string>-</string>
               </property>
              </widget>
             </item>
@@ -1017,7 +572,7 @@
               </property>
              </spacer>
             </item>
-            <item row="11" column="5" colspan="2">
+            <item row="3" column="0" colspan="7">
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
                <spacer name="horizontalSpacer">
@@ -1031,6 +586,20 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="cpfm_btn">
+                <property name="text">
+                 <string>Potential Failure Mode</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QToolButton" name="open_tailings_data_btn">
@@ -1066,255 +635,6 @@
                </widget>
               </item>
              </layout>
-            </item>
-            <item row="1" column="3">
-             <spacer name="horizontalSpacer_28">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="10" column="0" colspan="7">
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
-              <item>
-               <spacer name="horizontalSpacer_29">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="cpfm_btn">
-                <property name="text">
-                 <string>Potential Failure Mode</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="tailings_dam_height_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="3">
-             <spacer name="horizontalSpacer_31">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="8" column="5">
-             <widget class="QDoubleSpinBox" name="friction_angle_dam_material_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>99999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_5">
-              <property name="toolTip">
-               <string>Total Impoundment Volume (Vt)</string>
-              </property>
-              <property name="text">
-               <string>Total Impoundment Volume</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="4">
-             <widget class="QLabel" name="label_17">
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Unit weight of tailings dam material</string>
-              </property>
-              <property name="text">
-               <string>Unit Weight of Dam Material</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="1">
-             <widget class="QDoubleSpinBox" name="unit_weight_found_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>99999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="5">
-             <widget class="QDoubleSpinBox" name="depth_to_saturated_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>99999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="1">
-             <widget class="QSpinBox" name="spt_count_sb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <number>9999</number>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QDoubleSpinBox" name="dam_height_2_dsb">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <double>99999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="6">
-             <widget class="QLabel" name="tailings_imp_vol_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="4">
-             <widget class="QLabel" name="label_13">
-              <property name="minimumSize">
-               <size>
-                <width>185</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <italic>false</italic>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Depth to Saturated Tailings from Tailings Surface (DGW)</string>
-              </property>
-              <property name="text">
-               <string>Depth to Saturated Tailings from Tailings Surface</string>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="5">
-             <widget class="QComboBox" name="tailings_dam_material_cbo">
-              <property name="minimumSize">
-               <size>
-                <width>125</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>125</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="2">
-             <widget class="QLabel" name="found_uw_unit_lbl">
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
             </item>
            </layout>
           </widget>
@@ -1554,7 +874,7 @@
            </layout>
           </widget>
          </item>
-         <item row="3" column="0">
+         <item row="3" column="0" colspan="2">
           <spacer name="verticalSpacer_5">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
