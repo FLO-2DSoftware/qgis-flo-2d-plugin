@@ -7,6 +7,7 @@ import functools
 import time
 from collections import defaultdict
 
+from qgis.utils import iface
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis._core import QgsMessageLog, QgsSpatialIndex
 from qgis.analysis import QgsZonalStatistics
@@ -305,10 +306,13 @@ class GridElevation(ElevationCorrector):
     def elevation_from_polygons(self):
 
         if self.user_polygons.featureCount() <= 0:
+            parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Elevation Polygon."
+                "Please, define Elevation Polygon.",
+                QMessageBox.Ok,
+                parent
             )
             ms_box.exec()
             ms_box.show()
@@ -354,10 +358,13 @@ class GridElevation(ElevationCorrector):
     def elevation_from_tin(self):
 
         if self.user_polygons.featureCount() <= 0 or self.user_points.featureCount() <= 0:
+            parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Elevation Polygon & Elevation points."
+                "Please, define Elevation Polygon & Elevation points.",
+                QMessageBox.Ok,
+                parent
             )
             ms_box.exec()
             ms_box.show()
@@ -404,12 +411,14 @@ class GridElevation(ElevationCorrector):
         return True
 
     def tin_elevation_within_polygons(self):
-
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
         if self.user_polygons.featureCount() <= 0:
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Elevation Polygon."
+                "Please, define Elevation Polygon.",
+                QMessageBox.Ok,
+                parent
             )
             ms_box.exec()
             ms_box.show()
@@ -468,12 +477,14 @@ class GridElevation(ElevationCorrector):
         self.gutils.con.commit()
 
     def elevation_within_arf(self, calculation_type):
-
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
         if self.blocked_areas.featureCount() <= 0:
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
-                "Please, define Blocked Areas."
+                "Please, define Blocked Areas.",
+                QMessageBox.Ok,
+                parent
             )
             ms_box.exec()
             ms_box.show()
