@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 
 from qgis.utils import iface
-from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 from qgis._core import QgsMessageLog, QgsSpatialIndex
 from qgis.analysis import QgsZonalStatistics
 from qgis.core import (
@@ -39,6 +39,7 @@ from .grid_tools import (
 )
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
 from ..utils import qmeta_type
+from .. user_communication import UserCommunication
 
 
 def timer(func):
@@ -288,6 +289,8 @@ class GridElevation(ElevationCorrector):
     def __init__(self, gutils, lyrs):
         super(GridElevation, self).__init__(gutils, lyrs)
 
+        self.uc = UserCommunication(iface, "FLO-2D")
+
         self.grid = None
         self.blocked_areas = None
 
@@ -306,6 +309,7 @@ class GridElevation(ElevationCorrector):
     def elevation_from_polygons(self):
 
         if self.user_polygons.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
                 QMessageBox.Critical,
@@ -316,7 +320,9 @@ class GridElevation(ElevationCorrector):
             )
             ms_box.exec()
             ms_box.show()
-            return
+
+            self.uc.log_info("Elevation polygon not defined.")
+            return False
 
         if self.only_selected is True:
             request = self.request
@@ -355,9 +361,12 @@ class GridElevation(ElevationCorrector):
 
         self.gutils.con.commit()
 
+        return True
+
     def elevation_from_tin(self):
 
         if self.user_polygons.featureCount() <= 0 or self.user_points.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
                 QMessageBox.Critical,
@@ -368,6 +377,8 @@ class GridElevation(ElevationCorrector):
             )
             ms_box.exec()
             ms_box.show()
+
+            self.uc.log_info("Elevation Polygon & Elevation Points not defined.")
             return False
 
         if self.only_selected is True:
@@ -413,6 +424,7 @@ class GridElevation(ElevationCorrector):
     def tin_elevation_within_polygons(self):
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
         if self.user_polygons.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
@@ -422,7 +434,9 @@ class GridElevation(ElevationCorrector):
             )
             ms_box.exec()
             ms_box.show()
-            return
+
+            self.uc.log_info("Elevation Polygon not defined.")
+            return False
 
         if self.only_selected is True:
             request = self.request
@@ -476,9 +490,12 @@ class GridElevation(ElevationCorrector):
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
 
+        return True
+
     def elevation_within_arf(self, calculation_type):
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
         if self.blocked_areas.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
@@ -488,7 +505,8 @@ class GridElevation(ElevationCorrector):
             )
             ms_box.exec()
             ms_box.show()
-            return
+            self.uc.log_info("Blocked Areas not defined.")
+            return False
 
         if calculation_type == "Mean":
 
@@ -529,6 +547,8 @@ class GridElevation(ElevationCorrector):
         cur = self.gutils.con.cursor()
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
+
+        return True
 
 
 class ExternalElevation(ElevationCorrector):

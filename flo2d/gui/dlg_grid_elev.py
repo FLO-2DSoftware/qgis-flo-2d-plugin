@@ -91,26 +91,26 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
     def tin_method(self):
         try:
             self.internal_corrector.set_filter()
-            self.internal_corrector.elevation_from_tin()
+            return self.internal_corrector.elevation_from_tin()
         finally:
             self.internal_corrector.clear_filter()
 
     def tin_poly_method(self):
         try:
             self.internal_corrector.set_filter()
-            self.internal_corrector.tin_elevation_within_polygons()
+            return self.internal_corrector.tin_elevation_within_polygons()
         finally:
             self.internal_corrector.clear_filter()
 
     def polygon_method(self):
         try:
             self.internal_corrector.set_filter()
-            self.internal_corrector.elevation_from_polygons()
+            return self.internal_corrector.elevation_from_polygons()
         finally:
             self.internal_corrector.clear_filter()
 
     def arf_method(self):
-        self.internal_corrector.elevation_within_arf(self.stats_cbx.currentText())
+        return self.internal_corrector.elevation_within_arf(self.stats_cbx.currentText())
 
     def populate_polygon_vectors(self):
         poly_lyrs = self.lyrs.list_group_vlayers()
@@ -208,7 +208,10 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
 
     def run_internal(self):
         for no in sorted(self.internal_methods):
-            self.internal_methods[no]()
+            result = self.internal_methods[no]()
+            if result is False:
+                return False
+        return True
 
     def run_external(self):
         self.external_method()
