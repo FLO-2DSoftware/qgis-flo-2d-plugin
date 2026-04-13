@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 
 from qgis.utils import iface
-from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 from qgis._core import QgsMessageLog, QgsSpatialIndex
 from qgis.analysis import QgsZonalStatistics
 from qgis.core import (
@@ -309,6 +309,7 @@ class GridElevation(ElevationCorrector):
     def elevation_from_polygons(self):
 
         if self.user_polygons.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
                 QMessageBox.Critical,
@@ -365,6 +366,7 @@ class GridElevation(ElevationCorrector):
     def elevation_from_tin(self):
 
         if self.user_polygons.featureCount() <= 0 or self.user_points.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
                 QMessageBox.Critical,
@@ -422,6 +424,7 @@ class GridElevation(ElevationCorrector):
     def tin_elevation_within_polygons(self):
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
         if self.user_polygons.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
@@ -492,6 +495,7 @@ class GridElevation(ElevationCorrector):
     def elevation_within_arf(self, calculation_type):
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
         if self.blocked_areas.featureCount() <= 0:
+            QApplication.restoreOverrideCursor()
             ms_box = QMessageBox(
                 QMessageBox.Critical,
                 "Error",
@@ -501,7 +505,6 @@ class GridElevation(ElevationCorrector):
             )
             ms_box.exec()
             ms_box.show()
-
             self.uc.log_info("Blocked Areas not defined.")
             return False
 
