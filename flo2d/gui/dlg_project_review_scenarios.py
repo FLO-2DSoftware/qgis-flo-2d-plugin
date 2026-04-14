@@ -357,7 +357,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
 
                     if not os.path.exists(HYCROSS_file):
                         self.uc.bar_warn(f"HYCROSS.OUT not found in: {scenario}")
-                        self.uc.log_info(f"Missinf file: {HYCROSS_file}, \n thus this scenario will not be included.")
+                        self.uc.log_info(f"Missing file: {HYCROSS_file}, \n thus this scenario will not be included.")
                         continue
 
                     with open(HYCROSS_file, "r") as myfile:
@@ -421,7 +421,7 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
 
                 if not os.path.exists(CROSSQ_file):
                     self.uc.bar_warn(f"CROSSQ.OUT not found in: {scenario}")
-                    self.uc.log_info(f"Missing file: {CROSSQ_file}, \n thus will not be included.")
+                    self.uc.log_info(f"Missing file: {CROSSQ_file}, \n thus this scenario will not be included.")
                     continue
 
                 with open(CROSSQ_file, "r", encoding="utf-8", errors="replace") as myfile:
