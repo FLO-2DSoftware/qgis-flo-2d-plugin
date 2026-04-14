@@ -462,13 +462,35 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             if not self.rain:
                 return
+
+            # Get existing time series names
+            existing_tseries = {name for _, name in self.rain.get_time_series()}
+
+            # Prepare a list of skipped files
+            skipped_files = []
+
             for file in predefined_files:
                 tail = os.path.splitext(os.path.basename(file))[0]
+
+                # Check for duplicates
+                if tail in existing_tseries:
+                    skipped_files.append(tail)
+                    continue
+
                 self.rain.add_time_series(tail, True)
                 self.read_predefined_tseries_data(file)
-                self.populate_tseries()
 
+                # Update set to prevent duplicates within th same batch
+                existing_tseries.add(tail)
+
+            self.populate_tseries()
             QApplication.restoreOverrideCursor()
+
+            # Notify user
+            if skipped_files:
+                msg = ("The following time series were skipped because they already exist: \n\n" + "\n".join(skipped_files))
+                QMessageBox.warning(None, "Duplicate Time Series", msg)
+
             self.uc.show_info("Importing predefined time series finished!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
