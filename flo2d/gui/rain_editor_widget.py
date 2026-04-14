@@ -488,13 +488,15 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
             # Notify user
             if skipped_files:
-                msg = ("The following time series were skipped because they already exist: \n\n" + "\n".join(skipped_files))
-                QMessageBox.warning(None, "Duplicate Time Series", msg)
+                self.uc.show_warn(f"The following time series were skipped because they already exist: \n" + "\n".join(skipped_files))
+                self.uc.log_info(f"The following time series were skipped because they already exist: \n\n" + "\n".join(skipped_files))
 
             self.uc.show_info("Importing predefined time series finished!")
+            self.uc.log_info("Importing predefined time series finished!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("Importing predefined time series failed! Please check your input data.")
+            self.uc.log_info("Importing predefined time series failed! Please check your input data.")
 
     def read_predefined_tseries_data(self, file):
         tsd_sql = "INSERT INTO rain_time_series_data (series_fid, time, value) VALUES (?, ?, ?);"
