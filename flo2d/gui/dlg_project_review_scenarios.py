@@ -220,7 +220,13 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         """
         Function to process the results into a hdf5 for easy display on the FLO-2D table and plot
         """
-        processed_results_file = self.processed_results_le.text()
+        processed_results_file = self.processed_results_le.text().strip()
+
+        # Ensure output file path is set before processing
+        if not processed_results_file:
+            self.uc.bar_warn("Please select or create a processed results file before running.")
+            self.uc.log_info("Processed results file not set.")
+            return
 
         # Check if file exists
         if is_file_locked(processed_results_file):
@@ -302,6 +308,11 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                     hychan_xs_group= hdf.create_group(f"Scenario {i + 1}/Channels/Cross Sections")
                     HYCHAN_file = os.path.join(scenario, r"HYCHAN.OUT")
 
+                    if not os.path.exists(HYCHAN_file):
+                        self.uc.bar_warn(f"HYCHAN.OUT not found in: {scenario}")
+                        self.uc.log_info(f"Missing file: {HYCHAN_file}, \n thus this scenario will not be included.")
+                        continue
+
                     peaks_dict, _ = self.parser.parse_hychan(HYCHAN_file, mode="peaks")
                     ts_dict, _ = self.parser.parse_hychan(HYCHAN_file, mode="time_series")
 
@@ -343,6 +354,12 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 with h5py.File(processed_results_file, read_type) as hdf:
                     fpxs_group = hdf.create_group(f"Scenario {i + 1}/Floodplain Cross Sections")
                     HYCROSS_file = os.path.join(scenario, r"HYCROSS.OUT")
+
+                    if not os.path.exists(HYCROSS_file):
+                        self.uc.bar_warn(f"HYCROSS.OUT not found in: {scenario}")
+                        self.uc.log_info(f"Missinf file: {HYCROSS_file}, \n thus this scenario will not be included.")
+                        continue
+
                     with open(HYCROSS_file, "r") as myfile:
                         while True:
                             try:
@@ -401,6 +418,12 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 fpxs_group = hdf.require_group(f"Scenario {i + 1}/Floodplain Cross Sections/Cells")
 
                 CROSSQ_file = os.path.join(scenario, "CROSSQ.OUT")
+
+                if not os.path.exists(CROSSQ_file):
+                    self.uc.bar_warn(f"CROSSQ.OUT not found in: {scenario}")
+                    self.uc.log_info(f"Missing file: {CROSSQ_file}, \n thus will not be included.")
+                    continue
+
                 with open(CROSSQ_file, "r", encoding="utf-8", errors="replace") as myfile:
                     pushback = None  # holds a header line for the next iteration
 
@@ -466,6 +489,12 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 with h5py.File(processed_results_file, read_type) as hdf:
                     hydrostruct = hdf.create_group(f"Scenario {i + 1}/Hydraulic Structures")
                     HYDROSTRUCT_file = os.path.join(scenario, r"HYDROSTRUCT.OUT")
+
+                    if not os.path.exists(HYDROSTRUCT_file):
+                        self.uc.bar_warn(f"HYDROSTRUCT.OUT not found in: {scenario}")
+                        self.uc.log_info(f"Missing file: {HYDROSTRUCT_file}, \n thus this scenario will not be included.")
+                        continue
+
                     with open(HYDROSTRUCT_file, "r") as myfile:
                         time_list = []
                         discharge_list = []
@@ -527,6 +556,12 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
                 else:
                     read_type = "w"
                 timdep_file = os.path.join(scenario, r"TIMDEP.HDF5")
+
+                if not os.path.exists(timdep_file):
+                    self.uc.bar_warn(f"TIMDEP.HDF5 not found in: {scenario}")
+                    self.uc.log_info(f"Missing file: {timdep_file}, \n thus this scenario will not be included.")
+                    continue
+
                 with h5py.File(processed_results_file, read_type) as hdf:
                     time_dependent = hdf.create_group(f"Scenario {i + 1}/Time Dependent")
                     with h5py.File(timdep_file, "r") as timdep_hdf:
@@ -588,6 +623,12 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             QgsApplication.processEvents()
             if scenario:
                 SWMMQIN = scenario + r"/SWMMQIN.OUT"
+
+                if not os.path.exists(SWMMQIN):
+                    self.uc.bar_warn(f"SWMMQIN.OUT not found in: {scenario}")
+                    self.uc.log_info(f"Missing file: {SWMMQIN}, \n thus this scenario will not be included.")
+                    continue
+
                 swmmqin_data = self.get_SWMMQIN(SWMMQIN)
                 if os.path.exists(hdf5_file):
                     read_type = "a"
@@ -617,19 +658,24 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             QgsApplication.processEvents()
             if scenario:
                 SWMMOUTFIN = scenario + r"/SWMMOUTFIN.OUT"
-                if os.path.exists(SWMMOUTFIN):
-                    swmmoutfin_data = self.get_SWMMOUTFIN(SWMMOUTFIN)
-                    if os.path.exists(hdf5_file):
-                        read_type = "a"
-                    else:
-                        read_type = "w"
-                    with h5py.File(hdf5_file, read_type) as hdf:
-                        group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/SWMMOUTFIN")
-                        for key, values in swmmoutfin_data.items():
-                            group.create_dataset(key,
-                                                 data=values,
-                                                 compression="gzip",
-                                                 compression_opts=9)
+
+                if not os.path.exists(SWMMOUTFIN):
+                    self.uc.bar_warn(f"SWMMOUTFIN.OUT not found in: {scenario}")
+                    self.uc.log_info(f"Missing file: {SWMMOUTFIN}, \n thus this scenario will not be included.")
+                    continue
+
+                swmmoutfin_data = self.get_SWMMOUTFIN(SWMMOUTFIN)
+                if os.path.exists(hdf5_file):
+                    read_type = "a"
+                else:
+                    read_type = "w"
+                with h5py.File(hdf5_file, read_type) as hdf:
+                    group = hdf.create_group(f"Scenario {i + 1}/Storm Drain/SWMMOUTFIN")
+                    for key, values in swmmoutfin_data.items():
+                        group.create_dataset(key,
+                                             data=values,
+                                             compression="gzip",
+                                             compression_opts=9)
         progDialog.close()
 
     def process_swmmrpt(self, scenarios, hdf5_file):
@@ -647,6 +693,11 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             QgsApplication.processEvents()
             if scenario:
                 swmm_rpt = scenario + r"/swmm.RPT"
+
+                if not os.path.exists(swmm_rpt):
+                    self.uc.bar_warn(f"SWMM.RPT not found in: {scenario}")
+                    self.uc.log_info(f"Missing file:  {swmm_rpt}, \n thus this scenario is not included.")
+                    continue
 
                 # Start with nodes and time data
                 nodes = {}
