@@ -1046,22 +1046,6 @@
               </item>
              </widget>
             </item>
-            <item row="2" column="4">
-             <widget class="QLineEdit" name="tal_porosity_le">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="2">
              <spacer name="horizontalSpacer_36">
               <property name="orientation">
@@ -1077,19 +1061,6 @@
             </item>
             <item row="1" column="2">
              <spacer name="horizontalSpacer_37">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="2" column="2">
-             <spacer name="horizontalSpacer_38">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -1196,28 +1167,6 @@
                 <width>175</width>
                 <height>16777215</height>
                </size>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="3">
-             <widget class="QLabel" name="label_43">
-              <property name="minimumSize">
-               <size>
-                <width>185</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>185</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Porosity</string>
-              </property>
-              <property name="text">
-               <string>Porosity</string>
               </property>
              </widget>
             </item>

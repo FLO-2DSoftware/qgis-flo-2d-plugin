@@ -43,6 +43,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         self.setWindowFlags(self.windowFlags() | qt_window_type("WindowMinimizeButtonHint"))
 
         self.t_hr, self.Qt, self.Cv, self.Vs = None, None, None, None
+        self.Vrmin, self.Vrave, self.Vrmax, self.larrauri, self.rico, self.piciullo1, self.piciullo2 = None, None, None, None, None, None, None
         self.hyd_map = {}
         self.sed_map = {}
 
@@ -75,6 +76,8 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         self.populate_information()
         self.stackedWidget.currentChanged.connect(self.populate_information)
+
+        self.user_volume_le.textChanged.connect(self.populate_volume_options)
 
     def water_help(self):
         QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/toolbar/flo-2d-parameters/Breach%20Hydrograph%20Tool.html#water-dams"))
@@ -778,47 +781,59 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
             return
 
         # Estimate the volumes
-        Vrmin = min(1052 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
-        Vrave = min(3604 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
-        Vrmax = min(20419 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
+        self.Vrmin = min(1052 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
+        self.Vrave = min(3604 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
+        self.Vrmax = min(20419 * dam_height ** 1.2821, 0.95 * imp_tal_vol)
 
         if self.gutils.get_cont_par("METRIC") == "1":
-            self.vrmin_le.setText(str(int(Vrmin)))
-            self.vrave_le.setText(str(int(Vrave)))
-            self.vrmax_le.setText(str(int(Vrmax)))
+            self.vrmin_le.setText(str(int(self.Vrmin)))
+            self.vrave_le.setText(str(int(self.Vrave)))
+            self.vrmax_le.setText(str(int(self.Vrmax)))
         else:
-            self.vrmin_le.setText(str(int(Vrmin * 1.30795)))
-            self.vrave_le.setText(str(int(Vrave * 1.30795)))
-            self.vrmax_le.setText(str(int(Vrmax * 1.30795)))
+            self.vrmin_le.setText(str(int(self.Vrmin * 1.30795)))
+            self.vrave_le.setText(str(int(self.Vrave * 1.30795)))
+            self.vrmax_le.setText(str(int(self.Vrmax * 1.30795)))
 
-        larrauri = min(0.332 * (tot_imp_vol / 1000000) ** 0.95, 0.95 * imp_tal_vol)
-        rico = min(0.354 * (tot_imp_vol/ 1000000) ** 1.01, 0.95 * imp_tal_vol)
-        piciullo1 = min(0.214 * (tot_imp_vol/ 1000000) ** 0.35, 0.95 * imp_tal_vol)
-        piciullo2 = min((10 ** 0.33) * (tot_imp_vol ** 0.611) * (dam_height ** 0.994), 0.95 * imp_tal_vol)
+        self.larrauri = min(0.332 * (tot_imp_vol / 1000000) ** 0.95, 0.95 * imp_tal_vol)
+        self.rico = min(0.354 * (tot_imp_vol/ 1000000) ** 1.01, 0.95 * imp_tal_vol)
+        self.piciullo1 = min(0.214 * (tot_imp_vol/ 1000000) ** 0.35, 0.95 * imp_tal_vol)
+        self.piciullo2 = min((10 ** 0.33) * (tot_imp_vol ** 0.611) * (dam_height ** 0.994), 0.95 * imp_tal_vol)
 
         if self.gutils.get_cont_par("METRIC") == "1":
-            self.larrauri_dsb.setText(str(int(larrauri * 1000000)))
-            self.rico_dsb.setText(str(int(rico * 1000000)))
-            self.piciullo1_dsb.setText(str(int(piciullo1 * 1000000)))
-            self.piciullo2_dsb.setText(str(int(piciullo2)))
+            self.larrauri_dsb.setText(str(int(self.larrauri * 1000000)))
+            self.rico_dsb.setText(str(int(self.rico * 1000000)))
+            self.piciullo1_dsb.setText(str(int(self.piciullo1 * 1000000)))
+            self.piciullo2_dsb.setText(str(int(self.piciullo2)))
         else:
-            self.larrauri_dsb.setText(str(int(larrauri * 1307950)))
-            self.rico_dsb.setText(str(int(rico * 1307950)))
-            self.piciullo1_dsb.setText(str(int(piciullo1 * 1307950)))
-            self.piciullo2_dsb.setText(str(int(piciullo2 * 1.30795)))
+            self.larrauri_dsb.setText(str(int(self.larrauri * 1307950)))
+            self.rico_dsb.setText(str(int(self.rico * 1307950)))
+            self.piciullo1_dsb.setText(str(int(self.piciullo1 * 1307950)))
+            self.piciullo2_dsb.setText(str(int(self.piciullo2 * 1.30795)))
+
+        self.populate_volume_options()
+
+    def populate_volume_options(self):
+        """
+        Function to populate the breach volume options in the combo box
+        """
 
         # Save Options
         self.tal_select_volume_cbo.clear()
-        user_volume = float(self.user_volume_le.text()) if self.user_volume_le.text() != "" else 0
+
+        try:
+            user_volume = float(self.user_volume_le.text())
+        except (ValueError, TypeError):
+            user_volume = 0.0
+
         volumes = {
             "User Volume": user_volume,
-            "Minimum Volume": Vrmin,
-            "Average Volume": Vrave,
-            "Maximum Volume": Vrmax,
-            "Larrauri and Lall (2018)": larrauri * 1000000,
-            "Rico et al. (2008)": rico * 1000000,
-            "Piciullo et al. (2022)": piciullo1 * 1000000,
-            "Piciullo et al. (updated eq.)": piciullo2
+            "Minimum Volume": self.Vrmin,
+            "Average Volume": self.Vrave,
+            "Maximum Volume": self.Vrmax,
+            "Larrauri and Lall (2018)": self.larrauri * 1000000,
+            "Rico et al. (2008)": self.rico * 1000000,
+            "Piciullo et al. (2022)": self.piciullo1 * 1000000,
+            "Piciullo et al. (updated eq.)": self.piciullo2
         }
 
         for name, volume in volumes.items():
