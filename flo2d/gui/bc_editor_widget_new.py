@@ -402,7 +402,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.uc.log_info("No time series selected. Please, add or select one first.")
             return
 
-        new_name, ok = QInputDialog.getText(None, "Change data name", "New name:")
+        new_name, ok = QInputDialog.getText(self, "Change data name", "New name:")
         if not ok or not new_name:
             return
         self.bc_type = type
@@ -703,7 +703,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if type == "outflow":
                 self.no_bc_disable("outflow")
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        new_name, ok = QInputDialog.getText(self, "Change name", "New name:")
         if not ok or not new_name:
             return
         if not cb.findText(new_name) == -1:
