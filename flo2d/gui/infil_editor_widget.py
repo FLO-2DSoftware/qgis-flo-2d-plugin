@@ -11,6 +11,7 @@ import traceback
 from collections import OrderedDict
 from itertools import chain
 from math import isnan
+from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QMetaType, QUrl
 from qgis.PyQt.QtWidgets import QFileDialog
@@ -275,7 +276,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
         if not self.infil_name_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        new_name, ok = QInputDialog.getText(self, "Change name", "New name:")
         if not ok or not new_name:
             return
         if not self.infil_name_cbo.findText(new_name) == -1:
@@ -585,6 +586,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
         finally:
+            dlg.deleteLater()
             self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
 
@@ -628,6 +630,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 "Please check that the Raster covers the Grid Layer and the coordinate system is valid."
             )
         finally:
+            dlg.deleteLater()
             QApplication.restoreOverrideCursor()
             self.gutils.enable_geom_triggers()
 
@@ -639,13 +642,14 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
     global_changed = pyqtSignal(int)
 
     def __init__(self, iface, lyrs):
-        qtBaseClass_glob.__init__(self)
+        qtBaseClass_glob.__init__(self, iface.mainWindow())
         uiDialog_glob.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.con = self.iface.f2d["con"]
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.chan_dlg = ChannelDialog(self.iface, self.lyrs)
         self.global_imethod = 0
@@ -851,12 +855,13 @@ uiDialog_green, qtBaseClass_green = load_ui("infil_green_ampt")
 
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def __init__(self, iface, lyrs):
-        qtBaseClass_green.__init__(self)
+        qtBaseClass_green.__init__(self, iface.mainWindow())
         uiDialog_green.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.rb_NRCS = self.rb_NRCS
         self.soil_combos = [
@@ -1003,7 +1008,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
         try:
             # Create the progress Dialog
-            pd = QProgressDialog("Setting up...", None, 0, 7)
+            parent = iface.mainWindow() if iface and iface.mainWindow() else None
+            pd = QProgressDialog("Setting up...", None, 0, 7, parent)
             pd.setWindowTitle("NRCS soil survey database")
             pd.setModal(True)
             pd.forceShow()
@@ -1058,6 +1064,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
             pd.setValue(7)
             pd.close()
+            pd.deleteLater()
 
             QApplication.restoreOverrideCursor()
 
@@ -1083,7 +1090,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             saveLayers = False
 
         # Create the progress Dialog
-        pd = QProgressDialog("Getting OSM data...", None, 0, 11)
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        pd = QProgressDialog("Getting OSM data...", None, 0, 11, parent)
         pd.setWindowTitle("OSM land use")
         pd.setModal(True)
         pd.forceShow()
@@ -1574,6 +1582,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
                 pd.setValue(11)
                 pd.close()
+                pd.deleteLater()
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -1591,11 +1600,12 @@ uiDialog_scs, qtBaseClass_scs = load_ui("infil_scs")
 
 class SCSDialog(uiDialog_scs, qtBaseClass_scs):
     def __init__(self, iface, lyrs):
-        qtBaseClass_scs.__init__(self)
+        qtBaseClass_scs.__init__(self, iface.mainWindow())
         uiDialog_scs.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
 
         self.single_combos = [self.cn_cbo]
