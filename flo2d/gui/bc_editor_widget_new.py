@@ -358,7 +358,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 self.canvas.scene().removeItem(rb)
                 del rb
 
-            grid = self.lyrs.data["grid"]["qlyr"]
+            lyr_id = self.lyrs.data["grid"]["qlyr"].id()
             lyr = self.lyrs.get_layer_by_id(lyr_id)
             gt = lyr.geometryType()
 
