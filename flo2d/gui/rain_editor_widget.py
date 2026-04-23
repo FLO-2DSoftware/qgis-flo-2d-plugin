@@ -527,7 +527,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def rename_tseries(self):
         if not self.rain:
             return
-        new_name, ok = QInputDialog.getText(None, "Change timeseries name", "New name:")
+        new_name, ok = QInputDialog.getText(self, "Change timeseries name", "New name:")
         if not ok or not new_name:
             return
         if not self.tseries_cbo.findText(new_name) == -1:

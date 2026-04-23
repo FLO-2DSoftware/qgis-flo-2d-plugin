@@ -559,7 +559,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def change_xs_name(self, i):
         if not self.xs_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        new_name, ok = QInputDialog.getText(self, "Change name", "New name:")
         if not ok or not new_name:
             return
         if not self.xs_cbo.findText(new_name) == -1:
