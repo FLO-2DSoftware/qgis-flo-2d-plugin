@@ -719,11 +719,12 @@ uiDialog_individual_levees, qtBaseClass = load_ui("individual_levee_data")
 
 class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_individual_levees.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
