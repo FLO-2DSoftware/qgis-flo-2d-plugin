@@ -118,11 +118,12 @@ uiDialog, qtBaseClass = load_ui("individual_simple_multiple_channels_data")
 
 class IndividualSimplifiedMultipleChannelsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
