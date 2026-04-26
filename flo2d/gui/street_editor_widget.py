@@ -12,6 +12,7 @@ import traceback
 
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
+from qgis.PyQt.QtCore import Qt
 
 from ..flo2d_tools.schematic_tools import schematize_streets
 from ..geopackage_utils import GeoPackageUtils
@@ -24,11 +25,12 @@ uiDialog_pop, qtBaseClass_pop = load_ui("street_global")
 
 class StreetGeneral(uiDialog_pop, qtBaseClass_pop):
     def __init__(self, iface, lyrs):
-        qtBaseClass_pop.__init__(self)
+        qtBaseClass_pop.__init__(self, iface.mainWindow())
         uiDialog_pop.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
 
 
@@ -39,6 +41,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        # self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
