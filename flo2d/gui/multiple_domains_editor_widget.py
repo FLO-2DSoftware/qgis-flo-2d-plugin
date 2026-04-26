@@ -365,7 +365,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             fid = fid_qry[0]
         else:
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        new_name, ok = QInputDialog.getText(self, "Change name", "New name:")
         if not ok or not new_name:
             return
         if not self.md_name_cbo.findText(new_name) == -1:
