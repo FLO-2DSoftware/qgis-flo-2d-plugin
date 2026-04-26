@@ -330,8 +330,8 @@ class ScrollMessageBox2(QMessageBox):
         chldn[1].setText("")
 
 class TwoInputsDialog(QDialog):
-    def __init__(self, label_text, first_label, first_value, second_label, second_value):
-        super(TwoInputsDialog, self).__init__()
+    def __init__(self, label_text, first_label, first_value, second_label, second_value, parent=None):
+        super(TwoInputsDialog, self).__init__(parent)
 
         self.setWindowTitle("FLO-2D")
         self.label = QLabel(label_text, self)

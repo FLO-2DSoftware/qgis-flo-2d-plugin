@@ -13,6 +13,7 @@ from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import isnan, modf
 from pathlib import Path
+from qgis.utils import iface
 
 from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES
 
@@ -6633,10 +6634,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 distance_units = "feet"
 
+            parent = iface.mainWindow() if iface and iface.mainWindow() else None
             dialog = TwoInputsDialog("Do you want to overwrite Inlet and Outfall nodes\n" +
                                      "for all links (conduits, pumps, orifices, and weirs)?",
                                      "Find a node located at a distance\nless than this from the link (in " + distance_units + " )",
-                                     self.buffer_distance, "", 5)
+                                     self.buffer_distance, "", 5, parent)
             if dialog.exec() == qdialog_code("Accepted"):
                 self.buffer_distance = dialog.first_input.value()
             else:
