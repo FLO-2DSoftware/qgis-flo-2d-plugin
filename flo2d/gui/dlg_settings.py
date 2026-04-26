@@ -45,11 +45,12 @@ uiDialog, qtBaseClass = load_ui("settings")
 
 class SettingsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, gutils):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.ilg = InvisibleLayersAndGroups(self.iface)
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.setModal(True)
         self.con = con
