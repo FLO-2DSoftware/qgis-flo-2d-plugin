@@ -153,11 +153,12 @@ uiDialog_global, qtBaseClass = load_ui("global_breach_data")
 
 class GlobalBreachDialog(qtBaseClass, uiDialog_global):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_global.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -360,11 +361,12 @@ uiDialog_individual_breach, qtBaseClass = load_ui("individual_breach_data")
 
 class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_individual_breach.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -583,11 +585,12 @@ uiDialog_levee_fragility, qtBaseClass = load_ui("levee_fragility_curves")
 
 class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_levee_fragility.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
