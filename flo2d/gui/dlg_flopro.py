@@ -10,7 +10,7 @@
 
 import os
 
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog
 
 from ..flo2d_tools.flopro_tools import FLOPROExecutor
@@ -22,9 +22,10 @@ uiDialog, qtBaseClass = load_ui("flopro")
 
 class ExternalProgramFLO2D(qtBaseClass, uiDialog):
     def __init__(self, iface, title):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
         self.flo2d_browse.clicked.connect(self.get_flo2d_dir)
