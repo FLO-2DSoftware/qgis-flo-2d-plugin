@@ -23,11 +23,12 @@ uiDialog, qtBaseClass = load_ui("components")
 
 class ComponentsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, in_or_out):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
 
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.con = con
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
