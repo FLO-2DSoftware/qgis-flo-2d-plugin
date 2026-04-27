@@ -2,6 +2,7 @@ import math
 import os.path
 import time
 from itertools import combinations
+from qgis.utils import iface
 
 from ..deps import safe_h5py as h5py
 import numpy as np
@@ -39,7 +40,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
 
         # Call parent class initializers
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
 
         # Initialize attributes
@@ -54,6 +55,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         # Setup the UI
         self.setupUi(self)
+
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
 
         # Initialize subdomain dialog elements
         self.initialize_subdomain_elements()
@@ -441,7 +444,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
         cell_size = None
 
-        progress_dialog = QProgressDialog(f"Importing Subdomain 1...", None, 1, total_subdomains + 1)
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        progress_dialog = QProgressDialog(f"Importing Subdomain 1...", None, 1, total_subdomains + 1, parent)
         progress_dialog.setWindowTitle("FLO-2D Multiple Domains Import")
         progress_dialog.setModal(True)
         progress_dialog.forceShow()
@@ -471,6 +475,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 progress_dialog.setValue(subdomain + 1)
 
         progress_dialog.close()
+        progress_dialog.deleteLater()
 
         # Get the min x and min y
         row = self.gutils.execute("""
