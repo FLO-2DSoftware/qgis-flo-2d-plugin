@@ -208,8 +208,8 @@ class UserCommunication(object):
         else:
             print(msg)
 
-    def dialog_with_2_customized_buttons(self, title, msg, text1, text2):
-        msgBox = QMessageBox()
+    def dialog_with_2_customized_buttons(self, title, msg, text1, text2, parent=None):
+        msgBox = QMessageBox(parent)
         msgBox.setWindowTitle(title)
         if msg != "":
             msgBox.setText(msg)
