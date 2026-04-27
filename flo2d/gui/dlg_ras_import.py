@@ -10,7 +10,7 @@
 
 import os
 
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QFileDialog
 
 from ..flo2d_ie.ras_io import RASProject
@@ -22,9 +22,10 @@ uiDialog, qtBaseClass = load_ui("ras_import")
 
 class RasImportDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.con = con
         self.iface = iface
         self.lyrs = lyrs
