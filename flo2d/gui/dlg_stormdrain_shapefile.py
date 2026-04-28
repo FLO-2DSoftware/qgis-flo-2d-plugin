@@ -23,11 +23,12 @@ uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")
 
 class StormDrainShapefile(qtBaseClass, uiDialog):
     def __init__(self, con, iface, layers):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = layers
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
