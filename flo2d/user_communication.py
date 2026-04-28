@@ -301,29 +301,17 @@ class UserCommunication(object):
 
     def input_text(self, title, label, default_text=""):
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
-        """
-        Show text input dialog.
-        Returns text ot None if cancelled.
-        """
         text, ok = QInputDialog.getText(parent, title, label, text=default_text)
         if ok and text.strip():
             return text.strip()
         return None
 
     def input_int(self, title, label, value=0, min_val=0, max_val=999999, step=1):
-        """
-        Show integer input dialog.
-        Returns int or None if cancelled.
-        """
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
         val, ok = QInputDialog.getInt(parent, title, label, value=value, min=min_val, max=max_val, step=step)
         return val if ok else None
 
     def input_double(self, title, label, value=0.0, min_val=0.0, max_val=999999.0, decimals=2):
-        """
-        Show double input dialog.
-        Returns float or None if cancelled.
-        """
         parent = iface.maiWindow() if iface and iface.mainWindow() else None
         val, ok = QInputDialog.getDouble(parent, title, label, value=value, min=min_val, max=max_val, decimals=decimals)
         return val if ok else None
