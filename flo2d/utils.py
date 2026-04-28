@@ -645,3 +645,9 @@ def qt_mouse_button(name):
     if hasattr(Qt, "MouseButton"):  # Qt6
         return getattr(Qt.MouseButton, name)
     return getattr(Qt, name)        # Qt5
+
+def qt_window_flag(name):
+    try:
+        return getattr(Qt.WindowType, name) # Qt6
+    except AttributeError:
+        return getattr(Qt, name) #Qt5
