@@ -6852,8 +6852,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if name in ['Rating Tables', 'Culvert Equations']:
             return
     
-        new_name, ok = QInputDialog.getText(None, "Change table name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change table name", "New name:")
+        if not new_name:
             return
 
         if not self.SD_type4_cbo.findText(new_name) == -1:
@@ -7234,8 +7234,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def rename_pump_curve(self):
         if not self.PumpCurv:
             return
-        new_name, ok = QInputDialog.getText(None, "Change curve name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change curve name", "New name:")
+        if not new_name:
             return
         if len(new_name.split()) > 1:
             self.uc.show_warn("Do not use spaces in the new name!")

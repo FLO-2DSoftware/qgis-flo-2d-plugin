@@ -227,19 +227,12 @@ class HazusDialog(qtBaseClass, uiDialog):
                 return None
             return cs
         else:
-            r, ok = QInputDialog.getDouble(
-                None,
-                "Grid Cell Size",
-                "Enter grid element cell size",
-                value=100,
-                min=0.1,
-                max=99999,
-            )
-            if ok:
-                cs = r
-                self.gutils.set_cont_par("CELLSIZE", cs)
-            else:
+            cs = self.uc.input_double("Grid Cell Size", "Enter grid element cell size", value=100, min_val=0.1)
+            if cs is None:
                 return None
+
+            self.gutils.set_cont_par("CELLSIZE", cs)
+            return cs
 
     def eval_buildings_adjustment_factor(self):
         grid_empty = self.gutils.is_table_empty("grid")

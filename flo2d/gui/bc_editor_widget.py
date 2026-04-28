@@ -327,8 +327,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def change_bc_name(self):
         if not self.bc_name_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name, ok = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.bc_name_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1619: Boundary condition with name {} already exists in the database. Please, choose another name.".format(
@@ -355,8 +355,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber()
 
     def change_bc_data_name(self):
-        new_name, ok = QInputDialog.getText(None, "Change data name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change data name", "New name:")
+        if not new_name:
             return
         # inflow
         if self.bc_type_inflow_radio.isChecked():

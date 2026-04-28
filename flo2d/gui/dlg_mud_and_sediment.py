@@ -1082,8 +1082,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             # inGrid.exec();
             # grid = inGrid.textValue();
 
-            grid, ok = QInputDialog.getInt(None, "Add Grid Number", "Grid element number:", min=1, step=0)
-            if not ok or not grid:
+            grid, ok = self.uc.input_int("Add Grid Number", "Grid element number:", min_val=1)
+            if not grid:
                 return
             else:
                 if int(grid) <= self.n_cells:
@@ -1100,8 +1100,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
 
     def sed_add_rigid_bed_cell_btn_clicked(self):
         while True:
-            grid, ok = QInputDialog.getInt(None, "Add Rigid Ned Node", "Cell element number:", min=1, step=1)
-            if not ok or not grid:
+            grid = self.uc.input_int("Add Rigid Ned Node", "Cell element number:", min_val=1)
+            if not grid:
                 return
             else:
                 if int(grid) <= self.n_cells:

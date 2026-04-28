@@ -12,11 +12,13 @@ import traceback
 
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
+from qgis.PyQt.QtCore import Qt
 
 from ..flo2d_tools.schematic_tools import schematize_streets
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
+from ..utils import qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("street_editor")
 uiDialog_pop, qtBaseClass_pop = load_ui("street_global")
@@ -24,11 +26,12 @@ uiDialog_pop, qtBaseClass_pop = load_ui("street_global")
 
 class StreetGeneral(uiDialog_pop, qtBaseClass_pop):
     def __init__(self, iface, lyrs):
-        qtBaseClass_pop.__init__(self)
+        qtBaseClass_pop.__init__(self, iface.mainWindow())
         uiDialog_pop.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
 
 
@@ -193,8 +196,8 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
 
     def change_street_name(self):
-        new_name, ok = QInputDialog.getText(None, "Change street name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change street name", "New name:")
+        if not new_name:
             return
         self.street_name_cbo.setItemText(self.street_idx, new_name)
 
