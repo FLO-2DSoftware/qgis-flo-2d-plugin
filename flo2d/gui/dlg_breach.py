@@ -629,7 +629,7 @@ class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
         #         label = "Name: "
         #         mode = QLineEdit.Normal
         #         default = "<your name here>"
-        #         txt, ok = QinputDialog.getText(qid,title, label, mode, default)
+        #         txt, ok = self.uc.input_text(qid,title, label, mode, default)
         ID= self.uc.input_text("New fragility curve ID", "Fragility curve ID (one letter and one number)",)
         if not ID:
             return
