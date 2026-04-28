@@ -19,6 +19,7 @@ from ..flo2d_tools.grid_tools import grid_has_empty_elev, raster2grid
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("sampling_rain")
 
@@ -43,7 +44,7 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         self.grid = None
         self.cell_size = float(cell_size)
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")
