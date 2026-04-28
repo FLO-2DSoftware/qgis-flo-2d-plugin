@@ -6417,12 +6417,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty("user_swmm_inlets_junctions") and \
                 self.gutils.is_table_empty("user_swmm_storage_units"):
             return
-
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
         txt = "Do you want to assign Max. Depth to all nodes that \ndo not have Max. Depth assigned or select the nodes?\n\n" \
               "Max. Depth = Grid Elevation - Invert Elevation\n"
-        dialog = self.uc.dialog_with_2_customized_buttons(
-            "Assign Max. Depth", txt, "All Nodes", "Selected Nodes"
-        )
+        dialog = self.uc.dialog_with_2_customized_buttons("Assign Max. Depth", txt, "All Nodes", "Selected Nodes", parent)
 
         if dialog == self.uc.msgbox_button("Yes"):
             try:
