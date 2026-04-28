@@ -15,9 +15,10 @@ uiDialog, qtBaseClass = load_ui("gpkg_backup")
 
 class GpkgBackupDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, gutils):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.iface = iface
         self.gutils = gutils
         self.uc = UserCommunication(iface, "FLO-2D")
