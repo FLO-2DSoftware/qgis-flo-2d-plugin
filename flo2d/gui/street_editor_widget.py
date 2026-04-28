@@ -18,7 +18,7 @@ from ..flo2d_tools.schematic_tools import schematize_streets
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
-from ..utils import  qt_window_flag
+from ..utils import qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("street_editor")
 uiDialog_pop, qtBaseClass_pop = load_ui("street_global")
