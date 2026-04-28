@@ -561,8 +561,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
     def change_struct_name(self):
         if not self.struct_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(self, "Change name", "New name (no spaces, max 15 characters):")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name (no spaces, max 15 characters):")
+        if not new_name:
             return
         if not self.struct_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1737: Structure with name {} already exists in the database. Please, choose another name.".format(

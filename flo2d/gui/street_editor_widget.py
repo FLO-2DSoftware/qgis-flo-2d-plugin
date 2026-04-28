@@ -193,8 +193,8 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
 
     def change_street_name(self):
-        new_name, ok = QInputDialog.getText(None, "Change street name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change street name", "New name:")
+        if not new_name:
             return
         self.street_name_cbo.setItemText(self.street_idx, new_name)
 

@@ -402,8 +402,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.uc.log_info("No time series selected. Please, add or select one first.")
             return
 
-        new_name, ok = QInputDialog.getText(self, "Change data name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change data name", "New name:")
+        if not new_name:
             return
         self.bc_type = type
         # inflow
@@ -703,8 +703,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if type == "outflow":
                 self.no_bc_disable("outflow")
             return
-        new_name, ok = QInputDialog.getText(self, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not cb.findText(new_name) == -1:
             msg = f"WARNING 060319.1619: Boundary condition with name {new_name} already exists in the database. Please, choose another name."

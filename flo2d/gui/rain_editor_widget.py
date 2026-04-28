@@ -527,8 +527,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def rename_tseries(self):
         if not self.rain:
             return
-        new_name, ok = QInputDialog.getText(self, "Change timeseries name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change timeseries name", "New name:")
+        if not new_name:
             return
         if not self.tseries_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1725: Time series with name {} already exists in the database. Please, choose another name.".format(

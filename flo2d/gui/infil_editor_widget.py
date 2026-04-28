@@ -276,8 +276,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
         if not self.infil_name_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(self, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.infil_name_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1723: Infiltration with name {} already exists in the database. Please, choose another name."

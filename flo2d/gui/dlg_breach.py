@@ -630,12 +630,8 @@ class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
         #         mode = QLineEdit.Normal
         #         default = "<your name here>"
         #         txt, ok = QinputDialog.getText(qid,title, label, mode, default)
-        ID, ok = QInputDialog.getText(
-            None,
-            "New fragility curve ID",
-            "Fragility curve ID (one letter and one number)",
-        )
-        if not ok or not ID:
+        ID= self.uc.input_text("New fragility curve ID", "Fragility curve ID (one letter and one number)",)
+        if not ID:
             return
         sql = """INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES (?,?,?);"""
         self.gutils.execute(

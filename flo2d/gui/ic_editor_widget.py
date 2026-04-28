@@ -301,8 +301,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
     def rename_res(self):
         if not self.res_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.res_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1722: Reservoir with name {} already exists in the database. Please, choose another name.".format(
@@ -317,8 +317,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
     def rename_chan(self):
         if not self.chan_seg_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.chan_seg_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1722: Channel with name {} already exists in the database. Please, choose another name.".format(
@@ -333,8 +333,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
     def rename_tal(self):
         if not self.tailings_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.tailings_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1722: Tailings with name {} already exists in the database. Please, choose another name.".format(
@@ -352,8 +352,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         """
         if not self.tailing_res_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.tailing_res_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1722: Tailings with name {} already exists in the database. Please, choose another name.".format(
