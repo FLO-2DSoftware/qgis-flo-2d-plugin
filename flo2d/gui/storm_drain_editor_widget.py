@@ -3030,7 +3030,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         return True
 
     def import_INP_action(self):
-        msg = QMessageBox()
+        parent = iface.mainWindo() if iface and iface.mainWindow() else None
+        msg = QMessageBox(parent)
         msg.setWindowTitle("Replace or complete Storm Drain User Data")
         msg.setText(
             "There is already Storm Drain data in the Users Layers.\n\nWould you like to keep it and complete it with data taken from the .INP file?\n\n"
