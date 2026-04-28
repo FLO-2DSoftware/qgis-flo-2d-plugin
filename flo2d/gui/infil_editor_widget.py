@@ -30,7 +30,7 @@ from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 from ..geopackage_utils import GeoPackageUtils
 
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, qt_cursor_shape, qmeta_type
+from ..utils import m_fdata, qt_cursor_shape, qmeta_type, qt_window_flag
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 from ..misc.ssurgo_soils import SsurgoSoil
@@ -276,8 +276,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
         if not self.infil_name_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(self, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.infil_name_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1723: Infiltration with name {} already exists in the database. Please, choose another name."
@@ -649,7 +649,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
         self.con = self.iface.f2d["con"]
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.chan_dlg = ChannelDialog(self.iface, self.lyrs)
         self.global_imethod = 0
@@ -861,7 +861,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.lyrs = lyrs
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.rb_NRCS = self.rb_NRCS
         self.soil_combos = [
@@ -1605,7 +1605,7 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
 
         self.single_combos = [self.cn_cbo]

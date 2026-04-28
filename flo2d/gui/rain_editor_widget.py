@@ -527,8 +527,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def rename_tseries(self):
         if not self.rain:
             return
-        new_name, ok = QInputDialog.getText(None, "Change timeseries name", "New name:")
-        if not ok or not new_name:
+        new_name = self.uc.input_text("Change timeseries name", "New name:")
+        if not new_name:
             return
         if not self.tseries_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1725: Time series with name {} already exists in the database. Please, choose another name.".format(
@@ -682,19 +682,12 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 return None
             return cs
         else:
-            r, ok = QInputDialog.getDouble(
-                None,
-                "Grid Cell Size",
-                "Enter grid element cell size",
-                value=100,
-                min=0.1,
-                max=99999,
-            )
-            if ok:
-                cs = r
-                self.gutils.set_cont_par("CELLSIZE", cs)
-            else:
+            cs = self.uc.input_double("Grid Cell Size", "Enter grid element cell size", value=100, min_val=0.1)
+            if cs is None:
                 return None
+
+        self.gutils.set_cont_par("CELLSIZE", cs)
+        return cs
 
     def set_rain(self):
         if not self.rain:

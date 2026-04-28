@@ -28,9 +28,11 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QSpinBox,
     QVBoxLayout,
-    QHBoxLayout,    
+    QHBoxLayout,
+    QInputDialog,
 )
 from qgis.PyQt.QtGui import QFont
+from qgis.utils import iface
 
 from flo2d.utils import qt_window_modality, qt_window_type, qt_alignment_flag, mb_button, qsizepolicy_policy
 
@@ -297,6 +299,23 @@ class UserCommunication(object):
     def clear_bar_messages(self):
         self.iface.messageBar().clearWidgets()
 
+    def input_text(self, title, label, default_text=""):
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        text, ok = QInputDialog.getText(parent, title, label, text=default_text)
+        if ok and text.strip():
+            return text.strip()
+        return None
+
+    def input_int(self, title, label, value=0, min_val=0, max_val=999999, step=1):
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        val, ok = QInputDialog.getInt(parent, title, label, value=value, min=min_val, max=max_val, step=step)
+        return val if ok else None
+
+    def input_double(self, title, label, value=0.0, min_val=0.0, max_val=999999.0, decimals=2):
+        parent = iface.maiWindow() if iface and iface.mainWindow() else None
+        val, ok = QInputDialog.getDouble(parent, title, label, value=value, min=min_val, max=max_val, decimals=decimals)
+        return val if ok else None
+
 
 class ScrollMessageBox(QMessageBox):
     def __init__(self, msg, *args, **kwargs):
@@ -375,4 +394,3 @@ class TwoInputsDialog(QDialog):
 
         layout.addSpacing(20)
         layout.addLayout(button_layout)
-

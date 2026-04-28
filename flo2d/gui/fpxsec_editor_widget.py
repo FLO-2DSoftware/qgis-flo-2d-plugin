@@ -205,8 +205,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
     def rename_fpxs(self):
         if not self.fpxs_cbo.count():
             return
-        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
-        if not ok or not new_name:
+        new_name= self.uc.input_text("Change name", "New name:")
+        if not new_name:
             return
         if not self.fpxs_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1704: Floodplain cross-sections with name {} already exists in the database. Please, choose another name."
