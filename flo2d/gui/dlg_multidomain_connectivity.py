@@ -3,7 +3,7 @@ import time
 
 from ..deps import safe_h5py as h5py
 from qgis.PyQt.QtWidgets import QProgressDialog
-from qgis.PyQt.QtCore import NULL
+from qgis.PyQt.QtCore import NULL, Qt
 
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
@@ -14,10 +14,11 @@ uiDialog, qtBaseClass = load_ui("multiple_domains_connectivity")
 
 class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, con, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog | Qt.Tool)
         self.con = con
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
