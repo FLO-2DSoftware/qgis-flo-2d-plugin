@@ -607,8 +607,8 @@ class Flo2D(object):
 
     @staticmethod
     def f2d_dock_save_area(area):
-        s = QSettings("FLO2D")
-        s.setValue("dock/area", area)
+        s = QSettings()
+        s.setValue("FLO-2D/dock/area", area)
 
     def create_f2d_plot_dock(self):
         self.f2d_plot_dock = QgsDockWidget()  # The QDockWidget class provides a widget that can be docked inside
@@ -622,8 +622,8 @@ class Flo2D(object):
 
     @staticmethod
     def f2d_table_dock_save_area(area):
-        s = QSettings("FLO2D")
-        s.setValue("table_dock/area", area)
+        s = QSettings()
+        s.setValue("FLO-2D/table_dock/area", area)
 
     def create_f2d_table_dock(self):
         self.f2d_table_dock = QgsDockWidget()
@@ -635,8 +635,8 @@ class Flo2D(object):
 
     @staticmethod
     def f2d_plot_dock_save_area(area):
-        s = QSettings("FLO2D")
-        s.setValue("plot_dock/area", area)
+        s = QSettings()
+        s.setValue("FLO-2D/plot_dock/area", area)
 
     def create_f2d_grid_info_dock(self):
         self.f2d_grid_info_dock = QgsDockWidget()
@@ -651,37 +651,37 @@ class Flo2D(object):
 
     @staticmethod
     def f2d_grid_info_dock_save_area(area):
-        s = QSettings("FLO2D")
-        s.setValue("grid_info_dock/area", area)
+        s = QSettings()
+        s.setValue("FLO-2D/grid_info_dock/area", area)
 
     def add_docks_to_iface(self):
-        s = QSettings("FLO2D")
-        ma = s.value("dock/area", 0, type=int)
-        ta = s.value("table_dock/area", 0, type=int)
-        pa = s.value("plot_dock/area", 0, type=int)
-        ga = s.value("grid_info_dock/area", 0, type=int)
+        s = QSettings()
+        ma = s.value("FLO-2D/dock/area", 0, type=int)
+        ta = s.value("FLO-2D/table_dock/area", 0, type=int)
+        pa = s.value("FLO-2D/plot_dock/area", 0, type=int)
+        ga = s.value("FLO-2D/grid_info_dock/area", 0, type=int)
 
         if ma == 0:
             self.iface.addDockWidget(qt_dock_widget_area("RightDockWidgetArea"), self.f2d_dock)
-            self.f2d_dock.setFloating(True)
+            self.f2d_dock.setFloating(False)
         else:
             self.iface.addDockWidget(dock_area_from_int(ma), self.f2d_dock)
 
         if ta == 0:
             self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_table_dock)
-            self.f2d_table_dock.setFloating(True)
+            self.f2d_table_dock.setFloating(False)
         else:
             self.iface.addDockWidget(dock_area_from_int(ta), self.f2d_table_dock)
 
         if pa == 0:
             self.iface.addDockWidget(qt_dock_widget_area("BottomDockWidgetArea"), self.f2d_plot_dock)
-            self.f2d_plot_dock.setFloating(True)
+            self.f2d_plot_dock.setFloating(False)
         else:
             self.iface.addDockWidget(dock_area_from_int(pa), self.f2d_plot_dock)
 
         if ga == 0:
             self.iface.addDockWidget(qt_dock_widget_area("TopDockWidgetArea"), self.f2d_grid_info_dock)
-            self.f2d_grid_info_dock.setFloating(True)
+            self.f2d_grid_info_dock.setFloating(False)
         else:
             self.iface.addDockWidget(dock_area_from_int(ga), self.f2d_grid_info_dock)
 
