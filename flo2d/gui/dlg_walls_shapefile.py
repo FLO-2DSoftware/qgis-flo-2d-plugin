@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, qt_cursor_shape, qdialogbuttonbox_button
+from ..utils import float_or_zero, qt_cursor_shape, qdialogbuttonbox_button, qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("walls_shapefile")
@@ -29,11 +29,12 @@ uiDialog, qtBaseClass = load_ui("walls_shapefile")
 
 class WallsShapefile(qtBaseClass, uiDialog):
     def __init__(self, con, iface, layers):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = layers
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
