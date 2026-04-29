@@ -234,8 +234,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 dlg_components.hdf5_rb.setChecked(False)
                 dlg_components.data_rb.setChecked(True)
             else:
-                dlg_components.hdf5_rb.setChecked(True)
-                dlg_components.data_rb.setChecked(False)
+                dlg_components.hdf5_rb.setChecked(False)
+                dlg_components.data_rb.setChecked(True)
 
             QApplication.restoreOverrideCursor()
 

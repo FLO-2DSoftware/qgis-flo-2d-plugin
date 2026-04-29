@@ -90,7 +90,7 @@ from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
-    qt_dock_widget_area, dock_area_from_int, qt_window_type
+    qt_dock_widget_area, dock_area_from_int, qt_window_type, mb_button
 
 from PIL import Image
 
@@ -2747,8 +2747,8 @@ class Flo2D(object):
                     dlg_components.hdf5_rb.setChecked(False)
                     dlg_components.data_rb.setChecked(True)
                 else:
-                    dlg_components.hdf5_rb.setChecked(True)
-                    dlg_components.data_rb.setChecked(False)
+                    dlg_components.hdf5_rb.setChecked(False)
+                    dlg_components.data_rb.setChecked(True)
 
             # Check the presence of fplain cadpts neighbors dat files
             files = [
