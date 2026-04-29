@@ -4097,7 +4097,8 @@ class Flo2D(object):
                 #                     dletes = Qt.convertFromPlainText(dletes)
                 QApplication.restoreOverrideCursor()
 
-                m = QMessageBox()
+                parent = iface.mainWindow() if iface and iface.mainWindow() else None
+                m = QMessageBox(parent)
                 title = "Duplicate Opposite Levee Directions".center(170)
                 m.setWindowTitle(title)
                 m.setText(
