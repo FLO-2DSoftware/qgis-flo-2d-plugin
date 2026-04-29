@@ -157,7 +157,7 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -365,7 +365,7 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -589,7 +589,7 @@ class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -722,7 +722,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None

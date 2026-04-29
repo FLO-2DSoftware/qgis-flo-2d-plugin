@@ -27,7 +27,7 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.iface = iface
         self.lyrs = lyrs
         self.gutils = gutils

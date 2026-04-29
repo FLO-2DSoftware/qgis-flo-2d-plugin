@@ -36,7 +36,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.con = con
         self.lyrs = lyrs
         self.uc = uc

@@ -26,7 +26,7 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
         self.flo2d_browse.clicked.connect(self.get_flo2d_dir)

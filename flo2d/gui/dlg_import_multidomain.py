@@ -57,7 +57,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         # Setup the UI
         self.setupUi(self)
 
-        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
 
         # Initialize subdomain dialog elements
         self.initialize_subdomain_elements()
