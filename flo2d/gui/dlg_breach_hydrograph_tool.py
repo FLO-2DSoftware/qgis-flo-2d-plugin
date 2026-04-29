@@ -25,17 +25,18 @@ import numpy as np
 
 import xml.etree.ElementTree as ET
 
-from ..utils import qt_window_type, qsizepolicy_policy
+from ..utils import qt_window_type, qsizepolicy_policy, qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("breach_hydrograph_tool")
 
 
 class BreachHydrographToolDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, bc_editor):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.con = con
         self.lyrs = lyrs
         self.bc_editor = bc_editor
