@@ -16,7 +16,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, qt_item_role
+from ..utils import float_or_zero, qt_item_role, qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("channel_geometry")
@@ -29,7 +29,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None

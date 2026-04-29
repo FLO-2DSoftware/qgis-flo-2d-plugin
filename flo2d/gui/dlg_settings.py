@@ -50,7 +50,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.ilg = InvisibleLayersAndGroups(self.iface)
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.setModal(True)
         self.con = con

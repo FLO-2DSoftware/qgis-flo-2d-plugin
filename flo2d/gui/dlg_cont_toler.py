@@ -17,7 +17,7 @@ from .dlg_mud_and_sediment import MudAndSedimentDialog
 from .rain_editor_widget import RainEditorWidget
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, qt_cursor_shape
+from ..utils import float_or_zero, qt_cursor_shape,qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("cont_toler")
@@ -346,7 +346,7 @@ class ContToler(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
 

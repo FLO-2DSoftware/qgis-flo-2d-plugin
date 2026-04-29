@@ -94,7 +94,7 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         self.con = con
         self.iface = iface
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.polulate_INP_values()

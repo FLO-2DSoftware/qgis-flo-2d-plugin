@@ -8,7 +8,7 @@ from qgis._core import QgsProject
 
 from flo2d.gui.ui_utils import load_ui
 from flo2d.user_communication import UserCommunication
-from flo2d.utils import qt_cursor_shape
+from flo2d.utils import qt_cursor_shape, qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("gpkg_backup")
 
@@ -18,7 +18,7 @@ class GpkgBackupDialog(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.iface = iface
         self.gutils = gutils
         self.uc = UserCommunication(iface, "FLO-2D")

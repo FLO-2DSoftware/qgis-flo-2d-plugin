@@ -16,6 +16,7 @@ from qgis.PyQt.QtWidgets import QFileDialog
 from ..flo2d_ie.ras_io import RASProject
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("ras_import")
 
@@ -25,7 +26,7 @@ class RasImportDialog(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.con = con
         self.iface = iface
         self.lyrs = lyrs

@@ -19,7 +19,6 @@ from qgis.PyQt.QtGui import (
 )
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QInputDialog,
     QTableWidgetItem,
     QWidget,
 )
@@ -34,7 +33,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero, qt_item_role, qt_cursor_shape, qevent_type
+from ..utils import float_or_zero, int_or_zero, qt_item_role, qt_cursor_shape, qevent_type, qt_window_flag
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
 
@@ -158,7 +157,7 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -366,7 +365,7 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -590,7 +589,7 @@ class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -723,7 +722,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None

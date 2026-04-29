@@ -14,7 +14,7 @@ from .ui_utils import load_ui
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication, is_file_locked
-from ..utils import qt_cursor_shape
+from ..utils import qt_cursor_shape, qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("export_multiple_domains")
 
@@ -32,7 +32,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
         self.con = con
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")

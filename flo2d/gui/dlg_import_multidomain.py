@@ -18,6 +18,7 @@ from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..utils import qt_window_flag
 
 MAX_SUBDOMAINS = 15
 
@@ -56,7 +57,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         # Setup the UI
         self.setupUi(self)
 
-        self.setWindowFlags(Qt.Dialog | Qt.Tool)
+        self.setWindowFlags(qt_window_flag(Qt.Dialog) | qt_window_flag(Qt.Tool))
 
         # Initialize subdomain dialog elements
         self.initialize_subdomain_elements()
