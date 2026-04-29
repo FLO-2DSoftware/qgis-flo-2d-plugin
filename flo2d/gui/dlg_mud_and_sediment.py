@@ -12,13 +12,12 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QComboBox,
-    QInputDialog,
     QTableWidgetItem,
 )
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import FloatDelegate, qt_item_role, qt_cursor_shape
+from ..utils import FloatDelegate, qt_item_role, qt_cursor_shape, qt_window_flag
 from .ui_utils import load_ui, set_icon
 from ..flo2d_tools.grid_tools import number_of_elements
 
@@ -27,11 +26,12 @@ uiDialog, qtBaseClass = load_ui("mud_and_sediment")
 
 class MudAndSedimentDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
         self.gutils = None
