@@ -26,6 +26,7 @@ from ..flo2d_tools.schema2user_tools import (
 from ..geopackage_utils import GeoPackageUtils
 from .ui_utils import load_ui
 from ..flo2d_ie.flo2d_parser import ParseDAT
+from ..utils import qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("schema2user")
 
