@@ -9253,9 +9253,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for tsd_row in self.execute(ts_data_sql, (time_series_fid,)):
                     tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
                     _, time, value, value2 = tsd_row
-                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                        create_array(four_values, 4, np.float64,
-                                     (split_ts[line_hyd], time, round(value / len(line_cells), 2), value2)))
+                    try:
+                        bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                            create_array(four_values, 4, np.float64,
+                                         (split_ts[line_hyd], time, round(value / len(line_cells), 2), value2)))
+                    except:
+                        bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                        bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                            create_array(four_values, 4, np.float64,
+                                         (split_ts[line_hyd], time, round(value / len(line_cells), 2), value2)))
+
+
 
         previous_iid = -1
         row = None
