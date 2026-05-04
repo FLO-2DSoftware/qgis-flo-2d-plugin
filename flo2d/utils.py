@@ -650,3 +650,8 @@ def qt_window_flag(name):
     if hasattr(Qt, "WindowType"): # Qt6
         return getattr(Qt.WindowType, name)
     return getattr(Qt, name) #Qt5
+
+def mb_icon(name):
+    if hasattr(QMessageBox, "Icon"): #Qt6
+        return getattr(QMessageBox.Icon, name)
+    return getattr(QMessageBox, name) #Qt5
