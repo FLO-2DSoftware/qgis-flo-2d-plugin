@@ -400,6 +400,9 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             # non-text dat:
             self.uc.show_warn(os.path.basename(debug_file) + " is not a text file!")
             self.uc.log_info(os.path.basename(debug_file) + " is not a text file!")
+
+            QApplication.restoreOverrideCursor()
+
             return False
 
     def populate_errors_cbo(self):
