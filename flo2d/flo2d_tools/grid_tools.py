@@ -44,7 +44,7 @@ from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QProgressDialog
 
 from ..errors import Flo2dError, GeometryValidityErrors
 from ..gui.ui_utils import center_canvas, zoom_show_n_cells
-from ..utils import get_file_path, is_number, qt_cursor_shape, qt_window_modality, qt_pen_style, qmeta_type
+from ..utils import get_file_path, is_number, qt_cursor_shape, qt_window_modality, qt_pen_style, qmeta_type, mb_icon
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None
@@ -446,7 +446,7 @@ def show_error(msg):
     function = exc_tb.tb_frame.f_code.co_name
     line = str(exc_tb.tb_lineno)
     ms_box = QMessageBox(
-        QMessageBox.Critical,
+        mb_icon("Critical"),
         "Error",
         msg
         + "\n\n"

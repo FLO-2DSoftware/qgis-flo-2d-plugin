@@ -34,7 +34,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.PyQt.QtGui import QFont
 from qgis.utils import iface
 
-from flo2d.utils import qt_window_modality, qt_window_type, qt_alignment_flag, mb_button, qsizepolicy_policy
+from flo2d.utils import qt_window_modality, qt_window_type, qt_alignment_flag, mb_button, qsizepolicy_policy, mb_icon
 
 
 def is_file_locked(filepath):
@@ -95,7 +95,7 @@ class UserCommunication(object):
             msgBox.setWindowTitle("FLO-2D")
             icon = QMessageBox.Information if type=="info" else + \
                     QMessageBox.Warning if type=="warning" else + \
-                    QMessageBox.Critical if type=="error" else QMessageBox.Information
+                    mb_icon("Critical") if type=="error" else QMessageBox.Information
             msgBox.setIcon(icon)
             horizontalSpacer = QSpacerItem(hSize, 0, qsizepolicy_policy("Minimum"), qsizepolicy_policy("Expanding"))
             layout = msgBox.layout()
@@ -114,7 +114,7 @@ class UserCommunication(object):
 
     def show_critical(self, msg):
         if self.iface is not None:
-            QMessageBox.critical(self.iface.mainWindow(), self.context, msg)
+            mb_icon("Critical")(self.iface.mainWindow(), self.context, msg)
         else:
             print(msg)
 
@@ -128,7 +128,7 @@ class UserCommunication(object):
 
             formatted_lines = traceback.format_exc().splitlines()
 
-            QMessageBox.critical(
+            mb_icon("Critical")(
                 self.iface.mainWindow(),
                 self.context,
                 msg

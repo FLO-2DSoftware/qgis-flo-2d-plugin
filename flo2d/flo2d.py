@@ -90,7 +90,7 @@ from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
-    qt_dock_widget_area, dock_area_from_int, qt_window_type
+    qt_dock_widget_area, dock_area_from_int, qt_window_type, mb_icon
 
 from PIL import Image
 
@@ -2584,7 +2584,7 @@ class Flo2D(object):
         }
 
         if bname not in file_to_import_calls:
-            QMessageBox.critical(
+            mb_icon("Critical")(
                 self.iface.mainWindow(),
                 "Import selected DAT file",
                 "Import from {0} file is not supported.".format(bname),
@@ -2617,7 +2617,7 @@ class Flo2D(object):
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
-                QMessageBox.critical(
+                mb_icon("Critical")(
                     self.iface.mainWindow(),
                     "Import selected GDS file",
                     "Import from {0} fails".format(bname),

@@ -38,7 +38,7 @@ from .grid_tools import (
     spatial_index,
 )
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
-from ..utils import qmeta_type
+from ..utils import qmeta_type, mb_icon, mb_button
 from .. user_communication import UserCommunication
 
 
@@ -312,10 +312,10 @@ class GridElevation(ElevationCorrector):
             QApplication.restoreOverrideCursor()
             parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
-                QMessageBox.Critical,
+                mb_icon("Critical"),
                 "Error",
                 "Please, define Elevation Polygon.",
-                QMessageBox.Ok,
+                mb_button("Ok"),
                 parent
             )
             ms_box.exec()
@@ -369,10 +369,10 @@ class GridElevation(ElevationCorrector):
             QApplication.restoreOverrideCursor()
             parent = iface.mainWindow() if iface and iface.mainWindow() else None
             ms_box = QMessageBox(
-                QMessageBox.Critical,
+                mb_icon("Critical"),
                 "Error",
                 "Please, define Elevation Polygon & Elevation points.",
-                QMessageBox.Ok,
+                mb_button("Ok"),
                 parent
             )
             ms_box.exec()
@@ -426,10 +426,10 @@ class GridElevation(ElevationCorrector):
         if self.user_polygons.featureCount() <= 0:
             QApplication.restoreOverrideCursor()
             ms_box = QMessageBox(
-                QMessageBox.Critical,
+                mb_icon("Critical"),
                 "Error",
                 "Please, define Elevation Polygon.",
-                QMessageBox.Ok,
+                mb_button("Ok"),
                 parent
             )
             ms_box.exec()
@@ -497,10 +497,10 @@ class GridElevation(ElevationCorrector):
         if self.blocked_areas.featureCount() <= 0:
             QApplication.restoreOverrideCursor()
             ms_box = QMessageBox(
-                QMessageBox.Critical,
+                mb_icon("Critical"),
                 "Error",
                 "Please, define Blocked Areas.",
-                QMessageBox.Ok,
+                mb_button("Ok"),
                 parent
             )
             ms_box.exec()

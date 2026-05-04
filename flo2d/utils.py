@@ -344,7 +344,7 @@ def Msge(msg_string, icon):
     if icon == "Info":
         msgBox.setIcon(QMessageBox.Information)
     elif icon == "Error":
-        msgBox.setIcon(QMessageBox.Critical)
+        msgBox.setIcon(mb_icon("Critical"))
     elif icon == "Warning":
         msgBox.setIcon(QMessageBox.Warning)
     msgBox.setText(msg_string)
