@@ -13,6 +13,7 @@ import os
 from qgis.gui import QgsFileWidget
 from qgis.PyQt.QtCore import Qt
 
+from ..utils import qt_window_flag
 from .ui_utils import load_ui
 
 
@@ -30,7 +31,7 @@ class RGHDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
 
         # widgets from rgh.ui
         self.gb = self.mannings_n_rgh
