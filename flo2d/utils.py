@@ -655,3 +655,8 @@ def mb_icon(name):
     if hasattr(QMessageBox, "Icon"): #Qt6
         return getattr(QMessageBox.Icon, name)
     return getattr(QMessageBox, name) #Qt5
+
+def mb_role(name):
+    if hasattr(QMessageBox, "ButtonRole"): #Qt6
+        return getattr(QMessageBox.ButtonRole, name)
+    return getattr(QMessageBox, name) #Qt5
