@@ -74,7 +74,7 @@ from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, \
     qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag, qt_dock_widget_area, qmeta_type, qdialog_code, \
-    qfiledialog_option, qt_window_flag
+    qfiledialog_option, qt_window_flag, mb_role
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -3040,7 +3040,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
         msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
-        msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
+        msg.addButton(QPushButton("Cancel"), mb_role("RejectRole"))
         msg.setDefaultButton(QMessageBox().Cancel)
         msg.setIcon(QMessageBox.Question)
         ret = msg.exec()
