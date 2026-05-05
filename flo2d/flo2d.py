@@ -90,7 +90,7 @@ from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
-    qt_dock_widget_area, dock_area_from_int, qt_window_type
+    qt_dock_widget_area, dock_area_from_int, qt_window_type, mb_role, mb_button
 
 from PIL import Image
 
@@ -2617,7 +2617,7 @@ class Flo2D(object):
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
-                mb_icon("Critical")(
+                QMessageBox.critical(
                     self.iface.mainWindow(),
                     "Import selected GDS file",
                     "Import from {0} fails".format(bname),
@@ -3210,7 +3210,7 @@ class Flo2D(object):
 
                     msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
                     msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
-                    msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
+                    msg.addButton(QPushButton("Cancel"), mb_role("RejectRole"))
                     msg.setDefaultButton(QMessageBox().Cancel)
                     msg.setIcon(QMessageBox.Question)
                     ret = msg.exec()
