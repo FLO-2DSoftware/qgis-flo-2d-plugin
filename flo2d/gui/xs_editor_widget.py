@@ -1322,7 +1322,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             )
                             msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), self.uc.msgbox_role("NoRole"))
                             msg.addButton(QPushButton("Cancel"), mb_role("RejectRole"))
-                            msg.setDefaultButton(QMessageBox().Cancel)
+                            msg.setDefaultButton(self.uc.msgbox_button("Cancel"))
                             msg.setIcon(QMessageBox.Question)
                             ret = msg.exec()
                             if ret == 0:
