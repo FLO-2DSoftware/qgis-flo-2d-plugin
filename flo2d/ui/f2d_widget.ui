@@ -30,8 +30,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>363</width>
-        <height>740</height>
+        <width>388</width>
+        <height>658</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -53,7 +53,7 @@
           <string>Storm Drain Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_14">
           <property name="leftMargin">
@@ -80,7 +80,7 @@
           <string>Multiple Channels Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_15">
           <property name="leftMargin">
@@ -107,7 +107,7 @@
           <string>Profile Tool</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_7">
           <property name="leftMargin">
@@ -219,7 +219,7 @@
           <string>Structures Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_8">
           <property name="leftMargin">
@@ -246,7 +246,7 @@
           <string>Initial Condition Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <property name="leftMargin">
@@ -277,7 +277,7 @@
           <string>Levees and Breach Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_12">
           <property name="leftMargin">
@@ -304,7 +304,7 @@
           <string>Areas Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout">
           <property name="leftMargin">
@@ -331,7 +331,7 @@
           <string>Rain Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_5">
           <property name="leftMargin">
@@ -358,7 +358,7 @@
           <string>Grid Tools</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_6">
           <property name="leftMargin">
@@ -384,6 +384,9 @@
          <property name="title">
           <string>Boundary Condition Editor</string>
          </property>
+         <property name="collapsed">
+          <bool>true</bool>
+         </property>
          <layout class="QGridLayout" name="gridLayout_18">
           <property name="leftMargin">
            <number>6</number>
@@ -408,6 +411,9 @@
          <property name="title">
           <string>Multiple Domains Editor</string>
          </property>
+         <property name="collapsed">
+          <bool>true</bool>
+         </property>
          <layout class="QGridLayout" name="gridLayout_19">
           <property name="leftMargin">
            <number>6</number>
@@ -431,6 +437,9 @@
         <widget class="QgsCollapsibleGroupBox" name="street_editor_grp">
          <property name="title">
           <string>Street Editor</string>
+         </property>
+         <property name="collapsed">
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_4">
           <property name="leftMargin">
@@ -457,7 +466,7 @@
           <string>Infiltration Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_10">
           <property name="leftMargin">
@@ -489,7 +498,7 @@
           <string>Pre-processing Tools</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_17">
           <property name="leftMargin">
@@ -516,7 +525,7 @@
           <string>Cross Sections Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_13">
           <property name="leftMargin">
@@ -593,7 +602,7 @@
           <string>Floodplain Cross Sections Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_9">
           <property name="leftMargin">
@@ -620,7 +629,7 @@
           <string>Schematized Channels Editor</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_11">
           <property name="leftMargin">
