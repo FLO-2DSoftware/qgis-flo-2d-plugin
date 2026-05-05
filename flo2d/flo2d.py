@@ -3212,7 +3212,7 @@ class Flo2D(object):
                     msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
                     msg.addButton(QPushButton("Cancel"), mb_role("RejectRole"))
                     msg.setDefaultButton(self.uc.msgbox_button("Cancel"))
-                    msg.setIcon(QMessageBox.Question)
+                    msg.setIcon(self.uc.msgbox_icon("Question"))
                     ret = msg.exec()
                     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     if ret == 0:
