@@ -341,7 +341,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         idx = self.channel_segment_cbo.currentIndex() + 1
 
-        if self.initial_flow_elements_grp.isChecked():
+        if self.initial_flow_elems_grp.isChecked():
             self.initial_flow_for_all_dbox.setEnabled(False)
 
             exists = self.gutils.execute(sql_exists, (idx,)).fetchone()
