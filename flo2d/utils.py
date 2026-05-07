@@ -660,3 +660,8 @@ def mb_role(name):
     if hasattr(QMessageBox, "ButtonRole"): #Qt6
         return getattr(QMessageBox.ButtonRole, name)
     return getattr(QMessageBox, name) #Qt5
+
+def qt_key(name):
+    if hasattr(Qt, "Key"): # Qt6
+        return getattr(Qt.Key, name)
+    return getattr(Qt, name) # Qt5
