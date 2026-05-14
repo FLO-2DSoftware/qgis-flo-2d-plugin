@@ -26,7 +26,7 @@ except ImportError:
 
 
 from ..user_communication import UserCommunication
-from ..utils import is_number, qt_item_role, qt_cursor_shape, qevent_type, qt_keyboard_modifier
+from ..utils import is_number, qt_item_role, qt_cursor_shape, qevent_type, qt_keyboard_modifier, qt_key
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("table_editor")
@@ -201,12 +201,12 @@ class TableEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
         if event.type() == qevent_type("KeyPress"):
             if event.modifiers() & qt_keyboard_modifier("ControlModifier"):
-                if event.key() == Qt.Key_C:
+                if event.key() == qt_key("Key_C"):
                     table_editor_widget = receiver.parent()
                     if isinstance(table_editor_widget, TableEditorWidget):
                         table_editor_widget.copy_selection()
                     return True
-                elif event.key() == Qt.Key_V:
+                elif event.key() == qt_key("Key_V"):
                     table_editor_widget = receiver.parent()
                     if isinstance(table_editor_widget, TableEditorWidget):
                         table_editor_widget.paste()

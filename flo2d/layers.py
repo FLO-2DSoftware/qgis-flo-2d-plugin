@@ -26,7 +26,7 @@ from qgis.core import (
     QgsWkbTypes,
 )
 from qgis.gui import QgsRubberBand
-from qgis.PyQt.QtCore import Qt
+from qgis.utils import iface
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication
 
@@ -2424,7 +2424,8 @@ class Layers(object):
         self.collapse_all_flo2d_groups()
         self.group = group
 
-        pd = QProgressDialog("Loading layers...", None, 0, len(self.data))
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        pd = QProgressDialog("Loading layers...", None, 0, len(self.data), parent)
         pd.setWindowTitle("Loading layers")
         pd.setModal(True)
         pd.forceShow()
@@ -2494,6 +2495,9 @@ class Layers(object):
             i += 1
             QApplication.processEvents()
             pd.setValue(i)
+
+        pd.close()
+        pd.deleteLater()
 
         s = QSettings()
         s.setValue("FLO-2D/advanced_layers", False)

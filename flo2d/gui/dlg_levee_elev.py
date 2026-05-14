@@ -19,17 +19,18 @@ from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_walls_shapefile import WallsShapefile
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
-from ..utils import qdialogbuttonbox_button
+from ..utils import qdialogbuttonbox_button, qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("levees_elevation")
 
 
 class LeveesToolDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.con = con
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")

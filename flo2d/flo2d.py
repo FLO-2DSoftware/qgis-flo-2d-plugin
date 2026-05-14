@@ -38,7 +38,7 @@ from qgis.PyQt.QtWidgets import (
     QMenu,
     QMessageBox
 )
-from qgis.utils import plugins
+from qgis.utils import plugins, iface
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.flopro_tools import (
     ProgramExecutor,
@@ -90,7 +90,7 @@ from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt_toolbutton_popup_mode, \
-    qt_dock_widget_area, dock_area_from_int, qt_window_type, mb_button
+    qt_dock_widget_area, dock_area_from_int, qt_window_type, mb_role, mb_button
 
 from PIL import Image
 
@@ -1641,31 +1641,39 @@ class Flo2D(object):
     def call_IO_methods_hdf5(self, calls, debug, *args):
         self.f2g.parser.write_mode = "w"
 
-        progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls), parent)
         progDialog.setModal(True)
         progDialog.setValue(0)
         progDialog.show()
-        i = 0
 
-        for call in calls:
+        try:
 
-            i += 1
-            progDialog.setValue(i)
-            progDialog.setLabelText(call)
-            QApplication.processEvents()
+            i = 0
 
-            method = getattr(self.f2g, call)
-            try:
-                method(*args)
-                self.f2g.parser.write_mode = "a"
-            except Exception as e:
-                if debug is True:
-                    self.uc.log_info(traceback.format_exc())
-                else:
-                    raise
+            for call in calls:
 
-        self.f2g.parser.write_mode = "w"
-        self.files_used = self.f2g.parser.list_input_subfolders()
+                i += 1
+                progDialog.setValue(i)
+                progDialog.setLabelText(call)
+                QApplication.processEvents()
+
+                method = getattr(self.f2g, call)
+                try:
+                    method(*args)
+                    self.f2g.parser.write_mode = "a"
+                except Exception as e:
+                    if debug is True:
+                        self.uc.log_info(traceback.format_exc())
+                    else:
+                        raise
+
+            self.f2g.parser.write_mode = "w"
+            self.files_used = self.f2g.parser.list_input_subfolders()
+
+        finally:
+            progDialog.close()
+            progDialog.deleteLater()
 
     def call_IO_methods_dat(self, calls, debug, *args):
         s = QSettings()
@@ -1676,7 +1684,8 @@ class Flo2D(object):
         if calls[0] == "export_cont_toler":
             self.files_used = "CONT.DAT\n"
 
-        progDialog = QProgressDialog("Exporting to DATA...", None, 0, len(calls))
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        progDialog = QProgressDialog("Exporting to DATA...", None, 0, len(calls), parent)
         progDialog.setModal(True)
         progDialog.setValue(0)
         progDialog.show()
@@ -1776,6 +1785,8 @@ class Flo2D(object):
                 else:
                     raise
 
+        progDialog.close()
+        progDialog.deleteLater()
         QApplication.restoreOverrideCursor()
 
     @connection_required
@@ -2256,11 +2267,12 @@ class Flo2D(object):
         Import selected traditional GDS files into FLO-2D database (GeoPackage).
         """
         self.uncheck_all_info_tools()
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
         msg = "This import method imports .DAT files without importing grid related files.\n\n" \
               "* Select 'Several Components' to import multiple *.DAT files.\n" \
               "* Select 'One Single Component' to import one single *.DAT file.\n"
         imprt = self.uc.dialog_with_2_customized_buttons(
-            "Select import method", msg, " Several Components", " One Single Component"
+            "Select import method", msg, " Several Components", " One Single Component", parent
         )
 
         if imprt == self.uc.msgbox_button("Yes"):
@@ -3187,7 +3199,8 @@ class Flo2D(object):
             if self.f2g.set_parser(fname, get_cell_size=False):
                 if not empty_sd:
                     QApplication.restoreOverrideCursor()
-                    msg = QMessageBox()
+                    parent = iface.mainWindow() if iface and iface.mainWindow() else None
+                    msg = QMessageBox(parent)
                     msg.setWindowTitle("Replace or complete Storm Drain User Data")
                     msg.setText(
                         "There is already Storm Drain data in the Users Layers.\n\nWould you like to keep it and "
@@ -3197,9 +3210,9 @@ class Flo2D(object):
 
                     msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
                     msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
-                    msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
-                    msg.setDefaultButton(QMessageBox().Cancel)
-                    msg.setIcon(QMessageBox.Question)
+                    msg.addButton(QPushButton("Cancel"), mb_role("RejectRole"))
+                    msg.setDefaultButton(self.uc.msgbox_button("Cancel"))
+                    msg.setIcon(self.uc.msgbox_icon("Question"))
                     ret = msg.exec()
                     QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
                     if ret == 0:
@@ -4084,7 +4097,8 @@ class Flo2D(object):
                 #                     dletes = Qt.convertFromPlainText(dletes)
                 QApplication.restoreOverrideCursor()
 
-                m = QMessageBox()
+                parent = iface.mainWindow() if iface and iface.mainWindow() else None
+                m = QMessageBox(parent)
                 title = "Duplicate Opposite Levee Directions".center(170)
                 m.setWindowTitle(title)
                 m.setText(

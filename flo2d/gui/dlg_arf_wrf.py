@@ -11,6 +11,7 @@ from qgis._core import QgsWkbTypes
 from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
 from qgis.PyQt.QtCore import Qt
 
+from ..utils import qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("evaluate_blocked_areas")
@@ -22,7 +23,7 @@ class EvaluateReductionFactorsDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.collapse_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)
         self.arf_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)
         self.wrf_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)

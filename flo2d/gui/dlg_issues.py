@@ -9,6 +9,7 @@
 
 import os
 
+from qgis.utils import iface
 from qgis.PyQt.QtWidgets import QDockWidget
 from qgis.core import *
 from qgis.core import (
@@ -37,7 +38,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import copy_tablewidget_selection, qt_item_role, qt_cursor_shape, qt_dock_widget_area, qmeta_type
+from ..utils import copy_tablewidget_selection, qt_item_role, qt_cursor_shape, qt_dock_widget_area, qmeta_type, qt_window_flag
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_show_n_cells
 
 # from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
@@ -50,11 +51,12 @@ uiDialog, qtBaseClass = load_ui("errors_2")
 
 class ErrorsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -398,6 +400,9 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             # non-text dat:
             self.uc.show_warn(os.path.basename(debug_file) + " is not a text file!")
             self.uc.log_info(os.path.basename(debug_file) + " is not a text file!")
+
+            QApplication.restoreOverrideCursor()
+
             return False
 
     def populate_errors_cbo(self):
@@ -1286,10 +1291,11 @@ uiDialog, qtBaseClass = load_ui("issues_files")
 
 class IssuesFiles(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.con = con
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
@@ -2805,30 +2811,34 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
             cellsize = float(self.gutils.get_cont_par("CELLSIZE"))
 
             n_levees = len(levees)
-            pd = QProgressDialog("Finding levees...", None, 0, n_levees)
+            parent = iface.mainWindow() if iface and iface.mainWindow() else None
+            pd = QProgressDialog("Finding levees...", None, 0, n_levees, parent)
             pd.setWindowTitle("Warnings and Errors")
             pd.setModal(True)
             pd.forceShow()
             pd.setValue(0)
             i = 0
 
-            for i in range(n_levees):
-                cell = levees[i][0]
-                dir = levees[i][1]
-                crest = levees[i][2]
+            try:
+                for i in range(n_levees):
+                    cell = levees[i][0]
+                    dir = levees[i][1]
+                    crest = levees[i][2]
 
-                elev = self.gutils.grid_value(cell, "elevation")
+                    elev = self.gutils.grid_value(cell, "elevation")
 
-                adj_cell, adj_elev = get_adjacent_cell_elevation(self.gutils, grid_lyr, cell, dir, cellsize)
-                if adj_cell is not None and adj_elev != -999:
-                    if crest < elev or crest < adj_cell:
-                        self.levee_crests.append([str(i), cell, dir, crest, elev, adj_cell, adj_elev])
+                    adj_cell, adj_elev = get_adjacent_cell_elevation(self.gutils, grid_lyr, cell, dir, cellsize)
+                    if adj_cell is not None and adj_elev != -999:
+                        if crest < elev or crest < adj_cell:
+                            self.levee_crests.append([str(i), cell, dir, crest, elev, adj_cell, adj_elev])
 
-                i += 1
-                pd.setValue(i)
+                    i += 1
+                    pd.setValue(i)
+            finally:
+                pd.close()
+                pd.deleteLater()
 
         self.setWindowTitle("Levee Crests lower than cell elevations")
-
         self.create_levee_crests_conflicts_layer()
 
     def create_levee_crests_conflicts_layer(self):
@@ -2940,7 +2950,8 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
         self.crest_tblw.setRowCount(0)
 
-        pd = QProgressDialog("Checking levees errors...", None, 0, len(self.levee_crests))
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+        pd = QProgressDialog("Checking levees errors...", None, 0, len(self.levee_crests), parent)
         pd.setWindowTitle("Warnings and Errors")
         pd.setModal(True)
         pd.forceShow()
@@ -3006,6 +3017,8 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
             i += 1
             pd.setValue(i)
 
+        pd.close()
+        pd.deleteLater()
         QApplication.restoreOverrideCursor()
 
     def elements_cbo_activated(self):

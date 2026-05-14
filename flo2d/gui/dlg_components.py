@@ -17,17 +17,19 @@ from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
+from ..utils import qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("components")
 
 
 class ComponentsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, in_or_out):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
 
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.con = con
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")

@@ -17,16 +17,17 @@ from flo2d.user_communication import UserCommunication
 
 import processing
 
-from flo2d.utils import qt_cursor_shape
+from flo2d.utils import qt_cursor_shape, qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("gpkg_management")
 
 
 class GpkgManagementDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs, gutils):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.iface = iface
         self.lyrs = lyrs
         self.gutils = gutils

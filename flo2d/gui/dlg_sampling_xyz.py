@@ -38,7 +38,7 @@ from ..user_communication import UserCommunication
 from ..utils import (
     second_smallest,
     set_min_max_elevs,
-    time_taken, qt_cursor_shape, qmeta_type, qt_alignment_flag,
+    time_taken, qt_cursor_shape, qmeta_type, qt_alignment_flag, qt_window_flag
 )
 from .ui_utils import load_ui
 
@@ -58,7 +58,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         self.grid = self.lyrs.data["grid"]["qlyr"]
 
         self.setupUi(self)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")

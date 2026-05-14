@@ -8,10 +8,11 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtCore import Qt
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero
+from ..utils import float_or_zero, int_or_zero, qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("individual_multiple_channels_data")
@@ -19,11 +20,12 @@ uiDialog, qtBaseClass = load_ui("individual_multiple_channels_data")
 
 class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -116,11 +118,12 @@ uiDialog, qtBaseClass = load_ui("individual_simple_multiple_channels_data")
 
 class IndividualSimplifiedMultipleChannelsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None

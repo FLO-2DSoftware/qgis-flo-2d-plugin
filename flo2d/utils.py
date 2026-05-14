@@ -344,7 +344,7 @@ def Msge(msg_string, icon):
     if icon == "Info":
         msgBox.setIcon(QMessageBox.Information)
     elif icon == "Error":
-        msgBox.setIcon(QMessageBox.Critical)
+        msgBox.setIcon(mb_icon("Critical"))
     elif icon == "Warning":
         msgBox.setIcon(QMessageBox.Warning)
     msgBox.setText(msg_string)
@@ -650,3 +650,18 @@ def qt_window_flag(name):
     if hasattr(Qt, "WindowType"): # Qt6
         return getattr(Qt.WindowType, name)
     return getattr(Qt, name) #Qt5
+
+def mb_icon(name):
+    if hasattr(QMessageBox, "Icon"): #Qt6
+        return getattr(QMessageBox.Icon, name)
+    return getattr(QMessageBox, name) #Qt5
+
+def mb_role(name):
+    if hasattr(QMessageBox, "ButtonRole"): #Qt6
+        return getattr(QMessageBox.ButtonRole, name)
+    return getattr(QMessageBox, name) #Qt5
+
+def qt_key(name):
+    if hasattr(Qt, "Key"): # Qt6
+        return getattr(Qt.Key, name)
+    return getattr(Qt, name) # Qt5

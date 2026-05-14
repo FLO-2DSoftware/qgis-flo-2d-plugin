@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, qt_cursor_shape, qdialogbuttonbox_button
+from ..utils import float_or_zero, qt_cursor_shape, qdialogbuttonbox_button, qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("walls_shapefile")
@@ -29,11 +29,12 @@ uiDialog, qtBaseClass = load_ui("walls_shapefile")
 
 class WallsShapefile(qtBaseClass, uiDialog):
     def __init__(self, con, iface, layers):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = layers
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
@@ -103,7 +104,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
         try:
             uri = self.walls_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
-            self.current_lyr = self.lyrs.gget_layer_by_id(lyr_id)
+            self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             for combo_inlets in self.walls_fields_groupBox.findChildren(QComboBox):
                 combo_inlets.clear()

@@ -13,6 +13,7 @@ from qgis.PyQt.QtCore import Qt
 
 from ..flo2d_tools.elevation_correctors import ExternalElevation, GridElevation
 from ..geopackage_utils import GeoPackageUtils
+from ..utils import qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("grid_elevation")
@@ -24,7 +25,7 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.con = con
         self.lyrs = lyrs
         self.gutils = GeoPackageUtils(con, iface)

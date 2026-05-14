@@ -16,7 +16,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, qt_item_role
+from ..utils import float_or_zero, qt_item_role, qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("channel_geometry")
@@ -24,11 +24,12 @@ uiDialog, qtBaseClass = load_ui("channel_geometry")
 
 class ChannelGeometryDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -340,7 +341,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         idx = self.channel_segment_cbo.currentIndex() + 1
 
-        if self.initial_flow_elements_grp.isChecked():
+        if self.initial_flow_elems_grp.isChecked():
             self.initial_flow_for_all_dbox.setEnabled(False)
 
             exists = self.gutils.execute(sql_exists, (idx,)).fetchone()

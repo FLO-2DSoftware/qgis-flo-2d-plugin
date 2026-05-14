@@ -13,6 +13,7 @@ from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import isnan, modf
 from pathlib import Path
+from qgis.utils import iface
 
 from ..misc.project_review_utils import SCENARIO_COLOURS, SCENARIO_STYLES
 
@@ -73,7 +74,7 @@ from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata, qt_item_role, qt_pen_style, \
     qt_cursor_shape, qt_toolbutton_popup_mode, qt_item_flag, qt_dock_widget_area, qmeta_type, qdialog_code, \
-    qfiledialog_option
+    qfiledialog_option, qt_window_flag, mb_role
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom, zoom_cell_buffer
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -88,11 +89,12 @@ uiDialog, qtBaseClass = load_ui("inp_groups")
 
 class INP_GroupsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.con = con
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.polulate_INP_values()
@@ -3028,7 +3030,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         return True
 
     def import_INP_action(self):
-        msg = QMessageBox()
+        parent = iface.mainWindo() if iface and iface.mainWindow() else None
+        msg = QMessageBox(parent)
         msg.setWindowTitle("Replace or complete Storm Drain User Data")
         msg.setText(
             "There is already Storm Drain data in the Users Layers.\n\nWould you like to keep it and complete it with data taken from the .INP file?\n\n"
@@ -3037,9 +3040,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         msg.addButton(QPushButton("Keep existing and complete"), self.uc.msgbox_role("YesRole"))
         msg.addButton(QPushButton("Create new Storm Drains"), self.uc.msgbox_role("NoRole"))
-        msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
-        msg.setDefaultButton(QMessageBox().Cancel)
-        msg.setIcon(QMessageBox.Question)
+        msg.addButton(QPushButton("Cancel"), mb_role("RejectRole"))
+        msg.setDefaultButton(self.uc.msgbox_button("Cancel"))
+        msg.setIcon(self.uc.msgbox_icon("Question"))
         ret = msg.exec()
         if ret == 0:
             return "Keep and Complete"
@@ -6414,12 +6417,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty("user_swmm_inlets_junctions") and \
                 self.gutils.is_table_empty("user_swmm_storage_units"):
             return
-
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
         txt = "Do you want to assign Max. Depth to all nodes that \ndo not have Max. Depth assigned or select the nodes?\n\n" \
               "Max. Depth = Grid Elevation - Invert Elevation\n"
-        dialog = self.uc.dialog_with_2_customized_buttons(
-            "Assign Max. Depth", txt, "All Nodes", "Selected Nodes"
-        )
+        dialog = self.uc.dialog_with_2_customized_buttons("Assign Max. Depth", txt, "All Nodes", "Selected Nodes", parent)
 
         if dialog == self.uc.msgbox_button("Yes"):
             try:
@@ -6633,10 +6634,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 distance_units = "feet"
 
+            parent = iface.mainWindow() if iface and iface.mainWindow() else None
             dialog = TwoInputsDialog("Do you want to overwrite Inlet and Outfall nodes\n" +
                                      "for all links (conduits, pumps, orifices, and weirs)?",
                                      "Find a node located at a distance\nless than this from the link (in " + distance_units + " )",
-                                     self.buffer_distance, "", 5)
+                                     self.buffer_distance, "", 5, parent)
             if dialog.exec() == qdialog_code("Accepted"):
                 self.buffer_distance = dialog.first_input.value()
             else:

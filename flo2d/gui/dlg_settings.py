@@ -37,7 +37,7 @@ from ..geopackage_utils import (
 )
 from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from ..user_communication import UserCommunication
-from ..utils import is_number, get_plugin_version, get_flo2dpro_version, qt_cursor_shape
+from ..utils import is_number, get_plugin_version, get_flo2dpro_version, qt_cursor_shape, qt_window_flag
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("settings")
@@ -45,11 +45,12 @@ uiDialog, qtBaseClass = load_ui("settings")
 
 class SettingsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, gutils):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.ilg = InvisibleLayersAndGroups(self.iface)
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.setModal(True)
         self.con = con

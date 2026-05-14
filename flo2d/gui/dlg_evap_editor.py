@@ -14,7 +14,7 @@ from ..flo2dobjects import Evaporation
 from ..geopackage_utils import GeoPackageUtils
 from .plot_widget import PlotWidget
 from .ui_utils import load_ui
-from ..utils import qt_item_role
+from ..utils import qt_item_role, qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("evaporation_editor")
 
@@ -37,12 +37,13 @@ month_names = [
 
 class EvapEditorDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.con = con
         self.setupUi(self)
         self.setup_plot()
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.setModal(False)
         self.evap = None
         self.gutils = GeoPackageUtils(con, iface)

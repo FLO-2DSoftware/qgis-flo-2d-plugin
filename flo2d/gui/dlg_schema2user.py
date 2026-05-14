@@ -12,7 +12,7 @@ import traceback
 import os
 
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 
 from ..flo2d_tools.schema2user_tools import (
     Schema1DConverter,
@@ -26,16 +26,18 @@ from ..flo2d_tools.schema2user_tools import (
 from ..geopackage_utils import GeoPackageUtils
 from .ui_utils import load_ui
 from ..flo2d_ie.flo2d_parser import ParseDAT
+from ..utils import qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("schema2user")
 
 
 class Schema2UserDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, uc):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.con = con
         self.lyrs = lyrs
         self.uc = uc
@@ -92,7 +94,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         #     self.ckbox_swmm.setDisabled(True)
         # else:
         #     self.ckbox_swmm.setEnabled(True)
-            
+
         if any(self.gutils.is_table_empty(t) for t in schema_hydr_tables):
             self.ckbox_hydr_struct.setDisabled(True)
         else:

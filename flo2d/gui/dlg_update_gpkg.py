@@ -16,7 +16,7 @@ from qgis._core import QgsProject, QgsUnitTypes
 
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
-from ..utils import get_plugin_version, get_flo2dpro_version
+from ..utils import get_plugin_version, get_flo2dpro_version, qt_window_flag
 
 from ..user_communication import UserCommunication
 
@@ -26,11 +26,12 @@ uiDialog, qtBaseClass = load_ui("update_gpkg")
 
 class UpdateGpkg(qtBaseClass, uiDialog):
     def __init__(self, con, iface):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.iface = iface
         self.con = con
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
 

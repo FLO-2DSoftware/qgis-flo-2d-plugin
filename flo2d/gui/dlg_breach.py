@@ -19,7 +19,6 @@ from qgis.PyQt.QtGui import (
 )
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QInputDialog,
     QTableWidgetItem,
     QWidget,
 )
@@ -34,7 +33,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero, qt_item_role, qt_cursor_shape, qevent_type
+from ..utils import float_or_zero, int_or_zero, qt_item_role, qt_cursor_shape, qevent_type, qt_window_flag
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_cell_buffer
 
 
@@ -153,11 +152,12 @@ uiDialog_global, qtBaseClass = load_ui("global_breach_data")
 
 class GlobalBreachDialog(qtBaseClass, uiDialog_global):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_global.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -360,11 +360,12 @@ uiDialog_individual_breach, qtBaseClass = load_ui("individual_breach_data")
 
 class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_individual_breach.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -583,11 +584,12 @@ uiDialog_levee_fragility, qtBaseClass = load_ui("levee_fragility_curves")
 
 class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_levee_fragility.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
@@ -715,11 +717,12 @@ uiDialog_individual_levees, qtBaseClass = load_ui("individual_levee_data")
 
 class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
+        qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog_individual_levees.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None

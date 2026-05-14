@@ -15,7 +15,7 @@ from qgis.PyQt.QtCore import Qt
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
-from ..utils import qdialogbuttonbox_button
+from ..utils import qdialogbuttonbox_button, qt_window_flag
 
 uiDialog, qtBaseClass = load_ui("sampling_variable_into_grid")
 
@@ -28,7 +28,7 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")
