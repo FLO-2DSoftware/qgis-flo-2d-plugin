@@ -383,7 +383,7 @@ class PlotWidget(QWidget):
         self.plot.autoRange()
 
     def toggle_hover(self, state):
-        self.hover_enabled = bool(state)
+        self.hover_enabled = (state == qt_check_state("Checked"))
 
         if not self.hover_enabled:
             # Hide overlays immediately
