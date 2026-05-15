@@ -36,7 +36,8 @@ from qgis.PyQt.QtWidgets import (
     QApplication,
     QFileDialog,
     QMenu,
-    QMessageBox
+    QMessageBox,
+    QDockWidget
 )
 from qgis.utils import plugins, iface
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
@@ -679,11 +680,29 @@ class Flo2D(object):
         else:
             self.iface.addDockWidget(dock_area_from_int(pa), self.f2d_plot_dock)
 
+        # Fix the issue of having the grid info and the temporal controler togheter
+        temporal_cont = False
+        for dock in self.iface.mainWindow().findChildren(QDockWidget):
+            title = dock.windowTitle()
+            object_name = dock.objectName()
+            if (
+                    "Temporal Controller" in title
+                    or "Temporal Controller" in object_name
+                    or "temporal" in object_name.lower()
+            ):
+                temporal_cont = dock
+
         if ga == 0:
             self.iface.addDockWidget(qt_dock_widget_area("TopDockWidgetArea"), self.f2d_grid_info_dock)
             self.f2d_grid_info_dock.setFloating(False)
         else:
             self.iface.addDockWidget(dock_area_from_int(ga), self.f2d_grid_info_dock)
+
+        if temporal_cont is not None:
+            self.iface.mainWindow().tabifyDockWidget(
+                temporal_cont,
+                self.f2d_grid_info_dock
+            )
 
     def unload(self):
         """
