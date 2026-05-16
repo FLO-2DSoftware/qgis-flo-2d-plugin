@@ -596,17 +596,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
     def save_wall_shapefile_fields(self):
         s = QSettings()
 
-        s.setValue("sf_walls_layer_name", self.walls_shapefile_cbo.currentText())
-        s.setValue("sf_walls_crest_elevation", self.crest_elevation_FieldCbo.currentIndex())
-        s.setValue("sf_walls_name", self.name_FieldCbo.currentIndex())
-        s.setValue("sf_walls_correction", self.correction_FieldCbo.currentIndex())
-        s.setValue("sf_walls_failure_height", self.failure_height_FieldCbo.currentIndex())
-        s.setValue("sf_walls_duration", self.duration_FieldCbo.currentIndex())
-        s.setValue("sf_walls_base_elevation", self.base_elevation_FieldCbo.currentIndex())
-        s.setValue("sf_walls_maximum_width", self.maximum_width_FieldCbo.currentIndex())
-        s.setValue("sf_walls_vertical_fail_rate", self.vertical_fail_rate_FieldCbo.currentIndex())
-        s.setValue("sf_walls_horizontal_fail_rate", self.horizontal_fail_rate_FieldCbo.currentIndex())
-
         s.setValue("sf_walls_crest_elevation_name", self.crest_elevation_FieldCbo.currentText())
         s.setValue("sf_walls_name_name", self.name_FieldCbo.currentText())
         s.setValue("sf_walls_correction_name", self.correction_FieldCbo.currentText())
