@@ -373,7 +373,7 @@ class SsurgoSoil(object):
             else:
                 orgmat = 0
             if orgmat > 8:
-                orgamat = 8
+                orgmat = 8
 
             soil_depth = feature['hzdepb_r'] / depth_unit  # meters or ft
 
