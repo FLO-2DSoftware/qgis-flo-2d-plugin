@@ -681,6 +681,12 @@ def find_best_field_match(combo, preferred_names, excluded_names=None):
     if excluded_names is None:
         excluded_names = []
 
+    if isinstance(preferred_names, str):
+        preferred_names = [preferred_names]
+
+    if isinstance(excluded_names, str):
+        excluded_names = [excluded_names]
+
     def clean(text):
         return text.lower().replace("_", "").replace("-", "").replace(" ", "") # Normalize field names
 
