@@ -27,7 +27,7 @@ from heapq import nsmallest
 from itertools import filterfalse
 from math import ceil
 
-from qgis.PyQt.QtCore import QRegularExpression, Qt, QEvent, QMetaType
+from qgis.PyQt.QtCore import QRegularExpression, Qt, QEvent, QMetaType, QSettings
 from qgis.PyQt.QtGui import QRegularExpressionValidator, QPainter, QKeySequence, QTextCursor
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -665,3 +665,39 @@ def qt_key(name):
     if hasattr(Qt, "Key"): # Qt6
         return getattr(Qt.Key, name)
     return getattr(Qt, name) # Qt5
+
+# Read previously saved field name from QGIS settings
+def restore_field_name(setting_name, field_names):
+    s = QSettings()
+    field_name = "" if s.value(setting_name) is None else s.value(setting_name)
+
+    if field_name in field_names:
+        return field_name
+    else:
+        return ""
+
+# Substring matching
+def find_best_field_match(combo, preferred_names, excluded_names=None):
+    if excluded_names is None:
+        excluded_names = []
+
+    if isinstance(preferred_names, str):
+        preferred_names = [preferred_names]
+
+    if isinstance(excluded_names, str):
+        excluded_names = [excluded_names]
+
+    def clean(text):
+        return text.lower().replace("_", "").replace("-", "").replace(" ", "") # Normalize field names
+
+    preferred_names = [clean(name) for name in preferred_names]
+    excluded_names = [clean(name) for name in excluded_names]
+    for i in range(combo.count()):
+        item_text = combo.itemText(i)
+        clean_item = clean(item_text)
+
+        if any(excluded in clean_item for excluded in excluded_names):
+            continue
+        if any(preferred in clean_item for preferred in preferred_names):
+            return i
+    return -1

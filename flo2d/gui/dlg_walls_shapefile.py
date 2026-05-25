@@ -23,7 +23,7 @@ from qgis.gui import QgsFieldComboBox
 
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, qt_cursor_shape, qdialogbuttonbox_button, qt_window_flag
+from ..utils import float_or_zero, qt_cursor_shape, qdialogbuttonbox_button, qt_window_flag, restore_field_name, find_best_field_match
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("walls_shapefile")
@@ -79,60 +79,25 @@ class WallsShapefile(qtBaseClass, uiDialog):
         self.fail_elev_radio.toggled.connect(lambda checked: self.smart_assign_walls() if checked else None)
         self.fail_depth_radio.toggled.connect(lambda checked: self.smart_assign_walls() if checked else None)
 
-    # Read previously saved field name from QGIS settings
-    def restore_field_name(self, setting_name, field_names):
-        s = QSettings()
-        field_name = "" if s.value(setting_name) is None else s.value(setting_name)
-
-        if field_name in field_names:
-            return field_name
-        else:
-            return ""
-
-    # Substring matching
-    def find_best_field_match(self,combo, preferred_names, excluded_names=None):
-        if excluded_names is None:
-            excluded_names = []
-
-        def clean(text):
-            return text.lower().replace("_", "").replace("-", "").replace(" ", "") # Normalize field names
-
-        preferred_names = [clean(name) for name in preferred_names]
-        excluded_names = [clean(name) for name in excluded_names]
-
-        for i in range(combo.count()):
-            item_text = combo.itemText(i)
-            clean_item = clean(item_text)
-
-            if any(excluded in clean_item for excluded in excluded_names):
-                continue
-            if any(preferred in clean_item for preferred in preferred_names):
-                return i
-        return -1
-
     # Decide whether to restore saved field names or run smart asignment
     def restore_wall_shapefile_field_names(self):
         s=QSettings()
-
         layer = "" if s.value("FLO-2D/levee/sf_walls_layer_name") is None else s.value("FLO-2D/levee/sf_walls_layer_name")
-
         if layer != "":
             if layer == self.walls_shapefile_cbo.currentText():
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
-
-                self.crest_elevation_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_crest_elevation_name", field_names))
-                self.name_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_name_name", field_names))
-                self.correction_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_correction_name", field_names))
-                self.failure_height_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_failure_height_name", field_names))
-                self.duration_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_duration_name", field_names))
-                self.base_elevation_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_base_elevation_name", field_names))
-                self.maximum_width_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_maximum_width_name", field_names))
-                self.vertical_fail_rate_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_vertical_fail_rate_name", field_names))
-                self.horizontal_fail_rate_FieldCbo.setField(self.restore_field_name("FLO-2D/levee/sf_walls_horizontal_fail_rate_name", field_names))
+                self.crest_elevation_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_crest_elevation_name", field_names))
+                self.name_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_name_name", field_names))
+                self.correction_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_correction_name", field_names))
+                self.failure_height_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_failure_height_name", field_names))
+                self.duration_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_duration_name", field_names))
+                self.base_elevation_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_base_elevation_name", field_names))
+                self.maximum_width_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_maximum_width_name", field_names))
+                self.vertical_fail_rate_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_vertical_fail_rate_name", field_names))
+                self.horizontal_fail_rate_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_horizontal_fail_rate_name", field_names))
             else:
                 self.smart_assign_walls()
-
         elif self.walls_shapefile_cbo.currentText() != "":
             self.smart_assign_walls()
         else:
@@ -143,18 +108,18 @@ class WallsShapefile(qtBaseClass, uiDialog):
         try:
             self.clear_all_walls_attributes()
 
-            self.name_FieldCbo.setCurrentIndex(self.find_best_field_match(self.name_FieldCbo, ["name"]))
+            self.name_FieldCbo.setCurrentIndex(find_best_field_match(self.name_FieldCbo, ["name"]))
 
             self.crest_elevation_FieldCbo.setCurrentIndex(
-                self.find_best_field_match(
+                find_best_field_match(
                     self.crest_elevation_FieldCbo,
-                    ["elev", "crest_elev", "crestelev"],
+                    ["elev", "crestelev"],
                     ["failelev", "fail", "baseelev", "base", "nullelev", "null"]
                 )
             )
 
             self.correction_FieldCbo.setCurrentIndex(
-                self.find_best_field_match(
+                find_best_field_match(
                     self.correction_FieldCbo,
                     ["correction", "corr"]
                 )
@@ -162,37 +127,37 @@ class WallsShapefile(qtBaseClass, uiDialog):
 
             if self.fail_elev_radio.isChecked():
                 self.failure_height_FieldCbo.setCurrentIndex(
-                    self.find_best_field_match(
+                    find_best_field_match(
                         self.failure_height_FieldCbo,
-                        ["failelev", "fail_elev", "failureelev"],
+                        ["failelev", "failureelev"],
                         ["faildepth", "depth"]
                     )
                 )
             else:
                 self.failure_height_FieldCbo.setCurrentIndex(
-                    self.find_best_field_match(
+                    find_best_field_match(
                         self.failure_height_FieldCbo,
-                        ["faildepth", "fail_depth", "failuredepth"],
+                        ["faildepth", "failuredepth"],
                         ["failelev", "elev"]
                     )
                 )
 
-            self.duration_FieldCbo.setCurrentIndex(self.find_best_field_match(self.duration_FieldCbo, ["duration", "failduration"]))
+            self.duration_FieldCbo.setCurrentIndex(find_best_field_match(self.duration_FieldCbo, ["duration", "failduration"]))
 
             self.base_elevation_FieldCbo.setCurrentIndex(
-                self.find_best_field_match(
+                find_best_field_match(
                     self.base_elevation_FieldCbo,
-                    ["baseelev", "base_elev", "baseelevation"],
+                    ["baseelev", "baseelevation"],
                     ["failelev", "fail"]
                 )
             )
 
-            self.maximum_width_FieldCbo.setCurrentIndex(self.find_best_field_match(self.maximum_width_FieldCbo, ["maxwidth", "max_width", "maximumwidth"]))
+            self.maximum_width_FieldCbo.setCurrentIndex(find_best_field_match(self.maximum_width_FieldCbo, ["maxwidth", "max_width", "maximumwidth"]))
 
-            self.vertical_fail_rate_FieldCbo.setCurrentIndex(self.find_best_field_match(self.vertical_fail_rate_FieldCbo, ["failratev", "vertical", "vrate"]))
+            self.vertical_fail_rate_FieldCbo.setCurrentIndex(find_best_field_match(self.vertical_fail_rate_FieldCbo, ["failratev", "vertical", "vrate"]))
 
             self.horizontal_fail_rate_FieldCbo.setCurrentIndex(
-                self.find_best_field_match(self.horizontal_fail_rate_FieldCbo, ["failrateh", "horizontal", "hrate"])
+                find_best_field_match(self.horizontal_fail_rate_FieldCbo, ["failrateh", "horizontal", "hrate"])
             )
 
         except Exception as e:
@@ -202,7 +167,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
-
 
     def setup_layers_comboxes(self):
         try:
@@ -223,8 +187,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 self.walls_shapefile_cbo.setCurrentIndex(idx)
             elif self.walls_shapefile_cbo.count() > 0:
                 self.walls_shapefile_cbo.setCurrentIndex(0)
-
-            self.walls_shapefile_cbo.blockSignals(False)
 
             if self.walls_shapefile_cbo.currentIndex() != -1:
                 self.populate_walls_attributes(self.walls_shapefile_cbo.currentIndex())
@@ -247,9 +209,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
             self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields
-            string_combos = [
-                self.walls_fields_groupBox.findChild(QgsFieldComboBox, "name_FieldCbo")
-            ]
+            string_combos = [self.walls_fields_groupBox.findChild(QgsFieldComboBox, "name_FieldCbo")]
 
             # List of combo boxes that should be filtered to numeric fields
             numeric_combos = [
@@ -595,7 +555,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
 
     def save_wall_shapefile_fields(self):
         s = QSettings()
-
         s.setValue("FLO-2D/levee/sf_walls_crest_elevation_name", self.crest_elevation_FieldCbo.currentText())
         s.setValue("FLO-2D/levee/sf_walls_name_name", self.name_FieldCbo.currentText())
         s.setValue("FLO-2D/levee/sf_walls_correction_name", self.correction_FieldCbo.currentText())
