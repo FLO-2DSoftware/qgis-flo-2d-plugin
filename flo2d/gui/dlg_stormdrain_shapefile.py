@@ -232,7 +232,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def setup_layers_comboxes(self):
         try:
-
             self.inlets_shapefile_cbo.blockSignals(True)
             self.outfalls_shapefile_cbo.blockSignals(True)
             self.strge_units_shapefile_cbo.blockSignals(True)
@@ -323,7 +322,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 self.populate_weirs_attributes(self.weirs_shapefile_cbo.currentIndex())
             else:
                 self.weirs_shapefile_cbo.setCurrentIndex(idx)
-
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -331,7 +329,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
-
         finally:
             self.inlets_shapefile_cbo.blockSignals(False)
             self.outfalls_shapefile_cbo.blockSignals(False)
@@ -2806,7 +2803,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         Function to save the storm drain shapefiles names into the QSettings ("FLO-2D/storm_drain/...")
         """
         s = QSettings()
-
         s.setValue("FLO-2D/storm_drain/sf_inlets_layer_name", self.inlets_shapefile_cbo.currentText())
         s.setValue("FLO-2D/storm_drain/sf_inlets_name", self.inlets_name_FieldCbo.currentText())
         s.setValue("FLO-2D/storm_drain/sf_inlets_type", self.inlets_type_FieldCbo.currentText())
