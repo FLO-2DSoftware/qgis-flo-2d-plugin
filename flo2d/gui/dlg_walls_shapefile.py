@@ -117,7 +117,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
             self.crest_elevation_FieldCbo.setCurrentIndex(
                 find_best_field_match(
                     self.crest_elevation_FieldCbo,
-                    ["elev", "crest_elev", "crestelev"],
+                    ["elev", "crestelev"],
                     ["failelev", "fail", "baseelev", "base", "nullelev", "null"]
                 )
             )
@@ -133,7 +133,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 self.failure_height_FieldCbo.setCurrentIndex(
                     find_best_field_match(
                         self.failure_height_FieldCbo,
-                        ["failelev", "fail_elev", "failureelev"],
+                        ["failelev", "failureelev"],
                         ["faildepth", "depth"]
                     )
                 )
@@ -141,7 +141,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 self.failure_height_FieldCbo.setCurrentIndex(
                     find_best_field_match(
                         self.failure_height_FieldCbo,
-                        ["faildepth", "fail_depth", "failuredepth"],
+                        ["faildepth", "failuredepth"],
                         ["failelev", "elev"]
                     )
                 )
@@ -151,7 +151,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
             self.base_elevation_FieldCbo.setCurrentIndex(
                 find_best_field_match(
                     self.base_elevation_FieldCbo,
-                    ["baseelev", "base_elev", "baseelevation"],
+                    ["baseelev", "baseelevation"],
                     ["failelev", "fail"]
                 )
             )
