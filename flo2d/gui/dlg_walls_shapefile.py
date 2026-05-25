@@ -82,14 +82,11 @@ class WallsShapefile(qtBaseClass, uiDialog):
     # Decide whether to restore saved field names or run smart asignment
     def restore_wall_shapefile_field_names(self):
         s=QSettings()
-
         layer = "" if s.value("FLO-2D/levee/sf_walls_layer_name") is None else s.value("FLO-2D/levee/sf_walls_layer_name")
-
         if layer != "":
             if layer == self.walls_shapefile_cbo.currentText():
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
-
                 self.crest_elevation_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_crest_elevation_name", field_names))
                 self.name_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_name_name", field_names))
                 self.correction_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_correction_name", field_names))
@@ -101,7 +98,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 self.horizontal_fail_rate_FieldCbo.setField(restore_field_name("FLO-2D/levee/sf_walls_horizontal_fail_rate_name", field_names))
             else:
                 self.smart_assign_walls()
-
         elif self.walls_shapefile_cbo.currentText() != "":
             self.smart_assign_walls()
         else:
@@ -192,8 +188,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
             elif self.walls_shapefile_cbo.count() > 0:
                 self.walls_shapefile_cbo.setCurrentIndex(0)
 
-            self.walls_shapefile_cbo.blockSignals(False)
-
             if self.walls_shapefile_cbo.currentIndex() != -1:
                 self.populate_walls_attributes(self.walls_shapefile_cbo.currentIndex())
 
@@ -215,9 +209,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
             self.current_lyr = self.lyrs.get_layer_by_id(lyr_id)
 
             # List of combo boxes that should be filtered to string fields
-            string_combos = [
-                self.walls_fields_groupBox.findChild(QgsFieldComboBox, "name_FieldCbo")
-            ]
+            string_combos = [self.walls_fields_groupBox.findChild(QgsFieldComboBox, "name_FieldCbo")]
 
             # List of combo boxes that should be filtered to numeric fields
             numeric_combos = [
@@ -563,7 +555,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
 
     def save_wall_shapefile_fields(self):
         s = QSettings()
-
         s.setValue("FLO-2D/levee/sf_walls_crest_elevation_name", self.crest_elevation_FieldCbo.currentText())
         s.setValue("FLO-2D/levee/sf_walls_name_name", self.name_FieldCbo.currentText())
         s.setValue("FLO-2D/levee/sf_walls_correction_name", self.correction_FieldCbo.currentText())
