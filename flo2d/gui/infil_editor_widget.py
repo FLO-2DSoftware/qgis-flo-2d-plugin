@@ -17,7 +17,7 @@ from qgis.PyQt.QtCore import QMetaType, QUrl
 from qgis.PyQt.QtWidgets import QFileDialog
 from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsLayerTreeRegistryBridge, \
     QgsMapLayer, QgsVectorFileWriter
-from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
+from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject, QgsSpatialIndex, QgsGeometry
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
@@ -501,7 +501,101 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def infiltration_help(self):
         QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/infiltration-editor/index.html"))
 
+    def validate_coverage(self, layer, layer_name="Layer", layer_type="polygon"):
+        """
+        Validate the coverage of each infiltration polygon to ensure that it covers
+        the whole project domain before doing the actual computation.
+        """
+        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+
+        if layer_type == "raster":
+            if isinstance(layer, str):
+                layer = QgsRasterLayer(layer, layer_name, "gdal")
+
+            if layer is None or not layer.isValid():
+                self.uc.show_warn(f"{layer_name} is not a valid raster layer.")
+                self.uc.log_info(f"{layer_name} is not a valid raster layer.")
+                return [f.id() for f in self.grid_lyr.getFeatures()]
+
+            extent = layer.extent()
+            missing_ids = []
+            total = self.grid_lyr.featureCount()
+
+            pd = QProgressDialog(f"Checking {layer_name} coverage...", None, 0, total, parent)
+            pd.setWindowTitle(f"{layer_name} Coverage Check")
+            pd.setModal(True)
+            pd.show()
+            QApplication.processEvents()
+
+            try:
+                for i, grid_feat in enumerate(self.grid_lyr.getFeatures(), 1):
+                    if i % 100 == 0 or i == total:
+                        pd.setLabelText(f"Checking {layer_name} grid {i} of {total}...")
+                        pd.setValue(i)
+                        QApplication.processEvents()
+
+                    geom = grid_feat.geometry()
+                    if geom and not extent.intersects(geom.boundingBox()):
+                        missing_ids.append(grid_feat.id())
+            finally:
+                pd.close()
+                pd.deleteLater()
+
+        else:
+            if layer is None or layer.featureCount() == 0:
+                self.uc.show_warn(f"{layer_name} coverage layer is empty.")
+                return [f.id() for f in self.grid_lyr.getFeatures()]
+
+            total = layer.featureCount()
+            pd = QProgressDialog(f"Checking {layer_name} coverage...", None, 0, total, parent)
+            pd.setWindowTitle(f"{layer_name} Coverage Check")
+            pd.setModal(True)
+            pd.show()
+            QApplication.processEvents()
+
+            grid_feats = {}
+            grid_index = QgsSpatialIndex()
+
+            for grid_feat in self.grid_lyr.getFeatures():
+                grid_feats[grid_feat.id()] = grid_feat
+                grid_index.addFeature(grid_feat)
+
+            all_grid_ids = set(grid_feats.keys())
+            covered_ids = set()
+
+            try:
+                for i, poly_feat in enumerate(layer.getFeatures(), 1):
+                    if i % 100 == 0 or i == total:
+                        pd.setLabelText(f"Checking {layer_name} polygon {i} of {total}...")
+                        pd.setValue(i)
+                        QApplication.processEvents()
+
+                    poly_geom = poly_feat.geometry()
+                    if not poly_geom or poly_geom.isEmpty():
+                        continue
+
+                    for gid in grid_index.intersects(poly_geom.boundingBox()):
+                        if gid in covered_ids:
+                            continue
+                        if poly_geom.intersects(grid_feats[gid].geometry()):
+                            covered_ids.add(gid)
+
+                    if len(covered_ids) == len(all_grid_ids):
+                        break
+            finally:
+                pd.close()
+                pd.deleteLater()
+
+            missing_ids = sorted(all_grid_ids - covered_ids)
+
+        if missing_ids:
+            self.uc.show_warn(f"{layer_name} does not cover {len(missing_ids)} grid cells.")
+            self.uc.log_info(f"{layer_name} first 10 uncovered grid IDs: {missing_ids[:10]}")
+
+        return missing_ids
+
     def calculate_green_ampt(self):
+
         dlg = GreenAmptDialog(self.iface, self.lyrs)
         ok = dlg.exec()
         if not ok:
@@ -516,6 +610,16 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 vc_check,
                 log_area_average,
             ) = dlg.green_ampt_parameters()
+
+            # Coverage check
+            missing = self.validate_coverage(soil_lyr, "Soil")
+            if missing:
+                return
+
+            # Coverage check
+            missing = self.validate_coverage(land_lyr, "Land Use")
+            if missing:
+                return
 
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
@@ -601,14 +705,32 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             if dlg.single_grp.isChecked():
                 single_lyr, single_fields = dlg.single_scs_parameters()
+
+                # Coverage check
+                missing = self.validate_coverage(single_lyr, "SCS", "polygon")
+                if missing:
+                    return
+
                 inf_calc.setup_scs_single(single_lyr, *single_fields)
                 grid_params = inf_calc.scs_infiltration_single()
             elif dlg.raster_grp.isChecked():
                 raster_lyr, algorithm, nodatavalue, fillnodata, multithread = dlg.raster_scs_parameters()
+
+                # Coverage check
+                missing = self.validate_coverage(raster_lyr, "SCS Raster", "raster")
+                if missing:
+                    return
+
                 inf_calc.setup_scs_raster(raster_lyr, algorithm, nodatavalue, fillnodata, multithread)
                 grid_params = inf_calc.scs_infiltration_raster()
             else:
                 multi_lyr, multi_fields = dlg.multi_scs_parameters()
+
+                # Coverage check
+                missing = self.validate_coverage(multi_lyr, "SCS Multi", "polygon")
+                if missing:
+                    return
+
                 inf_calc.setup_scs_multi(multi_lyr, *multi_fields)
                 grid_params = inf_calc.scs_infiltration_multi()
             self.gutils.clear_tables("infil_cells_scs")
