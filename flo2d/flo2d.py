@@ -4254,16 +4254,15 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
 
-        # show the dialog
-        dlg_breach_hydrograph_tool = BreachHydrographToolDialog(self.con, self.iface, self.lyrs, self.f2d_widget.bc_editor_new)
-        dlg_breach_hydrograph_tool.show()
-
-        while True:
-            ok = dlg_breach_hydrograph_tool.exec()
-            if ok:
-                break
-            else:
+        if self.dlg_breach_hydrograph_tool is not None:
+            if self.dlg_breach_hydrograph_tool.isVisible():
+                self.dlg_breach_hydrograph_tool.showNormal()
+                self.dlg_breach_hydrograph_tool.raise_()
+                self.dlg_breach_hydrograph_tool.activateWindow()
                 return
+
+        self.dlg_breach_hydrograph_tool = BreachHydrographToolDialog(self.con, self.iface, self.lyrs, self.f2d_widget.bc_editor_new)
+        self.dlg_breach_hydrograph_tool.show()
 
     @connection_required
     def show_project_review_dialog(self):

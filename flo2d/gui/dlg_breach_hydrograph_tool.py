@@ -34,7 +34,12 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
+        self.setWindowFlags(
+            qt_window_flag("Window") |
+            qt_window_flag("WindowMinimizeButtonHint") |
+            qt_window_flag("WindowCloseButtonHint") |
+            qt_window_flag("WindowSystemMenuHint")
+        )
         self.con = con
         self.lyrs = lyrs
         self.bc_editor = bc_editor
