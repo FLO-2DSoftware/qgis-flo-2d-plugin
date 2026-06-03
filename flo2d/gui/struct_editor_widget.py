@@ -93,6 +93,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.revert_changes_btn.clicked.connect(self.cancel_struct_lyrs_edits)
         self.delete_struct_btn.clicked.connect(self.delete_struct)
         self.schem_struct_btn.clicked.connect(self.schematize_struct)
+        self.del_schem_struct_btn.clicked.connect(self.del_schematize_struct)
         self.structures_help_btn.clicked.connect(self.structures_help)
         self.struct_cbo.activated.connect(self.struct_changed)
         self.type_cbo.activated.connect(self.type_changed)
@@ -357,6 +358,37 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("WARNING 151203.0646: Error during Hydraulic Structures schematization!.")
         finally:
             QApplication.restoreOverrideCursor()
+
+    def del_schematize_struct(self):
+        """
+        Function to delete all schematized structures
+        """
+
+        if self.gutils.is_table_empty("struct"):
+            self.uc.bar_warn("There is no schematized hydraulic structures!")
+            self.uc.log_info("There is no schematized hydraulic structures!")
+            return
+
+        self.gutils.clear_tables("struct",
+                                 "storm_drains",
+                                 "culvert_equations",
+                                 "rat_curves",
+                                 "repl_rat_curves",
+                                 "rat_table",
+                                 "culvert_equations",
+                                 "bridge_variables",
+                                 "bridge_xs")
+
+        self.gutils.copy_new_struct_from_user_lyr()
+        self.gutils.fill_empty_struct_names()
+        self.populate_structs(show_last_edited=True)
+        self.repaint_structs()
+
+        self.uc.bar_info("Schematized hydraulic structures and all related datasets deleted!")
+        self.uc.log_info("Schematized hydraulic structures and all related datasets deleted!")
+
+        self.lyrs.clear_rubber()
+        self.lyrs.data["struct"]["qlyr"].triggerRepaint()
 
     def check_structures(self):
         """

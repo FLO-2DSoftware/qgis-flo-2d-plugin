@@ -34,29 +34,23 @@
      <property name="sizeConstraint">
       <enum>QLayout::SetFixedSize</enum>
      </property>
-     <item row="0" column="2">
-      <widget class="QToolButton" name="revert_changes_btn">
+     <item row="0" column="6">
+      <widget class="QToolButton" name="schem_struct_btn">
        <property name="minimumSize">
         <size>
          <width>31</width>
          <height>30</height>
         </size>
        </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>16777215</height>
-        </size>
-       </property>
        <property name="toolTip">
-        <string>Revert unsaved changes</string>
+        <string>Schematize structures</string>
        </property>
        <property name="text">
-        <string/>
+        <string>...</string>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
+         <normaloff>../img/schematize_struct.svg</normaloff>../img/schematize_struct.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -65,19 +59,6 @@
         </size>
        </property>
       </widget>
-     </item>
-     <item row="0" column="4">
-      <spacer name="horizontalSpacer_4">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item row="0" column="3">
       <widget class="QToolButton" name="delete_struct_btn">
@@ -96,58 +77,6 @@
        <property name="icon">
         <iconset>
          <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QToolButton" name="save_changes_btn">
-       <property name="minimumSize">
-        <size>
-         <width>31</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Save new structures</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5">
-      <widget class="QToolButton" name="schem_struct_btn">
-       <property name="minimumSize">
-        <size>
-         <width>31</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Schematize structures</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/schematize_struct.svg</normaloff>../img/schematize_struct.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -183,7 +112,78 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="6">
+     <item row="0" column="4">
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="0" column="1">
+      <widget class="QToolButton" name="save_changes_btn">
+       <property name="minimumSize">
+        <size>
+         <width>31</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Save new structures</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QToolButton" name="revert_changes_btn">
+       <property name="minimumSize">
+        <size>
+         <width>31</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Revert unsaved changes</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="8">
       <widget class="QToolButton" name="structures_help_btn">
        <property name="enabled">
         <bool>true</bool>
@@ -209,6 +209,29 @@
        <property name="icon">
         <iconset>
          <normaloff>../img/help.svg</normaloff>../img/help.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="7">
+      <widget class="QToolButton" name="del_schem_struct_btn">
+       <property name="minimumSize">
+        <size>
+         <width>31</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/delete_schematize_struct.svg</normaloff>../img/delete_schematize_struct.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
