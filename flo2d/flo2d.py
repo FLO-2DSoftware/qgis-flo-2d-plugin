@@ -175,6 +175,7 @@ class Flo2D(object):
         self.dlg_breach_hydrograph_tool = None
         self.dlg_gpkg_management = None
         self.dlg_gpkg_backup = None
+        self.dlg_errors = None
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
@@ -4346,17 +4347,19 @@ class Flo2D(object):
     def show_errors_dialog(self):
         self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
-        dlg_errors.show()
-        while True:
-            ok = dlg_errors.exec()
-            if ok:
-                break
-            else:
+        if self.dlg_errors is not None:
+            if self.dlg_errors.isVisible():
+                self.dlg_errors.showNormal()
+                self.dlg_errors.raise_()
+                self.dlg_errors.activateWindow()
                 return
+
+        self.dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
+        self.dlg_errors.show()
 
     @connection_required
     def show_mud_and_sediment_dialog(self):

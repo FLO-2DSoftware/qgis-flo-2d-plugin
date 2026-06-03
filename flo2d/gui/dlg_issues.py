@@ -56,7 +56,12 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.setWindowFlags(qt_window_flag("Dialog") | qt_window_flag("Tool"))
+        self.setWindowFlags(
+            qt_window_flag("Window") |
+            qt_window_flag("WindowMinimizeButtonHint") |
+            qt_window_flag("WindowCloseButtonHint") |
+            qt_window_flag("WindowSystemMenuHint")
+        )
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
