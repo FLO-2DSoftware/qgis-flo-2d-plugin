@@ -418,7 +418,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
                 flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
         else:
-            dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
+            dlg = ExternalProgramFLO2D(self.iface, "Run Settings", self.gutils, self.f2d_widget, self.lyrs)
             # dlg.debug_run_btn.setVisible(False)
             ok = dlg.exec()
             if not ok:

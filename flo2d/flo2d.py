@@ -144,7 +144,6 @@ class Flo2D(object):
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
-        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs.group = None
         self.gutils = None
         self.f2g = None
@@ -1199,95 +1198,13 @@ class Flo2D(object):
         Function to set the run settings: FLO-2D and Project folders
         """
         self.uncheck_all_info_tools()
-        dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
+        dlg = ExternalProgramFLO2D(self.iface, "Run Settings", self.gutils, self.f2d_widget, self.lyrs)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
         ok = dlg.exec()
         if not ok:
             return
         else:
-
-            flopro_found = False
-
-            # Project is loaded
-            if self.gutils:
-                flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
-                s = QSettings()
-                s.setValue("FLO-2D/lastGdsDir", project_dir)
-                s.setValue("FLO-2D/last_flopro", flo2d_dir)
-                self.f2d_widget.setup_project_folder()
-                if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
-                    # show advanced layers
-                    if advanced_layers:
-                        lyrs = self.lyrs.data
-                        for key, value in lyrs.items():
-                            group = value.get("sgroup")
-                            subsubgroup = value.get("ssgroup")
-                            self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
-                            self.ilg.unhideGroup(group)
-                            self.ilg.unhideGroup(subsubgroup, group)
-                    # hide advanced layers
-                    else:
-                        lyrs = self.lyrs.data
-                        for key, value in lyrs.items():
-                            advanced = value.get("advanced")
-                            if advanced:
-                                subgroup = value.get("sgroup")
-                                subsubgroup = value.get("ssgroup")
-                                self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
-                                if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
-                                    self.ilg.hideGroup(subsubgroup, subgroup)
-                                else:
-                                    self.ilg.hideGroup(subgroup)
-                s.setValue("FLO-2D/advanced_layers", advanced_layers)
-
-                if project_dir != "" and flo2d_dir != "":
-                    s.setValue("FLO-2D/run_settings", True)
-
-                    flopro_dir = s.value("FLO-2D/last_flopro")
-                    flo2d_v = "FLOPRO not found"
-                    # Check for FLOPRO.exe
-                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
-                        flopro_found = True
-                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
-                    # Check for FLOPRO_Demo.exe
-                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
-                        flopro_found = True
-                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
-                    else:
-                        flopro_found = False
-
-                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
-
-            # Project not loaded
-            else:
-                flo2d_dir, project_dir, _ = dlg.get_parameters()
-                s = QSettings()
-                s.setValue("FLO-2D/lastGdsDir", project_dir)
-                s.setValue("FLO-2D/last_flopro", flo2d_dir)
-
-                if self.f2d_widget:
-                    self.f2d_widget.setup_project_folder()
-
-                if project_dir != "" or flo2d_dir != "":
-                    s.setValue("FLO-2D/run_settings", True)
-
-                    flopro_dir = s.value("FLO-2D/last_flopro")
-                    # Check for FLOPRO.exe
-                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
-                        flopro_found = True
-                    # Check for FLOPRO_Demo.exe
-                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
-                        flopro_found = True
-                    else:
-                        flopro_found = False
-
-            if flopro_found:
-                self.uc.bar_info("Run Settings saved!")
-                self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
-            else:
-                self.uc.bar_warn("Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation folder!")
-                self.uc.log_info(f"Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation "
-                                 f"folder!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
+            dlg.save_settings()
 
     def run_flopro(self):
         self.uncheck_all_info_tools()
