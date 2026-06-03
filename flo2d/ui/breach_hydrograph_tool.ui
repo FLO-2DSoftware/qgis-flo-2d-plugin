@@ -2421,7 +2421,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Breach parameters and hidrograph estimation</string>
+            <string>Breach parameters and hydrograph estimation</string>
            </property>
           </widget>
          </item>
