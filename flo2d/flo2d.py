@@ -174,6 +174,7 @@ class Flo2D(object):
         self.dlg_prs = None
         self.dlg_breach_hydrograph_tool = None
         self.dlg_gpkg_management = None
+        self.dlg_gpkg_backup = None
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
@@ -1183,6 +1184,15 @@ class Flo2D(object):
         """
         Function to create a geopackage backup
         """
+        self.uncheck_all_info_tools()
+
+        if self.dlg_gpkg_backup is not None:
+            if self.dlg_gpkg_backup.isVisible():
+                self.dlg_gpkg_backup.showNormal()
+                self.dlg_gpkg_backup.raise_()
+                self.dlg_gpkg_backup.activateWindow()
+                return
+
         self.dlg_gpkg_backup = GpkgBackupDialog(self.iface, self.gutils)
         self.dlg_gpkg_backup.show()
 
