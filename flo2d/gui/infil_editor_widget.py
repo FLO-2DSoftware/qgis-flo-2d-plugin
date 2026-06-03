@@ -119,6 +119,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.delete_btn.clicked.connect(self.delete_cur_infil)
         self.change_name_btn.clicked.connect(self.rename_infil)
         self.schema_btn.clicked.connect(self.schematize_infiltration)
+        self.del_schema_btn.clicked.connect(self.delete_schematize_infiltration)
         self.infiltration_help_btn.clicked.connect(self.infiltration_help)
         self.global_params.clicked.connect(self.show_global_params)
         self.iglobal.global_changed.connect(self.show_groups)
@@ -497,6 +498,20 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
+
+    def delete_schematize_infiltration(self):
+        """
+        Function to delete the infiltration schematized data
+        """
+        if self.gutils.is_table_empty("infil"):
+            self.uc.bar_warn("There is no schematized infiltration data!")
+            self.uc.log_info("There is no schematized infiltration data!")
+            return
+
+        self.gutils.clear_tables("infil", "infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
+
+        self.uc.bar_info("Schematized infiltration data deleted!")
+        self.uc.log_info("Schematized infiltration data deleted!")
 
     def infiltration_help(self):
         QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/infiltration-editor/index.html"))
