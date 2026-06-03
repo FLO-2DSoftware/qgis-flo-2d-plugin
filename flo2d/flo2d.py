@@ -171,6 +171,12 @@ class Flo2D(object):
         self.infoToolCalled = False
         self.new_gpkg = None
 
+        self.dlg_prs = None
+        self.dlg_breach_hydrograph_tool = None
+        self.dlg_gpkg_management = None
+        self.dlg_gpkg_backup = None
+        self.dlg_errors = None
+
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
@@ -1163,6 +1169,14 @@ class Flo2D(object):
         Function to run the GeoPackage Management
         """
         self.uncheck_all_info_tools()
+
+        if self.dlg_gpkg_management is not None:
+            if self.dlg_gpkg_management.isVisible():
+                self.dlg_gpkg_management.showNormal()
+                self.dlg_gpkg_management.raise_()
+                self.dlg_gpkg_management.activateWindow()
+                return
+
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
 
@@ -1171,6 +1185,15 @@ class Flo2D(object):
         """
         Function to create a geopackage backup
         """
+        self.uncheck_all_info_tools()
+
+        if self.dlg_gpkg_backup is not None:
+            if self.dlg_gpkg_backup.isVisible():
+                self.dlg_gpkg_backup.showNormal()
+                self.dlg_gpkg_backup.raise_()
+                self.dlg_gpkg_backup.activateWindow()
+                return
+
         self.dlg_gpkg_backup = GpkgBackupDialog(self.iface, self.gutils)
         self.dlg_gpkg_backup.show()
 
@@ -4251,16 +4274,15 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
 
-        # show the dialog
-        dlg_breach_hydrograph_tool = BreachHydrographToolDialog(self.con, self.iface, self.lyrs, self.f2d_widget.bc_editor_new)
-        dlg_breach_hydrograph_tool.show()
-
-        while True:
-            ok = dlg_breach_hydrograph_tool.exec()
-            if ok:
-                break
-            else:
+        if self.dlg_breach_hydrograph_tool is not None:
+            if self.dlg_breach_hydrograph_tool.isVisible():
+                self.dlg_breach_hydrograph_tool.showNormal()
+                self.dlg_breach_hydrograph_tool.raise_()
+                self.dlg_breach_hydrograph_tool.activateWindow()
                 return
+
+        self.dlg_breach_hydrograph_tool = BreachHydrographToolDialog(self.con, self.iface, self.lyrs, self.f2d_widget.bc_editor_new)
+        self.dlg_breach_hydrograph_tool.show()
 
     @connection_required
     def show_project_review_dialog(self):
@@ -4273,14 +4295,15 @@ class Flo2D(object):
             self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
-        dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
-        dlg_prs.show()
-        while True:
-            ok = dlg_prs.exec()
-            if ok:
-                break
-            else:
+        if self.dlg_prs is not None:
+            if self.dlg_prs.isVisible():
+                self.dlg_prs.showNormal()
+                self.dlg_prs.raise_()
+                self.dlg_prs.activateWindow()
                 return
+
+        self.dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
+        self.dlg_prs.show()
 
     @connection_required
     def show_hazus_dialog(self):
@@ -4324,17 +4347,19 @@ class Flo2D(object):
     def show_errors_dialog(self):
         self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
-        dlg_errors.show()
-        while True:
-            ok = dlg_errors.exec()
-            if ok:
-                break
-            else:
+        if self.dlg_errors is not None:
+            if self.dlg_errors.isVisible():
+                self.dlg_errors.showNormal()
+                self.dlg_errors.raise_()
+                self.dlg_errors.activateWindow()
                 return
+
+        self.dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
+        self.dlg_errors.show()
 
     @connection_required
     def show_mud_and_sediment_dialog(self):
