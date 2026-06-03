@@ -172,6 +172,7 @@ class Flo2D(object):
         self.new_gpkg = None
 
         self.dlg_prs = None
+        self.dlg_breach_hydrograph_tool = None
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
@@ -4277,6 +4278,7 @@ class Flo2D(object):
 
         if self.dlg_prs is not None:
             if self.dlg_prs.isVisible():
+                self.dlg_prs.showNormal()
                 self.dlg_prs.raise_()
                 self.dlg_prs.activateWindow()
                 return
