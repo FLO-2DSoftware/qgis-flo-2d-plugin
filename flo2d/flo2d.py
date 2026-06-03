@@ -171,6 +171,8 @@ class Flo2D(object):
         self.infoToolCalled = False
         self.new_gpkg = None
 
+        self.dlg_prs = None
+
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
@@ -4273,14 +4275,14 @@ class Flo2D(object):
             self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
-        dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
-        dlg_prs.show()
-        while True:
-            ok = dlg_prs.exec()
-            if ok:
-                break
-            else:
+        if self.dlg_prs is not None:
+            if self.dlg_prs.isVisible():
+                self.dlg_prs.raise_()
+                self.dlg_prs.activateWindow()
                 return
+
+        self.dlg_prs = ProjectReviewScenariosDialog(self.iface, self.gutils)
+        self.dlg_prs.show()
 
     @connection_required
     def show_hazus_dialog(self):
