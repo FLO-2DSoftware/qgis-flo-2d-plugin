@@ -14,6 +14,34 @@ changelog=
  - General
     Added full support to Qt6
     Fixed the numpy error on Python 3.12
+	Improvements on the dialogs to avoid opening dialogs in second screen 
+	Refactored dock area to use consistent QSettings and disable floating for all docks
+	Avoided the opening of several instances of the same dialog
+	Code organization
+ - Levee Elevation Tool
+	Added a smart code to auto fill the comboboxes 
+	Organized the code
+ - Boundary Condition Editor
+	Fixed wrong export of datasets in the hdf5 context
+ - Breach Hydrograph Tool
+	Several improvements
+	Fix a typo
+ - Rain Editor
+	Fixed the predefined rain time series issue
+ - Infiltration Editor
+	Fixed a typo in the orgmat variable
+	Added delete schema data button
+ - Structures Editor
+	Added delete schema data button
+ - Storm Drain Editor
+	Improved the smart code to fill out the comboboxes
+ - Project Review Scenarios
+	Improved the error message for missing TIMDEP.HDF5
+ - Bugs
+	Fixed a bug on the TIN elevation corrector
+	None values handled correctly on the BREACH_GLOBAL dataset
+	Fixed the radio button selection logic in export dialog
+	Fixed the conflict between grid info and temporal controller
  <p>2.1.0
  - Breach Hydrograph Tool
     Added the breach hydrograph tool to generate water and tailings outflow breach hydrographs
