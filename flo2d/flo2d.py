@@ -173,6 +173,7 @@ class Flo2D(object):
 
         self.dlg_prs = None
         self.dlg_breach_hydrograph_tool = None
+        self.dlg_gpkg_management = None
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
@@ -1166,6 +1167,14 @@ class Flo2D(object):
         Function to run the GeoPackage Management
         """
         self.uncheck_all_info_tools()
+
+        if self.dlg_gpkg_management is not None:
+            if self.dlg_gpkg_management.isVisible():
+                self.dlg_gpkg_management.showNormal()
+                self.dlg_gpkg_management.raise_()
+                self.dlg_gpkg_management.activateWindow()
+                return
+
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
 
