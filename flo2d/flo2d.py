@@ -1598,7 +1598,7 @@ class Flo2D(object):
         self.f2g.parser.write_mode = "w"
 
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
-        progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls), parent)
+        progDialog = QProgressDialog("Exporting to HDF5...", "Cancel", 0, len(calls), parent)
         progDialog.setModal(True)
         progDialog.setValue(0)
         progDialog.show()
@@ -1613,6 +1613,17 @@ class Flo2D(object):
                 progDialog.setValue(i)
                 progDialog.setLabelText(call)
                 QApplication.processEvents()
+
+                if progDialog.wasCanceled():
+
+                    progDialog.close()
+                    QApplication.processEvents()
+                    progDialog.deleteLater()
+
+                    self.uc.log_info("Export to HDF5 canceled!")
+                    self.uc.bar_warn("Export to HDF5 canceled!")
+
+                    return False
 
                 method = getattr(self.f2g, call)
                 try:
@@ -1641,7 +1652,7 @@ class Flo2D(object):
             self.files_used = "CONT.DAT\n"
 
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
-        progDialog = QProgressDialog("Exporting to DATA...", None, 0, len(calls), parent)
+        progDialog = QProgressDialog("Exporting to DATA...", "Cancel", 0, len(calls), parent)
         progDialog.setModal(True)
         progDialog.setValue(0)
         progDialog.show()
@@ -1654,6 +1665,19 @@ class Flo2D(object):
             progDialog.setValue(i)
             progDialog.setLabelText(call)
             QApplication.processEvents()
+
+            if progDialog.wasCanceled():
+
+                progDialog.close()
+                QApplication.processEvents()
+                progDialog.deleteLater()
+
+                self.uc.log_info("Export to DATA canceled!")
+                self.uc.bar_warn("Export to DATA canceled!")
+
+                QApplication.restoreOverrideCursor()
+
+                return False
 
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
@@ -1743,7 +1767,6 @@ class Flo2D(object):
 
         progDialog.close()
         progDialog.deleteLater()
-        QApplication.restoreOverrideCursor()
 
     @connection_required
     def import_gds(self):
