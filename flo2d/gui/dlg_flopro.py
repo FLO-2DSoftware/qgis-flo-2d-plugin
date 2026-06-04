@@ -80,33 +80,44 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         try:
             flo2d_dir = self.flo2d_le.text()
             if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
-                self.uc.show_info("Running FLOPRO.exe")
+                self.uc.log_info("Running FLOPRO.exe in DEBUG mode!")
+                self.uc.bar_info("Running FLOPRO.exe in DEBUG mode!")
                 program = "FLOPRO.exe"
             elif os.path.isfile(flo2d_dir + r"\FLOPRO_Demo.exe"):
-                self.uc.show_info("Running FLOPRO_Demo.exe")
+                self.uc.log_info("Running FLOPRO_Demo.exe in DEBUG mode!")
+                self.uc.bar_info("Running FLOPRO_Demo.exe in DEBUG mode!")
                 program = "FLOPRO_Demo.exe"
             else:
-                self.uc.show_warn("WARNING 221022.0911: Program FLOPRO.exe or FLOPRO_Demo.exe is not in directory\n\n" + flo2d_dir)
-                self.uc.log_info(
-                    "WARNING 221022.0911: Program FLOPRO.exe or FLOPRO_Demo.exe is not in directory\n\n" + flo2d_dir)
+                self.uc.bar_warn("Program FLOPRO.exe or FLOPRO_Demo.exe is not in directory: " + flo2d_dir)
+                self.uc.log_info("Program FLOPRO.exe or FLOPRO_Demo.exe is not in directory:\n\n" + flo2d_dir)
+                return
+
             project_dir = self.project_le.text()
             contDAT = os.path.join(project_dir, "CONT.DAT")
-            if not os.path.exists(contDAT):
-                self.uc.show_warn("CONT.DAT is not in project directory.\n\n" + project_dir)
-                self.uc.log_info("CONT.DAT is not in project directory.\n\n" + project_dir)
+            inputHDF5 = os.path.join(project_dir, "Input.hdf5")
+
+            if os.path.exists(inputHDF5):
+                self.uc.bar_warn("DEBUG mode is not available on Input.HDF5!")
+                self.uc.log_info("DEBUG mode is not available on Input.HDF5!")
                 return
+
+            if not os.path.exists(contDAT):
+                self.uc.bar_warn("CONT.DAT is not in project directory: " + project_dir)
+                self.uc.log_info("CONT.DAT is not in project directory:\n\n" + project_dir)
+                return
+
             debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
             with open(debugDAT, "w") as f:
                 f.write("")
             debug_simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir, program)
             return_code = debug_simulation.perform()
-            self.uc.show_info(
-                "FLO-2D PRO DEBUG simulation completed."
-            )
+            self.uc.bar_info("FLO-2D PRO DEBUG simulation completed!")
+            self.uc.log_info("FLO-2D PRO DEBUG simulation completed!")
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 250419.1729: can't run debug model!.\n", e)
+            self.uc.show_error("DEBUG run failed!\n", e)
+            self.uc.bar_error("DEBUG run failed!")
 
         finally:
             self.close()
