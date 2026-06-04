@@ -19,8 +19,7 @@ from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenc
 from ..flo2d_tools.grid_tools import rasters2centroids
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.PyQt.QtWidgets import QProgressDialog
-
+from qgis.PyQt.QtWidgets import QProgressDialog, QApplication
 
 
 class ASCProcessor(object):
@@ -271,7 +270,7 @@ class HDFProcessor(object):
             dts = grp.create_dataset("IRAINDUM", (n_cells, int(irinters)), compression="gzip")
             dts.attrs["description"] = np.array(["Rainfall data in the grid cells"], dtype=np.bytes_)
 
-            progDialog = QProgressDialog("Exporting RealTime Rainfall (.HDF5)...", None, 0, int(irinters))
+            progDialog = QProgressDialog("Exporting RealTime Rainfall (.HDF5)...", "Cancel", 0, int(irinters))
             progDialog.setModal(True)
             progDialog.setValue(0)
             progDialog.show()
@@ -280,6 +279,17 @@ class HDFProcessor(object):
 
             i = 0
             for interval in timeinterval:
+
+                if progDialog.wasCanceled():
+                    progDialog.close()
+                    QApplication.processEvents()
+                    progDialog.deleteLater()
+
+                    self.uc.log_info("Exporting RealTime Rainfall (.HDF5) canceled!")
+                    self.uc.bar_warn("Exporting RealTime Rainfall (.HDF5) canceled!")
+
+                    return
+
                 progDialog.setValue(i)
                 if not subdomain:
                     batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
@@ -335,12 +345,23 @@ class HDFProcessor(object):
             n_lines2 = self.gutils.execute(flo2draincell_size).fetchone()[0]
             dts = grp.create_dataset("FLO2DRAINCELL", (n_lines2, 2), compression="gzip")
             dts.attrs["description"] = np.array(["Intersected realtime rainfall data"], dtype=np.bytes_)
-            progDialog = QProgressDialog("Exporting FLO2DRAINCELL (.HDF5)...", None, 0, int(n_lines2))
+            progDialog = QProgressDialog("Exporting FLO2DRAINCELL (.HDF5)...", "Cancel", 0, int(n_lines2))
             progDialog.setModal(True)
             progDialog.setValue(0)
             progDialog.show()
 
             for i, row in enumerate(self.gutils.execute(flo2draincell_qry_data).fetchall()):
+
+                if progDialog.wasCanceled():
+                    progDialog.close()
+                    QApplication.processEvents()
+                    progDialog.deleteLater()
+
+                    self.uc.log_info("Exporting FLO2DRAINCELL (.HDF5) canceled!")
+                    self.uc.bar_warn("Exporting FLO2DRAINCELL (.HDF5) canceled!")
+
+                    return
+
                 progDialog.setValue(i)
                 dts[i, :] = np.array([row[0], row[1]])
 
