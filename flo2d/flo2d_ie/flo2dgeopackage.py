@@ -10927,13 +10927,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 with open(raincell, "w") as r:
                     r.write(line1.format(*raincell_head))
-                    progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
+                    progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", "Cancel", 0, int(raincell_size))
                     progDialog.setModal(True)
                     progDialog.setValue(0)
                     progDialog.show()
                     i = 0
 
                     for row in raincell_rows:
+
+                        if progDialog.wasCanceled():
+
+                            progDialog.close()
+                            QApplication.processEvents()
+                            progDialog.deleteLater()
+
+                            self.uc.log_info("Exporting RealTime Rainfall (.DAT) canceled!")
+                            self.uc.bar_warn("Exporting RealTime Rainfall (.DAT) canceled!")
+
+                            QApplication.restoreOverrideCursor()
+
+                            return False
+
                         # Check if it is the last grid element -> Needs to be printed every single interval
                         if int(row[1]) == int(n_cells):
                             if row[2] is None:
@@ -10978,12 +10992,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 with open(raincell, "w") as r:
                     r.write(line1.format(*raincell_head))
-                    progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
+                    progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", "Cancel", 0, int(raincell_size))
                     progDialog.setModal(True)
                     progDialog.setValue(0)
                     progDialog.show()
                     i = 0
                     for row in raincell_rows:
+
+                        if progDialog.wasCanceled():
+
+                            progDialog.close()
+                            QApplication.processEvents()
+                            progDialog.deleteLater()
+
+                            self.uc.log_info("Exporting RealTime Rainfall (.DAT) canceled!")
+                            self.uc.bar_warn("Exporting RealTime Rainfall (.DAT) canceled!")
+
+                            QApplication.restoreOverrideCursor()
+
+                            return False
+
                         if row[2] is None:
                             r.write(line2.format(row[1], "0"))
                         else:
