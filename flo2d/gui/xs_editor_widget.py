@@ -3049,18 +3049,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def interpolate_channel_n(self):
         if sys.platform != "win32":
+            self.uc.log_info("Could not run 'CHAN N-VALUE INTERPOLATOR.EXE' under current operation system!")
             self.uc.bar_warn("Could not run 'CHAN N-VALUE INTERPOLATOR.EXE' under current operation system!")
             return
         if self.gutils.is_table_empty("grid"):
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        # dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
-        # dlg.debug_run_btn.setVisible(False)
-        # dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
-        # ok = dlg.exec()
-        # if not ok:
-        #     return
         s = QSettings()
         flo2d_dir = s.value("FLO-2D/last_flopro", "")
         project_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -3132,6 +3128,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 "\n_________________________________________________",
                 e,
             )
+        finally:
+            if os.path.exists(outdir):
+                # Delete the temp folder
+                shutil.rmtree(outdir)
 
     def schematize_confluences(self):
         if self.gutils.is_table_empty("grid"):
