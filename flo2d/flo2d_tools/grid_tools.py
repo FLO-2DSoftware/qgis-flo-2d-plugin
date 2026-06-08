@@ -1152,7 +1152,7 @@ def raster2grid(grid, out_raster, iface, request=None):
 
     parent = iface.mainWindow() if iface and iface.mainWindow() else None
 
-    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount(), parent)
+    pd = QProgressDialog("Probing raster...", "Cancel", 0, grid.featureCount(), parent)
     pd.setModal(True)
     pd.setValue(0)
     pd.forceShow()
@@ -1160,6 +1160,12 @@ def raster2grid(grid, out_raster, iface, request=None):
     i = 0
 
     for feat in features:
+
+        QApplication.processEvents()
+
+        if pd.wasCanceled():
+            break
+
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
         # ident is the value of the query provided by the identify method of the dataProvider.
