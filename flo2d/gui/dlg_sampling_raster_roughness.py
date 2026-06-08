@@ -194,15 +194,28 @@ class SamplingRoughnessDialog(qtBaseClass, uiDialog):
             self.fill_nodata()
         else:
             pass
-        sampler = raster2grid(self.grid, temp_file_path, self.iface)
 
-        qry = "UPDATE grid SET n_value=? WHERE fid=?;"
-        self.con.executemany(qry, sampler)
-        self.con.commit()
+        try:
+            sampler = raster2grid(self.grid, temp_file_path, self.iface)
 
-        os.remove(temp_file_path)
+            qry = "UPDATE grid SET n_value=? WHERE fid=?;"
+            self.con.executemany(qry, sampler)
+            self.con.commit()
 
-        return True
+            os.remove(temp_file_path)
+
+            return True
+
+        except InterruptedError:
+
+            qry = "UPDATE grid SET n_value=0.04;"
+            self.con.execute(qry)
+            self.con.commit()
+
+            self.uc.log_info("Roughness Sampling cancelled!")
+            self.uc.bar_warn("Roughness Sampling cancelled!")
+
+            return False
 
     def fill_nodata(self):
         opts = ["-md {}".format(self.radiusSBox.value())]

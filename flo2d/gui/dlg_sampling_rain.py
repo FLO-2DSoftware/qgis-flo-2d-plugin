@@ -173,18 +173,29 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             self.fill_nodata()
         else:
             pass
-        sampler = raster2grid(self.grid, temp_file_path, self.iface)
 
-        qry = """INSERT INTO rain_arf_cells (arf, grid_fid) VALUES (?,?);"""
-        self.con.executemany(qry, sampler)
-        qry = """SELECT MAX(arf) FROM rain_arf_cells;"""
-        max_val = self.con.execute(qry).fetchone()[0]
-        if max_val > 0:
-            qry = """UPDATE rain_arf_cells SET arf = arf/{0};""".format(max_val)
-            self.con.execute(qry)
-        self.con.commit()
-        os.remove(temp_file_path)
-        return True
+        try:
+            sampler = raster2grid(self.grid, temp_file_path, self.iface)
+
+            qry = """INSERT INTO rain_arf_cells (arf, grid_fid) VALUES (?,?);"""
+            self.con.executemany(qry, sampler)
+            qry = """SELECT MAX(arf) FROM rain_arf_cells;"""
+            max_val = self.con.execute(qry).fetchone()[0]
+            if max_val > 0:
+                qry = """UPDATE rain_arf_cells SET arf = arf/{0};""".format(max_val)
+                self.con.execute(qry)
+            self.con.commit()
+            os.remove(temp_file_path)
+            return True
+
+        except InterruptedError:
+
+            self.gutils.clear_tables("rain_arf_cells")
+
+            self.uc.log_info("Operation cancelled.")
+            self.uc.bar_warn("Operation cancelled.")
+
+            return False
 
     def fill_nodata(self):
         opts = ["-md {}".format(self.radiusSBox.value())]

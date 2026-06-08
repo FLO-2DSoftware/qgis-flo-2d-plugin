@@ -345,26 +345,34 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
                 self.fill_nodata(raster_outpath)
             else:
                 pass
-            self.log_message(">>> Sampling Raster-to-Grid")
-            sampler = raster2grid(self.grid, raster_outpath, self.iface)
 
-            qryIndex = """CREATE INDEX if not exists grid_FIDTemp ON grid (fid);"""
-            self.con.execute(qryIndex)
-            self.con.commit()
-            #
-            # print ("Writing elevs to geopackage")
+            try:
+                sampler = raster2grid(self.grid, raster_outpath, self.iface)
 
-            qry = "UPDATE grid SET elevation=? WHERE fid=?;"
-            self.con.executemany(qry, sampler)
-            self.con.commit()
+                qryIndex = """CREATE INDEX if not exists grid_FIDTemp ON grid (fid);"""
+                self.con.execute(qryIndex)
+                self.con.commit()
 
-            # print ("Done Writing elevs to geopackage")
-            qryIndex = """DROP INDEX if exists grid_FIDTemp;"""
-            self.con.execute(qryIndex)
-            self.con.commit()
+                qry = "UPDATE grid SET elevation=? WHERE fid=?;"
+                self.con.executemany(qry, sampler)
+                self.con.commit()
 
-            self.log_message("Ok.")
-            self.show_probing_result_info()
+                qryIndex = """DROP INDEX if exists grid_FIDTemp;"""
+                self.con.execute(qryIndex)
+                self.con.commit()
+
+                self.show_probing_result_info()
+
+            except InterruptedError:
+
+                qry = "UPDATE grid SET elevation=-9999;"
+                self.con.execute(qry)
+                self.con.commit()
+
+                self.uc.log_info("Elevation Sampling cancelled!")
+                self.uc.bar_warn("Elevation Sampling cancelled!")
+
+                return False
 
     @point_elev.timer
     def fill_nodata(self, raster_file):

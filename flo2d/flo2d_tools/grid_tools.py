@@ -803,14 +803,18 @@ def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_gr
 
     parent = iface.mainWindow() if iface and iface.mainWindow() else None
 
-    pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount(), parent)
+    pd = QProgressDialog("Assigning values...", "Cancel", 0, polygons.featureCount(), parent)
     pd.setModal(True)
     pd.setValue(0)
     pd.forceShow()
     i = 0
-    QApplication.processEvents()
 
     for feat in polygon_features:
+
+        QApplication.processEvents()
+        if pd.wasCanceled():
+            break
+
         fid = feat.id()
         geom = feat.geometry()
         geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
@@ -1164,7 +1168,7 @@ def raster2grid(grid, out_raster, iface, request=None):
         QApplication.processEvents()
 
         if pd.wasCanceled():
-            break
+            raise InterruptedError("Operation cancelled by user")
 
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
@@ -1876,7 +1880,7 @@ def calculate_arfwrf(grid, areas):
 
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
 
-        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features), parent)
+        pd = QProgressDialog("Calculating ARF and WRF...", "Cancel", 0, sum(1 for feature in features), parent)
         pd.setModal(True)
         pd.setValue(0)
         pd.forceShow()
@@ -1885,6 +1889,11 @@ def calculate_arfwrf(grid, areas):
         features = grid.getFeatures()
 
         for feat in features:
+
+            QApplication.processEvents()
+            if pd.wasCanceled():
+                break
+
             geom = feat.geometry()
             fids = index.intersects(geom.boundingBox())
 
