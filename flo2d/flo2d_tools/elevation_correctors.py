@@ -310,17 +310,7 @@ class GridElevation(ElevationCorrector):
 
         if self.user_polygons.featureCount() <= 0:
             QApplication.restoreOverrideCursor()
-            parent = iface.mainWindow() if iface and iface.mainWindow() else None
-            ms_box = QMessageBox(
-                mb_icon("Critical"),
-                "Error",
-                "Please, define Elevation Polygon.",
-                mb_button("Ok"),
-                parent
-            )
-            ms_box.exec()
-            ms_box.show()
-
+            self.uc.bar_error("Elevation polygon not defined.")
             self.uc.log_info("Elevation polygon not defined.")
             return False
 
@@ -328,40 +318,58 @@ class GridElevation(ElevationCorrector):
             request = self.request
         else:
             request = None
+
         set_qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         add_qry = "UPDATE grid SET elevation = elevation + ? WHERE fid = ?;"
         set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
+
         cur = self.gutils.con.cursor()
         cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
-        for el, cor, fid in poly2grid(
-            cellSize,
-            self.grid,
-            self.user_polygons,
-            request,
-            True,
-            False,
-            False,
-            self.threshold,
-            self.ELEVATION_FIELD,
-            self.CORRECTION_FIELD,
-        ):
-            el_null = el == NULL
-            cor_null = cor == NULL
-            if not el_null:
-                el = round(el, 4)
-            if not cor_null:
-                cor = round(cor, 4)
 
-            if not el_null and cor_null:
-                cur.execute(set_qry, (el, fid))
-            elif el_null and not cor_null:
-                cur.execute(add_qry, (cor, fid))
-            elif not el_null and not cor_null:
-                cur.execute(set_add_qry, (el, cor, fid))
+        try:
+            self.gutils.con.execute("BEGIN")
+            for el, cor, fid in poly2grid(
+                cellSize,
+                self.grid,
+                self.user_polygons,
+                request,
+                True,
+                False,
+                False,
+                self.threshold,
+                self.ELEVATION_FIELD,
+                self.CORRECTION_FIELD,
+            ):
+                el_null = el == NULL
+                cor_null = cor == NULL
 
-        self.gutils.con.commit()
+                if not el_null:
+                    el = round(el, 4)
 
-        return True
+                if not cor_null:
+                    cor = round(cor, 4)
+
+                if not el_null and cor_null:
+                    cur.execute(set_qry, (el, fid))
+
+                elif el_null and not cor_null:
+                    cur.execute(add_qry, (cor, fid))
+
+                elif not el_null and not cor_null:
+                    cur.execute(set_add_qry, (el, cor, fid))
+
+            self.gutils.con.commit()
+
+            return True
+
+        except InterruptedError:
+
+            self.gutils.con.rollback()
+
+            self.uc.log_info("Elevation from polygons cancelled! Original grid elevations restored.")
+            self.uc.bar_warn("Elevation from polygons cancelled! Original grid elevations restored.")
+
+            return False
 
     def elevation_from_tin(self):
 

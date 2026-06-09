@@ -111,17 +111,22 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
 
         try:
             QgsApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
+
+            self.gutils.con.execute("BEGIN")
+
             self.gutils.clear_tables("raincell", "raincellraw", "flo2d_raincell")
 
             # Convert grid layer to correct CRS
             current_lyr_crs = self.current_lyr.crs()
             grid_lyr_crs = self.grid_lyr.crs()
+
             if current_lyr_crs.authid() != grid_lyr_crs.authid():
                 reprojected = self.lyrs.reproject_simple(self.current_lyr, grid_lyr_crs, sink="memory:")
                 if not reprojected:
                     self.uc.bar_error("Error reprojecting source layer.")
                     self.uc.log_info("Error reprojecting source layer.")
                     return False
+
                 self.current_lyr = reprojected
 
             # Intersect the grid and save to flo2d_raincell table
@@ -130,11 +135,19 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
             # Centroids
             cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
 
-            self.gutils.con.executemany(
-                qry,
-                poly2grid(cellSize, self.grid_lyr, self.current_lyr, None, True, False, False, 1, src_field),
+            qry_generator = poly2grid(
+                cellSize,
+                self.grid_lyr,
+                self.current_lyr,
+                None,
+                True,
+                False,
+                False,
+                1,
+                src_field
             )
-            self.gutils.con.commit()
+
+            self.gutils.con.executemany(qry, qry_generator)
 
             # Parse the nexrad data and insert into raincellraw table - Check for the zeros
             # format_string = "%Y-%m-%d %H:%M:%S"
@@ -152,27 +165,54 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
                 data_max=data_max)
 
             intersected_nexrad_grids = self.gutils.execute("""SELECT DISTINCT nxrdgd FROM flo2d_raincell;""").fetchall()
+
+            insert_raw_qry = """
+                INSERT INTO raincellraw (nxrdgd, r_time, rrgrid)
+                VALUES (?, ?, ?);
+            """
+
             for row in intersected_nexrad_grids:
                 nxrdgd = row[0]
-                filtered_data = [r for r in raincellraw_data if r["POLYGON"] == nxrdgd]
-                insert_qry = """INSERT INTO raincellraw (nxrdgd, r_time, rrgrid) VALUES (?, ?, ?);"""
-                to_insert = [(r["POLYGON"], r["TIME_HOURS"], r["VALUE"]) for r in filtered_data]
-                self.gutils.con.executemany(insert_qry, to_insert)
-                self.gutils.con.commit()
+
+                to_insert = [
+                    (r["POLYGON"], r["TIME_HOURS"], r["VALUE"])
+                    for r in raincellraw_data
+                    if r["POLYGON"] == nxrdgd
+                ]
+
+                self.gutils.con.executemany(insert_raw_qry, to_insert)
 
             # Fill the raincell table
             duration_minutes = (data_max - data_min).total_seconds() / 60
             iriters = ceil(duration_minutes / rainintime) + 1
+
             insert_qry = """INSERT INTO raincell (rainintime, irinters) VALUES (?, ?);"""
+
             self.gutils.con.execute(insert_qry, (rainintime, iriters))
             self.gutils.con.commit()
 
             self.uc.bar_info("Realtime Rainfall (RAINCELLRAW) data processed successfully!")
             self.uc.log_info("Realtime Rainfall (RAINCELLRAW) data processed successfully!")
 
+            return True
+
+        except InterruptedError:
+            self.gutils.con.rollback()
+
+            self.uc.log_info("Processing raincellraw cancelled! Original rainfall data restored.")
+            self.uc.bar_warn("Processing raincellraw cancelled! Original rainfall data restored.")
+
+            return False
+
         except Exception as e:
+
+            self.gutils.con.rollback()
+
             self.uc.bar_error(f"Error processing raincellraw data!")
             self.uc.log_info(f"Error processing raincellraw data:\n\n{e}")
+
+            return False
+
         finally:
             QgsApplication.restoreOverrideCursor()
 

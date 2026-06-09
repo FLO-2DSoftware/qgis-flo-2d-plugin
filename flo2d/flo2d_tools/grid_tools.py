@@ -807,13 +807,14 @@ def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_gr
     pd.setModal(True)
     pd.setValue(0)
     pd.forceShow()
+    QApplication.processEvents()
     i = 0
 
     for feat in polygon_features:
 
         QApplication.processEvents()
         if pd.wasCanceled():
-            break
+            raise InterruptedError("Operation cancelled by user")
 
         fid = feat.id()
         geom = feat.geometry()
