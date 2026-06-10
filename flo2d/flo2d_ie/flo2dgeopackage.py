@@ -11115,7 +11115,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(raincellraw, "w") as r:
                 r.write(line1.format(int(raincellraw_head[0]), int(raincellraw_head[1])))
 
-                progDialog = QProgressDialog("Exporting Cumulative Realtime Rainfall (.DAT)...", None, 0,
+                progDialog = QProgressDialog("Exporting Cumulative Realtime Rainfall (.DAT)...", "Cancel", 0,
                                              int(raincellraw_size))
                 progDialog.setModal(True)
                 progDialog.setValue(0)
@@ -11124,6 +11124,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 previous_nxrdgd = None
                 for row in raincellraw_rows:
+
+                    if progDialog.wasCanceled():
+                        raise InterruptedError("Operation cancelled by user")
+
                     nxrdgd, r_time, rrgrid = row
                     if nxrdgd != previous_nxrdgd:
                         r.write(line2.format(nxrdgd))
@@ -11167,7 +11171,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             with open(flo2draincell, "w") as r:
 
-                progDialog = QProgressDialog("Exporting Intersected Realtime Rainfall (.DAT)...", None, 0,
+                progDialog = QProgressDialog("Exporting Intersected Realtime Rainfall (.DAT)...", "Cancel", 0,
                                              int(flo2draincell_size))
                 progDialog.setModal(True)
                 progDialog.setValue(0)
@@ -11175,12 +11179,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 i = 0
 
                 for row in flo2draincell_rows:
+
+                    if progDialog.wasCanceled():
+                        raise InterruptedError("Operation cancelled by user")
+
                     iraindum, nxrdgd = row
                     r.write(line.format(iraindum, nxrdgd))
                     progDialog.setValue(i)
                     i += 1
 
             return True
+
+        except InterruptedError:
+            self.uc.bar_warn("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT cancelled!")
+            self.uc.log_info("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT cancelled!")
+            return False
 
         except Exception as e:
             self.uc.show_error("Exporting RAINCELLRAW.DAT and FLO2DRAINCELL.DAT failed!.\n", e)
