@@ -14,6 +14,7 @@ from math import pi, sqrt
 from operator import itemgetter
 
 import numpy as np
+from qgis.PyQt.QtCore import NULL
 from qgis.core import (
     QgsFeature,
     QgsFeatureRequest,
@@ -307,10 +308,6 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
             ins_levees_sql = """INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
                          VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));"""
 
-            levee_failure_qry = """SELECT failevel, failtime, levbase, failwidthmax, failrate, failwidrate
-                                    FROM levee_failure 
-                                    WHERE grid_fid = ?"""
-
             ins_levees_failure_sql = """INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
                                                               levbase, failwidthmax, failrate, failwidrate)
                                          VALUES (?,?,?,?,?,?,?,?);"""
@@ -340,8 +337,8 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
 
                                 user_levees_data = gutils.con.execute(select_user_levees_qry, (lid,)).fetchone()
                                 if user_levees_data:
-                                    if not all(v == 0 for v in user_levees_data):
-                                        if not user_levees_data[0] == 0.0:
+                                    if not all(v in (0, NULL) for v in user_levees_data): # Treat both 0 and NULL as unset user levee values.
+                                        if user_levees_data[0] not in (NULL, 0):
                                             # failElev selected, use it.
                                             fail_data.append(
                                                 (
@@ -355,7 +352,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                                     user_levees_data[6],
                                                 )
                                             )
-                                        elif not user_levees_data[1] == 0.0:
+                                        elif user_levees_data[1] not in (NULL, 0):
                                             # failDepth selected, use adjacent cell elevations to calculate fail elevation.
 
                                             (
@@ -380,7 +377,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                         else:  # do not set failure data for this direction.
                                             pass
 
-                                        if user_levees_data[7] is None:  # crest elevation in user levees not defined
+                                        if user_levees_data[7] is NULL:  # crest elevation in user levees not defined
                                             (
                                                 adj_cell,
                                                 adj_elev,
