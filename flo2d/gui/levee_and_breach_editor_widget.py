@@ -132,7 +132,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
                 self.uc.log_info(f"ERROR: {e}")
 
             schem_levee = self.lyrs.data['levee_data']["qlyr"]
-            schem_levee.triggerRepaint()
+            repaint_levee(self.gutils, schem_levee) # Rebuild the levee renderer after data changes
             QApplication.restoreOverrideCursor()
             self.uc.bar_info(f"Schematized levees deleted.")
             self.uc.log_info(f"Schematized levees deleted.")

@@ -74,7 +74,12 @@ def repaint_levee(gutils, levees_layer):
 
     # check
     failure_mode_qry = """SELECT ilevfail FROM levee_general"""
-    failure_mode = gutils.execute(failure_mode_qry).fetchall()[0][0]
+
+    # Get the failure mode that controls levee symbology.
+    # If levee_general is empty or ilevfail is NULL, treat it as 0 ("No failure")
+    # so the renderer can still be built instead of failing on fetchall()[0][0].
+    failure_mode_row = gutils.execute(failure_mode_qry).fetchone()
+    failure_mode = failure_mode_row[0] if failure_mode_row and failure_mode_row[0] is not None else 0
 
     # create a new rule-based renderer
     symbol = QgsSymbol.defaultSymbol(levees_layer.geometryType())
@@ -1590,6 +1595,12 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                 self.lyrs.data["levee_failure"]["qlyr"],
             ]
             self.lyrs.repaint_layers()
+
+            # Ensure levee_general exists and prescribed failure mode is active
+            if self.gutils.is_table_empty("levee_general"):
+                self.gutils.execute("INSERT INTO levee_general DEFAULT VALUES;")
+
+            self.gutils.execute("UPDATE levee_general SET ilevfail = 1;")
 
             levees = self.lyrs.data["levee_data"]["qlyr"]
             repaint_levee(self.gutils, levees)
