@@ -864,6 +864,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 self.uc.log_info("There is no grid. Please, create it before sampling tailings.")
                 return
 
+            self.gutils.con.execute("BEGIN")
+
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             qry = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]
 
@@ -919,6 +921,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     self.uc.show_info(
                         "There are no intersections between the grid and layer '" + external_layer.name() + "' !"
                     )
+
+        except InterruptedError:
+            self.gutils.con.rollback()
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info("Assigning tailing cells cancelled!")
+            self.uc.bar_warn("Assigning tailing cells cancelled!")
+            QApplication.restoreOverrideCursor()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()

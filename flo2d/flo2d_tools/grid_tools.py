@@ -1460,6 +1460,7 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
     Updating roughness values inside 'grid' table.
     """
     try:
+        gutils.con.execute("BEGIN")
         if reset is True:
             default = gutils.get_cont_par("MANNING")
             gutils.execute("UPDATE grid SET n_value=?;", (default,))
@@ -1483,9 +1484,10 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
             gutils.con.commit()
             return True
 
-    #     end_time = time.time()
-    #     QApplication.restoreOverrideCursor()
-    #     debugMsg('\t{0:.3f} seconds'.format(end_time - start_time))
+    except InterruptedError:
+        gutils.con.rollback()
+        show_error("Updating roughness values cancelled!")
+        return False
 
     except:
         QApplication.restoreOverrideCursor()
@@ -1670,21 +1672,28 @@ def modify_elevation(gutils, grid, elev):
     set_add_vals = []
     qry_dict = {set_qry: set_vals, add_qry: add_vals, set_add_qry: set_add_vals}
     cellSize = float(gutils.get_cont_par("CELLSIZE"))
-    for el, cor, fid in poly2grid(cellSize, grid, elev, None, True, False, False, 1, "elev", "correction"):
-        if el != NULL and cor == NULL:
-            set_vals.append((el, fid))
-        elif el == NULL and cor != NULL:
-            add_vals.append((cor, fid))
-        elif el != NULL and cor != NULL:
-            set_add_vals.append((el, cor, fid))
-        else:
-            pass
+    try:
+        gutils.con.execute("BEGIN")
+        for el, cor, fid in poly2grid(cellSize, grid, elev, None, True, False, False, 1, "elev", "correction"):
+            if el != NULL and cor == NULL:
+                set_vals.append((el, fid))
+            elif el == NULL and cor != NULL:
+                add_vals.append((cor, fid))
+            elif el != NULL and cor != NULL:
+                set_add_vals.append((el, cor, fid))
+            else:
+                pass
 
-    for qry, vals in qry_dict.items():
-        if vals:
-            cur = gutils.con.cursor()
-            cur.executemany(qry, vals)
-            gutils.con.commit()
+        for qry, vals in qry_dict.items():
+            if vals:
+                cur = gutils.con.cursor()
+                cur.executemany(qry, vals)
+                gutils.con.commit()
+
+    except InterruptedError:
+        show_error("Modify elevation values cancelled!")
+        gutils.con.rollback()
+        return False
 
 
 def evaluate_arfwrf(gutils, grid, areas):

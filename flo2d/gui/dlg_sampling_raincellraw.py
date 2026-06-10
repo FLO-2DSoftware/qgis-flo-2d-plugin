@@ -199,8 +199,8 @@ class SamplingRaincellRawDialog(qtBaseClass, uiDialog):
         except InterruptedError:
             self.gutils.con.rollback()
 
-            self.uc.log_info("Processing raincellraw cancelled! Original rainfall data restored.")
-            self.uc.bar_warn("Processing raincellraw cancelled! Original rainfall data restored.")
+            self.uc.log_info("Processing raincellraw cancelled!")
+            self.uc.bar_warn("Processing raincellraw cancelled!")
 
             return False
 

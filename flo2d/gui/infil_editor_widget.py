@@ -430,6 +430,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if imethod == 0:
             return
         try:
+            self.gutils.con.execute("BEGIN")
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
             sl = self.slices[imethod]
@@ -486,6 +487,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("Schematizing Infiltration finished! The Infiltration switch is now enabled.")
             # Set Structures on the Control Parameters
             self.gutils.set_cont_par("INFIL", 1)
+
+        except InterruptedError:
+            self.gutils.con.rollback()
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("Schematizing of infiltration cancelled!")
+            self.uc.log_info("Schematizing of infiltration cancelled!")
 
         except Exception as e:
             self.gutils.enable_geom_triggers()

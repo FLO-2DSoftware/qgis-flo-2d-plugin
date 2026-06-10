@@ -375,17 +375,7 @@ class GridElevation(ElevationCorrector):
 
         if self.user_polygons.featureCount() <= 0 or self.user_points.featureCount() <= 0:
             QApplication.restoreOverrideCursor()
-            parent = iface.mainWindow() if iface and iface.mainWindow() else None
-            ms_box = QMessageBox(
-                mb_icon("Critical"),
-                "Error",
-                "Please, define Elevation Polygon & Elevation points.",
-                mb_button("Ok"),
-                parent
-            )
-            ms_box.exec()
-            ms_box.show()
-
+            self.uc.bar_warn("Elevation Polygon & Elevation Points not defined.")
             self.uc.log_info("Elevation Polygon & Elevation Points not defined.")
             return False
 
@@ -393,56 +383,59 @@ class GridElevation(ElevationCorrector):
             request = self.request
         else:
             request = None
+
         self.add_virtual_sum(self.user_points)
         tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         tin.setup_layer_data()
         cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
 
-        grid_fids = [
-            val[-1]
-            for val in poly2grid(
-                cellSize,
-                self.grid,
-                self.user_polygons,
-                request,
-                True,
-                True,
-                False,
-                self.threshold,
-            )
-        ]
+        try:
+            self.gutils.con.execute("BEGIN")
 
-        request = QgsFeatureRequest().setFilterFids(grid_fids)
-        qry_values = []
-        qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
-        for feat in self.grid.getFeatures(request):
-            geom = feat.geometry()
-            centroid = geom.centroid().asPoint()
-            succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
-            if succes != 0:
-                continue
-            qry_values.append((round(value, 4), feat.id()))
-        cur = self.gutils.con.cursor()
-        cur.executemany(qry, qry_values)
-        self.gutils.con.commit()
-        self.remove_virtual_sum(self.user_points)
+            grid_fids = [
+                val[-1]
+                for val in poly2grid(
+                    cellSize,
+                    self.grid,
+                    self.user_polygons,
+                    request,
+                    True,
+                    True,
+                    False,
+                    self.threshold,
+                )
+            ]
 
-        return True
+            request = QgsFeatureRequest().setFilterFids(grid_fids)
+            qry_values = []
+            qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+            for feat in self.grid.getFeatures(request):
+                geom = feat.geometry()
+                centroid = geom.centroid().asPoint()
+                succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
+                if succes != 0:
+                    continue
+                qry_values.append((round(value, 4), feat.id()))
+            cur = self.gutils.con.cursor()
+            cur.executemany(qry, qry_values)
+            self.gutils.con.commit()
+            self.remove_virtual_sum(self.user_points)
+
+            return True
+
+        except InterruptedError:
+            self.gutils.con.rollback()
+
+            self.uc.log_info("Elevation from TIN cancelled! Original grid elevations restored.")
+            self.uc.bar_warn("Elevation from TIN cancelled! Original grid elevations restored.")
+
+            return False
 
     def tin_elevation_within_polygons(self):
-        parent = iface.mainWindow() if iface and iface.mainWindow() else None
+
         if self.user_polygons.featureCount() <= 0:
             QApplication.restoreOverrideCursor()
-            ms_box = QMessageBox(
-                mb_icon("Critical"),
-                "Error",
-                "Please, define Elevation Polygon.",
-                mb_button("Ok"),
-                parent
-            )
-            ms_box.exec()
-            ms_box.show()
-
+            self.uc.bar_warn("Elevation Polygon not defined.")
             self.uc.log_info("Elevation Polygon not defined.")
             return False
 
@@ -450,6 +443,7 @@ class GridElevation(ElevationCorrector):
             request = self.request
         else:
             request = None
+
         poly_feats = (
             self.user_polygons.getFeatures() if self.only_selected is False else self.user_polygons.getFeatures(request)
         )
@@ -470,35 +464,46 @@ class GridElevation(ElevationCorrector):
         tin = TINInterpolator(grid_centroids, "elevation")
         cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
         tin.setup_layer_data()
-        grid_fids = [
-            val[-1]
-            for val in poly2grid(
-                cellSize,
-                self.grid,
-                self.user_polygons,
-                request,
-                True,
-                True,
-                False,
-                self.threshold,
-            )
-        ]
-        request = QgsFeatureRequest().setFilterFids(grid_fids)
-        qry_values = []
-        qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
-        for feat in self.grid.getFeatures(request):
-            QgsMessageLog.logMessage(str(feat.id()))
-            geom = feat.geometry()
-            centroid = geom.centroid().asPoint()
-            succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
-            if succes != 0:
-                continue
-            qry_values.append((round(value, 4), feat.id()))
-        cur = self.gutils.con.cursor()
-        cur.executemany(qry, qry_values)
-        self.gutils.con.commit()
+        try:
+            self.gutils.con.execute("BEGIN")
 
-        return True
+            grid_fids = [
+                val[-1]
+                for val in poly2grid(
+                    cellSize,
+                    self.grid,
+                    self.user_polygons,
+                    request,
+                    True,
+                    True,
+                    False,
+                    self.threshold,
+                )
+            ]
+            request = QgsFeatureRequest().setFilterFids(grid_fids)
+            qry_values = []
+            qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+            for feat in self.grid.getFeatures(request):
+                QgsMessageLog.logMessage(str(feat.id()))
+                geom = feat.geometry()
+                centroid = geom.centroid().asPoint()
+                succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
+                if succes != 0:
+                    continue
+                qry_values.append((round(value, 4), feat.id()))
+            cur = self.gutils.con.cursor()
+            cur.executemany(qry, qry_values)
+            self.gutils.con.commit()
+
+            return True
+
+        except InterruptedError:
+            self.gutils.con.rollback()
+
+            self.uc.log_info("Elevation from TIN cancelled! Original grid elevations restored.")
+            self.uc.bar_warn("Elevation from TIN cancelled! Original grid elevations restored.")
+
+            return False
 
     def elevation_within_arf(self, calculation_type):
         parent = iface.mainWindow() if iface and iface.mainWindow() else None
@@ -625,43 +630,51 @@ class ExternalElevation(ElevationCorrector):
         add_qry = "UPDATE grid SET elevation = elevation + ? WHERE fid = ?;"
         set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
         cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
-        poly_list = poly2grid(
-            cellSize,
-            self.grid,
-            self.polygons,
-            self.request,
-            self.only_centroids,
-            True,
-            False,
-            self.threshold,
-            self.elevation_field,
-            self.correction_field,
-        )
-        fids = {}
-        qry_values = []
-        for fid, el, cor, gid in poly_list:
-            el_null = el == NULL
-            cor_null = cor == NULL
-            if not el_null:
-                el = round(el, 4)
-            if not cor_null:
-                cor = round(cor, 4)
 
-            if not el_null and cor_null:
-                qry_values.append((set_qry, (el, gid)))
-            elif el_null and not cor_null:
-                qry_values.append((add_qry, (cor, gid)))
-            elif not el_null and not cor_null:
-                qry_values.append((set_add_qry, (el, cor, gid)))
+        try:
 
-            fids[fid] = {"elev": el, "correction": cor}
+            self.gutils.con.execute("BEGIN")
 
-        cur = self.gutils.con.cursor()
-        for qry, vals in qry_values:
-            cur.execute(qry, vals)
-        self.gutils.con.commit()
-        if self.copy_features is True:
-            self.import_features(fids)
+            poly_list = poly2grid(
+                cellSize,
+                self.grid,
+                self.polygons,
+                self.request,
+                self.only_centroids,
+                True,
+                False,
+                self.threshold,
+                self.elevation_field,
+                self.correction_field,
+            )
+            fids = {}
+            qry_values = []
+            for fid, el, cor, gid in poly_list:
+                el_null = el == NULL
+                cor_null = cor == NULL
+                if not el_null:
+                    el = round(el, 4)
+                if not cor_null:
+                    cor = round(cor, 4)
+
+                if not el_null and cor_null:
+                    qry_values.append((set_qry, (el, gid)))
+                elif el_null and not cor_null:
+                    qry_values.append((add_qry, (cor, gid)))
+                elif not el_null and not cor_null:
+                    qry_values.append((set_add_qry, (el, cor, gid)))
+
+                fids[fid] = {"elev": el, "correction": cor}
+
+            cur = self.gutils.con.cursor()
+            for qry, vals in qry_values:
+                cur.execute(qry, vals)
+            self.gutils.con.commit()
+            if self.copy_features is True:
+                self.import_features(fids)
+
+        except InterruptedError:
+            self.gutils.con.rollback()
 
     def elevation_grid_statistics(self):
         if self.statistics == "Mean":
@@ -684,32 +697,38 @@ class ExternalElevation(ElevationCorrector):
         cur = self.gutils.con.cursor()
         qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
-        grid_gen = poly2grid(
-            cellSize,
-            self.grid,
-            self.polygons,
-            self.request,
-            self.only_centroids,
-            True,
-            False,
-            self.threshold,
-        )
-        fids_grids = defaultdict(list)
-        fids_elevs = {}
-        for fid, gid in grid_gen:
-            fids_grids[fid].append(gid)
-        for fid, grids_fids in list(fids_grids.items()):
-            grid_request = QgsFeatureRequest().setFilterFids(grids_fids)
-            elevs = []
-            for grid_feat in self.grid.getFeatures(grid_request):
-                elevs.append(grid_feat["elevation"])
-            elevation = round(calculation_method(elevs), 4)
-            fids_elevs[fid] = {"elev": elevation}
-            for g in grids_fids:
-                cur.execute(qry, (elevation, g))
-        self.gutils.con.commit()
-        if self.copy_features is True:
-            self.import_features(fids_elevs)
+        try:
+            self.gutils.con.execute("BEGIN")
+
+            grid_gen = poly2grid(
+                cellSize,
+                self.grid,
+                self.polygons,
+                self.request,
+                self.only_centroids,
+                True,
+                False,
+                self.threshold,
+            )
+            fids_grids = defaultdict(list)
+            fids_elevs = {}
+            for fid, gid in grid_gen:
+                fids_grids[fid].append(gid)
+            for fid, grids_fids in list(fids_grids.items()):
+                grid_request = QgsFeatureRequest().setFilterFids(grids_fids)
+                elevs = []
+                for grid_feat in self.grid.getFeatures(grid_request):
+                    elevs.append(grid_feat["elevation"])
+                elevation = round(calculation_method(elevs), 4)
+                fids_elevs[fid] = {"elev": elevation}
+                for g in grids_fids:
+                    cur.execute(qry, (elevation, g))
+            self.gutils.con.commit()
+            if self.copy_features is True:
+                self.import_features(fids_elevs)
+
+        except InterruptedError:
+            self.gutils.con.rollback()
 
     def elevation_raster_statistics(self):
         if self.statistics == "Mean":
