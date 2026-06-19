@@ -1768,6 +1768,8 @@ class Flo2D(object):
         progDialog.close()
         progDialog.deleteLater()
 
+        QApplication.restoreOverrideCursor()
+
     @connection_required
     def import_gds(self):
         """
