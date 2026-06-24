@@ -920,7 +920,7 @@
             </sizepolicy>
            </property>
            <property name="title">
-            <string>Breach parameters and hidrograph estimation</string>
+            <string>Breach parameters and hydrograph estimation</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_13">
             <item row="0" column="0">
