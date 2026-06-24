@@ -2411,7 +2411,7 @@
             </sizepolicy>
            </property>
            <property name="title">
-            <string>Hidrograph Generation</string>
+            <string>Hydrograph Generation</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_18">
             <item row="1" column="0" colspan="10">
