@@ -199,8 +199,8 @@
     </field>
   </fieldConfiguration>
   <aliases>
-    <alias index="0" field="fid" name=""/>
-    <alias index="1" field="adjustment_factor" name=""/>
+    <alias index="0" field="fid" name="FID"/>
+    <alias index="1" field="adjustment_factor" name="Adjustment Factor"/>
   </aliases>
   <defaults>
     <default field="fid" expression="" applyOnUpdate="0"/>

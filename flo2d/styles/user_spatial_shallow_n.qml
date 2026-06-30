@@ -270,9 +270,8 @@
   <DiagramLayerSettings yPosColumn="-1" showColumn="0" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform>.</annotationform>
   <aliases>
-    <alias field="fid" index="0" name=""/>
-    <alias field="shallow_n" index="1" name=""/>
-    <alias field="code" index="2" name=""/>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="shallow_n" index="1" name="Spatial Shallow-n"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>

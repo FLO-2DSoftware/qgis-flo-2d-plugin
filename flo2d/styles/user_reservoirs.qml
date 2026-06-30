@@ -245,11 +245,11 @@
   <DiagramLayerSettings yPosColumn="-1" showColumn="0" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
   <aliases>
-    <alias field="fid" index="0" name=""/>
-    <alias field="name" index="1" name=""/>
-    <alias field="grid_fid" index="2" name=""/>
-    <alias field="wsel" index="3" name=""/>
-    <alias field="note" index="4" name=""/>
+    <alias index="0" field="fid" name="FID"/>
+    <alias index="1" field="name" name="Name"/>
+    <alias index="2" field="wsel" name="Water Surface Elevation"/>
+    <alias index="3" field="n_value" name="N_value"/>
+    <alias index="4" field="notes" name="Notes"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>

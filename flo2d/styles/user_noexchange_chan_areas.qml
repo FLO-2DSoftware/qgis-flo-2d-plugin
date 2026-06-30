@@ -232,9 +232,8 @@
   <DiagramLayerSettings yPosColumn="-1" showColumn="0" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
   <aliases>
-    <alias field="fid" index="0" name=""/>
-    <alias field="chan_seg_fid" index="1" name=""/>
-    <alias field="note" index="2" name=""/>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="notes" index="1" name="Notes"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>

@@ -151,8 +151,8 @@
     </field>
   </fieldConfiguration>
   <aliases>
-    <alias index="0" name="" field="fid"/>
-    <alias index="1" name="" field="type"/>
+    <alias index="0" name="FID" field="fid"/>
+    <alias index="1" name="Type" field="type"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
