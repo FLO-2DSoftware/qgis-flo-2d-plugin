@@ -232,11 +232,11 @@
     </field>
   </fieldConfiguration>
   <aliases>
-    <alias field="fid" index="0" name=""/>
-    <alias field="name" index="1" name=""/>
-    <alias field="elev" index="2" name=""/>
-    <alias field="correction" index="3" name=""/>
-    <alias field="membership" index="4" name=""/>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="name" index="1" name="Name"/>
+    <alias field="elev" index="2" name="Elevation"/>
+    <alias field="correction" index="3" name="Correction"/>
+    <alias field="membership" index="4" name="Membership"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
