@@ -232,8 +232,17 @@
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
   <aliases>
-    <alias field="fid" index="0" name=""/>
-    <alias field="elev" index="1" name=""/>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="name" index="1" name="Name"/>
+    <alias field="elev" index="2" name="Elevation"/>
+    <alias field="correction" index="3" name="Correction"/>
+    <alias field="failElev" index="4" name="Failure Elevation"/>
+    <alias field="failDepth" index="5" name="Failure Depth"/>
+    <alias field="failDuration" index="6" name="Failure Duration"/>
+    <alias field="failBaseElev" index="7" name="Failure Base Elevation"/>
+    <alias field="failMaxWidth" index="8" name="Failure Elevation Width"/>
+    <alias field="failVRate" index="9" name="Failure Vertical Rate"/>
+    <alias field="failHRate" index="10" name="Failure Horizontal Rate"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
