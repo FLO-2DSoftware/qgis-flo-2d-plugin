@@ -322,7 +322,7 @@
     <alias field="name" index="1" name="Name"/>
     <alias field="depinitial" index="2" name="Initial Depth"/>
     <alias field="froudc" index="3" name="Limiting Froude CH"/>
-    <alias field="roughadj" index="4" name="Depth Adjustment Coef."/>
+    <alias field="roughadj" index="4" name="Depth Adjustment Coef"/>
     <alias field="isedn" index="5" name="Sed Transport Switch"/>
     <alias field="ibaseflow" index="6" name="Baseflow"/>
     <alias field="rank" index="7" name="Rank"/>
