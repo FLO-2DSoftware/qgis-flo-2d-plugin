@@ -283,7 +283,7 @@
   <annotationform></annotationform>
   <aliases>
     <alias field="fid" index="0" name="FID"/>
-    <alias field="fcn" index="1" name="Avrg. Manning's Roughness"/>
+    <alias field="fcn" index="1" name="Avg Roughness Coef"/>
     <alias field="type" index="2" name="Type"/>
     <alias field="name" index="3" name="Name"/>
     <alias field="notes" index="4" name="Notes"/>

@@ -323,7 +323,7 @@
     <alias index="0" field="fid" name="FID"/>
     <alias index="1" field="name" name="Name"/>
     <alias index="2" field="wsel" name="Water Surface Elevation"/>
-    <alias index="3" field="tailings" name="Tailings"/>
+    <alias index="3" field="tailings" name="Tailings Surface Elevation"/>
     <alias index="4" field="n_value" name="Mannings n"/>
     <alias index="5" field="notes" name="Notes"/>
   </aliases>
