@@ -203,6 +203,11 @@
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
+   <aliases>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="n" index="1" name="Mannings n"/>
+    <alias field="code" index="2" name="Code"/>
+  </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions/>

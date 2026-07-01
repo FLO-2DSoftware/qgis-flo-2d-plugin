@@ -282,11 +282,11 @@
   <DiagramLayerSettings yPosColumn="-1" showColumn="0" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
   <aliases>
-    <alias field="fid" index="0" name=""/>
-    <alias field="fcn" index="1" name=""/>
-    <alias field="type" index="2" name=""/>
-    <alias field="name" index="3" name=""/>
-    <alias field="notes" index="4" name=""/>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="fcn" index="1" name="Avg Roughness Coef"/>
+    <alias field="type" index="2" name="Type"/>
+    <alias field="name" index="3" name="Name"/>
+    <alias field="notes" index="4" name="Notes"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
