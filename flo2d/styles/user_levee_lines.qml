@@ -234,8 +234,8 @@
   <aliases>
     <alias field="fid" index="0" name="FID"/>
     <alias field="name" index="1" name="Name"/>
-    <alias field="elev" index="2" name="Elevation"/>
-    <alias field="correction" index="3" name="Correction"/>
+    <alias field="elev" index="2" name="Crest Elevation"/>
+    <alias field="correction" index="3" name="Correction or Height"/>
     <alias field="failElev" index="4" name="Failure Elevation"/>
     <alias field="failDepth" index="5" name="Failure Depth"/>
     <alias field="failDuration" index="6" name="Failure Duration"/>
