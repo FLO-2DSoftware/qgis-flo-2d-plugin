@@ -318,13 +318,15 @@
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
   <aliases>
-    <alias field="fid" index="0" name=""/>
-    <alias field="name" index="1" name=""/>
-    <alias field="depinitial" index="2" name=""/>
-    <alias field="froudc" index="3" name=""/>
-    <alias field="roughadj" index="4" name=""/>
-    <alias field="isedn" index="5" name=""/>
-    <alias field="notes" index="6" name=""/>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="name" index="1" name="Name"/>
+    <alias field="depinitial" index="2" name="Initial Flow Depth"/>
+    <alias field="froudc" index="3" name="Max. Channel Froude"/>
+    <alias field="roughadj" index="4" name="Depth Adjustment Coef."/>
+    <alias field="isedn" index="5" name="Sed. Transport Eqn. Switch"/>
+    <alias field="ibaseflow" index="6" name="Baseflow"/>
+    <alias field="rank" index="7" name="Rank"/>
+    <alias field="notes" index="8" name="Notes"/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
