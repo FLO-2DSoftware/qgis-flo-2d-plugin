@@ -585,7 +585,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         + no_inter
                     )
                 else:
-                    self.uc.show_info("Calculating Green-Ampt parameters finished!")
+                    self.uc.show_info("Calculating Green-Ampt parameters finished! \n"
+                                      "The Calculated infiltration data was added to the schematized data.")
 
             else:
                 QApplication.restoreOverrideCursor()
@@ -636,8 +637,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             cur.executemany(qry, values)
             self.con.commit()
             self.gutils.enable_geom_triggers()
-            self.uc.bar_info("Calculating SCS Curve Number parameters finished!")
-            self.uc.log_info("Calculating SCS Curve Number parameters finished!")
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Calculating SCS Curve Number parameters finished! \n"
+                             "The Calculated infiltration data was added to the schematized data.")
+            self.uc.log_info("Calculating SCS Curve Number parameters finished! \n"
+                             "The Calculated infiltration data was added to the schematized data.")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
