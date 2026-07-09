@@ -12,6 +12,8 @@ import os
 import tempfile
 from subprocess import PIPE, STDOUT, Popen
 
+from osgeo import gdal
+
 from qgis.core import QgsRasterLayer
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QFileDialog
@@ -137,13 +139,53 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(1)
-        self.src_srs = src_raster_lyr.crs().authid()
+        self.src_srs = self.get_horizontal_srs(self.src_raster)
         if not self.src_srs:
             self.src_srs = self.out_srs
         # NODATA
         und = self.srcNoDataEdit.text()
         if und:
             self.src_nodata = int(und)
+
+    @staticmethod
+    def get_horizontal_srs(raster_path):
+        """
+        Some elevation rasters (e.g. exported from LAZ/COPC point clouds via PDAL)
+        carry a COMPOUND CRS - a horizontal CRS plus a vertical (height) CRS, such
+        as "NAD83 / UTM zone 14N + NAVD88 height". QGIS's QgsCoordinateReferenceSystem
+        .authid() can resolve this to a valid compound identifier (e.g. "EPSG:26914+5703").
+
+        Passing a compound/3D CRS to gdalwarp's -s_srs while -t_srs is a plain 2D CRS
+        triggers a *vertical datum shift on the pixel values themselves*, which requires
+        a geoid grid that is often not installed/available offline. When that grid is
+        missing the warp silently produces NODATA everywhere instead of erroring,
+        which is why sampling to the grid returns no values.
+
+        This pulls out just the horizontal (projected/geographic) EPSG code and ignores
+        the vertical component, so gdalwarp does a plain 2D resample - the elevation
+        values are copied as-is, with no vertical datum transform attempted.
+        """
+        try:
+            ds = gdal.Open(raster_path)
+            if ds is None:
+                return None
+            srs = ds.GetSpatialRef()
+            if srs is None:
+                return None
+            if srs.IsCompound():
+                epsg = srs.GetAuthorityCode("PROJCS") or srs.GetAuthorityCode("GEOGCS")
+                ds = None
+                if epsg:
+                    return "EPSG:{}".format(epsg)
+                return None
+            else:
+                epsg = srs.GetAuthorityCode("PROJCS") or srs.GetAuthorityCode("GEOGCS")
+                ds = None
+                if epsg:
+                    return "EPSG:{}".format(epsg)
+                return srs.ExportToProj4()
+        except Exception:
+            return None
 
     def probe_elevation(self, raster=None):
         """
