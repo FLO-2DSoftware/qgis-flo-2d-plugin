@@ -429,6 +429,22 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         imethod = self.infmethod
         if imethod == 0:
             return
+
+        has_schema_data = (
+            not self.gutils.is_table_empty("infil_cells_green") or
+            not self.gutils.is_table_empty("infil_cells_scs") or
+            not self.gutils.is_table_empty("infil_cells_horton") or
+            not self.gutils.is_table_empty("infil_chan_elems")
+        )
+        if has_schema_data:
+            msg = (
+                "There are some schematized infiltration data already.\n"
+                "Schematizing will clear existing schematized infiltration data. \n"
+                "Do you want to continue?"
+            )
+            if not self.uc.question(msg):
+                return
+
         try:
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
