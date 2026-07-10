@@ -429,6 +429,22 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         imethod = self.infmethod
         if imethod == 0:
             return
+
+        has_schema_data = (
+            not self.gutils.is_table_empty("infil_cells_green") or
+            not self.gutils.is_table_empty("infil_cells_scs") or
+            not self.gutils.is_table_empty("infil_cells_horton") or
+            not self.gutils.is_table_empty("infil_chan_elems")
+        )
+        if has_schema_data:
+            msg = (
+                "There are some schematized infiltration data already.\n"
+                "Schematizing will clear existing schematized infiltration data. \n"
+                "Do you want to continue?"
+            )
+            if not self.uc.question(msg):
+                return
+
         try:
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
@@ -585,7 +601,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         + no_inter
                     )
                 else:
-                    self.uc.show_info("Calculating Green-Ampt parameters finished!")
+                    self.uc.show_info("Calculating Green-Ampt parameters finished! \n"
+                                      "The Calculated infiltration data was added to the schematized data.")
 
             else:
                 QApplication.restoreOverrideCursor()
@@ -636,8 +653,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             cur.executemany(qry, values)
             self.con.commit()
             self.gutils.enable_geom_triggers()
-            self.uc.bar_info("Calculating SCS Curve Number parameters finished!")
-            self.uc.log_info("Calculating SCS Curve Number parameters finished!")
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Calculating SCS Curve Number parameters finished! \n"
+                             "The Calculated infiltration data was added to the schematized data.")
+            self.uc.log_info("Calculating SCS Curve Number parameters finished! \n"
+                             "The Calculated infiltration data was added to the schematized data.")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
