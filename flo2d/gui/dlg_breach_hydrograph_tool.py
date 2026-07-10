@@ -34,6 +34,7 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
+        self.setMinimumSize(700, 500) # Set minimum width and height of the dialog
         self.setWindowFlags(
             qt_window_flag("Window") |
             qt_window_flag("WindowMinimizeButtonHint") |
@@ -307,7 +308,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         canvas = FigureCanvas(fig)
         canvas.setSizePolicy(qsizepolicy_policy("Expanding"), qsizepolicy_policy("Expanding"))
-        canvas.setMinimumHeight(220)
+        # canvas.setMinimumHeight(220)
+
+        canvas.setMinimumSize(0, 0)
+        canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.verticalLayout.addWidget(canvas, stretch=1)
         canvas.draw()
@@ -358,7 +362,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         fig.tight_layout()
 
         canvas = FigureCanvas(fig)
-        canvas.setMinimumHeight(450)
+        # canvas.setMinimumHeight(450)
+
+        canvas.setMinimumSize(0, 0)
+        canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         canvas.mpl_connect(
             "button_press_event",
@@ -421,7 +428,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
         fig.tight_layout()
 
         canvas = FigureCanvas(fig)
-        canvas.setMinimumHeight(450)
+        # canvas.setMinimumHeight(450)
+
+        canvas.setMinimumSize(0, 0)
+        canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         canvas.mpl_connect(
             "button_press_event",
@@ -1163,7 +1173,10 @@ class BreachHydrographToolDialog(qtBaseClass, uiDialog):
 
         canvas = FigureCanvas(fig)
         canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        canvas.setMinimumHeight(220)
+        # canvas.setMinimumHeight(220)
+
+        canvas.setMinimumSize(0, 0)
+        canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # Clear previous plot
         while self.verticalLayout.count():
