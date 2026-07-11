@@ -220,11 +220,11 @@
     </field>
   </fieldConfiguration>
   <aliases>
-    <alias field="fid" name="" index="0"/>
-    <alias field="width" name="" index="1"/>
-    <alias field="height" name="" index="2"/>
-    <alias field="n_value" name="" index="3"/>
-    <alias field="direction" name="" index="4"/>
+    <alias field="fid" name="FID" index="0"/>
+    <alias field="width" name="Width" index="1"/>
+    <alias field="height" name="Height" index="2"/>
+    <alias field="n_value" name="N_value" index="3"/>
+    <alias field="direction" name="Direction" index="4"/>
   </aliases>
   <defaults>
     <default applyOnUpdate="0" field="fid" expression=""/>
