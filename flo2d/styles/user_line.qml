@@ -210,6 +210,15 @@
   </LinearlyInterpolatedDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
+  <aliases>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="name" index="1" name="Name"/>
+    <alias field="n_value" index="2" name="Mannings n"/>
+    <alias field="elevation" index="3" name="Elevation"/>
+    <alias field="curb_height" index="4" name="Curb Height"/>
+    <alias field="street_width" index="5" name="Street Width"/>
+    <alias field="notes" index="6" name="Notes"/>
+  </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions/>

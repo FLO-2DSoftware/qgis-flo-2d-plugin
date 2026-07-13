@@ -258,6 +258,13 @@
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
+  <aliases>
+    <alias field="fid" index="0" name="FID"/>
+    <alias field="width" index="1" name="Width"/>
+    <alias field="height" index="2" name="Height"/>
+    <alias field="n_value" index="3" name="N_value"/>
+    <alias field="direction" index="4" name="Direction"/>
+  </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions default="-1"/>
