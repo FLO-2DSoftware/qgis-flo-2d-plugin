@@ -428,16 +428,20 @@ class InfiltrationCalculator(object):
         """
         This code sets the CN based on the centroid of the intersecting layer.
         """
+        grid_params = {}
+        default_count = 0
+        default_cn = self.gutils.execute("SELECT scsnall FROM infil").fetchone()[0]
         try:
-            grid_params = {}
             curve_values = centroids2poly_geos(self.grid_lyr, self.curve_lyr, None, self.curve_fld)
+
             for gid, values in curve_values:
                 if len(values) == 0:
-                    raise Exception("Grid element centroid is not inside the Infiltration Polygon.")
+                    cn = default_cn
+                    default_count += 1
                 else:
                     cn = values[0][0]
-                    grid_params[gid] = {"scsn": cn}
-            return grid_params
+                grid_params[gid] = {"scsn": cn}
+            return grid_params, default_count, default_cn
 
         except Exception as e:
             self.uc.show_error(
@@ -492,14 +496,20 @@ class InfiltrationCalculator(object):
         sampler = raster2grid(self.grid_lyr, temp_file_path, iface)
 
         grid_params = {}
+        default_count = 0
+
+        default_cn = self.gutils.execute("SELECT scsnall FROM infil").fetchone()[0]
+
         for cn, gid in sampler:
             if cn is None:
-                cn = self.gutils.execute("SELECT scsnall FROM infil").fetchone()[0]
+                cn = default_cn
+                default_count += 1
+
             grid_params[gid] = {"scsn": int(round(cn, 0))}
 
         os.remove(temp_file_path)
 
-        return grid_params
+        return grid_params, default_count, default_cn
 
     def scs_infiltration_multi(self):
         grid_params = {}
