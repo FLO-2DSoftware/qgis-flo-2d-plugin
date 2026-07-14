@@ -932,9 +932,10 @@ def centroids2poly_geos(base_polygons, polygons, request=None, *columns):
     for feat in base_features:
         base_geom = feat.geometry().centroid()
         fids = index.intersects(base_geom.boundingBox())
-        if not fids:
-            continue
         base_fid = feat.id()
+        if not fids:
+            yield base_fid, [] # allow processing even those grids without intersection to all assignment of default value
+            continue
         base_geom_geos = base_geom.constGet()
         base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
         base_geom_engine.prepareGeometry()
