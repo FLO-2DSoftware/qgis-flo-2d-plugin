@@ -635,7 +635,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             if dlg.single_grp.isChecked():
                 single_lyr, single_fields = dlg.single_scs_parameters()
                 inf_calc.setup_scs_single(single_lyr, *single_fields)
-                grid_params = inf_calc.scs_infiltration_single()
+                grid_params, default_count, default_cn = inf_calc.scs_infiltration_single()
             elif dlg.raster_grp.isChecked():
                 raster_lyr, algorithm, nodatavalue, fillnodata, multithread = dlg.raster_scs_parameters()
                 inf_calc.setup_scs_raster(raster_lyr, algorithm, nodatavalue, fillnodata, multithread)
@@ -656,15 +656,15 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
             msg = (
-                "Calculating SCS Curve Number parameters finished! \n"
+                "Calculating SCS Curve Number parameters finished!\n"
                 "The Calculated infiltration data was added to the schematized data."
             )
 
             if default_count > 0:
                 msg += (
-                    f"\n\n The CN raster did not completely cover the computational grid. "
-                    f"The Global SCS CN value ({default_cn})"
-                    f"was used for the missing infiltration values."
+                    f"\n\nThe CN layer did not completely cover the computational grid.\n"
+                    f"A Global SCS CN value ({default_cn:}) "
+                    f"was assigned to cells outside the layer coverage."
                 )
             self.uc.show_info(msg)
             self.uc.log_info(msg)
@@ -672,7 +672,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 060319.1724: Calculating SCS Curve Number parameters failed! \n"
-                "Please check that the Raster covers the Grid Layer and the coordinate system is valid."
+                "Please check your input data and try again.\n"
+                "__________________________________________________",
+                e,
             )
         finally:
             dlg.deleteLater()
