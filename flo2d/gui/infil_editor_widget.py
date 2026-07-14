@@ -627,6 +627,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         ok = dlg.exec()
         if not ok:
             return
+        default_count = 0
         try:
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
@@ -638,7 +639,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             elif dlg.raster_grp.isChecked():
                 raster_lyr, algorithm, nodatavalue, fillnodata, multithread = dlg.raster_scs_parameters()
                 inf_calc.setup_scs_raster(raster_lyr, algorithm, nodatavalue, fillnodata, multithread)
-                grid_params = inf_calc.scs_infiltration_raster()
+                grid_params, default_count, default_cn = inf_calc.scs_infiltration_raster()
             else:
                 multi_lyr, multi_fields = dlg.multi_scs_parameters()
                 inf_calc.setup_scs_multi(multi_lyr, *multi_fields)
@@ -654,10 +655,19 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.con.commit()
             self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Calculating SCS Curve Number parameters finished! \n"
-                             "The Calculated infiltration data was added to the schematized data.")
-            self.uc.log_info("Calculating SCS Curve Number parameters finished! \n"
-                             "The Calculated infiltration data was added to the schematized data.")
+            msg = (
+                "Calculating SCS Curve Number parameters finished! \n"
+                "The Calculated infiltration data was added to the schematized data."
+            )
+
+            if default_count > 0:
+                msg += (
+                    f"\n\n The CN raster did not completely cover the computational grid. "
+                    f"The Global SCS CN value ({default_cn})"
+                    f"was used for the missing infiltration values."
+                )
+            self.uc.show_info(msg)
+            self.uc.log_info(msg)
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
