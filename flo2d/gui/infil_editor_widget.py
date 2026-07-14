@@ -655,17 +655,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.con.commit()
             self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
-            msg = (
-                "Calculating SCS Curve Number parameters finished!\n"
-                "The Calculated infiltration data was added to the schematized data."
-            )
-
+            msg = ("Calculating SCS Curve Number parameters finished!\n"
+                "The Calculated infiltration data was added to the schematized data.")
             if default_count > 0:
-                msg += (
-                    f"\n\nThe CN layer did not completely cover the computational grid.\n"
+                msg += (f"\n\nThe CN layer did not completely cover the computational grid.\n"
                     f"A Global SCS CN value ({default_cn:}) "
-                    f"was assigned to cells outside the layer coverage."
-                )
+                    f"was assigned to cells outside the layer coverage.")
             self.uc.show_info(msg)
             self.uc.log_info(msg)
         except Exception as e:
