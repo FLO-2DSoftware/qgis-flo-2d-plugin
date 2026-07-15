@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os
+import os, re
 import traceback
 from datetime import datetime
 from math import isnan
@@ -453,7 +453,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             None,
             "Select time series files to import data",
             directory=last_dir,
-            filter="(*.DAT *.TXT)",
+            filter="Rainfall Files (*.DAT *.TXT *.INP)",
         )
         if not predefined_files:
             return
@@ -500,7 +500,11 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
     def read_predefined_tseries_data(self, file):
         tsd_sql = "INSERT INTO rain_time_series_data (series_fid, time, value) VALUES (?, ?, ?);"
-        data = self.parse_timeseries(file)
+        ext = os.path.splitext(file)[1].lower()
+        if ext == ".inp":
+            data = self.parse_tr20_inp(file)
+        else:
+            data = self.parse_timeseries(file)
         ts_list = []
         for item in data:
             ts_list.append((self.rain.series_fid, float(item[0]), float(item[1])))
@@ -509,6 +513,46 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def parse_timeseries(self, filename):
         par = self.single_parser(filename)
         data = [row for row in par]
+        return data
+
+    # Function to parse INP data from WIN-TR20
+    def parse_tr20_inp(self, filename):
+        """
+        Read a TR-20 rainfall distributions (.inp) and return [(time, cumulative_ratio), ...]
+        """
+        with open(filename, "r", errors="replace") as f:
+            text = f.read()
+        if "RAINFALL DISTRIBUTION:" not in text:
+            raise ValueError("Could not find 'RAINFALL DISTRIBUTION:' section.")
+        section = text.split("RAINFALL DISTRIBUTION:", 1)[1]
+        lines = section.splitlines()
+        values = []
+        timestep_hr = None
+        collecting = False
+        for line in lines:
+            upper = line.upper()
+            if "NOAA_" in upper or "TYPE" in upper:
+                nums = re.findall(r"[-+]?\d*\.\d+|\d+", line)
+                if nums:
+                    timestep_hr = float(nums[-1])
+                collecting = True
+                continue
+            if collecting:
+                nums = re.findall(r"[-+]?\d*\.\d+|\d+", line)
+                if nums:
+                    values.extend(float(n) for n in nums)
+                elif values:
+                    break
+        if not values:
+            raise ValueError("No rainfall values found.")
+        if timestep_hr is None:
+            raise ValueError("Could not determine time step.")
+        expected = int(round(24.0 / timestep_hr)) + 1
+        values = values[:expected]
+        data = []
+        for i, ratio in enumerate(values):
+            time = i * timestep_hr
+            data.append((time, ratio))
         return data
 
     def single_parser(self, file):
