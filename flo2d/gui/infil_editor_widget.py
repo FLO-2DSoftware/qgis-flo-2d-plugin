@@ -416,6 +416,32 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
+    def delete_infiltration_cells(self, infiltration_grids):
+        """
+        Delete only schematized infiltration cells that belong to
+        the user infiltration polygons currently being schematized
+        """
+        # Get all affected grid ids
+        gids = sorted(set(row[-1] for row in infiltration_grids))
+        if not gids:
+            return
+        placeholders = ",".join("?" for _ in gids)
+
+        tables = (
+            "infil_cells_green",
+            "infil_cells_scs",
+            "infil_cells_horton",
+            "infil_chan_elems",
+        )
+
+        cur = self.con.cursor()
+
+        for table in tables:
+            qry = f"""DELETE FROM {table} WHERE grid_fid IN ({placeholders});"""
+            cur.execute(qry, gids)
+
+        self.con.commit()
+
     def schematize_infiltration(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
@@ -430,6 +456,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if imethod == 0:
             return
 
+        update_mode = InfilUpdateSelector.ALL
         has_schema_data = (
             not self.gutils.is_table_empty("infil_cells_green") or
             not self.gutils.is_table_empty("infil_cells_scs") or
@@ -445,6 +472,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             if not self.uc.question(msg):
                 return
 
+            dlg = InfilUpdateSelector(self)
+            if not dlg.exec():
+                return
+            update_mode = dlg.selected_mode()
+
         try:
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
@@ -453,12 +485,17 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
             infiltration_grids = list(
                 poly2grid(cellSize, self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
-            self.gutils.clear_tables(
-                "infil_cells_green",
-                "infil_cells_scs",
-                "infil_cells_horton",
-                "infil_chan_elems",
-            )
+
+            if update_mode == InfilUpdateSelector.ALL:
+                self.gutils.clear_tables(
+                    "infil_cells_green",
+                    "infil_cells_scs",
+                    "infil_cells_horton",
+                    "infil_chan_elems"
+                )
+            else:
+                self.delete_infiltration_cells(infiltration_grids)
+
             if imethod == 1 or imethod == 3:
                 green_vals, chan_area_vals, scs_vals, chan_vals = [], [], [], []
                 chan_fid, scs_fid = 1, 1
@@ -525,7 +562,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
 
         self.gutils.clear_tables("infil", "infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
-
         self.uc.bar_info("Schematized infiltration data deleted!")
         self.uc.log_info("Schematized infiltration data deleted!")
 
@@ -828,6 +864,20 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
             self.spin_hydcxx.setDisabled(True)
             self.chan_btn.setDisabled(True)
 
+uiInfilUpdate, qtBaseClassInfilUpdate = load_ui("infil_update_selector")
+
+class InfilUpdateSelector(qtBaseClassInfilUpdate, uiInfilUpdate):
+    ALL = 0
+    POLYGONS = 1
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+    def selected_mode(self):
+        if self.allGridElemsRadio.isChecked():
+            return self.ALL
+        return self.POLYGONS
 
 uiDialog_chan, qtBaseClass_chan = load_ui("infil_chan")
 
