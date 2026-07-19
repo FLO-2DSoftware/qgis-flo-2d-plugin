@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>403</width>
+    <width>406</width>
     <height>100</height>
    </rect>
   </property>
@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Select  Update Method</string>
+   <string>Select Schematization Update Mode</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_4">
    <item row="2" column="0">
