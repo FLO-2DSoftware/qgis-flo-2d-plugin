@@ -14,10 +14,10 @@ from math import isnan
 from qgis.utils import iface
 
 from qgis.PyQt.QtCore import QMetaType, QUrl
-from qgis.PyQt.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QFileDialog, QDialogButtonBox
 from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsLayerTreeRegistryBridge, \
     QgsMapLayer, QgsVectorFileWriter
-from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
+from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject, QgsFieldProxyModel
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
@@ -30,7 +30,7 @@ from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 from ..geopackage_utils import GeoPackageUtils
 
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, qt_cursor_shape, qmeta_type, qt_window_flag
+from ..utils import m_fdata, qt_cursor_shape, qmeta_type, qt_window_flag, restore_field_name, find_best_field_match
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 from ..misc.ssurgo_soils import SsurgoSoil
@@ -920,123 +920,227 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             self.ia_cbo,
             self.rtimpl_cbo,
         ]
-
         self.soil_cbo.currentIndexChanged.connect(self.populate_soil_fields)
         self.land_cbo.currentIndexChanged.connect(self.populate_land_fields)
-
         self.setup_layer_combos()
-        self.restore_green_ampt_shapefile_fields()
-
         self.calculateJE_btn.clicked.connect(self.calculate_ssurgo)
         self.lu_osm_btn.clicked.connect(self.calculate_osm)
+        self.veg_cover_chbox.toggled.connect(self.validate_green_ampt_inputs)
+        self.validate_green_ampt_inputs()
+        for combo in chain(self.soil_combos, self.land_combos):
+            combo.currentIndexChanged.connect(self.validate_green_ampt_inputs)
+
+    # Restore key helper: restores a previously saved field selection by field name, not by index
+    def restore_combo_field(self, combo, setting_key, field_names):
+        field = restore_field_name(setting_key, field_names)
+        idx = combo.findText(field)
+        if idx != -1:
+            combo.setCurrentIndex(idx)
+
+    # Decide whether to restore saved field names or run smart assignment
+    def restore_green_ampt_field_names(self):
+        s = QSettings()
+        # Restore Soil Layer Fields
+        soil_layer = s.value("FLO-2D/infiltration/ga_soil_layer_name", "")
+        if soil_layer != "":
+            if soil_layer == self.soil_cbo.currentText():
+                lyr = self.lyrs.get_layer_by_name(soil_layer).layer()
+                field_names = [field.name() for field in lyr.fields()]
+                self.restore_combo_field(self.xksat_cbo, "FLO-2D/infiltration/ga_soil_XKSAT", field_names)
+                self.restore_combo_field(self.rtimps_cbo, "FLO-2D/infiltration/ga_soil_rtimps", field_names)
+                self.restore_combo_field(self.soil_depth_cbo, "FLO-2D/infiltration/ga_soil_depth", field_names)
+                self.restore_combo_field(self.dthetan_cbo, "FLO-2D/infiltration/ga_soil_DTHETAn", field_names)
+                self.restore_combo_field(self.dthetad_cbo, "FLO-2D/infiltration/ga_soil_DTHETAd", field_names)
+                self.restore_combo_field(self.psif_cbo, "FLO-2D/infiltration/ga_soil_PSIF", field_names)
+            else:
+                self.smart_assign_green_ampt()
+        elif self.soil_cbo.currentText() != "":
+            self.smart_assign_green_ampt()
+
+        # Restore Land Use Layer Fields
+        land_layer = s.value("FLO-2D/infiltration/ga_land_layer_name", "")
+        if land_layer != "":
+            if land_layer == self.land_cbo.currentText():
+                lyr = self.lyrs.get_layer_by_name(land_layer).layer()
+                field_names = [field.name() for field in lyr.fields()]
+                self.restore_combo_field(self.saturation_cbo, "FLO-2D/infiltration/ga_land_saturation", field_names)
+                self.restore_combo_field(self.vc_cbo, "FLO-2D/infiltration/ga_land_vc", field_names)
+                self.restore_combo_field(self.ia_cbo, "FLO-2D/infiltration/ga_land_ia", field_names)
+                self.restore_combo_field(self.rtimpl_cbo, "FLO-2D/infiltration/ga_land_rtimpl", field_names)
+            else:
+                self.smart_assign_green_ampt()
+        elif self.land_cbo.currentText() != "":
+            self.smart_assign_green_ampt()
+
+        # No layers selected
+        if self.soil_cbo.currentText() == "" and self.land_cbo.currentText() == "":
+            self.clear_all_green_ampt_attributes()
+
+    # Smart assign
+    def smart_assign_green_ampt(self):
+        try:
+            self.xksat_cbo.setCurrentIndex(find_best_field_match(self.xksat_cbo, ["xksat", "hydraulic", "ksat", "conductivity"]))
+            self.rtimps_cbo.setCurrentIndex(find_best_field_match(self.rtimps_cbo, ["rock", "rockout", "outcrop"]))
+            self.soil_depth_cbo.setCurrentIndex(find_best_field_match(self.soil_depth_cbo,  ["depth", "soildepth"]))
+            self.dthetan_cbo.setCurrentIndex(find_best_field_match(self.dthetan_cbo, ["dtheta", "dthetan", "dthetanormal"]))
+            self.dthetad_cbo.setCurrentIndex(find_best_field_match(self.dthetad_cbo, ["dthetadry", "drytheta"]))
+            self.psif_cbo.setCurrentIndex(find_best_field_match(self.psif_cbo, ["psif", "psi", "suction"]))
+            self.saturation_cbo.setCurrentIndex(find_best_field_match(self.saturation_cbo, ["saturation", "sat", "condition"]))
+            self.vc_cbo.setCurrentIndex(find_best_field_match(self.vc_cbo, ["vegetation", "veg", "cover", "vc"]))
+            self.ia_cbo.setCurrentIndex(find_best_field_match(self.ia_cbo, ["ia", "initial", "abstraction"]))
+            self.rtimpl_cbo.setCurrentIndex(find_best_field_match(self.rtimpl_cbo, ["rtimp", "impervious", "imperv"]))
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR: Smart green-ampt field assignment failed!"
+                + "\n___________________________________________ ",
+                e,
+            )
 
     def setup_layer_combos(self):
         """
         Filter layer and fields combo boxes for polygons and connect fields cbo.
         """
-        self.soil_cbo.clear()
-        self.land_cbo.clear()
         try:
+            self.soil_cbo.blockSignals(True)
+            self.land_cbo.blockSignals(True)
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     l.reload()
                     if l.featureCount() > 0:
-                        lyr_name = l.name()
-                        self.soil_cbo.addItem(lyr_name, l)
-                        self.land_cbo.addItem(lyr_name, l)
+                        uri = l.dataProvider().dataSourceUri()
+                        self.soil_cbo.addItem(l.name(), uri)
+                        self.land_cbo.addItem(l.name(), uri)
+            s = QSettings()
+            previous_soil = s.value("FLO-2D/infiltration/ga_soil_layer_name", "")
+            idx = self.soil_cbo.findText(previous_soil)
+            if idx != -1:
+                self.soil_cbo.setCurrentIndex(idx)
+            elif self.soil_cbo.count() > 0:
+                self.soil_cbo.setCurrentIndex(0)
+            if self.soil_cbo.currentIndex() != -1:
+                self.populate_soil_fields(self.soil_cbo.currentIndex())
+
+            previous_land = s.value("FLO-2D/infiltration/ga_land_layer_name", "")
+            idx = self.land_cbo.findText(previous_land)
+            if idx != -1:
+                self.land_cbo.setCurrentIndex(idx)
+            elif self.land_cbo.count() > 0:
+                self.land_cbo.setCurrentIndex(0)
+            if self.land_cbo.currentIndex() != -1:
+                self.populate_land_fields(self.land_cbo.currentIndex())
         except Exception as e:
-            pass
-
-        s = QSettings()
-        previous = "" if s.value("ga_soil_layer_name") is None else s.value("ga_soil_layer_name")
-        idx = self.soil_cbo.findText(previous)
-        if idx != -1:
-            self.soil_cbo.setCurrentIndex(idx)
-
-        previous = "" if s.value("ga_land_layer_name") is None else s.value("ga_land_layer_name")
-        idx = self.land_cbo.findText(previous)
-        if idx != -1:
-            self.land_cbo.setCurrentIndex(idx)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: couldn't load layer!", e)
+        finally:
+            self.soil_cbo.blockSignals(False)
+            self.land_cbo.blockSignals(False)
 
     def populate_soil_fields(self, idx):
-        lyr = self.soil_cbo.itemData(idx)
-        fields = [f.name() for f in lyr.fields()]
-
-        for c in self.soil_combos:
-            c.clear()
-            c.addItems(fields)
+        try:
+            uri = self.soil_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            lyr = self.lyrs.get_layer_by_id(lyr_id)
+            if lyr is None:
+                return
+            fields = lyr.fields()
+            for combo in self.soil_combos:
+                combo.clear()
+            for field in fields:
+                name = field.name()
+                # Only numeric fields
+                if field.isNumeric():
+                    for combo in self.soil_combos:
+                        combo.addItem(name)
+            self.restore_green_ampt_field_names()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR: Failed to populate soil fields",
+                e,
+            )
 
     def populate_land_fields(self, idx):
-        lyr = self.land_cbo.itemData(idx)
-        fields = [f.name() for f in lyr.fields()]
-        for c in self.land_combos:
-            c.clear()
-            c.addItems(fields)
+        try:
+            uri = self.land_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            lyr = self.lyrs.get_layer_by_id(lyr_id)
+            if lyr is None:
+                return
+            self.saturation_cbo.clear()
+            self.vc_cbo.clear()
+            self.ia_cbo.clear()
+            self.rtimpl_cbo.clear()
+            for field in lyr.fields():
+                if field.isNumeric():
+                    self.vc_cbo.addItem(field.name())
+                    self.ia_cbo.addItem(field.name())
+                    self.rtimpl_cbo.addItem(field.name())
+                else:
+                    self.saturation_cbo.addItem(field.name())
+            self.restore_green_ampt_field_names()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR: Failed to populate land fields",
+                e,
+            )
 
     def green_ampt_parameters(self):
         sidx = self.soil_cbo.currentIndex()
-        soil_lyr = self.soil_cbo.itemData(sidx)
         lidx = self.land_cbo.currentIndex()
-        land_lyr = self.land_cbo.itemData(lidx)
+        soil_uri = self.soil_cbo.itemData(sidx)
+        soil_id = self.lyrs.layer_exists_in_group(soil_uri)
+        soil_lyr = self.lyrs.get_layer_by_id(soil_id)
+        land_uri = self.land_cbo.itemData(lidx)
+        land_id = self.lyrs.layer_exists_in_group(land_uri)
+        land_lyr = self.lyrs.get_layer_by_id(land_id)
         fields = [f.currentText() for f in chain(self.soil_combos, self.land_combos)]
         vc_check = self.veg_cover_chbox.isChecked()
         log_area_average = self.log_area_average_chbox.isChecked()
         return soil_lyr, land_lyr, fields, vc_check, log_area_average
 
+    def validate_green_ampt_inputs(self):
+        required = [
+            self.xksat_cbo,
+            self.rtimps_cbo,
+            self.soil_depth_cbo,
+            self.dthetan_cbo,
+            self.dthetad_cbo,
+            self.psif_cbo,
+            self.saturation_cbo,
+            self.ia_cbo,
+            self.rtimpl_cbo,
+        ]
+        # Vegetation cover is only required if enabled
+        if self.veg_cover_chbox.isChecked():
+            required.append(self.vc_cbo)
+        valid = all(combo.currentText().strip() for combo in required)
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(valid)
+        ok_button = self.buttonBox.button(QDialogButtonBox.Ok)
+        if valid:
+            ok_button.setEnabled(True)
+            ok_button.setToolTip("")
+        else:
+            ok_button.setEnabled(False)
+            ok_button.setToolTip("Assign values to all required Green-Ampt fields before continuing.")
+
     def save_green_ampt_shapefile_fields(self):
         s = QSettings()
-
-        s.setValue("ga_soil_layer_name", self.soil_cbo.currentText())
-        s.setValue("ga_soil_XKSAT", self.xksat_cbo.currentIndex())
-        s.setValue("ga_soil_rtimps", self.rtimps_cbo.currentIndex())
-        s.setValue("ga_soil_depth", self.soil_depth_cbo.currentIndex())
-        s.setValue("ga_soil_DTHETAn", self.dthetan_cbo.currentIndex())
-        s.setValue("ga_soil_DTHETAd", self.dthetad_cbo.currentIndex())
-        s.setValue("ga_soil_PSIF", self.psif_cbo.currentIndex())
-
-        s.setValue("ga_land_layer_name", self.land_cbo.currentText())
-        s.setValue("ga_land_saturation", self.saturation_cbo.currentIndex())
-        s.setValue("ga_land_vc", self.vc_cbo.currentIndex())
-        s.setValue("ga_land_ia", self.ia_cbo.currentIndex())
-        s.setValue("ga_land_rtimpl", self.rtimpl_cbo.currentIndex())
-
-    def restore_green_ampt_shapefile_fields(self):
-        s = QSettings()
-
-        name = "" if s.value("ga_soil_layer_name") is None else s.value("ga_soil_layer_name")
-        if name == self.soil_cbo.currentText():
-            val = int(-1 if s.value("ga_soil_XKSAT") is None else s.value("ga_soil_XKSAT"))
-            self.xksat_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_soil_rtimps") is None else s.value("ga_soil_rtimps"))
-            self.rtimps_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_soil_depth") is None else s.value("ga_soil_depth"))
-            self.soil_depth_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_soil_DTHETAn") is None else s.value("ga_soil_DTHETAn"))
-            self.dthetan_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_soil_DTHETAd") is None else s.value("ga_soil_DTHETAd"))
-            self.dthetad_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_soil_PSIF") is None else s.value("ga_soil_PSIF"))
-            self.psif_cbo.setCurrentIndex(val)
-
-        name = "" if s.value("ga_land_layer_name") is None else s.value("ga_land_layer_name")
-        if name == self.land_cbo.currentText():
-            val = int(-1 if s.value("ga_land_saturation") is None else s.value("ga_land_saturation"))
-            self.saturation_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_land_vc") is None else s.value("ga_land_vc"))
-            self.vc_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_land_ia") is None else s.value("ga_land_ia"))
-            self.ia_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_land_rtimpl") is None else s.value("ga_land_rtimpl"))
-            self.rtimpl_cbo.setCurrentIndex(val)
+        s.setValue("FLO-2D/infiltration/ga_soil_layer_name", self.soil_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_soil_XKSAT", self.xksat_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_soil_rtimps", self.rtimps_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_soil_depth", self.soil_depth_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_soil_DTHETAn", self.dthetan_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_soil_DTHETAd", self.dthetad_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_soil_PSIF", self.psif_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_land_layer_name", self.land_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_land_saturation", self.saturation_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_land_vc", self.vc_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_land_ia", self.ia_cbo.currentText())
+        s.setValue("FLO-2D/infiltration/ga_land_rtimpl", self.rtimpl_cbo.currentText())
 
     def calculate_ssurgo(self):
 
@@ -1665,6 +1769,8 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         self.multi_lyr_cbo.currentIndexChanged.connect(self.populate_multi_fields)
         self.multi_grp.toggled.connect(self.multi_checked)
         self.setup_layer_combos()
+        for combo in chain(self.soil_combos, self.land_combos):
+            combo.currentIndexChanged.connect(self.validate_green_ampt_inputs)
 
     def setup_layer_combos(self):
         """
