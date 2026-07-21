@@ -561,7 +561,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("There is no schematized infiltration data!")
             return
 
-        self.gutils.clear_tables("infil", "infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
+        self.gutils.clear_tables("infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
         self.uc.bar_info("Schematized infiltration data deleted!")
         self.uc.log_info("Schematized infiltration data deleted!")
 
