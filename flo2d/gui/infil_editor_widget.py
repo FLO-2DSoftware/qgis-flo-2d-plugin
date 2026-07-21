@@ -1030,7 +1030,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def smart_assign_green_ampt(self):
         try:
             self.xksat_cbo.setCurrentIndex(find_best_field_match(self.xksat_cbo, ["xksat", "hydraulic", "ksat", "hydc"]))
-            self.rtimps_cbo.setCurrentIndex(find_best_field_match(self.rtimps_cbo, ["rock", "rockout", "outcrop", "rtimpn"]))
+            self.rtimps_cbo.setCurrentIndex(find_best_field_match(self.rtimps_cbo, ["rock", "rockout", "outcrop", "rtimp"]))
             self.soil_depth_cbo.setCurrentIndex(find_best_field_match(self.soil_depth_cbo,  ["depth", "soildepth", "soild"]))
             self.dthetan_cbo.setCurrentIndex(find_best_field_match(self.dthetan_cbo, ["dtheta", "dthetan", "dthetanorm"]))
             self.dthetad_cbo.setCurrentIndex(find_best_field_match(self.dthetad_cbo, ["dthetadry", "dthetad"]))
