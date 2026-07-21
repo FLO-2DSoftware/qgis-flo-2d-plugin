@@ -561,7 +561,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("There is no schematized infiltration data!")
             return
 
-        self.gutils.clear_tables("infil", "infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
+        self.gutils.clear_tables("infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
         self.uc.bar_info("Schematized infiltration data deleted!")
         self.uc.log_info("Schematized infiltration data deleted!")
 
@@ -1029,16 +1029,16 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     # Smart assign
     def smart_assign_green_ampt(self):
         try:
-            self.xksat_cbo.setCurrentIndex(find_best_field_match(self.xksat_cbo, ["xksat", "hydraulic", "ksat", "conductivity"]))
-            self.rtimps_cbo.setCurrentIndex(find_best_field_match(self.rtimps_cbo, ["rock", "rockout", "outcrop"]))
-            self.soil_depth_cbo.setCurrentIndex(find_best_field_match(self.soil_depth_cbo,  ["depth", "soildepth"]))
-            self.dthetan_cbo.setCurrentIndex(find_best_field_match(self.dthetan_cbo, ["dtheta", "dthetan", "dthetanormal"]))
-            self.dthetad_cbo.setCurrentIndex(find_best_field_match(self.dthetad_cbo, ["dthetadry", "drytheta"]))
-            self.psif_cbo.setCurrentIndex(find_best_field_match(self.psif_cbo, ["psif", "psi", "suction"]))
-            self.saturation_cbo.setCurrentIndex(find_best_field_match(self.saturation_cbo, ["saturation", "sat", "condition"]))
-            self.vc_cbo.setCurrentIndex(find_best_field_match(self.vc_cbo, ["vegetation", "veg", "cover", "vc"]))
-            self.ia_cbo.setCurrentIndex(find_best_field_match(self.ia_cbo, ["ia", "initial", "abstraction"]))
-            self.rtimpl_cbo.setCurrentIndex(find_best_field_match(self.rtimpl_cbo, ["rtimp", "impervious", "imperv"]))
+            self.xksat_cbo.setCurrentIndex(find_best_field_match(self.xksat_cbo, ["xksat", "hydraulic", "ksat", "hydc"]))
+            self.rtimps_cbo.setCurrentIndex(find_best_field_match(self.rtimps_cbo, ["rock", "rockout", "outcrop", "rtimpn"]))
+            self.soil_depth_cbo.setCurrentIndex(find_best_field_match(self.soil_depth_cbo,  ["depth", "soildepth", "soild"]))
+            self.dthetan_cbo.setCurrentIndex(find_best_field_match(self.dthetan_cbo, ["dtheta", "dthetan", "dthetanorm"]))
+            self.dthetad_cbo.setCurrentIndex(find_best_field_match(self.dthetad_cbo, ["dthetadry", "dthetad"]))
+            self.psif_cbo.setCurrentIndex(find_best_field_match(self.psif_cbo, ["psif", "suction", "capsuct"]))
+            self.saturation_cbo.setCurrentIndex(find_best_field_match(self.saturation_cbo, ["saturation", "sat", "initsat"]))
+            self.vc_cbo.setCurrentIndex(find_best_field_match(self.vc_cbo, ["vegcover", "veg", "cover", "vc"]))
+            self.ia_cbo.setCurrentIndex(find_best_field_match(self.ia_cbo, ["ia", "initabs", "inabs"]))
+            self.rtimpl_cbo.setCurrentIndex(find_best_field_match(self.rtimpl_cbo, ["rtimp", "imperv"]))
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -1819,8 +1819,6 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         self.multi_lyr_cbo.currentIndexChanged.connect(self.populate_multi_fields)
         self.multi_grp.toggled.connect(self.multi_checked)
         self.setup_layer_combos()
-        for combo in chain(self.soil_combos, self.land_combos):
-            combo.currentIndexChanged.connect(self.validate_green_ampt_inputs)
 
     def setup_layer_combos(self):
         """
