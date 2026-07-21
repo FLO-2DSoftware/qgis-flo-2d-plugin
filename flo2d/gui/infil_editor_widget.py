@@ -1769,8 +1769,6 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         self.multi_lyr_cbo.currentIndexChanged.connect(self.populate_multi_fields)
         self.multi_grp.toggled.connect(self.multi_checked)
         self.setup_layer_combos()
-        for combo in chain(self.soil_combos, self.land_combos):
-            combo.currentIndexChanged.connect(self.validate_green_ampt_inputs)
 
     def setup_layer_combos(self):
         """
