@@ -426,20 +426,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not gids:
             return
         placeholders = ",".join("?" for _ in gids)
-
-        tables = (
-            "infil_cells_green",
-            "infil_cells_scs",
-            "infil_cells_horton",
-            "infil_chan_elems",
-        )
-
+        tables = ("infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
         cur = self.con.cursor()
-
         for table in tables:
             qry = f"""DELETE FROM {table} WHERE grid_fid IN ({placeholders});"""
             cur.execute(qry, gids)
-
         self.con.commit()
 
     def schematize_infiltration(self):
@@ -464,19 +455,10 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             not self.gutils.is_table_empty("infil_chan_elems")
         )
         if has_schema_data:
-            msg = (
-                "There are some schematized infiltration data already.\n"
-                "Schematizing will clear existing schematized infiltration data. \n"
-                "Do you want to continue?"
-            )
-            if not self.uc.question(msg):
-                return
-
             dlg = InfilUpdateSelector(self)
             if not dlg.exec():
                 return
             update_mode = dlg.selected_mode()
-
         try:
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             self.gutils.disable_geom_triggers()
@@ -487,12 +469,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 poly2grid(cellSize, self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
 
             if update_mode == InfilUpdateSelector.ALL:
-                self.gutils.clear_tables(
-                    "infil_cells_green",
-                    "infil_cells_scs",
-                    "infil_cells_horton",
-                    "infil_chan_elems"
-                )
+                self.gutils.clear_tables("infil_cells_green", "infil_cells_scs", "infil_cells_horton", "infil_chan_elems")
             else:
                 self.delete_infiltration_cells(infiltration_grids)
 
@@ -515,23 +492,61 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         val = (gid, row[7])
                         scs_vals.append(val)
                         scs_fid += 1
+
                 cur = self.con.cursor()
+
+                # Insert user polygon values first
                 cur.executemany(qry_green, green_vals)
                 cur.executemany(qry_chan, chan_vals)
                 cur.executemany(qry_scs, scs_vals)
+
+                if update_mode == InfilUpdateSelector.ALL:
+                    (
+                        default_hydc, default_soils, default_dtheta, default_abstr, default_soil_depth, default_cn
+                    ) = self.gutils.execute("""SELECT hydcall, soilall, hydcadj, abstr, soild, scsnall FROM infil;""").fetchone()
+                    default_rtimpf = 0.0
+                    uncovered = self.con.execute(
+                        """SELECT fid FROM grid WHERE fid NOT IN (SELECT grid_fid FROM infil_cells_green)
+                        AND fid NOT IN (SELECT grid_fid FROM infil_chan_elems)
+                        AND fid NOT IN (SELECT grid_fid FROM infil_cells_scs);""").fetchall()
+
+                    green_defaults = []
+                    scs_defaults = []
+
+                    for (gid,) in uncovered:
+                        green_defaults.append(( gid, default_hydc, default_soils, default_dtheta, default_abstr, default_rtimpf, default_soil_depth))
+                        scs_defaults.append((gid, default_cn))
+
+                    cur.executemany(qry_green, green_defaults)
+                    cur.executemany(qry_scs, scs_defaults)
             else:
                 if imethod == 2:
                     qry_cells = qry_scs
                 else:
                     qry_cells = qry_horton
+
                 cells_vals = []
-                for i, grid_row in enumerate(infiltration_grids, 1):
+                for grid_row in infiltration_grids:
                     row = list(grid_row)
                     gid = row.pop()
-                    val = (gid,) + tuple(row)
-                    cells_vals.append(val)
+                    cells_vals.append((gid,) + tuple(row))
                 cur = self.con.cursor()
+                # Insert user polygon values first
                 cur.executemany(qry_cells, cells_vals)
+
+                if update_mode == InfilUpdateSelector.ALL:
+                    if imethod == 2:
+                        # Read global SCS Curve Number
+                        default_cn = self.gutils.execute("SELECT scsnall FROM infil;").fetchone()[0]
+                        uncovered = self.con.execute("""SELECT fid FROM grid WHERE fid NOT IN (SELECT grid_fid FROM infil_cells_scs);""").fetchall()
+                        default_vals = [(gid, default_cn) for (gid,) in uncovered]
+                    else:
+                        # Read global Horton parameters
+                        default_fhorti, default_fhortf, default_deca = self.gutils.execute("""SELECT fhortoni, fhortonf, decaya FROM infil;""").fetchone()
+                        uncovered = self.con.execute("""SELECT fid FROM grid WHERE fid NOT IN (SELECT grid_fid FROM infil_cells_horton);""").fetchall()
+                        default_vals = [(gid, default_fhorti, default_fhortf, default_deca) for (gid,) in uncovered]
+
+                    cur.executemany(qry_cells, default_vals)
             self.con.commit()
             self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
@@ -683,9 +698,26 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils.clear_tables("infil_cells_scs")
             qry = """INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES (?,?);"""
             values = []
-            for i, (gid, params) in enumerate(grid_params.items(), 1):
-                val = (gid, params["scsn"])
-                values.append(val)
+
+            covered_grids = set()
+            # Add calculated SCS values
+            for gid, params in grid_params.items():
+                values.append((gid, params["scsn"]))
+                covered_grids.add(gid)
+
+            # Fill uncovered grid elements with the global default CN
+            if covered_grids:
+                placeholders = ",".join("?" * len(covered_grids))
+                uncovered = self.con.execute(
+                    f"""SELECT fid FROM grid WHERE fid NOT IN ({placeholders});""",
+                    tuple(covered_grids),
+                ).fetchall()
+            else:
+                uncovered = self.con.execute("SELECT fid FROM grid;").fetchall()
+
+            for (gid,) in uncovered:
+                values.append((gid, default_cn))
+
             cur = self.con.cursor()
             cur.executemany(qry, values)
             self.con.commit()
@@ -699,13 +731,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     f"was assigned to cells outside the layer coverage.")
             self.uc.show_info(msg)
             self.uc.log_info(msg)
-        except Exception as e:
+        except Exception:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 060319.1724: Calculating SCS Curve Number parameters failed! \n"
-                "Please check your input data and try again.\n"
-                "__________________________________________________",
-                e,
+                "Please check your input data and try again."
             )
         finally:
             dlg.deleteLater()
@@ -1030,7 +1060,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def smart_assign_green_ampt(self):
         try:
             self.xksat_cbo.setCurrentIndex(find_best_field_match(self.xksat_cbo, ["xksat", "hydraulic", "ksat", "hydc"]))
-            self.rtimps_cbo.setCurrentIndex(find_best_field_match(self.rtimps_cbo, ["rock", "rockout", "outcrop", "rtimpn"]))
+            self.rtimps_cbo.setCurrentIndex(find_best_field_match(self.rtimps_cbo, ["rock", "rockout", "outcrop", "rtimp"]))
             self.soil_depth_cbo.setCurrentIndex(find_best_field_match(self.soil_depth_cbo,  ["depth", "soildepth", "soild"]))
             self.dthetan_cbo.setCurrentIndex(find_best_field_match(self.dthetan_cbo, ["dtheta", "dthetan", "dthetanorm"]))
             self.dthetad_cbo.setCurrentIndex(find_best_field_match(self.dthetad_cbo, ["dthetadry", "dthetad"]))
