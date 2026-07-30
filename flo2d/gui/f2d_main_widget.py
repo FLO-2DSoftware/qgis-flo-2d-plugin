@@ -32,6 +32,7 @@ from .struct_editor_widget import StructEditorWidget
 from .ui_utils import load_ui, set_icon
 from .xs_editor_widget import XsecEditorWidget
 from .pre_processing_widget import PreProcessingWidget
+from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 
 uiDialog, qtBaseClass = load_ui("f2d_widget")
 
@@ -90,18 +91,52 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         ]
         self.set_collapsible_groups()
 
+        self.ilg = InvisibleLayersAndGroups(self.iface)
+        s = QSettings()
+        advanced = s.value("FLO-2D/advanced_layers", False, type=bool)
+        self.advanced_layers_btn.setChecked(advanced)
+
         # connections
         self.collapse_groups_btn.clicked.connect(self.collapse_all_groups)
         self.show_flo2d_table_btn.clicked.connect(self.show_f2d_table)
         self.show_flo2d_plot_btn.clicked.connect(self.show_f2d_plot)
         self.clear_rubberband_btn.clicked.connect(self.clear_rubberband)
         self.project_folder_selector_btn.clicked.connect(self.get_project_dir)
+        self.advanced_layers_btn.toggled.connect(self.toggle_advanced_layers)
 
         # clear rubberband when collapsing the BC editor
         self.bc_editor_new_grp.collapsedStateChanged.connect(self.lyrs.clear_rubber)
 
         # set icons
         set_icon(self.collapse_groups_btn, "collapse_groups.svg")
+
+    def toggle_advanced_layers(self, advanced_layers):
+        s = QSettings()
+        if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+            # show advanced layers
+            if advanced_layers:
+                lyrs = self.lyrs.data
+                for key, value in lyrs.items():
+                    group = value.get("sgroup")
+                    subsubgroup = value.get("ssgroup")
+                    self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                    self.ilg.unhideGroup(group)
+                    self.ilg.unhideGroup(subsubgroup, group)
+            # hide advanced layers
+            else:
+                lyrs = self.lyrs.data
+                for key, value in lyrs.items():
+                    advanced = value.get("advanced")
+                    if advanced:
+                        subgroup = value.get("sgroup")
+                        subsubgroup = value.get("ssgroup")
+                        self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                        if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                            self.ilg.hideGroup(subsubgroup, subgroup)
+                        else:
+                            self.ilg.hideGroup(subgroup)
+        s.setValue("FLO-2D/advanced_layers", advanced_layers)
+
 
     def show_f2d_table(self):
         """
