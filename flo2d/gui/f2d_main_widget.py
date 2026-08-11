@@ -33,7 +33,6 @@ from .ui_utils import load_ui, set_icon
 from .xs_editor_widget import XsecEditorWidget
 from .pre_processing_widget import PreProcessingWidget
 from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
-from qgis.utils import plugins
 
 uiDialog, qtBaseClass = load_ui("f2d_widget")
 
@@ -290,17 +289,11 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.plot.clear()
         self.table.clear()
 
-        # Clear the external Profile Tool, if it is available and still valid
-        try:
-            profiletool = plugins.get("profiletool")
-            if profiletool and profiletool.profiletool:
-                profiletool.profiletool.cleaning()
-                profiletool.profiletool.x_cursor = 0 # Reset the cursor position used by the Profile Tool
-                renderer = profiletool.profiletool.toolrenderer
-                if renderer:
-                    renderer.rubberbandpoint.hide()
-        except (RuntimeError, AttributeError):
-            # Profile Tool may not be installed, loaded, or its Qt objects
-            # may already have been deleted.
-            pass
-
+        # Remove temporary rubber bands/vertex markers from the map canvas
+        canvas = self.iface.mapCanvas()
+        for item in list(canvas.scene().items()):
+            cls = item.__class__.__name__
+            if cls == "QgsRubberBand":
+                item.hide()
+            elif cls == "QgsVertexMarker":
+                item.hide()
