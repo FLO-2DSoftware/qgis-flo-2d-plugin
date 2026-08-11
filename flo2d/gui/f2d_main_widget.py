@@ -285,8 +285,15 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         """
         Function to clear all rubberbands from all layers, the FLO-2D Table and plot
         """
-
         self.lyrs.clear_rubber()
         self.plot.clear()
         self.table.clear()
 
+        # Remove temporary rubber bands/vertex markers from the map canvas
+        canvas = self.iface.mapCanvas()
+        for item in list(canvas.scene().items()):
+            cls = item.__class__.__name__
+            if cls == "QgsRubberBand":
+                item.hide()
+            elif cls == "QgsVertexMarker":
+                item.hide()
