@@ -33,6 +33,7 @@ from .ui_utils import load_ui, set_icon
 from .xs_editor_widget import XsecEditorWidget
 from .pre_processing_widget import PreProcessingWidget
 from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
+from qgis.utils import plugins
 
 uiDialog, qtBaseClass = load_ui("f2d_widget")
 
@@ -285,8 +286,23 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         """
         Function to clear all rubberbands from all layers, the FLO-2D Table and plot
         """
-
         self.lyrs.clear_rubber()
         self.plot.clear()
         self.table.clear()
+
+        # Clear the external Profile Tool, if it is available and still valid
+        try:
+            profiletool = plugins.get("profiletool")
+
+            if profiletool and profiletool.profiletool:
+                profiletool.profiletool.cleaning()
+
+                renderer = profiletool.profiletool.toolrenderer
+                if renderer:
+                    renderer.rubberbandpoint.hide()
+
+        except (RuntimeError, AttributeError):
+            # Profile Tool may not be installed, loaded, or its Qt objects
+            # may already have been deleted.
+            pass
 
