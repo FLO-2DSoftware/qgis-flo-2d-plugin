@@ -293,14 +293,12 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         # Clear the external Profile Tool, if it is available and still valid
         try:
             profiletool = plugins.get("profiletool")
-
             if profiletool and profiletool.profiletool:
                 profiletool.profiletool.cleaning()
-
+                profiletool.profiletool.x_cursor = 0 # Reset the cursor position used by the Profile Tool
                 renderer = profiletool.profiletool.toolrenderer
                 if renderer:
                     renderer.rubberbandpoint.hide()
-
         except (RuntimeError, AttributeError):
             # Profile Tool may not be installed, loaded, or its Qt objects
             # may already have been deleted.
