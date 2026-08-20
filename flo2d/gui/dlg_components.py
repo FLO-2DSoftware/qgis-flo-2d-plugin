@@ -374,6 +374,10 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.mannings_n_and_Topo_chbox.setChecked(True)
                 self.mannings_n_and_Topo_chbox.setEnabled(True)
 
+            if not self.gutils.is_table_empty("grid"):
+                self.cadpts_fplain_chbox.setChecked(True)
+                self.cadpts_fplain_chbox.setEnabled(True)
+
             if not self.gutils.is_table_empty("tailing_cells"):
                 self.tailings_chbox.setChecked(True)
                 self.tailings_chbox.setEnabled(True)
@@ -487,6 +491,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         if self.mannings_n_and_Topo_chbox.isChecked():
             self.components.append("Manning's n and Topo")
 
+        if self.cadpts_fplain_chbox.isChecked():
+            self.components.append("Cadpts and Fplain")
+
         if self.tailings_chbox.isChecked():
             self.components.append("Tailings")
 
@@ -543,3 +550,5 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.spatial_lid_volume_chbox.setChecked(select)
         if self.mannings_n_and_Topo_chbox.isEnabled():
             self.mannings_n_and_Topo_chbox.setChecked(select)
+        if self.cadpts_fplain_chbox.isEnabled():
+            self.cadpts_fplain_chbox.setChecked(select)
