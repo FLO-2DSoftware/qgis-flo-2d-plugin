@@ -3085,6 +3085,9 @@ class Flo2D(object):
         if "Manning's n and Topo" not in dlg_components.components:
             export_calls.remove("export_mannings_n_topo")
 
+        if "Cadpts and Fplain" not in dlg_components.components:
+            export_calls.remove("export_cadpts_fplain")
+
         if "Spatial Steep Slope-n" not in dlg_components.components:
             export_calls.remove("export_steep_slopen")
 
