@@ -37,7 +37,6 @@ from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date, qt_
 from .flo2d_parser import ParseDAT, ParseHDF5
 
 
-
 def create_array(line_format, max_columns, array_type, *args):
     if len(args) == 1 and isinstance(args[0], tuple):
         values = line_format.format(*args[0]).split()
@@ -9121,7 +9120,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ST_AsText(ST_Centroid(GeomFromGPB(geom)))
                     FROM grid ORDER BY fid;"""
                 )
-                
+
                 records = list(self.execute(sql))
             else:
                 sub_grid_cells = self.gutils.execute(
