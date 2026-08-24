@@ -9108,6 +9108,98 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
 
+    def export_cadpts_fplain(self, output=None, subdomain=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_cadpts_fplain_dat(output, subdomain)
+
+    def export_cadpts_fplain_dat(self, outdir, subdomain):
+        try:
+            if not subdomain:
+                sql = (
+                    """SELECT fid, n_value, elevation,
+                    ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                    FROM grid ORDER BY fid;"""
+                )
+                records = self.execute(sql)
+            else:
+                sub_grid_cells = self.gutils.execute(
+                    f"""SELECT DISTINCT
+                            md.domain_cell,
+                            g.n_value,
+                            g.elevation,
+                            ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                        FROM grid g
+                        JOIN schema_md_cells md ON g.fid = md.grid_fid
+                        WHERE md.domain_fid = {subdomain};"""
+                ).fetchall()
+
+                records = sorted(sub_grid_cells, key=lambda x: x[0])
+
+            cadpts = os.path.join(outdir, "CADPTS.DAT")
+            fplain = os.path.join(outdir, "FPLAIN.DAT")
+
+            cline = "{0: >9} {1: >14} {2: >14}\n"
+            fline = "{0: >9} {1: >8} {2: >8} {3: >8} {4: >8} {5: >7} {6: >9}\n"
+
+            nulls = 0
+
+            neighbors = grid_compas_neighbors(self.gutils)
+
+            with open(cadpts, "w") as c, open(fplain, "w") as f:
+                for row, neighbor_row in zip(records, neighbors):
+                    fid, man, elev, geom = row
+
+                    if man == None or elev == None:
+                        nulls += 1
+                        if man == None:
+                            man = 0.04
+                        if elev == None:
+                            elev = -9999
+
+                    x, y = geom.strip("POINT()").split()
+
+                    c.write(
+                        cline.format(
+                            fid,
+                            "{0: .3f}".format(float(x)),
+                            "{0: .3f}".format(float(y)),
+                        )
+                    )
+
+                    f.write(
+                        fline.format(
+                            fid,
+                            neighbor_row[0],
+                            neighbor_row[1],
+                            neighbor_row[2],
+                            neighbor_row[3],
+                            "{0: .3f}".format(float(man)),
+                            "{0: .2f}".format(float(elev)),
+                        )
+                    )
+
+            if nulls > 0:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn(
+                    "WARNING 281122.0541: there are "
+                    + str(nulls)
+                    + " NULL values in the Grid layer's elevation or n_value fields.\n\n"
+                    + "Default values were written to the exported files.\n\n"
+                    + "Please check the source layer coverage or use Fill Nodata."
+                )
+                QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 101218.1541: exporting CADPTS.DAT or FPLAIN.DAT failed!\n",
+                e,
+            )
+            QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
+            return False
+
+
     # def export_neighbours(self):
     #     if self.parsed_format == self.FORMAT_DAT:
     #         raise NotImplementedError("Exporting NEIGHBOURS.DAT is not supported!")
