@@ -2702,6 +2702,7 @@ class Flo2D(object):
                             "export_levee",
                             "export_lid_volume",
                             "export_mannings_n_topo",
+                            "export_cadpts_fplain",
                             "export_mult",
                             "export_outflow",
                             "export_outrc",
