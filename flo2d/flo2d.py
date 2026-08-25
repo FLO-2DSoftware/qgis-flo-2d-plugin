@@ -91,6 +91,8 @@ from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt
 
 from PIL import Image
 
+from .flo2d_compatibility import EngineCompatibility
+
 
 @contextmanager
 def cd(newdir):
@@ -146,6 +148,7 @@ class Flo2D(object):
         self.lyrs = Layers(iface)
         self.lyrs.group = None
         self.gutils = None
+        self.compat = EngineCompatibility(self)
         self.f2g = None
         self.prep_sql = None
         self.f2d_widget = None
@@ -1198,7 +1201,7 @@ class Flo2D(object):
         Function to set the run settings: FLO-2D and Project folders
         """
         self.uncheck_all_info_tools()
-        dlg = ExternalProgramFLO2D(self.iface, "Run Settings", self.gutils, self.f2d_widget, self.lyrs)
+        dlg = ExternalProgramFLO2D(self.iface, "Run Settings", self.gutils, self.f2d_widget, self.lyrs, self)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
         ok = dlg.exec()
         if not ok:
