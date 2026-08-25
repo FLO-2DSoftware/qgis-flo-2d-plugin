@@ -42,9 +42,17 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.components_buttonBox.accepted.connect(self.select_components)
         self.select_all_chbox.clicked.connect(self.unselect_all)
 
+        self.hdf5_rb.toggled.connect(lambda checked: self.set_cadpts_fplain_enabled(not checked)) # Enable cadpts and fplain only when HDF5 export is not selected.
+
         self.setFixedSize(self.size())
 
         self.populate_components_dialog()
+
+    def set_cadpts_fplain_enabled(self, enabled):
+        """Enable or disable the cadpts and fplain checkbox, unchecking it when disabled."""
+        if not enabled:
+            self.cadpts_fplain_chbox.setChecked(False)
+        self.cadpts_fplain_chbox.setEnabled(enabled)
 
     def populate_components_dialog(self):
         s = QSettings()

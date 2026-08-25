@@ -2728,6 +2728,9 @@ class Flo2D(object):
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
 
+            if export_type == "hdf5":
+                dlg_components.set_cadpts_fplain_enabled(False) # Uncheck and disable cadpts and fplain checkbox
+
             if quick_run:
                 dlg_components.data_rb.setVisible(True)
                 dlg_components.hdf5_rb.setVisible(True)
