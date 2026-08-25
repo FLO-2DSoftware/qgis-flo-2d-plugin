@@ -688,18 +688,29 @@ class ParseDAT(object):
         rain = self.dat_files["RAIN.DAT"]
         if not rain:
             return None, None, None
-        head = [
-            "IRAINREAL",
-            "IRAINBUILDING",
-            "RTT",
-            "RAINABS",
-            "RAINARF",
-            "MOVINGSTORM",
-        ]
         par = self.single_parser(rain)
         line1 = next(par)
         line2 = next(par)
-        data = OrderedDict(list(zip(head, chain(line1, line2))))
+        if len(line1)  == 1: # 2009 format
+            values = list(chain(line1, line2))
+            data = OrderedDict([
+                ("IRAINREAL", values[0]),
+                ("IRAINBUILDING", 0),
+                ("RTT", values[1]),
+                ("RAINABS", values[2]),
+                ("RAINARF", values[3]),
+                ("MOVINGSTORM", values[4]),
+            ])
+        else:   # PRO format
+            values = list(chain(line1, line2))
+            data = OrderedDict([
+                ("IRAINREAL", values[0]),
+                ("IRAINBUILDING", values[1]),
+                ("RTT", values[2]),
+                ("RAINABS", values[3]),
+                ("RAINARF", values[4]),
+                ("MOVINGSTORM", values[5]),
+            ])
         time_series = []
         rain_arf = []
         for row in par:
@@ -855,7 +866,7 @@ class ParseDAT(object):
                     segments[-1][-1].append(row + xsec + rbank)
                 except StopIteration:
                     return
-                
+
             elif char == "B":
                 baseflow.append(row)
                 # segments[-1].append(row)
@@ -881,7 +892,7 @@ class ParseDAT(object):
                 segments[i].append(baseflow[i])
             except:
                 pass
-              
+
         return segments, wsel, confluence, noexchange
 
     def parse_chan_interior_nodes(self):
