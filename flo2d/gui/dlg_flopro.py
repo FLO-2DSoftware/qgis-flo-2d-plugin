@@ -17,12 +17,13 @@ from ..flo2d_tools.flopro_tools import FLOPROExecutor
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 from ..utils import qt_window_flag, get_flo2dpro_version
+from ..flo2d_compatibility import EngineCompatibility, FLO2009, FLOPRO
 
 uiDialog, qtBaseClass = load_ui("flopro")
 
 
 class ExternalProgramFLO2D(qtBaseClass, uiDialog):
-    def __init__(self, iface, title, gutils, f2d_widget, lyrs):
+    def __init__(self, iface, title, gutils, f2d_widget, lyrs, flo2d):
         qtBaseClass.__init__(self, iface.mainWindow())
         uiDialog.__init__(self)
         self.setupUi(self)
@@ -31,11 +32,20 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         self.gutils = gutils
         self.f2d_widget = f2d_widget
         self.lyrs = lyrs
+        self.flo2d = flo2d
         self.uc = UserCommunication(iface, "FLO-2D")
         self.flo2d_browse.clicked.connect(self.get_flo2d_dir)
         self.project_browse.clicked.connect(self.get_project_dir)
         self.debug_run_btn.clicked.connect(self.debug_run)
         self.set_previous_paths(title)
+
+        engine = None
+        if self.gutils:
+            engine = self.flo2d.compat.engine
+        if engine is None:
+            project_dir = self.project_le.text()
+        self.project_2009_chk.setChecked(self.flo2d.compat.is_flo2009)
+
         self.buttonBox.accepted.connect(self.save_settings)
 
     def set_previous_paths(self, title):
@@ -64,6 +74,13 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         if not project_dir:
             return
         self.project_le.setText(project_dir)
+
+        engine = self.flo2d.compat.engine
+        if engine == FLO2009:
+            self.project_2009_chk.setChecked(True)
+        else:
+            self.project_2009_chk.setChecked(False)
+
         s.setValue("FLO-2D/lastGdsDir", project_dir)
 
     def get_parameters(self):
@@ -120,6 +137,16 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         Function to save the settings in the flopro dialog
         """
         flopro_found = False
+
+        if self.gutils:
+            engine = FLO2009 if self.project_2009_chk.isChecked() else FLOPRO
+            self.flo2d.compat.set_engine(engine)
+
+            if engine == FLOPRO:
+                self.gutils.execute(
+                    "DELETE FROM metadata WHERE name = ?;",
+                    ("ENGINE_SELECTED",)
+                )
 
         # Project is loaded
         if self.gutils:
