@@ -37,6 +37,7 @@ from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date, qt_
 from .flo2d_parser import ParseDAT, ParseHDF5
 
 
+
 def create_array(line_format, max_columns, array_type, *args):
     if len(args) == 1 and isinstance(args[0], tuple):
         values = line_format.format(*args[0]).split()
@@ -471,6 +472,43 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 040521.1154: importing Grid data from HDF5 file!\n", e)
+
+    def import_cadpts_fplain(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_cadpts_fplain_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_cadpts_fplain_hdf5()
+
+    def import_cadpts_fplain_dat(self):
+        try:
+            sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
+
+            self.clear_tables("grid")
+
+            data = self.parser.parse_fplain_cadpts()
+
+            c = 0
+            fid = slice(0, 1)
+            man = slice(5, 6)
+            elev = slice(6, 7)
+            coords = slice(8, None)
+
+            for row in data:
+                if c < self.chunksize:
+                    geom = " ".join(row[coords])
+                    g = self.build_square(geom, self.cell_size)
+
+                    sql += [tuple(row[fid] + row[man] + row[elev] + [g])]
+                    c += 1
+                else:
+                    self.batch_execute(sql)
+                    c = 0
+            if len(sql) > 2:
+                self.batch_execute(sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040521.1154: importing CADPTS.DAT and FPLAIN.DAT!.\n", e)
 
     def import_inflow(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
