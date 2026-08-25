@@ -20,7 +20,7 @@ import numpy as np
 from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtGui import QDesktopServices, QColor
 from qgis.PyQt.QtWidgets import QProgressDialog
-from qgis._core import QgsFeatureRequest, QgsProject, QgsMeshLayer, QgsMeshDatasetIndex
+from qgis._core import QgsFeatureRequest, QgsProject, QgsMeshLayer, QgsMeshDatasetIndex, QgsPointXY
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt.QtCore import QSettings, Qt, QThread
 from qgis.PyQt.QtWidgets import (
@@ -1178,21 +1178,48 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     geom = geom.buffer(0.0, 5)
                     if not geom.isGeosValid():
                         continue
+                # Convert every source geometry to 2D Polygon geometry.
                 if geom.isMultipart():
-                    new_geoms = [QgsGeometry.fromPolygonXY(g) for g in geom.asMultiPolygon()]
+                    new_geoms = []
+                    for polygon in geom.asMultiPolygon():
+                        rings = []
+                        for ring in polygon:
+                            rings.append([QgsPointXY(point.x(), point.y()) for point in ring])
+                        new_geoms .append(QgsGeometry.fromPolygonXY(rings))
                 else:
-                    new_geoms = [geom]
+                    polygon = geom.asPolygon()
+                    rings=[]
+                    for ring in polygon:
+                        rings.append([QgsPointXY(point.x(), point.y()) for point in ring])
+                    new_geoms = [QgsGeometry.fromPolygonXY(rings)]
+
+                # Add each converted polygon to user_layer
                 for new_geom in new_geoms:
                     user_feat = QgsFeature(blocked_areas_fields)
                     user_feat.setGeometry(new_geom)
+
                     for user_field_name, external_field_name in field_names_map.items():
                         external_value = feat[external_field_name]
-                        user_feat[user_field_name] = int(external_value) if external_value != NULL else external_value
+                        user_feat[user_field_name] = (int(external_value) if external_value != NULL else external_value)
                     user_feats.append(user_feat)
             blocked_areas_lyr.startEditing()
             blocked_areas_lyr.deleteFeatures([f.id() for f in blocked_areas_lyr.getFeatures()])
-            blocked_areas_lyr.addFeatures(user_feats)
-            blocked_areas_lyr.commitChanges()
+
+            # Add all converted external features to the blocked areas layer and roll back if the insertion fails
+            add_result = blocked_areas_lyr.addFeatures(user_feats)
+            if not add_result:
+                if blocked_areas_lyr.isEditable():
+                    blocked_areas_lyr.rollBack()
+                raise RuntimeError("Could not add features to Blocked areas.")
+
+            # Commit the imported features to the geopackage and roll back the edit session if commit fails
+            commit_result = blocked_areas_lyr.commitChanges()
+            if not commit_result:
+                errors = blocked_areas_lyr.commitErrors()
+                if blocked_areas_lyr.isEditable():
+                    blocked_areas_lyr.rollBack()
+                raise RuntimeError("Could not commit Blocked areas:\n" + "\n".join(errors))
+
             blocked_areas_lyr.updateExtents()
             blocked_areas_lyr.triggerRepaint()
             QApplication.restoreOverrideCursor()
