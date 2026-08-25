@@ -1753,6 +1753,8 @@ class Flo2D(object):
                             self.files_used += "SWMM.INP" + "\n"
                         if dat == "TOPO.DAT":
                             self.files_used += "MANNINGS_N.DAT" + "\n"
+                        if dat == "FPLAIN.DAT":
+                            self.files_used += "CADPTS.DAT" + "\n"
                         if dat == "MULT.DAT":
                             self.files_used += "SIMPLE_MULT.DAT" + "\n"
                         pass
