@@ -10,6 +10,7 @@
 import os
 import shutil
 import traceback
+import math
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 from itertools import chain, groupby
@@ -9120,7 +9121,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ST_AsText(ST_Centroid(GeomFromGPB(geom)))
                     FROM grid ORDER BY fid;"""
                 )
-                records = self.execute(sql)
+                
+                records = list(self.execute(sql))
             else:
                 sub_grid_cells = self.gutils.execute(
                     f"""SELECT DISTINCT
@@ -9143,10 +9145,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             nulls = 0
 
-            neighbors = grid_compas_neighbors(self.gutils)
+            # Build a centroid-to-FID lookup from the grid records already retrieved above.
+            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+            centroid_map = {}
+            for fid, man, elev, geom in records:
+                x, y = geom.strip("POINT()").split()
+                centroid_map[(float(x), float(y))] = fid
+
+            # FPLAIN.DAT requires only the four cardinal neighbors (N, E, S, W).
+            # Calculate them directly from the grid records to avoid the overhead
+            # of the general-purpose grid_compas_neighbors() function.
+            cardinal_neighbors = []
+            for fid, man, elev, geom in records:
+                x, y = geom.strip("POINT()").split()
+                x = float(x)
+                y = float(y)
+
+                north = centroid_map.get((x, y + cell_size), 0)
+                east = centroid_map.get((x + cell_size, y), 0)
+                south = centroid_map.get((x, y - cell_size), 0)
+                west = centroid_map.get((x - cell_size, y), 0)
+
+                cardinal_neighbors.append([north, east, south, west])
 
             with open(cadpts, "w") as c, open(fplain, "w") as f:
-                for row, neighbor_row in zip(records, neighbors):
+                for row, neighbor_row in zip(records, cardinal_neighbors):
                     fid, man, elev, geom = row
 
                     if man == None or elev == None:
@@ -9161,8 +9184,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     c.write(
                         cline.format(
                             fid,
-                            "{0: .3f}".format(float(x)),
-                            "{0: .3f}".format(float(y)),
+                            f"{math.trunc(float(x) * 10000) / 10000: .4f}",
+                            f"{math.trunc(float(y) * 10000) / 10000: .4f}",
                         )
                     )
 
@@ -9177,7 +9200,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             "{0: .2f}".format(float(elev)),
                         )
                     )
-
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_warn(
@@ -9188,6 +9210,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     + "Please check the source layer coverage or use Fill Nodata."
                 )
                 QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
+
             return True
 
         except Exception as e:
@@ -9198,7 +9221,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
-
 
     # def export_neighbours(self):
     #     if self.parsed_format == self.FORMAT_DAT:
