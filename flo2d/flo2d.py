@@ -1753,6 +1753,8 @@ class Flo2D(object):
                             self.files_used += "SWMM.INP" + "\n"
                         if dat == "TOPO.DAT":
                             self.files_used += "MANNINGS_N.DAT" + "\n"
+                        if dat == "FPLAIN.DAT":
+                            self.files_used += "CADPTS.DAT" + "\n"
                         if dat == "MULT.DAT":
                             self.files_used += "SIMPLE_MULT.DAT" + "\n"
                         pass
@@ -2702,6 +2704,7 @@ class Flo2D(object):
                             "export_levee",
                             "export_lid_volume",
                             "export_mannings_n_topo",
+                            "export_cadpts_fplain",
                             "export_mult",
                             "export_outflow",
                             "export_outrc",
@@ -2726,6 +2729,9 @@ class Flo2D(object):
                             ]
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+
+            if export_type == "hdf5":
+                dlg_components.set_cadpts_fplain_enabled(False) # Uncheck and disable cadpts and fplain checkbox
 
             if quick_run:
                 dlg_components.data_rb.setVisible(True)
@@ -3084,6 +3090,9 @@ class Flo2D(object):
 
         if "Manning's n and Topo" not in dlg_components.components:
             export_calls.remove("export_mannings_n_topo")
+
+        if "Cadpts and Fplain" not in dlg_components.components:
+            export_calls.remove("export_cadpts_fplain")
 
         if "Spatial Steep Slope-n" not in dlg_components.components:
             export_calls.remove("export_steep_slopen")

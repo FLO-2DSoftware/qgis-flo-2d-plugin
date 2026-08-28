@@ -42,9 +42,17 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.components_buttonBox.accepted.connect(self.select_components)
         self.select_all_chbox.clicked.connect(self.unselect_all)
 
+        self.hdf5_rb.toggled.connect(lambda checked: self.set_cadpts_fplain_enabled(not checked)) # Enable cadpts and fplain only when HDF5 export is not selected.
+
         self.setFixedSize(self.size())
 
         self.populate_components_dialog()
+
+    def set_cadpts_fplain_enabled(self, enabled):
+        """Enable or disable the cadpts and fplain checkbox, unchecking it when disabled."""
+        if not enabled:
+            self.cadpts_fplain_chbox.setChecked(False)
+        self.cadpts_fplain_chbox.setEnabled(enabled)
 
     def populate_components_dialog(self):
         s = QSettings()
@@ -374,6 +382,10 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.mannings_n_and_Topo_chbox.setChecked(True)
                 self.mannings_n_and_Topo_chbox.setEnabled(True)
 
+            if not self.gutils.is_table_empty("grid"):
+                self.cadpts_fplain_chbox.setChecked(True)
+                self.cadpts_fplain_chbox.setEnabled(True)
+
             if not self.gutils.is_table_empty("tailing_cells"):
                 self.tailings_chbox.setChecked(True)
                 self.tailings_chbox.setEnabled(True)
@@ -487,6 +499,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         if self.mannings_n_and_Topo_chbox.isChecked():
             self.components.append("Manning's n and Topo")
 
+        if self.cadpts_fplain_chbox.isChecked():
+            self.components.append("Cadpts and Fplain")
+
         if self.tailings_chbox.isChecked():
             self.components.append("Tailings")
 
@@ -543,3 +558,5 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.spatial_lid_volume_chbox.setChecked(select)
         if self.mannings_n_and_Topo_chbox.isEnabled():
             self.mannings_n_and_Topo_chbox.setChecked(select)
+        if self.cadpts_fplain_chbox.isEnabled():
+            self.cadpts_fplain_chbox.setChecked(select)
