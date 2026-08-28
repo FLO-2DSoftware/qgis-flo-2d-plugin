@@ -384,6 +384,19 @@ class ParseDAT(object):
             ["ITIMTEP", "TIMTEP", "STARTIMTEP", "ENDTIMTEP"],
             ["GRAPTIM"],
         ]
+
+        self.cont_rows_2009 = [
+            ["SIMUL", "TOUT", "LGPLOT", "METRIC", "IBACKUP", "build"],
+            ["ICHANNEL", "MSTREET", "LEVEE", "IWRFS", "IMULTC"],
+            ["IRAIN", "INFIL", "IEVAP", "MUD", "ISED", "IMODFLOW"],
+            ["IHYDRSTRUCT", "IFLOODWAY", "IDEBRV"],
+            ["AMANN", "DEPTHDUR", "XCONC", "XARF", "FROUDL", "SHALLOWN", "ENCROACH"],
+            ["NOPRTFP", "SUPER"],
+            ["NOPRTC"],
+            ["ITIMTEP", "TIMTEP"],
+            ["GRAPTIM"],
+        ]
+
         self.toler_rows = [
             ["TOLGLOBAL", "DEPTOL", ""],
             ["COURCHAR_C", "COURANTFP", "COURANTC", "COURANTST"],
