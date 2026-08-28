@@ -10,7 +10,6 @@
 import os
 import shutil
 import traceback
-import math
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 from itertools import chain, groupby
@@ -36,6 +35,7 @@ from ..gui.dlg_settings import SettingsDialog
 from ..layers import Layers
 from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date, qt_cursor_shape
 from .flo2d_parser import ParseDAT, ParseHDF5
+
 
 
 def create_array(line_format, max_columns, array_type, *args):
@@ -9184,8 +9184,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     c.write(
                         cline.format(
                             fid,
-                            f"{math.trunc(float(x) * 10000) / 10000: .4f}",
-                            f"{math.trunc(float(y) * 10000) / 10000: .4f}",
+                            "{0: .4f}".format(float(x)),
+                            "{0: .4f}".format(float(y)),
                         )
                     )
 
@@ -9210,7 +9210,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     + "Please check the source layer coverage or use Fill Nodata."
                 )
                 QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
-
             return True
 
         except Exception as e:
@@ -9221,6 +9220,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
             return False
+
 
     # def export_neighbours(self):
     #     if self.parsed_format == self.FORMAT_DAT:
