@@ -35,7 +35,7 @@ from ..gui.dlg_settings import SettingsDialog
 from ..layers import Layers
 from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date, qt_cursor_shape
 from .flo2d_parser import ParseDAT, ParseHDF5
-
+from ..flo2d_compatibility import EngineCompatibility, FLO2009, FLOPRO
 
 
 def create_array(line_format, max_columns, array_type, *args):
@@ -8705,8 +8705,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_cont_toler_dat(self, outdir):
         try:
             parser = ParseDAT()
+            
+            engine = self.get_cont_par("ENGINE")
+            if engine == FLO2009:
+                cont_rows = parser.cont_rows_2009
+            else:
+                cont_rows = parser.cont_rows
+            
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+
+            if engine == FLO2009:
+                options["SUPER"] = options.get("DEPRESSDEPTH", "")
             if options["IFLOODWAY"] == "0":
                 del options["ENCROACH"]
             if options["ICHANNEL"] == "0":
@@ -8743,7 +8753,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             toler = os.path.join(outdir, "TOLER.DAT")
             rline = " {0}"
             with open(cont, "w") as c:
-                for row in parser.cont_rows:
+                for row in cont_rows:
                     lst = ""
                     for o in row:
                         if o not in options:
@@ -8753,38 +8763,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     lst += "\n"
                     if lst.isspace() is False:
                         if row[0] == "ITIMTEP":
-                            # See if CONT table has ENDTIMTEP and STARTIMTEP:
-                            endtimtep = self.get_cont_par("ENDTIMTEP")
-                            if not endtimtep:
-                                self.set_cont_par("ENDTIMTEP", 0.0)
-
-                            starttimtep = self.get_cont_par("STARTIMTEP")
-                            if not starttimtep:
-                                self.set_cont_par("STARTIMTEP", 0.0)
-
-                            # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
-
-                            if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
-                                _itimtep = ("11", "21", "31", "41", "51")[int(float(options["ITIMTEP"])) - 1]
-                                if (
-                                        float_or_zero(options["STARTIMTEP"]) == 0.0
-                                        and float_or_zero(options["ENDTIMTEP"]) == 0.0
-                                ):
-                                    lst = " " + _itimtep + " " + options["TIMTEP"]
-                                else:
-                                    lst = (
-                                            " "
-                                            + _itimtep
-                                            + " "
-                                            + options["TIMTEP"]
-                                            + " "
-                                            + options["STARTIMTEP"]
-                                            + " "
-                                            + options["ENDTIMTEP"]
-                                    )
-                            else:
+                            if engine == FLO2009:
+                                # FLO-2D 2009 only uses ITIMTEP and TIMTEP
                                 lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
-                            lst += "\n"
+                            else:
+                                # See if CONT table has ENDTIMTEP and STARTIMTEP:
+                                endtimtep = self.get_cont_par("ENDTIMTEP")
+                                if not endtimtep:
+                                    self.set_cont_par("ENDTIMTEP", 0.0)
+
+                                starttimtep = self.get_cont_par("STARTIMTEP")
+                                if not starttimtep:
+                                    self.set_cont_par("STARTIMTEP", 0.0)
+
+                                # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+
+                                if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
+                                    _itimtep = ("11", "21", "31", "41", "51")[int(float(options["ITIMTEP"])) - 1]
+                                    if (
+                                            float_or_zero(options["STARTIMTEP"]) == 0.0
+                                            and float_or_zero(options["ENDTIMTEP"]) == 0.0
+                                    ):
+                                        lst = " " + _itimtep + " " + options["TIMTEP"]
+                                    else:
+                                        lst = (
+                                                " "
+                                                + _itimtep
+                                                + " "
+                                                + options["TIMTEP"]
+                                                + " "
+                                                + options["STARTIMTEP"]
+                                                + " "
+                                                + options["ENDTIMTEP"]
+                                        )
+                                else:
+                                    lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
+                                lst += "\n"
                         c.write(lst)
                     else:
                         pass
