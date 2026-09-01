@@ -67,6 +67,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)
             self.mannings_n_and_Topo_chbox.setVisible(False)
+            self.cadpts_fplain_chbox.setVisible(False)
 
             parser = ParseDAT()
             cont = parser.parse_cont(last_dir + r"\CONT.DAT")
