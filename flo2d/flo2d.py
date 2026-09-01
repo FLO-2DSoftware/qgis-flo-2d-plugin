@@ -1790,6 +1790,7 @@ class Flo2D(object):
         import_calls = [
             "import_cont_toler",
             "import_mannings_n_topo",
+            "import_cadpts_fplain",
             "import_inflow",
             "import_tailings",
             # "import_outrc",  Add back when the OUTRC process is completed
@@ -1910,7 +1911,7 @@ class Flo2D(object):
                         self.gutils.enable_geom_triggers()
                         return
                     selected_engine = dlg_engine.selected_engine
-                import_calls[1] = "import_cadpts_fplain"
+                import_calls.remove("import_mannings_n_topo")
             else:
                 selected_engine = FLOPRO
 
