@@ -481,34 +481,90 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_cadpts_fplain_dat(self):
         try:
-            sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
-
             self.clear_tables("grid")
 
             data = self.parser.parse_fplain_cadpts()
 
-            c = 0
+            # Temporary table for CADPTS/FPLAIN data
+            self.execute("""
+                DROP TABLE IF EXISTS temp_cadpts_fplain
+            """)
+
+            self.execute("""
+                CREATE TEMP TABLE temp_cadpts_fplain (
+                    fid INTEGER,
+                    n_value REAL,
+                    elevation REAL,
+                    x REAL,
+                    y REAL
+                )
+            """)
+
             fid = slice(0, 1)
             man = slice(5, 6)
             elev = slice(6, 7)
             coords = slice(8, None)
 
-            for row in data:
-                if c < self.chunksize:
-                    geom = " ".join(row[coords])
-                    g = self.build_square(geom, self.cell_size)
+            rows = []
 
-                    sql += [tuple(row[fid] + row[man] + row[elev] + [g])]
-                    c += 1
-                else:
-                    self.batch_execute(sql)
-                    c = 0
-            if len(sql) > 2:
-                self.batch_execute(sql)
+            for row in data:
+                geom = " ".join(row[coords])
+                x, y = [float(v) for v in geom.strip("POINT()").split()]
+
+                rows.append((
+                    int(row[fid][0]),
+                    float(row[man][0]),
+                    float(row[elev][0]),
+                    x,
+                    y,
+                ))
+
+            # Insert all CADPTS/FPLAIN data into the temporary table
+            cur = self.con.cursor()
+            cur.executemany("""
+                INSERT INTO temp_cadpts_fplain
+                    (fid, n_value, elevation, x, y)
+                VALUES (?, ?, ?, ?, ?)
+            """, rows)
+            self.con.commit()
+
+            # Generate all grid geometries in one set-based operation
+            half_size = float(self.cell_size) * 0.5
+
+            self.execute(f"""
+                INSERT INTO grid (fid, n_value, elevation, geom)
+                SELECT
+                    fid,
+                    n_value,
+                    elevation,
+                    AsGPB(
+                        ST_GeomFromText(
+                            'POLYGON((' ||
+                            (x - {half_size}) || ' ' || (y - {half_size}) || ', ' ||
+                            (x + {half_size}) || ' ' || (y - {half_size}) || ', ' ||
+                            (x + {half_size}) || ' ' || (y + {half_size}) || ', ' ||
+                            (x - {half_size}) || ' ' || (y + {half_size}) || ', ' ||
+                            (x - {half_size}) || ' ' || (y - {half_size}) ||
+                            '))',
+                            102709
+                        )
+                    )
+                FROM temp_cadpts_fplain
+            """)
+
+            self.con.commit()
+
+            self.execute("""
+                DROP TABLE IF EXISTS temp_cadpts_fplain
+            """)
+            self.con.commit()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 040521.1154: importing CADPTS.DAT and FPLAIN.DAT!.\n", e)
+            self.uc.show_error(
+                "ERROR 040521.1154: importing CADPTS.DAT and FPLAIN.DAT!.\n",
+                e
+            )
 
     def import_inflow(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
