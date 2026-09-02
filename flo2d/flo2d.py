@@ -2051,9 +2051,6 @@ class Flo2D(object):
                         specific_components.append(1)
 
                     if len(specific_components) > 0:
-                        msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
-                              "Layers to User Layers</FONT> tool in the FLO-2D panel."
-                        self.uc.show_info(msg)
                         self.schematic2user(True)
 
             # Update the lastGdsDir to the original
