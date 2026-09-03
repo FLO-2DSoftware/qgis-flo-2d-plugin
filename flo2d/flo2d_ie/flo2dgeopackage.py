@@ -410,32 +410,119 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_mannings_n_topo_dat(self):
         try:
-            sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
-
             self.clear_tables("grid")
+
             data = self.parser.parse_mannings_n_topo()
 
-            c = 0
-            man = slice(0, 2)
+            # Temporary table for MANNINGS_N/TOPO data
+            self.execute("DROP TABLE IF EXISTS temp_mannings_n_topo")
+
+            self.execute("""
+                CREATE TEMP TABLE temp_mannings_n_topo (
+                    fid INTEGER,
+                    n_value REAL,
+                    elevation REAL,
+                    x REAL,
+                    y REAL
+                )
+            """)
+
+            fid = slice(0, 1)
+            man = slice(1, 2)
             coords = slice(2, 4)
             elev = slice(4, None)
+
+            rows = []
+
             for row in data:
-                if c < self.chunksize:
-                    geom = " ".join(row[coords])
-                    g = self.build_square(geom, self.cell_size)
-                    sql += [tuple(row[man] + row[elev] + [g])]
-                    c += 1
-                else:
-                    self.batch_execute(sql)
-                    c = 0
-            if len(sql) > 2:
-                self.batch_execute(sql)
-            else:
-                pass
+                x = float(row[coords][0])
+                y = float(row[coords][1])
+
+                rows.append((
+                    int(row[fid][0]),
+                    float(row[man][0]),
+                    float(row[elev][0]),
+                    x,
+                    y,
+                ))
+
+            # Insert all MANNINGS_N/TOPO data into the temporary table
+            cur = self.con.cursor()
+            cur.executemany("""
+                INSERT INTO temp_mannings_n_topo
+                    (fid, n_value, elevation, x, y)
+                VALUES (?, ?, ?, ?, ?)
+            """, rows)
+            self.con.commit()
+
+            # Get the GeoPackage SRID
+            srid = self.execute("""
+                SELECT srs_id
+                FROM gpkg_geometry_columns
+                WHERE table_name = 'grid'
+                    AND column_name = 'geom'
+            """).fetchone()[0]
+
+            half_size = float(self.cell_size) * 0.5
+
+            # Generate all grid geometries in one set-based operation
+            self.execute(f"""
+                INSERT INTO grid (fid, n_value, elevation, geom)
+                SELECT
+                    fid,
+                    n_value,
+                    elevation,
+                    AsGPB(
+                        BuildMbr(
+                            x - {half_size},
+                            y - {half_size},
+                            x + {half_size},
+                            y + {half_size},
+                            {srid}
+                        )
+                    )
+                FROM temp_mannings_n_topo
+            """)
+            self.con.commit()
+
+            self.execute("DROP TABLE IF EXISTS temp_mannings_n_topo")
+            self.con.commit()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 040521.1154: importing TOPO.DAT!.\n", e)
+            self.uc.show_error(
+                "ERROR 040521.1154: importing MANNINGS_N.DAT and TOPO.DAT!.\n",
+                e
+            )
+
+    # def import_mannings_n_topo_dat(self):
+    #     try:
+    #         sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
+    #
+    #         self.clear_tables("grid")
+    #         data = self.parser.parse_mannings_n_topo()
+    #
+    #         c = 0
+    #         man = slice(0, 2)
+    #         coords = slice(2, 4)
+    #         elev = slice(4, None)
+    #         for row in data:
+    #             if c < self.chunksize:
+    #                 geom = " ".join(row[coords])
+    #                 g = self.build_square(geom, self.cell_size)
+    #                 sql += [tuple(row[man] + row[elev] + [g])]
+    #                 c += 1
+    #             else:
+    #                 self.batch_execute(sql)
+    #                 c = 0
+    #         if len(sql) > 2:
+    #             self.batch_execute(sql)
+    #         else:
+    #             pass
+    #
+    #     except Exception as e:
+    #         QApplication.restoreOverrideCursor()
+    #         self.uc.show_error("ERROR 040521.1154: importing TOPO.DAT!.\n", e)
 
     def import_mannings_n_topo_hdf5(self):
         try:
@@ -479,6 +566,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_cadpts_fplain_hdf5()
 
+
     def import_cadpts_fplain_dat(self):
         try:
             self.clear_tables("grid")
@@ -486,9 +574,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             data = self.parser.parse_fplain_cadpts()
 
             # Temporary table for CADPTS/FPLAIN data
-            self.execute("""
-                DROP TABLE IF EXISTS temp_cadpts_fplain
-            """)
+            self.execute("DROP TABLE IF EXISTS temp_cadpts_fplain")
 
             self.execute("""
                 CREATE TEMP TABLE temp_cadpts_fplain (
@@ -529,6 +615,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.con.commit()
 
             # Generate all grid geometries in one set-based operation
+            srid = self.execute("""
+                SELECT srs_id
+                FROM gpkg_geometry_columns
+                WHERE table_name = 'grid'
+                    AND column_name = 'geom'
+            """).fetchone()[0]
+
             half_size = float(self.cell_size) * 0.5
 
             self.execute(f"""
@@ -538,25 +631,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     n_value,
                     elevation,
                     AsGPB(
-                        ST_GeomFromText(
-                            'POLYGON((' ||
-                            (x - {half_size}) || ' ' || (y - {half_size}) || ', ' ||
-                            (x + {half_size}) || ' ' || (y - {half_size}) || ', ' ||
-                            (x + {half_size}) || ' ' || (y + {half_size}) || ', ' ||
-                            (x - {half_size}) || ' ' || (y + {half_size}) || ', ' ||
-                            (x - {half_size}) || ' ' || (y - {half_size}) ||
-                            '))',
-                            102709
+                        BuildMbr(
+                            x - {half_size},
+                            y - {half_size},
+                            x + {half_size},
+                            y + {half_size},
+                            {srid}
                         )
                     )
                 FROM temp_cadpts_fplain
             """)
-
             self.con.commit()
-
-            self.execute("""
-                DROP TABLE IF EXISTS temp_cadpts_fplain
-            """)
+            self.execute("DROP TABLE IF EXISTS temp_cadpts_fplain")
             self.con.commit()
 
         except Exception as e:
