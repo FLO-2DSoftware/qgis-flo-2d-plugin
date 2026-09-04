@@ -11031,8 +11031,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_rain_dat(self, outdir, subdomain):
         # check if there is any rain defined.
+        engine = self.get_cont_par("ENGINE")
         try:
-
             # Check if rain table is empty and return False if true
             if self.is_table_empty("rain"):
                 self.uc.log_info("Rain table is empty!")
@@ -11059,7 +11059,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         md.domain_fid = {subdomain}
                                     ORDER BY md.domain_cell;"""
 
-            rain_line1 = "{0}  {1}\n"
+            if engine == FLO2009:
+                rain_line1 = "{0}\n"
+            else:
+                rain_line1 = "{0}  {1}\n"
             rain_line2 = "{0}   {1}  {2}  {3}\n"
             tsd_line3 = "R {0}   {1}\n"  # Rainfall Time series distribution
             rain_line4 = "{0}   {1}\n"
@@ -11085,7 +11088,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             rain = os.path.join(outdir, "RAIN.DAT")
             repeated_value = False
             with open(rain, "w") as r:
-                r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
+                if engine == FLO2009:
+                    r.write(rain_line1.format(rain_row[1]))
+                else:
+                    irainbuilding = rain_row[2] if rain_row[2] is not None else 0
+                    r.write(rain_line1.format(rain_row[1], irainbuilding))  # irainreal, irainbuilding
                 r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
 
                 fid = rain_row[
