@@ -546,7 +546,6 @@ class ParseDAT(object):
                 row.insert(index, default)
 
     def parse_cont(self, cont=None):
-
         results = {}
         if cont is None:
             cont = self.dat_files["CONT.DAT"]
