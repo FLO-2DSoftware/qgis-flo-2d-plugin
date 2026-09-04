@@ -8858,7 +8858,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
 
             if engine == FLO2009:
-                options["SUPER"] = options.get("DEPRESSDEPTH", "")
+                options["SUPER"] = "0"
+            elif "DEPRESSDEPTH" not in options:
+                options["DEPRESSDEPTH"] = "0.00"
             if options["IFLOODWAY"] == "0":
                 del options["ENCROACH"]
             if options["ICHANNEL"] == "0":
@@ -8898,6 +8900,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in cont_rows:
                     lst = ""
                     for o in row:
+                        if o == "build":
+                            continue
                         if o not in options:
                             continue
                         val = options[o]
@@ -8907,7 +8911,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if row[0] == "ITIMTEP":
                             if engine == FLO2009:
                                 # FLO-2D 2009 only uses ITIMTEP and TIMTEP
-                                lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
+                                itimtept  = "1" if float_or_zero(options["ITIMTEP"]) != 0 else "0"
+                                lst = " " + itimtept + " " + options["TIMTEP"]
                             else:
                                 # See if CONT table has ENDTIMTEP and STARTIMTEP:
                                 endtimtep = self.get_cont_par("ENDTIMTEP")
