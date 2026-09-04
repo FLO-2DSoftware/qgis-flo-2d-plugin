@@ -8859,8 +8859,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if engine == FLO2009:
                 options["SUPER"] = "0"
-            elif "DEPRESSDEPTH" not in options:
-                options["DEPRESSDEPTH"] = "0.00"
+            else:
+                if "DEPRESSDEPTH" not in options:
+                    options["DEPRESSDEPTH"] = "0.00"
+                if "SWMM" not in options:
+                    options["SWMM"] = "0"
             if options["IFLOODWAY"] == "0":
                 del options["ENCROACH"]
             if options["ICHANNEL"] == "0":
