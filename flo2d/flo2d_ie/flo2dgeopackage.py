@@ -8851,32 +8851,47 @@ class Flo2dGeoPackage(GeoPackageUtils):
             engine = self.get_cont_par("ENGINE")
             if engine == FLO2009:
                 cont_rows = parser.cont_rows_2009
+                toler_rows = parser.toler_rows_2009
             else:
                 cont_rows = parser.cont_rows
+                toler_rows = parser.toler_rows
             
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
 
+            if "TIMTEP" in options:
+                options["TIMTEP"] = f"{float(options['TIMTEP']):.2f}"
+
             if engine == FLO2009:
                 options["SUPER"] = "0"
+                if not options.get("WAVEMAX"):
+                    options["WAVEMAX"] = "0.00"
             else:
-                if "DEPRESSDEPTH" not in options:
-                    options["DEPRESSDEPTH"] = "0.00"
+                options["DEPRESSDEPTH"] = f"{float_or_zero(options.get('DEPRESSDEPTH')):.2f}"
                 if "SWMM" not in options:
                     options["SWMM"] = "0"
             if options["IFLOODWAY"] == "0":
                 del options["ENCROACH"]
             if options["ICHANNEL"] == "0":
-                del options["NOPRTC"]
-                del options["COURANTC"]
+                options.pop("NOPRTC", None)
+                options.pop("COURANTC", None)
             if options["LGPLOT"] != "2":
-                del options["GRAPTIM"]
+                options.pop("GRAPTIM", None)
             if options["LGPLOT"] == "2":
                 options["IDEPLT"] = "0"
             if options["MSTREET"] == "0":
-                del options["COURANTST"]
+                options.pop("COURANTST", None)
             if "IDEPLT" not in options:
                 options["IDEPLT"] = "0"
+            if engine != FLO2009:
+                if options.get("ICHANNEL") != "0" and not options.get("COURANTC"):
+                    options["COURANTC"] = options["COURANTFP"]
+                if options.get("MSTREET") != "0" and not options.get("COURANTST"):
+                    options["COURANTST"] = options["COURANTFP"]
+                if not options.get("COURCHAR_T"):
+                    options["COURCHAR_T"] = "T"
+                if not options.get("TIME_ACCEL"):
+                    options["TIME_ACCEL"] = "0.10"
 
             first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
             first_gid = first_gid[0] if first_gid is not None else 0
@@ -8901,60 +8916,62 @@ class Flo2dGeoPackage(GeoPackageUtils):
             rline = " {0}"
             with open(cont, "w") as c:
                 for row in cont_rows:
+                    if row[0] == "ITIMTEP":
+                        if engine == FLO2009:
+                            itimtept = "1" if float_or_zero(options["ITIMTEP"]) != 0 else "0"
+                            lst = f" {itimtept} {options['TIMTEP']}\n"
+
+                        else:
+                            endtimtep = self.get_cont_par("ENDTIMTEP")
+                            if not endtimtep:
+                                self.set_cont_par("ENDTIMTEP", 0.0)
+
+                            starttimtep = self.get_cont_par("STARTIMTEP")
+                            if not starttimtep:
+                                self.set_cont_par("STARTIMTEP", 0.0)
+
+                            if (
+                                    options["ITIMTEP"] != "0"
+                                    and float_or_zero(options["ENDTIMTEP"]) > 0.0
+                            ):
+                                _itimtep = ("11", "21", "31", "41", "51")[
+                                    int(float(options["ITIMTEP"])) - 1
+                                    ]
+
+                                if (
+                                        float_or_zero(options["STARTIMTEP"]) == 0.0
+                                        and float_or_zero(options["ENDTIMTEP"]) == 0.0
+                                ):
+                                    lst = f" {_itimtep} {options['TIMTEP']}\n"
+                                else:
+                                    lst = (
+                                        f" {_itimtep} {options['TIMTEP']} "
+                                        f"{options['STARTIMTEP']} {options['ENDTIMTEP']}\n"
+                                    )
+                            else:
+                                lst = f" {options['ITIMTEP']} {options['TIMTEP']}\n"
+
+                        c.write(lst)
+                        continue
+
+                    # Normal rows
                     lst = ""
                     for o in row:
                         if o == "build":
                             continue
                         if o not in options:
                             continue
-                        val = options[o]
-                        lst += rline.format(val)
+                        lst += rline.format(options[o])
+
                     lst += "\n"
-                    if lst.isspace() is False:
-                        if row[0] == "ITIMTEP":
-                            if engine == FLO2009:
-                                # FLO-2D 2009 only uses ITIMTEP and TIMTEP
-                                itimtept  = "1" if float_or_zero(options["ITIMTEP"]) != 0 else "0"
-                                lst = " " + itimtept + " " + options["TIMTEP"]
-                            else:
-                                # See if CONT table has ENDTIMTEP and STARTIMTEP:
-                                endtimtep = self.get_cont_par("ENDTIMTEP")
-                                if not endtimtep:
-                                    self.set_cont_par("ENDTIMTEP", 0.0)
 
-                                starttimtep = self.get_cont_par("STARTIMTEP")
-                                if not starttimtep:
-                                    self.set_cont_par("STARTIMTEP", 0.0)
-
-                                # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
-
-                                if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
-                                    _itimtep = ("11", "21", "31", "41", "51")[int(float(options["ITIMTEP"])) - 1]
-                                    if (
-                                            float_or_zero(options["STARTIMTEP"]) == 0.0
-                                            and float_or_zero(options["ENDTIMTEP"]) == 0.0
-                                    ):
-                                        lst = " " + _itimtep + " " + options["TIMTEP"]
-                                    else:
-                                        lst = (
-                                                " "
-                                                + _itimtep
-                                                + " "
-                                                + options["TIMTEP"]
-                                                + " "
-                                                + options["STARTIMTEP"]
-                                                + " "
-                                                + options["ENDTIMTEP"]
-                                        )
-                                else:
-                                    lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
-                                lst += "\n"
+                    if not lst.isspace():
                         c.write(lst)
                     else:
                         pass
 
             with open(toler, "w") as t:
-                for row in parser.toler_rows:
+                for row in toler_rows:
                     lst = ""
                     for o in row:
                         if o not in options:
