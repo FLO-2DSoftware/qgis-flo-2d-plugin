@@ -403,6 +403,11 @@ class ParseDAT(object):
             ["COURCHAR_T", "TIME_ACCEL"],
         ]
 
+        self.toler_rows_2009 = [
+            ["TOLGLOBAL", "DEPTOL", "WAVEMAX"],
+            ["COURCHAR_C", "COURANTFP"]
+        ]
+
     def scan_project_dir(self, path):
         self.project_dir = os.path.dirname(path)
         for f in os.listdir(self.project_dir):
@@ -565,7 +570,13 @@ class ParseDAT(object):
         results = {}
         toler = self.dat_files["TOLER.DAT"]
         with open(toler, "r") as f:
-            for row in self.toler_rows:
+            first_line = f.readline().split()
+            if len(first_line) == 3:
+                toler_rows = self.toler_rows_2009
+            else:
+                toler_rows = self.toler_rows
+            results.update(dict(zip_longest(toler_rows[0], first_line)))
+            for row in toler_rows[1:]:
                 results.update(dict(zip_longest(row, f.readline().split())))
         return results
 
@@ -780,7 +791,7 @@ class ParseDAT(object):
 
         line2 = next(par)
 
-        if method == "1" or method == "3":
+        if method in ("1", "2", "3"):
             if len(line2) == 5:  # 2009 format
                 values = line2
 
