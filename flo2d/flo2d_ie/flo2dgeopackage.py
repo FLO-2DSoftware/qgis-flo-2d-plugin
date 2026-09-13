@@ -11609,10 +11609,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_infil_dat(self, outdir, subdomain):
         # check if there is any infiltration defined.
         try:
+            engine = self.get_cont_par("ENGINE")
             if self.is_table_empty("infil"):
                 return False
             infil_sql = """SELECT * FROM infil;"""
             infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
+            chan_seg_sql = """SELECT fid FROM chan ORDER BY fid;"""
             if not subdomain:
                 green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
                 scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
@@ -11672,9 +11674,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             line1 = "{0}"
             line2 = "\n" + "  {}" * 6
+            line2_2009 = "\n" + " {}" * 5
             line2h = "\n{0}"
             line3 = "\n" + "  {}" * 3
+            line3_2009 = "\n" + " {}" * 2
             line4 = "\n{0}"
+            line4a = "\nR {0}"
             line4ab = "\nR  {0}  {1}  {2}"
             line5 = "\n{0}  {1}"
             line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
@@ -11701,20 +11706,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gen[13:16],
                     gen[16]
                 )
+
+                if engine != FLO2009:
+                    if not v2[4]:
+                        v2[4] = 0
+                    if not v3[2]:
+                        v3[2] = 0
+
                 i.write(line1.format(v1))
-                if v1 == 1 or v1 == 3:
-                    i.write(line2.format(*v2))
-                    i.write(line3.format(*v3))
-                    if v2[5] == 1:
-                        i.write(line4.format(*v4))
-                    #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
-                    # #                         if any(val) is True:
-                    #                             i.write(line.format(*val))
-                    # #                         else:
-                    # #                             pass
-                    for row in self.execute(infil_r_sql):
-                        row = [x if x is not None else "" for x in row]
-                        i.write(line4ab.format(*row))
+                if v1 in (1, 2, 3):
+                    if engine == FLO2009:
+                        i.write(line2_2009.format(v2[0], v2[1], v2[2], v2[3], v2[5]))
+                        i.write(line3_2009.format(v3[0], v3[1]))
+                        if v2[5] == "1" or v2[5] == 1:
+                            i.write(line4.format(*v4))
+                    else:
+                        i.write(line2.format(*v2))
+                        i.write(line3.format(*v3))
+                        if v2[5] == "1" or v2[5] == 1:
+                            i.write(line4.format(*v4))
+                            r_rows = self.execute(infil_r_sql).fetchall()
+                            if r_rows:
+                                for row in r_rows:
+                                    row = [x if x is not None else "" for x in row]
+                                    if float(v2[4] or 0) > 0:
+                                        i.write(line4ab.format(*row))
+                                    else:
+                                        i.write(line4a.format(row[0]))
+                            else:
+                                for row in self.execute(chan_seg_sql):
+                                    i.write(line4a.format(v4[0]))
                 if v1 == 2 or v1 == 3:
                     if any(v5) is True:
                         i.write(line5.format(*v5))
@@ -11726,13 +11747,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     i.write(line7.format(*row))
                 for row in self.execute(chan_sql):
                     i.write(line8.format(*row))
-                if any(v9) is True:
-                    i.write(line2h.format(str(v2h)))
-                    i.write(line9.format(*v9))
-                else:
-                    pass
-                for row in self.execute(horton_sql):
-                    i.write(line10.format(*row))
+                if engine != FLO2009:
+                    if any(v9) is True:
+                        i.write(line2h.format(str(v2h)))
+                        i.write(line9.format(*v9))
+                    else:
+                        pass
+                    for row in self.execute(horton_sql):
+                        i.write(line10.format(*row))
 
             return True
 
