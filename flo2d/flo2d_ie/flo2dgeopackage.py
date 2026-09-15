@@ -132,6 +132,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "chan_elems",
             "chan_elems_interp",
             "chan_n",
+            "chan_noflow",
             "chan_r",
             "chan_t",
             "chan_v",
@@ -2987,6 +2988,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_chan_dat(self, grid_to_domain):
 
+        engine = self.get_cont_par("ENGINE")
+
         chan_sql = [
             """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn, ibaseflow) VALUES""",
             6,
@@ -3022,6 +3025,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             """INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""",
             2,
         ]
+        chan_noflow_sql = [
+            """INSERT INTO chan_noflow (fid, noflo1, noflo2) VALUES""",
+            3,
+        ]
 
         sqls = {
             "R": [chan_r_sql, 4, 7],
@@ -3030,7 +3037,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "N": [chan_n_sql, 2, 3],
         }
 
-        segments, wsel, confluence, noexchange = self.parser.parse_chan()
+        segments, wsel, confluence, noexchange, noflow = self.parser.parse_chan()
+
         if not segments:
             return
 
@@ -3047,6 +3055,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "user_noexchange_chan_areas",
                 "noexchange_chan_cells",
                 "chan_wsel",
+                "chan_noflow",
             )
 
             for i, seg in enumerate(segments, 1):
@@ -3091,6 +3100,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 geom = self.grid_centroids([gid])[gid]
                 chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
                 elems_e_sql += [(i, gid)]
+            if engine == FLO2009:
+                for i, row in enumerate(noflow, 1):
+                    chan_noflow_sql += [(i, row[1], row[2])]
         else:
             self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_elems_fid ON chan_elems(fid);")
             self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_r_elem_fid ON chan_r(elem_fid);")
@@ -3193,6 +3205,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_e_sql,
             elems_e_sql,
             chan_wsel_sql,
+            chan_noflow_sql,
         )
         qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
         self.execute(qry)
