@@ -2002,12 +2002,21 @@ class Flo2D(object):
 
                     self.f2g.clear_gpkg_tables()
 
-                    self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
-                    # the methods in the class Flo2dGeoPackage to import (read) the FLO-2D .DAT files
+                    # Import CONT.DAT first
+                    self.call_IO_methods(["import_cont_toler"], True)
 
                     # Apply the engine selected by the user after CONT.DAT has been imported
                     sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES(?, ?, ?);"""
                     self.gutils.execute(sql, ("ENGINE", selected_engine, "FLO-2D Engine"))
+
+                    # import all remaining components
+                    remaining_import_calls = [
+                        call for call in import_calls
+                        if call != "import_cont_toler"
+                    ]
+
+                    self.call_IO_methods(remaining_import_calls, True)  # The strings list 'export_calls', contains the names of
+                    # the methods in the class Flo2dGeoPackage to import (read) the FLO-2D .DAT files
 
                     # Remember only an explicit choice to continue using 2009 engine
                     if is_legacy_2009 and selected_engine == FLO2009:
