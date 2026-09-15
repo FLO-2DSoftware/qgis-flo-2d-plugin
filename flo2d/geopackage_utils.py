@@ -241,7 +241,7 @@ class GeoPackageUtils(object):
         'outflow_time_series_data', 'rain_time_series', 'rain_time_series_data', 'outflow',
         'outflow_cells', 'qh_params', 'qh_params_data', 'qh_table', 'qh_table_data',
         'out_hydrographs', 'out_hydrographs_cells', 'rain', 'rain_arf_cells', 'chan',
-        'chan_elems', 'rbank', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_confluences',
+        'chan_elems', 'rbank', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_noflow', 'chan_confluences',
         'user_noexchange_chan_areas', 'noexchange_chan_cells', 'chan_wsel', 'xsec_n_data',
         'evapor', 'evapor_monthly', 'evapor_hourly', 'infil', 'infil_chan_seg',
         'infil_cells_green', 'infil_cells_scs', 'infil_cells_horton', 'infil_chan_elems',
