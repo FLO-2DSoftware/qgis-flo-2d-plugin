@@ -3408,7 +3408,7 @@ def find_this_cell(iface, lyrs, uc, gutils, cell, color=QColor("yellow"), zoom_i
                 ext = iface.mapCanvas().extent()
                 if cell != "":
                     cell = int(cell)
-                    if len(grid) >= cell and cell > 0:
+                    if grid.featureCount() >= cell and cell > 0:
                         lyrs.show_feat_rubber(grid.id(), cell, QColor(color), clear_previous)
                         currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
                         x, y = currentCell.geometry().centroid().asPoint()
