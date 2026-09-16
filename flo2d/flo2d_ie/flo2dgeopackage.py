@@ -11696,6 +11696,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line4ab = "\nR  {0}  {1}  {2}"
             line5 = "\n{0}  {1}"
             line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+            line6_2009 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f}"
             #         line6 = '\n' + 'F' + '  {}' * 7
             line7 = "\nS  {0}  {1}"
             line8 = "\nC  {0}  {1}"
@@ -11755,7 +11756,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         pass
                 for row in self.execute(green_sql):
-                    i.write(line6.format(*row))
+                    if engine == FLO2009:
+                        i.write(line6_2009.format(*row[:6]))
+                    else:
+                        row = list(row)
+                        if row[6] is None:
+                            row[6] = 0
+                        i.write(line6.format(*row))
                 for row in self.execute(scs_sql):
                     i.write(line7.format(*row))
                 for row in self.execute(chan_sql):
@@ -12430,6 +12437,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_chan_dat(self, outdir, subdomain):
         # check if there are any channels defined.
         # try:
+        engine = self.get_cont_par("ENGINE")
         if self.is_table_empty("chan"):
             return False
 
@@ -12447,6 +12455,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
             chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
             chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+            chan_noflow_sql = """SELECT noflo1, noflo2 FROM chan_noflow ORDER BY fid"""
         else:
             subdomain_fids = self.execute(f"""
                 SELECT 
@@ -12584,6 +12593,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         wsel = "{0} {1:.2f}\n"
         conf = " C {0}  {1}\n"
         chan_e = " E {0}\n"
+        chan_noflow = " F {0} {1}\n"
 
         sqls = {
             "R": [chan_r_sql, chan_r, 3, 6],
@@ -12677,30 +12687,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         (subdomain, rbank)
                     )
 
-                if row[5]: # ibaseflow
-                    if str(row[5]) != "":
-                        bLines += "B " + str(row[5]) + "\n"
-                        # c.write("B " + str(row[5]) + "\n")
+                if engine != FLO2009 and row[5]:  # ibaseflow
+                    bLines += "B " + str(row[5]) + "\n"
 
             for row in self.execute(chan_wsel_sql):
                 c.write(wsel.format(*row[:2]))
                 c.write(wsel.format(*row[2:]))
 
-            pairs = []
-            for row in self.execute(chan_conf_sql):
-                chan_elem = row[0]
-                if not pairs:
-                    pairs.append(chan_elem)
-                else:
-                    pairs.append(chan_elem)
-                    c.write(conf.format(*pairs))
-                    del pairs[:]
+            if engine == FLO2009:
+                for row in self.execute(chan_noflow_sql):
+                    c.write(chan_noflow.format(*row))
 
-            for row in self.execute(chan_e_sql):
-                c.write(chan_e.format(row[0]))
+            if engine != FLO2009:
+                pairs = []
+                for row in self.execute(chan_conf_sql):
+                    chan_elem = row[0]
+                    if not pairs:
+                        pairs.append(chan_elem)
+                    else:
+                        pairs.append(chan_elem)
+                        c.write(conf.format(*pairs))
+                        del pairs[:]
 
-            if bLines != "":
-                c.write(bLines)
+                for row in self.execute(chan_e_sql):
+                    c.write(chan_e.format(row[0]))
+
+                if engine != FLO2009 and bLines:
+                    c.write(bLines)
 
         return True
 
