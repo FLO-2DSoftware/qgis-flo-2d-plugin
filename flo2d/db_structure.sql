@@ -704,13 +704,6 @@ CREATE TABLE "chan_interior_nodes" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_interior_nodes', 'aspatial');
 
-CREATE TABLE "chan_noflow"(
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "noflo1" INTEGER,
-    "noflo2" INTEGER
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_noflow', 'aspatial');
-
 CREATE TABLE "user_steep_slope_n_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "global" INTEGER DEFAULT 0,
