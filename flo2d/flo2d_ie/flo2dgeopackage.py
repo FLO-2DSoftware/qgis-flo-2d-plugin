@@ -132,7 +132,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "chan_elems",
             "chan_elems_interp",
             "chan_n",
-            "chan_noflow",
             "chan_r",
             "chan_t",
             "chan_v",
@@ -3017,17 +3016,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             5,
         ]
         chan_conf_sql = [
-            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
-            4,
+            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid, notes) VALUES""",
+            5,
         ]
         chan_e_sql = ["""INSERT INTO user_noexchange_chan_areas (geom) VALUES""", 1]
         elems_e_sql = [
             """INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""",
             2,
-        ]
-        chan_noflow_sql = [
-            """INSERT INTO chan_noflow (fid, noflo1, noflo2) VALUES""",
-            3,
         ]
 
         sqls = {
@@ -3055,7 +3050,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "user_noexchange_chan_areas",
                 "noexchange_chan_cells",
                 "chan_wsel",
-                "chan_noflow",
             )
 
             for i, seg in enumerate(segments, 1):
@@ -3093,16 +3087,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells = self.grid_centroids([gid1, gid2], buffers=True)
 
                 geom1, geom2 = cells[gid1], cells[gid2]
-                chan_conf_sql += [(geom1, i, 0, gid1)]
-                chan_conf_sql += [(geom2, i, 1, gid2)]
+                chan_conf_sql += [(geom1, i, 0, gid1, None)]
+                chan_conf_sql += [(geom2, i, 1, gid2, None)]
+            for i, row in enumerate(noflow, start=len(confluence) + 1):
+                gid1, gid2 = int(row[1]), int(row[2])
+                cells = self.grid_centroids([gid1, gid2], buffers=True)
+
+                geom1, geom2 = cells[gid1], cells[gid2]
+                chan_conf_sql += [(geom1, i, 0, gid1, "NOFLOC")]
+                chan_conf_sql += [(geom2, i, 1, gid2, "NOFLOC")]
+
             for i, row in enumerate(noexchange, 1):
                 gid = row[-1]
                 geom = self.grid_centroids([gid])[gid]
                 chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
                 elems_e_sql += [(i, gid)]
-            if engine == FLO2009:
-                for i, row in enumerate(noflow, 1):
-                    chan_noflow_sql += [(i, row[1], row[2])]
         else:
             self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_elems_fid ON chan_elems(fid);")
             self.gutils.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_chan_r_elem_fid ON chan_r(elem_fid);")
@@ -3205,7 +3204,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_e_sql,
             elems_e_sql,
             chan_wsel_sql,
-            chan_noflow_sql,
         )
         qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
         self.execute(qry)
@@ -12454,8 +12452,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
             chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
             chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
-            chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
-            chan_noflow_sql = """SELECT noflo1, noflo2 FROM chan_noflow ORDER BY fid"""
+            chan_conf_sql = """SELECT chan_elem_fid, notes FROM chan_confluences ORDER BY fid;"""
         else:
             subdomain_fids = self.execute(f"""
                 SELECT 
@@ -12593,7 +12590,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         wsel = "{0} {1:.2f}\n"
         conf = " C {0}  {1}\n"
         chan_e = " E {0}\n"
-        chan_noflow = " F {0} {1}\n"
+        chan_nofloc = " F {0} {1}\n"
 
         sqls = {
             "R": [chan_r_sql, chan_r, 3, 6],
@@ -12695,19 +12692,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 c.write(wsel.format(*row[2:]))
 
             if engine == FLO2009:
-                for row in self.execute(chan_noflow_sql):
-                    c.write(chan_noflow.format(*row))
-
-            if engine != FLO2009:
+                # Export legacy NOFLOC records as F lines
                 pairs = []
                 for row in self.execute(chan_conf_sql):
-                    chan_elem = row[0]
-                    if not pairs:
+                    chan_elem, notes= row
+                    if notes == "NOFLOC":
                         pairs.append(chan_elem)
-                    else:
+                        if len(pairs) == 2:
+                            c.write(chan_nofloc.format(*pairs))
+                            pairs = []
+
+            else:
+                # Export normal confluences as C lines
+                pairs = []
+                for row in self.execute(chan_conf_sql):
+                    chan_elem, notes = row
+                    if notes != "NOFLOC":
                         pairs.append(chan_elem)
-                        c.write(conf.format(*pairs))
-                        del pairs[:]
+                        if len(pairs) ==2:
+                            c.write(conf.format(*pairs))
 
                 for row in self.execute(chan_e_sql):
                     c.write(chan_e.format(row[0]))
