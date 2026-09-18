@@ -3408,19 +3408,24 @@ def find_this_cell(iface, lyrs, uc, gutils, cell, color=QColor("yellow"), zoom_i
                 ext = iface.mapCanvas().extent()
                 if cell != "":
                     cell = int(cell)
-                    if grid.featureCount() >= cell and cell > 0:
-                        lyrs.show_feat_rubber(grid.id(), cell, QColor(color), clear_previous)
-                        currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
-                        x, y = currentCell.geometry().centroid().asPoint()
-                        if x < ext.xMinimum() or x > ext.xMaximum() or y < ext.yMinimum() or y > ext.yMaximum():
-                            center_canvas(iface, x, y)
-                            ext = iface.mapCanvas().extent()
-                        else:
-                            if zoom_in:
+                    if cell > 0:
+                        currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)), None)
+                        if currentCell is not None and currentCell.isValid():
+                            lyrs.show_feat_rubber(grid.id(), cell, QColor(color), clear_previous)
+                            x, y = currentCell.geometry().centroid().asPoint()
+                            if (x < ext.xMinimum() or x > ext.xMaximum() or y < ext.yMinimum() or y > ext.yMaximum()):
                                 center_canvas(iface, x, y)
-                                cell_size = float(gutils.get_cont_par("CELLSIZE"))
-                                zoom_show_n_cells(iface, cell_size, 30)
                                 ext = iface.mapCanvas().extent()
+                            else:
+                                if zoom_in:
+                                    center_canvas(iface, x, y)
+                                    cell_size = float(gutils.get_cont_par("CELLSIZE"))
+                                    zoom_show_n_cells(iface, cell_size, 30)
+                                    ext = iface.mapCanvas().extent()
+                        else:
+                            if cell != -999:
+                                uc.bar_warn("Cell " + str(cell) + " not found.", 2)
+                            lyrs.clear_rubber()
                     else:
                         if cell != -999:
                             uc.bar_warn("Cell " + str(cell) + " not found.", 2)
