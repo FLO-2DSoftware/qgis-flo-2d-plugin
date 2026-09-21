@@ -2037,6 +2037,11 @@ class Flo2D(object):
 
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
+
+                    grid = self.lyrs.data["grid"]["qlyr"]
+                    if grid:
+                        grid.reload() # Reload grid after import
+
                     self.lyrs.zoom_to_all()
 
                     QApplication.restoreOverrideCursor()
@@ -4161,9 +4166,6 @@ class Flo2D(object):
         self.uc.log_info("Converting Schematic Layers to User Layers finished for:\n\n" + msg)
 
         self.lyrs.refresh_layers()
-        grid = self.lyrs.data["grid"]["qlyr"]
-        if grid:
-            grid.reload()
         self.lyrs.zoom_to_all()
 
     @connection_required
