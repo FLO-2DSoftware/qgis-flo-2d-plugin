@@ -148,9 +148,19 @@ class TributariesDialog(qtBaseClass, uiDialog):
             self.canvas.scene().removeItem(rb)
 
     def save(self):
+        # Preserve the existing notes before clearing the table
+        notes = {}
+        for row in range(0, self.confluences_tblw.rowCount()):
+            tributary = self.confluences_tblw.item(row, 0).text()
+            result = self.gutils.execute("SELECT notes FROM chan_confluences WHERE type = ? AND chan_elem_fid = ?;", (0, tributary)).fetchone()
+            if result and result[0]:
+                notes[tributary] = result[0]
+            else:
+                notes[tributary] = "CONFLUENCE"
+
         chan_conf_sql = [
-            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
-            4,
+            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid, notes) VALUES""",
+            5,
         ]
 
         for row in range(0, self.confluences_tblw.rowCount()):
@@ -163,8 +173,9 @@ class TributariesDialog(qtBaseClass, uiDialog):
                     cells = self.gutils.grid_centroids([tributary, main], buffers=True)
 
                     geom1, geom2 = cells[tributary], cells[main]
-                    chan_conf_sql += [(geom1, row + 1, 0, tributary)]
-                    chan_conf_sql += [(geom2, row + 1, 1, main)]
+                    note = notes.get(tributary, "CONFLUENCE")
+                    chan_conf_sql += [(geom1, row + 1, 0, tributary, note)]
+                    chan_conf_sql += [(geom2, row + 1, 1, main, note)]
         pass
         self.gutils.clear_tables("chan_confluences")
         self.gutils.batch_execute(chan_conf_sql)
