@@ -3032,7 +3032,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "N": [chan_n_sql, 2, 3],
         }
 
-        segments, wsel, confluence, noexchange, noflow = self.parser.parse_chan()
+        segments, wsel, confluence, noexchange, nofloc = self.parser.parse_chan()
 
         if not segments:
             return
@@ -3089,7 +3089,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 geom1, geom2 = cells[gid1], cells[gid2]
                 chan_conf_sql += [(geom1, i, 0, gid1, "CONFLUENCE")]
                 chan_conf_sql += [(geom2, i, 1, gid2, "CONFLUENCE")]
-            for i, row in enumerate(noflow, start=len(confluence) + 1):
+            for i, row in enumerate(nofloc, start=len(confluence) + 1):
                 gid1, gid2 = int(row[1]), int(row[2])
                 cells = self.grid_centroids([gid1, gid2], buffers=True)
 
