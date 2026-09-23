@@ -900,7 +900,7 @@ class ParseDAT(object):
         confluence = []
         noexchange = []
         baseflow = []
-        noflow = []
+        nofloc = []
         shape = {"R": 8, "V": 20, "T": 10, "N": 5}
         chanchar = ["C", "E", "F"]  # C = PRO confluence, E = no-exhnge, F = 2009 NOLFLO1/NOFLO2
         no_rb = ""
@@ -951,7 +951,7 @@ class ParseDAT(object):
             elif char == "F":
                 # FLO-2D 2009: F = NOFLO1/NOFLO2.
                 # Preserve these records for 2009 - 2009 round-trip export
-                noflow.append(row)
+                nofloc.append(row)
             else:
                 if start is True:
                     wsel.append(row)
@@ -970,7 +970,7 @@ class ParseDAT(object):
             except:
                 pass
 
-        return segments, wsel, confluence, noexchange, noflow
+        return segments, wsel, confluence, noexchange, nofloc
 
     def parse_chan_interior_nodes(self):
         chan_interior_nodes = self.dat_files["CHAN_INTERIOR_NODES.OUT"]
