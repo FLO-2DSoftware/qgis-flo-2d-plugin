@@ -398,7 +398,7 @@ class ParseDAT(object):
         ]
 
         self.toler_rows = [
-            ["TOLGLOBAL", "DEPTOL", ""],
+            ["TOLGLOBAL", "DEPTOL"],
             ["COURCHAR_C", "COURANTFP", "COURANTC", "COURANTST"],
             ["COURCHAR_T", "TIME_ACCEL"],
         ]
