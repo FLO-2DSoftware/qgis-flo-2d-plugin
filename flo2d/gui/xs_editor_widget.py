@@ -3323,7 +3323,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         intersects = xs_geometry.intersection(left_bank_feature.geometry())
-        if intersects.wkbType == QgsWkbTypes.MultiPoint:
+        if intersects.wkbType() == QgsWkbTypes.LineString:
+            self.uc.log_info("INTERSECTION IS LINESTRING")
+            return None
+        if intersects.wkbType() == QgsWkbTypes.MultiPoint:
             multi_point = intersects.asMultiPoint()
             intersect_point = multi_point[0]
         else:
