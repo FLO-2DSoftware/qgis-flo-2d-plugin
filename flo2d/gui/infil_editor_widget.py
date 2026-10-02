@@ -707,11 +707,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
             # Fill uncovered grid elements with the global default CN
             if covered_grids:
-                placeholders = ",".join("?" * len(covered_grids))
-                uncovered = self.con.execute(
-                    f"""SELECT fid FROM grid WHERE fid NOT IN ({placeholders});""",
-                    tuple(covered_grids),
-                ).fetchall()
+                all_grids = self.con.execute("SELECT fid from grid;").fetchall()
+                uncovered = [row for row in all_grids if row[0] not in covered_grids]
             else:
                 uncovered = self.con.execute("SELECT fid FROM grid;").fetchall()
 
