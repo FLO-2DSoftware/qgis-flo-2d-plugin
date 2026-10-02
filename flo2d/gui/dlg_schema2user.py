@@ -162,6 +162,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         try:
             domain_converter = Schema1DConverter(self.con, self.iface, self.lyrs)
             domain_converter.create_user_lbank()
+            domain_converter.create_user_rbank()
             domain_converter.create_user_xs()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
