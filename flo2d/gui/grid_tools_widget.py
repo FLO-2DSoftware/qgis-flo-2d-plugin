@@ -167,7 +167,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             for w in QApplication.topLevelWidgets():
                 if isinstance(w, QProgressDialog):
                     w.close()
-                    w.deletelater()
+                    w.deleteLater()
             create_grid_dlg.deleteLater()
             return
 
