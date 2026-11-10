@@ -12433,9 +12433,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         return True
 
     def export_chan_dat(self, outdir, subdomain):
+        engine = self.get_cont_par("ENGINE")
         # check if there are any channels defined.
         # try:
-        engine = self.get_cont_par("ENGINE")
         if self.is_table_empty("chan"):
             return False
 
