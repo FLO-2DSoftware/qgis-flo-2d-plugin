@@ -1082,7 +1082,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             # inGrid.exec();
             # grid = inGrid.textValue();
 
-            grid, ok = self.uc.input_int("Add Grid Number", "Grid element number:", min_val=1)
+            grid = self.uc.input_int("Add Grid Number", "Grid element number:", min_val=1)
             if not grid:
                 return
             else:
@@ -1094,6 +1094,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     self.sed_size_grid_tblw.setItem(n_rows, 0, itm)
                     self.sed_size_grid_tblw.selectRow(n_rows)
                     self.sed_size_grid_tblw.setFocus()
+                    return
                 else:
                     self.uc.bar_warn("Grid element number is outside the domain!")
                     self.uc.log_info("Grid element number is outside the domain!")
