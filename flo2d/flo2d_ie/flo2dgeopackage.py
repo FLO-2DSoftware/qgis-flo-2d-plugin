@@ -35,7 +35,7 @@ from ..gui.dlg_settings import SettingsDialog
 from ..layers import Layers
 from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date, qt_cursor_shape
 from .flo2d_parser import ParseDAT, ParseHDF5
-
+from ..flo2d_compatibility import EngineCompatibility, FLO2009, FLOPRO
 
 
 def create_array(line_format, max_columns, array_type, *args):
@@ -410,32 +410,119 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_mannings_n_topo_dat(self):
         try:
-            sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
-
             self.clear_tables("grid")
+
             data = self.parser.parse_mannings_n_topo()
 
-            c = 0
-            man = slice(0, 2)
+            # Temporary table for MANNINGS_N/TOPO data
+            self.execute("DROP TABLE IF EXISTS temp_mannings_n_topo")
+
+            self.execute("""
+                CREATE TEMP TABLE temp_mannings_n_topo (
+                    fid INTEGER,
+                    n_value REAL,
+                    elevation REAL,
+                    x REAL,
+                    y REAL
+                )
+            """)
+
+            fid = slice(0, 1)
+            man = slice(1, 2)
             coords = slice(2, 4)
             elev = slice(4, None)
+
+            rows = []
+
             for row in data:
-                if c < self.chunksize:
-                    geom = " ".join(row[coords])
-                    g = self.build_square(geom, self.cell_size)
-                    sql += [tuple(row[man] + row[elev] + [g])]
-                    c += 1
-                else:
-                    self.batch_execute(sql)
-                    c = 0
-            if len(sql) > 2:
-                self.batch_execute(sql)
-            else:
-                pass
+                x = float(row[coords][0])
+                y = float(row[coords][1])
+
+                rows.append((
+                    int(row[fid][0]),
+                    float(row[man][0]),
+                    float(row[elev][0]),
+                    x,
+                    y,
+                ))
+
+            # Insert all MANNINGS_N/TOPO data into the temporary table
+            cur = self.con.cursor()
+            cur.executemany("""
+                INSERT INTO temp_mannings_n_topo
+                    (fid, n_value, elevation, x, y)
+                VALUES (?, ?, ?, ?, ?)
+            """, rows)
+            self.con.commit()
+
+            # Get the GeoPackage SRID
+            srid = self.execute("""
+                SELECT srs_id
+                FROM gpkg_geometry_columns
+                WHERE table_name = 'grid'
+                    AND column_name = 'geom'
+            """).fetchone()[0]
+
+            half_size = float(self.cell_size) * 0.5
+
+            # Generate all grid geometries in one set-based operation
+            self.execute(f"""
+                INSERT INTO grid (fid, n_value, elevation, geom)
+                SELECT
+                    fid,
+                    n_value,
+                    elevation,
+                    AsGPB(
+                        BuildMbr(
+                            x - {half_size},
+                            y - {half_size},
+                            x + {half_size},
+                            y + {half_size},
+                            {srid}
+                        )
+                    )
+                FROM temp_mannings_n_topo
+            """)
+            self.con.commit()
+
+            self.execute("DROP TABLE IF EXISTS temp_mannings_n_topo")
+            self.con.commit()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 040521.1154: importing TOPO.DAT!.\n", e)
+            self.uc.show_error(
+                "ERROR 040521.1154: importing MANNINGS_N.DAT and TOPO.DAT!.\n",
+                e
+            )
+
+    # def import_mannings_n_topo_dat(self):
+    #     try:
+    #         sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
+    #
+    #         self.clear_tables("grid")
+    #         data = self.parser.parse_mannings_n_topo()
+    #
+    #         c = 0
+    #         man = slice(0, 2)
+    #         coords = slice(2, 4)
+    #         elev = slice(4, None)
+    #         for row in data:
+    #             if c < self.chunksize:
+    #                 geom = " ".join(row[coords])
+    #                 g = self.build_square(geom, self.cell_size)
+    #                 sql += [tuple(row[man] + row[elev] + [g])]
+    #                 c += 1
+    #             else:
+    #                 self.batch_execute(sql)
+    #                 c = 0
+    #         if len(sql) > 2:
+    #             self.batch_execute(sql)
+    #         else:
+    #             pass
+    #
+    #     except Exception as e:
+    #         QApplication.restoreOverrideCursor()
+    #         self.uc.show_error("ERROR 040521.1154: importing TOPO.DAT!.\n", e)
 
     def import_mannings_n_topo_hdf5(self):
         try:
@@ -472,6 +559,98 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 040521.1154: importing Grid data from HDF5 file!\n", e)
+
+    def import_cadpts_fplain(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_cadpts_fplain_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_cadpts_fplain_hdf5()
+
+
+    def import_cadpts_fplain_dat(self):
+        try:
+            self.clear_tables("grid")
+
+            data = self.parser.parse_fplain_cadpts()
+
+            # Temporary table for CADPTS/FPLAIN data
+            self.execute("DROP TABLE IF EXISTS temp_cadpts_fplain")
+
+            self.execute("""
+                CREATE TEMP TABLE temp_cadpts_fplain (
+                    fid INTEGER,
+                    n_value REAL,
+                    elevation REAL,
+                    x REAL,
+                    y REAL
+                )
+            """)
+
+            fid = slice(0, 1)
+            man = slice(5, 6)
+            elev = slice(6, 7)
+            coords = slice(8, None)
+
+            rows = []
+
+            for row in data:
+                geom = " ".join(row[coords])
+                x, y = [float(v) for v in geom.strip("POINT()").split()]
+
+                rows.append((
+                    int(row[fid][0]),
+                    float(row[man][0]),
+                    float(row[elev][0]),
+                    x,
+                    y,
+                ))
+
+            # Insert all CADPTS/FPLAIN data into the temporary table
+            cur = self.con.cursor()
+            cur.executemany("""
+                INSERT INTO temp_cadpts_fplain
+                    (fid, n_value, elevation, x, y)
+                VALUES (?, ?, ?, ?, ?)
+            """, rows)
+            self.con.commit()
+
+            # Generate all grid geometries in one set-based operation
+            srid = self.execute("""
+                SELECT srs_id
+                FROM gpkg_geometry_columns
+                WHERE table_name = 'grid'
+                    AND column_name = 'geom'
+            """).fetchone()[0]
+
+            half_size = float(self.cell_size) * 0.5
+
+            self.execute(f"""
+                INSERT INTO grid (fid, n_value, elevation, geom)
+                SELECT
+                    fid,
+                    n_value,
+                    elevation,
+                    AsGPB(
+                        BuildMbr(
+                            x - {half_size},
+                            y - {half_size},
+                            x + {half_size},
+                            y + {half_size},
+                            {srid}
+                        )
+                    )
+                FROM temp_cadpts_fplain
+            """)
+            self.con.commit()
+            self.execute("DROP TABLE IF EXISTS temp_cadpts_fplain")
+            self.con.commit()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 040521.1154: importing CADPTS.DAT and FPLAIN.DAT!.\n",
+                e
+            )
 
     def import_inflow(self, grid_to_domain=None):
         if self.parsed_format == self.FORMAT_DAT:
@@ -2808,6 +2987,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_chan_dat(self, grid_to_domain):
 
+        engine = self.get_cont_par("ENGINE")
+
         chan_sql = [
             """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn, ibaseflow) VALUES""",
             6,
@@ -2835,8 +3016,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             5,
         ]
         chan_conf_sql = [
-            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
-            4,
+            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid, notes) VALUES""",
+            5,
         ]
         chan_e_sql = ["""INSERT INTO user_noexchange_chan_areas (geom) VALUES""", 1]
         elems_e_sql = [
@@ -2851,7 +3032,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "N": [chan_n_sql, 2, 3],
         }
 
-        segments, wsel, confluence, noexchange = self.parser.parse_chan()
+        segments, wsel, confluence, noexchange, nofloc = self.parser.parse_chan()
+
         if not segments:
             return
 
@@ -2905,8 +3087,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells = self.grid_centroids([gid1, gid2], buffers=True)
 
                 geom1, geom2 = cells[gid1], cells[gid2]
-                chan_conf_sql += [(geom1, i, 0, gid1)]
-                chan_conf_sql += [(geom2, i, 1, gid2)]
+                chan_conf_sql += [(geom1, i, 0, gid1, "CONFLUENCE")]
+                chan_conf_sql += [(geom2, i, 1, gid2, "CONFLUENCE")]
+            for i, row in enumerate(nofloc, start=len(confluence) + 1):
+                gid1, gid2 = int(row[1]), int(row[2])
+                cells = self.grid_centroids([gid1, gid2], buffers=True)
+
+                geom1, geom2 = cells[gid1], cells[gid2]
+                chan_conf_sql += [(geom1, i, 0, gid1, "NOFLOC")]
+                chan_conf_sql += [(geom2, i, 1, gid2, "NOFLOC")]
+
             for i, row in enumerate(noexchange, 1):
                 gid = row[-1]
                 geom = self.grid_centroids([gid])[gid]
@@ -8668,21 +8858,51 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_cont_toler_dat(self, outdir):
         try:
             parser = ParseDAT()
+            
+            engine = self.get_cont_par("ENGINE")
+            if engine == FLO2009:
+                cont_rows = parser.cont_rows_2009
+                toler_rows = parser.toler_rows_2009
+            else:
+                cont_rows = parser.cont_rows
+                toler_rows = parser.toler_rows
+            
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+
+            if "TIMTEP" in options:
+                options["TIMTEP"] = f"{float(options['TIMTEP']):.2f}"
+
+            if engine == FLO2009:
+                options["SUPER"] = "0"
+                if not options.get("WAVEMAX"):
+                    options["WAVEMAX"] = "0.00"
+            else:
+                options["DEPRESSDEPTH"] = f"{float_or_zero(options.get('DEPRESSDEPTH')):.2f}"
+                if "SWMM" not in options:
+                    options["SWMM"] = "0"
             if options["IFLOODWAY"] == "0":
                 del options["ENCROACH"]
             if options["ICHANNEL"] == "0":
-                del options["NOPRTC"]
-                del options["COURANTC"]
+                options.pop("NOPRTC", None)
+                options.pop("COURANTC", None)
             if options["LGPLOT"] != "2":
-                del options["GRAPTIM"]
+                options.pop("GRAPTIM", None)
             if options["LGPLOT"] == "2":
                 options["IDEPLT"] = "0"
             if options["MSTREET"] == "0":
-                del options["COURANTST"]
+                options.pop("COURANTST", None)
             if "IDEPLT" not in options:
                 options["IDEPLT"] = "0"
+            if engine != FLO2009:
+                if options.get("ICHANNEL") != "0" and not options.get("COURANTC"):
+                    options["COURANTC"] = options["COURANTFP"]
+                if options.get("MSTREET") != "0" and not options.get("COURANTST"):
+                    options["COURANTST"] = options["COURANTFP"]
+                if not options.get("COURCHAR_T"):
+                    options["COURCHAR_T"] = "T"
+                if not options.get("TIME_ACCEL"):
+                    options["TIME_ACCEL"] = "0.10"
 
             first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
             first_gid = first_gid[0] if first_gid is not None else 0
@@ -8706,17 +8926,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             toler = os.path.join(outdir, "TOLER.DAT")
             rline = " {0}"
             with open(cont, "w") as c:
-                for row in parser.cont_rows:
-                    lst = ""
-                    for o in row:
-                        if o not in options:
-                            continue
-                        val = options[o]
-                        lst += rline.format(val)
-                    lst += "\n"
-                    if lst.isspace() is False:
-                        if row[0] == "ITIMTEP":
-                            # See if CONT table has ENDTIMTEP and STARTIMTEP:
+                for row in cont_rows:
+                    if row[0] == "ITIMTEP":
+                        if engine == FLO2009:
+                            itimtept = "1" if float_or_zero(options["ITIMTEP"]) != 0 else "0"
+                            lst = f" {itimtept} {options['TIMTEP']}\n"
+
+                        else:
                             endtimtep = self.get_cont_par("ENDTIMTEP")
                             if not endtimtep:
                                 self.set_cont_par("ENDTIMTEP", 0.0)
@@ -8725,35 +8941,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             if not starttimtep:
                                 self.set_cont_par("STARTIMTEP", 0.0)
 
-                            # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+                            if (
+                                    options["ITIMTEP"] != "0"
+                                    and float_or_zero(options["ENDTIMTEP"]) > 0.0
+                            ):
+                                _itimtep = ("11", "21", "31", "41", "51")[
+                                    int(float(options["ITIMTEP"])) - 1
+                                    ]
 
-                            if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
-                                _itimtep = ("11", "21", "31", "41", "51")[int(float(options["ITIMTEP"])) - 1]
                                 if (
                                         float_or_zero(options["STARTIMTEP"]) == 0.0
                                         and float_or_zero(options["ENDTIMTEP"]) == 0.0
                                 ):
-                                    lst = " " + _itimtep + " " + options["TIMTEP"]
+                                    lst = f" {_itimtep} {options['TIMTEP']}\n"
                                 else:
                                     lst = (
-                                            " "
-                                            + _itimtep
-                                            + " "
-                                            + options["TIMTEP"]
-                                            + " "
-                                            + options["STARTIMTEP"]
-                                            + " "
-                                            + options["ENDTIMTEP"]
+                                        f" {_itimtep} {options['TIMTEP']} "
+                                        f"{options['STARTIMTEP']} {options['ENDTIMTEP']}\n"
                                     )
                             else:
-                                lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
-                            lst += "\n"
+                                lst = f" {options['ITIMTEP']} {options['TIMTEP']}\n"
+
+                        c.write(lst)
+                        continue
+
+                    # Normal rows
+                    lst = ""
+                    for o in row:
+                        if o == "build":
+                            continue
+                        if o not in options:
+                            continue
+                        lst += rline.format(options[o])
+
+                    lst += "\n"
+
+                    if not lst.isspace():
                         c.write(lst)
                     else:
                         pass
 
             with open(toler, "w") as t:
-                for row in parser.toler_rows:
+                for row in toler_rows:
                     lst = ""
                     for o in row:
                         if o not in options:
@@ -9121,7 +9350,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ST_AsText(ST_Centroid(GeomFromGPB(geom)))
                     FROM grid ORDER BY fid;"""
                 )
-                
+
                 records = list(self.execute(sql))
             else:
                 sub_grid_cells = self.gutils.execute(
@@ -10830,8 +11059,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_rain_dat(self, outdir, subdomain):
         # check if there is any rain defined.
+        engine = self.get_cont_par("ENGINE")
         try:
-
             # Check if rain table is empty and return False if true
             if self.is_table_empty("rain"):
                 self.uc.log_info("Rain table is empty!")
@@ -10858,7 +11087,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         md.domain_fid = {subdomain}
                                     ORDER BY md.domain_cell;"""
 
-            rain_line1 = "{0}  {1}\n"
+            if engine == FLO2009:
+                rain_line1 = "{0}\n"
+            else:
+                rain_line1 = "{0}  {1}\n"
             rain_line2 = "{0}   {1}  {2}  {3}\n"
             tsd_line3 = "R {0}   {1}\n"  # Rainfall Time series distribution
             rain_line4 = "{0}   {1}\n"
@@ -10884,7 +11116,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             rain = os.path.join(outdir, "RAIN.DAT")
             repeated_value = False
             with open(rain, "w") as r:
-                r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
+                if engine == FLO2009:
+                    r.write(rain_line1.format(rain_row[1]))
+                else:
+                    irainbuilding = rain_row[2] if rain_row[2] is not None else 0
+                    r.write(rain_line1.format(rain_row[1], irainbuilding))  # irainreal, irainbuilding
                 r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
 
                 fid = rain_row[
@@ -11384,10 +11620,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_infil_dat(self, outdir, subdomain):
         # check if there is any infiltration defined.
         try:
+            engine = self.get_cont_par("ENGINE")
             if self.is_table_empty("infil"):
                 return False
             infil_sql = """SELECT * FROM infil;"""
             infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
+            chan_seg_sql = """SELECT fid FROM chan ORDER BY fid;"""
             if not subdomain:
                 green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
                 scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
@@ -11447,12 +11685,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             line1 = "{0}"
             line2 = "\n" + "  {}" * 6
+            line2_2009 = "\n" + " {}" * 5
             line2h = "\n{0}"
             line3 = "\n" + "  {}" * 3
+            line3_2009 = "\n" + " {}" * 2
             line4 = "\n{0}"
+            line4a = "\nR {0}"
             line4ab = "\nR  {0}  {1}  {2}"
             line5 = "\n{0}  {1}"
             line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+            line6_2009 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f}"
             #         line6 = '\n' + 'F' + '  {}' * 7
             line7 = "\nS  {0}  {1}"
             line8 = "\nC  {0}  {1}"
@@ -11476,38 +11718,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gen[13:16],
                     gen[16]
                 )
+
+                if engine != FLO2009:
+                    if not v2[4]:
+                        v2[4] = 0
+                    if not v3[2]:
+                        v3[2] = 0
+
                 i.write(line1.format(v1))
-                if v1 == 1 or v1 == 3:
-                    i.write(line2.format(*v2))
-                    i.write(line3.format(*v3))
-                    if v2[5] == 1:
-                        i.write(line4.format(*v4))
-                    #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
-                    # #                         if any(val) is True:
-                    #                             i.write(line.format(*val))
-                    # #                         else:
-                    # #                             pass
-                    for row in self.execute(infil_r_sql):
-                        row = [x if x is not None else "" for x in row]
-                        i.write(line4ab.format(*row))
+                if v1 in (1, 2, 3):
+                    if engine == FLO2009:
+                        i.write(line2_2009.format(v2[0], v2[1], v2[2], v2[3], v2[5]))
+                        i.write(line3_2009.format(v3[0], v3[1]))
+                        if v2[5] == "1" or v2[5] == 1:
+                            i.write(line4.format(*v4))
+                    else:
+                        i.write(line2.format(*v2))
+                        i.write(line3.format(*v3))
+                        if v2[5] == "1" or v2[5] == 1:
+                            i.write(line4.format(*v4))
+                            r_rows = self.execute(infil_r_sql).fetchall()
+                            if r_rows:
+                                for row in r_rows:
+                                    row = [x if x is not None else "" for x in row]
+                                    if float(v2[4] or 0) > 0:
+                                        i.write(line4ab.format(*row))
+                                    else:
+                                        i.write(line4a.format(row[0]))
+                            else:
+                                for row in self.execute(chan_seg_sql):
+                                    i.write(line4a.format(v4[0]))
                 if v1 == 2 or v1 == 3:
                     if any(v5) is True:
                         i.write(line5.format(*v5))
                     else:
                         pass
                 for row in self.execute(green_sql):
-                    i.write(line6.format(*row))
+                    if engine == FLO2009:
+                        i.write(line6_2009.format(*row[:6]))
+                    else:
+                        row = list(row)
+                        if row[6] is None:
+                            row[6] = 0
+                        i.write(line6.format(*row))
                 for row in self.execute(scs_sql):
                     i.write(line7.format(*row))
                 for row in self.execute(chan_sql):
                     i.write(line8.format(*row))
-                if any(v9) is True:
-                    i.write(line2h.format(str(v2h)))
-                    i.write(line9.format(*v9))
-                else:
-                    pass
-                for row in self.execute(horton_sql):
-                    i.write(line10.format(*row))
+                if engine != FLO2009:
+                    if any(v9) is True:
+                        i.write(line2h.format(str(v2h)))
+                        i.write(line9.format(*v9))
+                    else:
+                        pass
+                    for row in self.execute(horton_sql):
+                        i.write(line10.format(*row))
 
             return True
 
@@ -12168,6 +12433,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         return True
 
     def export_chan_dat(self, outdir, subdomain):
+        engine = self.get_cont_par("ENGINE")
         # check if there are any channels defined.
         # try:
         if self.is_table_empty("chan"):
@@ -12186,7 +12452,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
             chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
             chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
-            chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+            chan_conf_sql = """SELECT chan_elem_fid, notes FROM chan_confluences ORDER BY fid;"""
         else:
             subdomain_fids = self.execute(f"""
                 SELECT 
@@ -12324,6 +12590,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         wsel = "{0} {1:.2f}\n"
         conf = " C {0}  {1}\n"
         chan_e = " E {0}\n"
+        chan_nofloc = " F {0} {1}\n"
 
         sqls = {
             "R": [chan_r_sql, chan_r, 3, 6],
@@ -12417,30 +12684,40 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         (subdomain, rbank)
                     )
 
-                if row[5]: # ibaseflow
-                    if str(row[5]) != "":
-                        bLines += "B " + str(row[5]) + "\n"
-                        # c.write("B " + str(row[5]) + "\n")
+                if engine != FLO2009 and row[5]:  # ibaseflow
+                    bLines += "B " + str(row[5]) + "\n"
 
             for row in self.execute(chan_wsel_sql):
                 c.write(wsel.format(*row[:2]))
                 c.write(wsel.format(*row[2:]))
 
-            pairs = []
-            for row in self.execute(chan_conf_sql):
-                chan_elem = row[0]
-                if not pairs:
-                    pairs.append(chan_elem)
-                else:
-                    pairs.append(chan_elem)
-                    c.write(conf.format(*pairs))
-                    del pairs[:]
+            if engine == FLO2009:
+                # Export legacy NOFLOC records as F lines
+                pairs = []
+                for row in self.execute(chan_conf_sql):
+                    chan_elem, notes= row
+                    if notes == "NOFLOC":
+                        pairs.append(chan_elem)
+                        if len(pairs) == 2:
+                            c.write(chan_nofloc.format(*pairs))
+                            pairs = []
 
-            for row in self.execute(chan_e_sql):
-                c.write(chan_e.format(row[0]))
+            else:
+                # Export normal confluences as C lines
+                pairs = []
+                for row in self.execute(chan_conf_sql):
+                    chan_elem, notes = row
+                    if notes == "CONFLUENCE":
+                        pairs.append(chan_elem)
+                        if len(pairs) ==2:
+                            c.write(conf.format(*pairs))
+                            pairs = []
 
-            if bLines != "":
-                c.write(bLines)
+                for row in self.execute(chan_e_sql):
+                    c.write(chan_e.format(row[0]))
+
+                if engine != FLO2009 and bLines:
+                    c.write(bLines)
 
         return True
 

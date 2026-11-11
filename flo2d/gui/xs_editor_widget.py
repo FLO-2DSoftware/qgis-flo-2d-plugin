@@ -161,7 +161,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.user_xs_lyr.geometryChanged.connect(self.xs_feature_changed)
         self.user_xs_lyr.attributeValueChanged.connect(self.xs_feature_changed)
 
-        self.user_xs_lyr.afterCommitChanges.connect(lambda: self.populate_xsec_cbo(show_last_edited=True))
+        self.user_xs_lyr.afterCommitChanges.connect(self.after_commit_changes)
         self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
 
     def setup_connection(self):
@@ -238,6 +238,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.populate_xsec_cbo(show_last_edited=True)
         except:
             return
+
+    def after_commit_changes(self):
+        self.populate_xsec_cbo(show_last_edited=True)
 
     def populate_xsec_cbo(self, fid=None, show_last_edited=False):
         """
@@ -1408,8 +1411,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             4,
         ]
         chan_conf_sql = [
-            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
-            4,
+            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid, notes) VALUES""",
+            5,
         ]
         chan_e_sql = ["""INSERT INTO user_noexchange_chan_areas (geom) VALUES""", 1]
         elems_e_sql = [
@@ -1438,7 +1441,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             "chan_wsel",
         )
 
-        segments, wsel, confluence, noexchange = self.parser.parse_chan()
+        segments, wsel, confluence, noexchange, nofloc = self.parser.parse_chan()
         for i, seg in enumerate(segments, 1):
             xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
             gids = []
@@ -1470,8 +1473,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             cells = self.grid_centroids([gid1, gid2], buffers=True)
 
             geom1, geom2 = cells[gid1], cells[gid2]
-            chan_conf_sql += [(geom1, i, 0, gid1)]
-            chan_conf_sql += [(geom2, i, 1, gid2)]
+            chan_conf_sql += [(geom1, i, 0, gid1, "CONFLUENCE")]
+            chan_conf_sql += [(geom2, i, 1, gid2, "CONFLUENCE")]
+
+        for i, row in enumerate(nofloc, start=len(confluence) + 1):
+            gid1, gid2 = int(row[1]), int(row[2])
+            cells = self.grid_centroids([gid1, gid2], buffers=True)
+
+            geom1, geom2 = cells[gid1], cells[gid2]
+            chan_conf_sql += [(geom1, i, 0, gid1, "NOFLOC")]
+            chan_conf_sql += [(geom2, i, 1, gid2, "NOFLOC")]
 
         for i, row in enumerate(noexchange, 1):
             gid = row[-1]
@@ -3312,7 +3323,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         intersects = xs_geometry.intersection(left_bank_feature.geometry())
-        if intersects.wkbType == QgsWkbTypes.MultiPoint:
+        if intersects.wkbType() == QgsWkbTypes.LineString:
+            self.uc.log_info("INTERSECTION IS LINESTRING")
+            return None
+        if intersects.wkbType() == QgsWkbTypes.MultiPoint:
             multi_point = intersects.asMultiPoint()
             intersect_point = multi_point[0]
         else:

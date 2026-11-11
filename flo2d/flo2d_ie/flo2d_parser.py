@@ -384,10 +384,28 @@ class ParseDAT(object):
             ["ITIMTEP", "TIMTEP", "STARTIMTEP", "ENDTIMTEP"],
             ["GRAPTIM"],
         ]
+
+        self.cont_rows_2009 = [
+            ["SIMUL", "TOUT", "LGPLOT", "METRIC", "IBACKUP", "build"],
+            ["ICHANNEL", "MSTREET", "LEVEE", "IWRFS", "IMULTC"],
+            ["IRAIN", "INFIL", "IEVAP", "MUD", "ISED", "IMODFLOW"],
+            ["IHYDRSTRUCT", "IFLOODWAY", "IDEBRV"],
+            ["AMANN", "DEPTHDUR", "XCONC", "XARF", "FROUDL", "SHALLOWN", "ENCROACH"],
+            ["NOPRTFP", "SUPER"],
+            ["NOPRTC"],
+            ["ITIMTEP", "TIMTEP"],
+            ["GRAPTIM"],
+        ]
+
         self.toler_rows = [
-            ["TOLGLOBAL", "DEPTOL", ""],
+            ["TOLGLOBAL", "DEPTOL"],
             ["COURCHAR_C", "COURANTFP", "COURANTC", "COURANTST"],
             ["COURCHAR_T", "TIME_ACCEL"],
+        ]
+
+        self.toler_rows_2009 = [
+            ["TOLGLOBAL", "DEPTOL", "WAVEMAX"],
+            ["COURCHAR_C", "COURANTFP"]
         ]
 
     def scan_project_dir(self, path):
@@ -533,7 +551,6 @@ class ParseDAT(object):
                 row.insert(index, default)
 
     def parse_cont(self, cont=None):
-
         results = {}
         if cont is None:
             cont = self.dat_files["CONT.DAT"]
@@ -553,7 +570,13 @@ class ParseDAT(object):
         results = {}
         toler = self.dat_files["TOLER.DAT"]
         with open(toler, "r") as f:
-            for row in self.toler_rows:
+            first_line = f.readline().split()
+            if len(first_line) == 3:
+                toler_rows = self.toler_rows_2009
+            else:
+                toler_rows = self.toler_rows
+            results.update(dict(zip_longest(toler_rows[0], first_line)))
+            for row in toler_rows[1:]:
                 results.update(dict(zip_longest(row, f.readline().split())))
         return results
 
@@ -688,18 +711,29 @@ class ParseDAT(object):
         rain = self.dat_files["RAIN.DAT"]
         if not rain:
             return None, None, None
-        head = [
-            "IRAINREAL",
-            "IRAINBUILDING",
-            "RTT",
-            "RAINABS",
-            "RAINARF",
-            "MOVINGSTORM",
-        ]
         par = self.single_parser(rain)
         line1 = next(par)
         line2 = next(par)
-        data = OrderedDict(list(zip(head, chain(line1, line2))))
+        if len(line1)  == 1: # 2009 format
+            values = list(chain(line1, line2))
+            data = OrderedDict([
+                ("IRAINREAL", values[0]),
+                ("IRAINBUILDING", 0),
+                ("RTT", values[1]),
+                ("RAINABS", values[2]),
+                ("RAINARF", values[3]),
+                ("MOVINGSTORM", values[4]),
+            ])
+        else:   # PRO format
+            values = list(chain(line1, line2))
+            data = OrderedDict([
+                ("IRAINREAL", values[0]),
+                ("IRAINBUILDING", values[1]),
+                ("RTT", values[2]),
+                ("RAINABS", values[3]),
+                ("RAINARF", values[4]),
+                ("MOVINGSTORM", values[5]),
+            ])
         time_series = []
         rain_arf = []
         for row in par:
@@ -749,40 +783,89 @@ class ParseDAT(object):
         infil = self.dat_files["INFIL.DAT"]
         if not infil:
             return None
-        line1 = ["INFMETHOD"]
-        line2h = ["FHORTONIA"]
-        line2 = ["ABSTR", "SATI", "SATF", "POROS", "SOILD", "INFCHAN"]
-        line3 = ["HYDCALL", "SOILALL", "HYDCADJ"]
-        line5 = ["SCSNALL", "ABSTR1"]
+
         par = self.single_parser(infil)
-        data = OrderedDict(list(zip(line1, next(par))))
-        method = data["INFMETHOD"]
-        if method == "1" or method == "3":
-            data.update(list(zip(line2, next(par))))
-            data.update(list(zip(line3, next(par))))
+
+        line1 = next(par)
+        method = line1[0]
+
+        line2 = next(par)
+
+        if method in ("1", "2", "3"):
+            if len(line2) == 5:  # 2009 format
+                values = line2
+
+                data = OrderedDict([
+                    ("INFMETHOD", method),
+                    ("ABSTR", values[0]),
+                    ("SATI", values[1]),
+                    ("SATF", values[2]),
+                    ("POROS", values[3]),
+                    ("SOILD", None),
+                    ("INFCHAN", values[4]),
+                ])
+
+                line3 = next(par)
+                data["HYDCALL"] = line3[0]
+                data["SOILALL"] = line3[1]
+                data["HYDCADJ"] = None
+
+            else:  # PRO format
+                values = line2
+
+                data = OrderedDict([
+                    ("INFMETHOD", method),
+                    ("ABSTR", values[0]),
+                    ("SATI", values[1]),
+                    ("SATF", values[2]),
+                    ("POROS", values[3]),
+                    ("SOILD", values[4]),
+                    ("INFCHAN", values[5]),
+                ])
+
+                line3 = next(par)
+                data["HYDCALL"] = line3[0]
+                data["SOILALL"] = line3[1]
+                data["HYDCADJ"] = line3[2]
+
             if data["INFCHAN"] == "1":
                 data["HYDCXX"] = next(par)[0]
             else:
-                pass
+                data["HYDCXX"] = None
+
         elif method == "4":
-            data.update(list(zip(line2h, next(par))))
+            data = OrderedDict([
+                ("INFMETHOD", method),
+                ("FHORTONIA", line2[0]),
+            ])
+
         else:
-            pass
+            data = OrderedDict([
+                ("INFMETHOD", method),
+            ])
+
         chars = {"R": 4, "F": 8, "S": 3, "C": 3, "H": 5}
+
         for char in chars:
             data[char] = []
+
         for row in par:
             char = row[0]
+
             if char in chars:
                 self.fix_row_size(row, chars[char])
                 data[char].append(row[1:])
+
             elif char == "I":
                 self.fix_row_size(row, 3)
                 data["FHORTONI"] = row[1]
                 data["FHORTONF"] = row[2]
                 data["DECAYA"] = row[3]
+
             else:
-                data.update(list(zip(line5, row)))
+                data["SCSNALL"] = row[0]
+                data["ABSTR1"] = row[1]
+
         return data
 
     def parse_evapor(self):
@@ -817,8 +900,9 @@ class ParseDAT(object):
         confluence = []
         noexchange = []
         baseflow = []
+        nofloc = []
         shape = {"R": 8, "V": 20, "T": 10, "N": 5}
-        chanchar = ["C", "E"]
+        chanchar = ["C", "E", "F"]  # C = PRO confluence, E = no-exhnge, F = 2009 NOLFLO1/NOFLO2
         no_rb = ""
         for row in par:
             char = row[0]
@@ -855,7 +939,7 @@ class ParseDAT(object):
                     segments[-1][-1].append(row + xsec + rbank)
                 except StopIteration:
                     return
-                
+
             elif char == "B":
                 baseflow.append(row)
                 # segments[-1].append(row)
@@ -864,6 +948,10 @@ class ParseDAT(object):
                 confluence.append(row)
             elif char == "E":
                 noexchange.append(row)
+            elif char == "F":
+                # FLO-2D 2009: F = NOFLO1/NOFLO2.
+                # Preserve these records for 2009 - 2009 round-trip export
+                nofloc.append(row)
             else:
                 if start is True:
                     wsel.append(row)
@@ -881,8 +969,8 @@ class ParseDAT(object):
                 segments[i].append(baseflow[i])
             except:
                 pass
-              
-        return segments, wsel, confluence, noexchange
+
+        return segments, wsel, confluence, noexchange, nofloc
 
     def parse_chan_interior_nodes(self):
         chan_interior_nodes = self.dat_files["CHAN_INTERIOR_NODES.OUT"]

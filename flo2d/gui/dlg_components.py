@@ -11,13 +11,14 @@
 import os
 
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication, QMessageBox
+from qgis.PyQt.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QRadioButton, QDialogButtonBox
 
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 from ..utils import qt_window_flag
+from ..flo2d_compatibility import FLO2009, FLOPRO
 
 uiDialog, qtBaseClass = load_ui("components")
 
@@ -66,6 +67,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)
             self.mannings_n_and_Topo_chbox.setVisible(False)
+            self.cadpts_fplain_chbox.setVisible(False)
 
             parser = ParseDAT()
             cont = parser.parse_cont(last_dir + r"\CONT.DAT")
@@ -216,6 +218,8 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.setWindowTitle("FLO-2D Components to Export")
             self.file_lbl.setText(last_dir)
             show_note = False
+
+            engine = self.gutils.get_cont_par("ENGINE")
 
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.gutils.execute(sql).fetchall()}
@@ -379,8 +383,12 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.spatial_lid_volume_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("grid"):
-                self.mannings_n_and_Topo_chbox.setChecked(True)
-                self.mannings_n_and_Topo_chbox.setEnabled(True)
+                if engine == FLO2009:
+                    self.mannings_n_and_Topo_chbox.setChecked(False)
+                    self.mannings_n_and_Topo_chbox.setEnabled(False)
+                else:
+                    self.mannings_n_and_Topo_chbox.setChecked(True)
+                    self.mannings_n_and_Topo_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("grid"):
                 self.cadpts_fplain_chbox.setChecked(True)
@@ -560,3 +568,28 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.mannings_n_and_Topo_chbox.setChecked(select)
         if self.cadpts_fplain_chbox.isEnabled():
             self.cadpts_fplain_chbox.setChecked(select)
+
+class EngineChoiceDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Project Version")
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(
+            "This project appears to have been created for FLO-2D 2009.\n"
+            "How would you like to continue?"
+            ))
+        self.keep2009 = QRadioButton("Continue using FLO-2D 2009")
+        self.upgrade = QRadioButton("Upgrade project to FLO-2D PRO")
+        self.keep2009.setChecked(True)
+        layout.addWidget(self.keep2009)
+        layout.addWidget(self.upgrade)
+        buttons = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    @property
+    def selected_engine(self):
+        if self.keep2009.isChecked():
+            return FLO2009
+        return FLOPRO
