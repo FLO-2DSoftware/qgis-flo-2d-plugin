@@ -18,7 +18,7 @@ from math import isnan
 
 from qgis.PyQt.QtWidgets import QProgressDialog
 from qgis.PyQt.QtGui import QDesktopServices
-from qgis.PyQt.QtCore import QUrl  
+from qgis.PyQt.QtCore import QUrl
 from qgis._gui import QgsDockWidget
 from qgis.core import (
     QgsCoordinateTransform,
@@ -50,7 +50,6 @@ from ..flo2d_tools.flopro_tools import (
     ChanRightBankExecutor,
     XSECInterpolatorExecutor,
 )
-from ..flo2d_tools.grid_tools import adjacent_grids
 from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
 from ..flo2dobjects import ChannelSegment, UserCrossSection
 from ..geopackage_utils import GeoPackageUtils
@@ -124,7 +123,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.save_xs_changes_btn.clicked.connect(self.save_user_xsections_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_user_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_xs)
-        self.xs_help_btn.clicked.connect(self.xs_help)        
+        self.xs_help_btn.clicked.connect(self.xs_help)
         self.delete_user_btn.clicked.connect(self.delete_user_data)
         self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
@@ -172,7 +171,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
-
 
     def update_sample_elevation_btn(self, is_checked):
         if self.xs is not None:
@@ -629,7 +627,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.populate_xsec_cbo()
         self.repaint_xs()
 
-    
     def xs_help(self):
         QDesktopServices.openUrl(QUrl("https://documentation.flo-2d.com/Build25/flo-2d_plugin/user_manual/widgets/cross-sections-editor/Cross%20Sections%20Editor.html"))
 
@@ -2208,13 +2205,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                         if i == 0:
                             headers = [f"{scenario} - Station ({self.system_units[units][0]})",
-                                        f"{scenario} - Bed elevation ({self.system_units[units][0]})",
-                                        f"{scenario} - Left bank ({self.system_units[units][0]})",
-                                        f"{scenario} - Right bank ({self.system_units[units][0]})",
-                                        f"{scenario} - Max. Water ({self.system_units[units][0]})",
-                                        f"{scenario} - Velocity ({self.system_units[units][1]})",
-                                        f"{scenario} - Froude",
-                                        f"{scenario} - Concentration (By Vol)"]
+                                       f"{scenario} - Bed elevation ({self.system_units[units][0]})",
+                                       f"{scenario} - Left bank ({self.system_units[units][0]})",
+                                       f"{scenario} - Right bank ({self.system_units[units][0]})",
+                                       f"{scenario} - Max. Water ({self.system_units[units][0]})",
+                                       f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                       f"{scenario} - Froude",
+                                       f"{scenario} - Concentration (By Vol)"]
 
                             data_model.setHorizontalHeaderLabels(headers)
 
@@ -2243,13 +2240,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                                       ])
                         else:
                             headers.extend([f"{scenario} - Station ({self.system_units[units][0]})",
-                                           f"{scenario} - Bed elevation ({self.system_units[units][0]})",
-                                           f"{scenario} - Left bank ({self.system_units[units][0]})",
-                                           f"{scenario} - Right bank ({self.system_units[units][0]})",
-                                           f"{scenario} - Max. Water ({self.system_units[units][0]})",
-                                           f"{scenario} - Velocity ({self.system_units[units][1]})",
-                                           f"{scenario} - Froude",
-                                           f"{scenario} - Concentration (By Vol)"])
+                                            f"{scenario} - Bed elevation ({self.system_units[units][0]})",
+                                            f"{scenario} - Left bank ({self.system_units[units][0]})",
+                                            f"{scenario} - Right bank ({self.system_units[units][0]})",
+                                            f"{scenario} - Max. Water ({self.system_units[units][0]})",
+                                            f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                            f"{scenario} - Froude",
+                                            f"{scenario} - Concentration (By Vol)"])
                             data_model.setHorizontalHeaderLabels(headers)
 
                             data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_con)
@@ -2338,20 +2335,20 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                                       ])
                         else:
                             headers.extend([f"{scenario} - Station ({self.system_units[units][0]})",
-                                           f"{scenario} - Bed elevation ({self.system_units[units][0]})",
-                                           f"{scenario} - Left bank ({self.system_units[units][0]})",
-                                           f"{scenario} - Right bank ({self.system_units[units][0]})",
-                                           f"{scenario} - Max. Water ({self.system_units[units][0]})",
-                                           f"{scenario} - Velocity ({self.system_units[units][1]})",
-                                           f"{scenario} - Froude",
-                                           f"{scenario} - Flow area ({self.system_units[units][3]})",
-                                           f"{scenario} - Wetted perimeter ({self.system_units[units][0]})",
-                                           f"{scenario} - Hydraulic radius ({self.system_units[units][0]})",
-                                           f"{scenario} - Top width ({self.system_units[units][0]})",
-                                           f"{scenario} - Width/Depth",
-                                           f"{scenario} - Energy slope",
-                                           f"{scenario} - Shear stress ({self.system_units[units][4]})",
-                                           f"{scenario} - Surface area ({self.system_units[units][3]})"])
+                                            f"{scenario} - Bed elevation ({self.system_units[units][0]})",
+                                            f"{scenario} - Left bank ({self.system_units[units][0]})",
+                                            f"{scenario} - Right bank ({self.system_units[units][0]})",
+                                            f"{scenario} - Max. Water ({self.system_units[units][0]})",
+                                            f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                            f"{scenario} - Froude",
+                                            f"{scenario} - Flow area ({self.system_units[units][3]})",
+                                            f"{scenario} - Wetted perimeter ({self.system_units[units][0]})",
+                                            f"{scenario} - Hydraulic radius ({self.system_units[units][0]})",
+                                            f"{scenario} - Top width ({self.system_units[units][0]})",
+                                            f"{scenario} - Width/Depth",
+                                            f"{scenario} - Energy slope",
+                                            f"{scenario} - Shear stress ({self.system_units[units][4]})",
+                                            f"{scenario} - Surface area ({self.system_units[units][3]})"])
                             data_model.setHorizontalHeaderLabels(headers)
 
                             data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_flow_area,
@@ -2718,12 +2715,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                     if len(values) == 7:
                         headers.extend([f"{scenario} - Elevation ({self.system_units[units][0]})",
-                                   f"{scenario} - Thalweg depth ({self.system_units[units][0]})",
-                                   f"{scenario} - Velocity ({self.system_units[units][1]})",
-                                   f"{scenario} - Discharge ({self.system_units[units][2]})",
-                                   f"{scenario} - Froude",
-                                   f"{scenario} - Concentration"
-                                  ])
+                                        f"{scenario} - Thalweg depth ({self.system_units[units][0]})",
+                                        f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                        f"{scenario} - Discharge ({self.system_units[units][2]})",
+                                        f"{scenario} - Froude",
+                                        f"{scenario} - Concentration"
+                                        ])
                         data_model.setHorizontalHeaderLabels(headers)
 
                         data = zip(values[:, 0],
@@ -2754,19 +2751,19 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     else:
 
                         headers.extend([f"{scenario} - Elevation ({self.system_units[units][0]})",
-                                       f"{scenario} - Thalweg depth ({self.system_units[units][0]})",
-                                       f"{scenario} - Velocity ({self.system_units[units][1]})",
-                                       f"{scenario} - Discharge ({self.system_units[units][2]})",
-                                       f"{scenario} - Froude",
-                                       f"{scenario} - Flow area ({self.system_units[units][2]})",
-                                       f"{scenario} - Wetted perimeter ({self.system_units[units][0]})",
-                                       f"{scenario} - Hydraulic radius ({self.system_units[units][0]})",
-                                       f"{scenario} - Top width ({self.system_units[units][0]})",
-                                       f"{scenario} - Width/Depth",
-                                       f"{scenario} - Energy slope",
-                                       f"{scenario} - Shear stress ({self.system_units[units][4]})",
-                                       f"{scenario} - Surface Area ({self.system_units[units][3]})",
-                                       ])
+                                        f"{scenario} - Thalweg depth ({self.system_units[units][0]})",
+                                        f"{scenario} - Velocity ({self.system_units[units][1]})",
+                                        f"{scenario} - Discharge ({self.system_units[units][2]})",
+                                        f"{scenario} - Froude",
+                                        f"{scenario} - Flow area ({self.system_units[units][2]})",
+                                        f"{scenario} - Wetted perimeter ({self.system_units[units][0]})",
+                                        f"{scenario} - Hydraulic radius ({self.system_units[units][0]})",
+                                        f"{scenario} - Top width ({self.system_units[units][0]})",
+                                        f"{scenario} - Width/Depth",
+                                        f"{scenario} - Energy slope",
+                                        f"{scenario} - Shear stress ({self.system_units[units][4]})",
+                                        f"{scenario} - Surface Area ({self.system_units[units][3]})",
+                                        ])
                         data_model.setHorizontalHeaderLabels(headers)
 
                         data = zip(values[:, 0],
@@ -3174,105 +3171,32 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def create_confluences(self):
         if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("WARNING 160821.0930: There is no grid! Please create it before running tool.")
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("chan_elems"):
-            self.uc.bar_warn("WARNING 160821.0931: There are no schematized channel cross sections.")
+            self.uc.bar_warn("There are no schematized channel cross sections.")
             return
+        dlg = None
         try:
             QApplication.setOverrideCursor(qt_cursor_shape("WaitCursor"))
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-            xs_lyr = self.lyrs.data["chan_elems"]["qlyr"]
-            xs = xs_lyr.getFeatures()
-            segments = {}
-            for feat in xs:
-                segments[feat["seg_fid"]] = [feat["fid"]]
-            lastCellInSegments = segments.items()
-            confluences = dict(segments)
-            for key, last in lastCellInSegments:
-                # Find adjacent cells to 'last' cell in others segments:
-                lastCell = next(grid_lyr.getFeatures(QgsFeatureRequest(last)))
-                (
-                    n_grid,
-                    ne_grid,
-                    e_grid,
-                    se_grid,
-                    s_grid,
-                    sw_grid,
-                    w_grid,
-                    nw_grid,
-                ) = adjacent_grids(self.gutils, lastCell, cell_size)
-                if n_grid:
-                    lst = list(segments[key])
-                    lst.append(n_grid)
-                    segments[key] = lst
-                    pass
-                if ne_grid:
-                    lst = list(segments[key])
-                    lst.append(ne_grid)
-                    segments[key] = lst
-                    pass
-                if e_grid:
-                    lst = list(segments[key])
-                    lst.append(e_grid)
-                    segments[key] = lst
-                    pass
-                if se_grid:
-                    lst = list(segments[key])
-                    lst.append(se_grid)
-                    segments[key] = lst
-                    pass
-                if s_grid:
-                    lst = list(segments[key])
-                    lst.append(s_grid)
-                    segments[key] = lst
-                    pass
-                if sw_grid:
-                    lst = list(segments[key])
-                    lst.append(sw_grid)
-                    segments[key] = lst
-                    pass
-                if w_grid:
-                    lst = list(segments[key])
-                    lst.append(w_grid)
-                    segments[key] = lst
-                    pass
-                if nw_grid:
-                    lst = list(segments[key])
-                    lst.append(nw_grid)
-                    segments[key] = lst
-                    pass
-
-            for key, values in segments.items():
-                xs2 = xs_lyr.getFeatures()
-                for f in xs2:
-                    if f["seg_fid"] != key:
-                        if f["fid"] in values[1:]:
-                            lst = list(confluences[key])
-                            if f["fid"] not in lst:
-                                lst.append(f["fid"])
-                                confluences[key] = lst
-                        if f["rbankgrid"] in values[1:]:
-                            lst = list(confluences[key])
-                            if f["rbankgrid"] not in lst:
-                                lst.append(f["rbankgrid"])
-                                confluences[key] = lst
-            QApplication.restoreOverrideCursor()
-
-            dlg_tributaries = TributariesDialog(self.iface, self.lyrs, confluences)
-            save = dlg_tributaries.exec()
-            if save:
-                dlg_tributaries.save()
-
-            dlg_tributaries.clear_confluences_rubber()
-
-            self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
+            try:
+                dlg = TributariesDialog(self.iface, self.lyrs)
+            finally:
+                QApplication.restoreOverrideCursor()
+            # Keep the dialog available when a selection needs correction.
+            while dlg.exec():
+                try:
+                    dlg.save()
+                    break
+                except ValueError as error:
+                    self.uc.bar_warn(str(error))
+        except Exception as error:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_error("ERROR 160921.0937: Creation of confluences aborted!\n,", e)
+            self.uc.show_error("Creation of confluences aborted!", error)
+        finally:
+            if dlg is not None:
+                dlg.clear_confluences_rubber()
+            self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
 
     def delete_confluences(self):
         """
