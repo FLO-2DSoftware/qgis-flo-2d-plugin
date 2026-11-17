@@ -137,8 +137,8 @@ class TributariesDialog(qtBaseClass, uiDialog):
 
         current_widget = self.confluences_tblw.cellWidget(row, 1)
         if current_widget:
-            main_cell = current_widget.currentText()
-            if main_cell != "":
+            main_cell = current_widget.currentText().strip()
+            if main_cell.isdigit():
                 find_this_cell(
                     self.iface,
                     self.lyrs,
