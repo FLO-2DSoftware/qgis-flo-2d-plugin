@@ -1,35 +1,22 @@
-# flo2d/deps/safe_cftime.py
-import sys, os, importlib
+"""Load cftime from QGIS if available, otherwise from FLO-2D's external wheel."""
 
-# --- Linux: use system cftime (for CI) ---
-if os.name != "nt":
-    import cftime
-    sys.modules[__name__] = cftime
+import importlib
+import importlib.util
+import os
+import sys
 
-# --- Windows: use vendored extracted cftime_cpXXX ---
-else:
-    abi = f"cp{sys.version_info.major}{sys.version_info.minor}"
-    deps_dir = os.path.dirname(__file__)
-    cftime_dir = os.path.join(deps_dir, 'cftime', f"cftime_{abi}")   # e.g. deps/cftime_cp312
+if os.name == "nt" and "cftime" not in sys.modules and importlib.util.find_spec("cftime") is None:
+    from .dependency_manager import stage_cftime
 
-    if not os.path.isdir(cftime_dir):
-        raise ImportError(
-            f"[FLO-2D] cftime folder not found for {abi}: {cftime_dir}\n"
-            "Extract the cftime wheel into this directory."
-        )
-
-    # Put cftime_cpXXX first on sys.path
-    if cftime_dir in sys.path:
-        sys.path.remove(cftime_dir)
-    sys.path.insert(0, cftime_dir)
-
-    # Clear stale imports
-    for k in list(sys.modules.keys()):
-        if k == "cftime" or k.startswith("cftime."):
-            del sys.modules[k]
+    package_root = str(stage_cftime())
+    if package_root not in sys.path:
+        sys.path.insert(0, package_root)
     importlib.invalidate_caches()
 
-    import cftime
+# Do not clear an existing cftime module: compiled extensions cannot be safely reloaded.
+try:
+    _module = importlib.import_module("cftime")
+except ImportError as exc:
+    raise ImportError("[FLO-2D] Unable to load cftime; check QGIS and FLO-2D dependencies") from exc
 
-    # Alias shim to real module
-    sys.modules[__name__] = cftime
+sys.modules[__name__] = _module
