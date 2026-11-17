@@ -14,7 +14,7 @@ import tempfile
 from zipfile import ZipFile, BadZipFile
 
 SUPPORTED_ABIS = frozenset({"cp39", "cp312"})
-VERSIONS = {"h5py": "3.11.0", "cftime": "1.6.4.post1", "netCDF4": "1.7.2"}
+VERSIONS = {"h5py": "3.11.0", "cftime": "1.6.4.post1", "netCDF4": "1.7.2", "pyqtgraph": "0.13.7"}
 MAX_ENTRIES = 10000
 MAX_UNCOMPRESSED = 500 * 1024 * 1024
 
@@ -24,7 +24,11 @@ def _abi():
 
 
 def _wheel_path(name, version, abi):
-    return Path(__file__).resolve().parent / "packages" / f"{name}-{version}-{abi}-{abi}-win_amd64.whl"
+    if name == "pyqtgraph":
+        filename = f"pyqtgraph-{version}-py3-none-any.whl"
+    else:
+        filename = f"{name}-{version}-{abi}-{abi}-win_amd64.whl"
+    return Path(__file__).resolve().parent / "packages" / filename
 
 
 def _valid_install(folder, name, version, abi):
@@ -36,7 +40,7 @@ def _valid_install(folder, name, version, abi):
                          if p.name.casefold() == f"{name}-{version}.dist-info".casefold()), metadata)
     return (package.joinpath("__init__.py").is_file()
             and metadata.is_file()
-            and any(p.name.endswith(f".{abi}-win_amd64.pyd") for p in package.rglob("*.pyd")))
+            and (name == "pyqtgraph" or any(p.name.endswith(f".{abi}-win_amd64.pyd") for p in package.rglob("*.pyd"))))
 
 
 def _validate_wheel(wheel, name, version, abi):
@@ -71,7 +75,7 @@ def _validate_wheel(wheel, name, version, abi):
         metadata_name = f"{name}-{version}.dist-info/METADATA".casefold()
         if metadata_name not in {p.casefold() for p in files}:
             raise ValueError(f"Missing package metadata in {wheel.name}")
-        if not any(p.startswith(f"{name}/") and p.endswith(f".{abi}-win_amd64.pyd") for p in files):
+        if name != "pyqtgraph" and not any(p.startswith(f"{name}/") and p.endswith(f".{abi}-win_amd64.pyd") for p in files):
             raise ValueError(f"No {abi} compiled extension found in {wheel.name}")
         corrupt = archive.testzip()
         if corrupt is not None:
@@ -90,12 +94,12 @@ def stage_dependency(name):
     if name not in VERSIONS:
         raise ValueError(f"Unknown FLO-2D dependency: {name}")
     abi = _abi()
-    if os.name != "nt" or sys.maxsize <= 2**32 or abi not in SUPPORTED_ABIS:
+    if name != "pyqtgraph" and (os.name != "nt" or sys.maxsize <= 2**32 or abi not in SUPPORTED_ABIS):
         raise RuntimeError(f"No bundled {name} wheel for this platform / Python ABI: {abi}")
     version = VERSIONS[name]
     profile = Path(QgsApplication.qgisSettingsDirPath()).resolve()
     root = profile / "flo2d_dependencies" / name / version
-    destination = root / abi
+    destination = root / ("py3" if name == "pyqtgraph" else abi)
 
     if destination.exists():
         if not _valid_install(destination, name, version, abi):
@@ -141,3 +145,7 @@ def stage_cftime():
 
 def stage_netcdf4():
     return stage_dependency("netCDF4")
+
+
+def stage_pyqtgraph():
+    return stage_dependency("pyqtgraph")

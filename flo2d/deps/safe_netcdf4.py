@@ -1,50 +1,45 @@
-# flo2d/deps/safe_netcdf4.py
-import sys, os, importlib
+"""Load netCDF4 from QGIS if available, otherwise from FLO-2D's external wheel."""
 
-# --- Linux: use system netCDF4 for GitHub Actions ---
-if os.name != "nt":
-    import numpy  # ensure dependencies are ready
-    import netCDF4
-    sys.modules[__name__] = netCDF4
+import importlib
+import importlib.util
+import os
+from pathlib import Path
+import sys
 
-# --- Windows: load vendored wheel inside plugin ---
-else:
-    abi = f"cp{sys.version_info.major}{sys.version_info.minor}"
-    deps_dir = os.path.dirname(__file__)
-    netcdf_dir = os.path.join(deps_dir, 'netCDF4', f"netcdf4_{abi}")   # e.g. deps/netcdf4_cp312
-    dll_dir    = os.path.join(netcdf_dir, "netcdf4.libs")        # where DLLs usually are
+# netCDF4 imports cftime; establish the selected cftime module first.
+from . import safe_cftime as cftime  # noqa: F401
 
-    if not os.path.isdir(netcdf_dir):
-        raise ImportError(f"[FLO-2D] netCDF4 folder not found for {abi}: {netcdf_dir}")
-    if not os.path.isdir(dll_dir):
-        raise ImportError(f"[FLO-2D] Missing DLLs: {dll_dir}")
+# Keep DLL directory handles alive for the lifetime of the Python process.
+# Store them outside this shim because its sys.modules entry is replaced below.
+_DLL_HANDLES_KEY = "_flo2d_netcdf4_dll_handles"
 
-    from ..deps import safe_cftime as cftime
+if os.name == "nt" and "netCDF4" not in sys.modules and importlib.util.find_spec("netCDF4") is None:
+    from .dependency_manager import stage_netcdf4
 
-    # Prepend to sys.path
-    if netcdf_dir in sys.path:
-        sys.path.remove(netcdf_dir)
-    sys.path.insert(0, netcdf_dir)
+    package_root = Path(stage_netcdf4())
+    libs_dir = package_root / "netCDF4.libs"
+    if not libs_dir.is_dir():
+        # Case-insensitive filesystem names are common on Windows, but do not assume them.
+        libs_dir = next((p for p in package_root.iterdir()
+                         if p.is_dir() and p.name.casefold() == "netcdf4.libs"), None)
+    if libs_dir is not None and hasattr(os, "add_dll_directory"):
+        handles = getattr(sys, _DLL_HANDLES_KEY, None)
+        if handles is None:
+            handles = []
+            setattr(sys, _DLL_HANDLES_KEY, handles)
+        handles.append(os.add_dll_directory(str(libs_dir)))
 
-    # Clear stale partial imports
-    for k in list(sys.modules.keys()):
-        if k == "netCDF4" or k.startswith("netCDF4."):
-            del sys.modules[k]
+    package_path = str(package_root)
+    if package_path not in sys.path:
+        sys.path.insert(0, package_path)
     importlib.invalidate_caches()
 
-    # Sandbox PATH so OSGeo4W doesn’t override DLLs
-    old_path = os.environ.get("PATH", "")
-    os.environ["PATH"] = dll_dir
-    try:
-        try:
-            os.add_dll_directory(dll_dir)  # Python 3.8+
-        except Exception:
-            pass
+# An installed package is not necessarily compatible. If import fails, report it
+# instead of switching native extensions in a partially initialized process.
+try:
+    importlib.import_module("numpy")
+    _module = importlib.import_module("netCDF4")
+except ImportError as exc:
+    raise ImportError("[FLO-2D] Unable to load netCDF4; check QGIS and FLO-2D dependencies") from exc
 
-        import numpy  # ABI compatibility
-        import netCDF4
-
-    finally:
-        os.environ["PATH"] = old_path
-
-    sys.modules[__name__] = netCDF4
+sys.modules[__name__] = _module
