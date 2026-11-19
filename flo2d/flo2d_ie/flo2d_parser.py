@@ -570,14 +570,23 @@ class ParseDAT(object):
         results = {}
         toler = self.dat_files["TOLER.DAT"]
         with open(toler, "r") as f:
-            first_line = f.readline().split()
-            if len(first_line) == 3:
-                toler_rows = self.toler_rows_2009
-            else:
+            lines = [line.split() for line in f if line.strip()]
+
+            if len(lines) >= 3 and lines[1][0] == "C" and lines[2][0] == "T":
                 toler_rows = self.toler_rows
-            results.update(dict(zip_longest(toler_rows[0], first_line)))
-            for row in toler_rows[1:]:
-                results.update(dict(zip_longest(row, f.readline().split())))
+
+                if len(lines[0]) == 3:
+                    toler_rows = [
+                        ["TOLGLOBAL", "DEPTOL", "WAVEMAX"],
+                        ["COURCHAR_C", "COURANTFP", "COURANTC", "COURANTST"],
+                        ["COURCHAR_T", "TIME_ACCEL"],
+                    ]
+            else:
+                toler_rows = self.toler_rows_2009
+
+            for row, values in zip(toler_rows, lines):
+                results.update(dict(zip_longest(row, values)))
+
         return results
 
     def parse_fplain_cadpts(self):
