@@ -32,12 +32,16 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtGui import QDesktopServices, QIcon
 from qgis.PyQt.QtWidgets import (
+    QToolButton,
+    QProgressDialog,
+    QPushButton,
     QAction,
     QApplication,
     QFileDialog,
     QMenu,
     QMessageBox,
-    QDockWidget
+    QDockWidget,
+    QDialog,
 )
 from qgis.utils import plugins, iface
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
@@ -57,7 +61,7 @@ from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.results_tool import ResultsTool
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect, database_connect
 from .gui.dlg_breach_hydrograph_tool import BreachHydrographToolDialog
-from .gui.dlg_components import ComponentsDialog
+from .gui.dlg_components import ComponentsDialog, EngineChoiceDialog
 from .gui.dlg_cont_toler import ContToler
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_export_multidomain import ExportMultipleDomainsDialog
@@ -90,6 +94,8 @@ from .utils import get_flo2dpro_version, get_plugin_version, qt_cursor_shape, qt
     qt_dock_widget_area, dock_area_from_int, qt_window_type, mb_role, mb_button
 
 from PIL import Image
+
+from .flo2d_compatibility import EngineCompatibility, FLO2009, FLOPRO
 
 
 @contextmanager
@@ -146,6 +152,7 @@ class Flo2D(object):
         self.lyrs = Layers(iface)
         self.lyrs.group = None
         self.gutils = None
+        self.compat = EngineCompatibility(self)
         self.f2g = None
         self.prep_sql = None
         self.f2d_widget = None
@@ -1198,7 +1205,7 @@ class Flo2D(object):
         Function to set the run settings: FLO-2D and Project folders
         """
         self.uncheck_all_info_tools()
-        dlg = ExternalProgramFLO2D(self.iface, "Run Settings", self.gutils, self.f2d_widget, self.lyrs)
+        dlg = ExternalProgramFLO2D(self.iface, "Run Settings", self.gutils, self.f2d_widget, self.lyrs, self)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
         ok = dlg.exec()
         if not ok:
@@ -1783,6 +1790,7 @@ class Flo2D(object):
         import_calls = [
             "import_cont_toler",
             "import_mannings_n_topo",
+            "import_cadpts_fplain",
             "import_inflow",
             "import_tailings",
             # "import_outrc",  Add back when the OUTRC process is completed
@@ -1833,13 +1841,29 @@ class Flo2D(object):
         s.setValue("FLO-2D/lastGdsDir", dir_name)
         self.f2d_widget.setup_project_folder()
         bname = os.path.basename(fname)
+
+        cadpts = False
+        fplain = False
+
         if self.f2g.set_parser(fname):
+            dat_files = self.f2g.parser.dat_files
+            is_legacy_2009 = (
+                dat_files["CADPTS.DAT"] is not None
+                and dat_files["FPLAIN.DAT"] is not None
+                and dat_files["TOPO.DAT"] is None
+                and dat_files["MANNINGS_N.DAT"] is None
+            )
             topo = self.f2g.parser.dat_files["TOPO.DAT"]
+            # if TOPO.DAT does not exist, it could be a FLO-2D 2009 model. Check for CADPTS.DAT
             if topo is None:
-                self.uc.bar_error("Could not find TOPO.DAT file! Importing GDS files aborted!", dur=3)
-                self.uc.log_info("Could not find TOPO.DAT file! Importing GDS files aborted!")
-                self.gutils.enable_geom_triggers()
-                return
+                cadpts = self.f2g.parser.dat_files["CADPTS.DAT"]
+                if cadpts is None:
+                    self.uc.bar_error("Could not find TOPO.DAT or CADPTS.DAT file! Importing GDS files aborted!", dur=3)
+                    self.uc.log_info("Could not find TOPO.DAT or CADPTS.DAT file! Importing GDS files aborted!")
+                    self.gutils.enable_geom_triggers()
+                    return
+                else:
+                    cadpts = True
             if bname not in self.f2g.parser.dat_files:
                 self.uc.bar_info("Import cancelled!")
                 self.uc.log_info("Import cancelled!")
@@ -1859,10 +1883,14 @@ class Flo2D(object):
 
             # Check if MANNINGS_N.DAT exist:
             if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
-                self.uc.bar_error("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
-                self.uc.log_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
-                self.gutils.enable_geom_triggers()
-                return
+                # if MANNINGS_N.DAT does not exist, it could be a FLO-2D 2009 model. Check for FPLAIN.DAT
+                if not os.path.isfile(dir_name + r"\FPLAIN.DAT")  or os.path.getsize(dir_name + "\FPLAIN.DAT") == 0:
+                    self.uc.bar_error("ERROR 241019.1821: file MANNINGS_N.DAT or FPLAIN.DAT is missing or empty!")
+                    self.uc.log_info("ERROR 241019.1821: file MANNINGS_N.DAT or FPLAIN.DAT is missing or empty!")
+                    self.gutils.enable_geom_triggers()
+                    return
+                else:
+                    fplain = True
 
             # Check if TOLER.DAT exist:
             if not os.path.isfile(dir_name + r"\TOLER.DAT") or os.path.getsize(dir_name + r"\TOLER.DAT") == 0:
@@ -1870,6 +1898,22 @@ class Flo2D(object):
                 self.uc.log_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
                 self.gutils.enable_geom_triggers()
                 return
+
+            selected_engine = FLOPRO
+            if is_legacy_2009:
+                # Legacy FLO-2D 2009 project
+                engine_selected = self.gutils.get_metadata_par("ENGINE_SELECTED")
+                if engine_selected == "1":
+                    selected_engine = FLO2009
+                else:
+                    dlg_engine = EngineChoiceDialog(self.iface.mainWindow())
+                    if dlg_engine.exec() != QDialog.Accepted:
+                        self.gutils.enable_geom_triggers()
+                        return
+                    selected_engine = dlg_engine.selected_engine
+                import_calls.remove("import_mannings_n_topo")
+            else:
+                selected_engine = FLOPRO
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
             ok = dlg_components.exec()
@@ -1958,9 +2002,26 @@ class Flo2D(object):
 
                     self.f2g.clear_gpkg_tables()
 
-                    self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
-                    # the methods in the class Flo2dGeoPackage to import (read) the
-                    # FLO-2D .DAT files
+                    # Import CONT.DAT first
+                    self.call_IO_methods(["import_cont_toler"], True)
+
+                    # Apply the engine selected by the user after CONT.DAT has been imported
+                    sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES(?, ?, ?);"""
+                    self.gutils.execute(sql, ("ENGINE", selected_engine, "FLO-2D Engine"))
+
+                    # import all remaining components
+                    remaining_import_calls = [
+                        call for call in import_calls
+                        if call != "import_cont_toler"
+                    ]
+
+                    self.call_IO_methods(remaining_import_calls, True)  # The strings list 'export_calls', contains the names of
+                    # the methods in the class Flo2dGeoPackage to import (read) the FLO-2D .DAT files
+
+                    # Remember only an explicit choice to continue using 2009 engine
+                    if is_legacy_2009 and selected_engine == FLO2009:
+                        sql = """INSERT OR REPLACE INTO metadata (name, value, note) VALUES (?, ?, ?);"""
+                        self.gutils.execute(sql, ("ENGINE_SELECTED", "1", "User confirmed to keep FLO-2D 2009 engine"))
 
                     # Save CRS to table cont
                     self.gutils.set_cont_par("PROJ", self.crs.toProj())
@@ -1976,6 +2037,11 @@ class Flo2D(object):
 
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
+
+                    grid = self.lyrs.data["grid"]["qlyr"]
+                    if grid:
+                        grid.reload() # Reload grid after import
+
                     self.lyrs.zoom_to_all()
 
                     QApplication.restoreOverrideCursor()
@@ -2047,7 +2113,7 @@ class Flo2D(object):
                     if "import_fpxsec" in import_calls:
                         specific_components.append(5)
 
-                    if "import_mannings_n_topo" in import_calls:
+                    if "import_mannings_n_topo" in import_calls or "import_cadpts_fplain" in import_calls:
                         specific_components.append(1)
 
                     if len(specific_components) > 0:
@@ -2217,7 +2283,7 @@ class Flo2D(object):
         if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
             specific_components.append(2)
 
-        if "import_chan" in import_calls or "import_xsec" in import_calls or "chan_interior_nodes" in import_calls:
+        if "import_chan" in import_calls or "import_xsec" in import_calls or "import_chan_interior_nodes" in import_calls:
             specific_components.append(3)
 
         if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
