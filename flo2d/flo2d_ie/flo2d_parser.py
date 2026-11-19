@@ -800,7 +800,7 @@ class ParseDAT(object):
 
         line2 = next(par)
 
-        if method in ("1", "2", "3"):
+        if method in ("1", "3"):
             if len(line2) == 5:  # 2009 format
                 values = line2
 
@@ -835,12 +835,19 @@ class ParseDAT(object):
                 line3 = next(par)
                 data["HYDCALL"] = line3[0]
                 data["SOILALL"] = line3[1]
-                data["HYDCADJ"] = line3[2]
+                data["HYDCADJ"] = line3[2] if len(line3) > 2 else None
 
             if data["INFCHAN"] == "1":
                 data["HYDCXX"] = next(par)[0]
             else:
                 data["HYDCXX"] = None
+
+        elif method == "2":
+            data = OrderedDict([
+                ("INFMETHOD", method),
+                ("SCSNALL", line2[0]),
+                ("ABSTR1", line2[1])
+            ])
 
         elif method == "4":
             data = OrderedDict([
