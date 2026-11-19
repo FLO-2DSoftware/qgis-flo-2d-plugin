@@ -8870,6 +8870,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
 
+            build = options.get("build", "").strip().lower()
+
+            # Preserve the build only when it matches the target engine
+            if engine == FLO2009:
+                if "version 2009" not in build:
+                    options["build"] = ""
+            else:
+                if "pro model" not in build:
+                    options["build"] = ""
+
             if "TIMTEP" in options:
                 options["TIMTEP"] = f"{float(options['TIMTEP']):.2f}"
 
@@ -8968,10 +8978,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     # Normal rows
                     lst = ""
                     for o in row:
-                        if o == "build":
-                            continue
                         if o not in options:
                             continue
+                        if o == "build" and not options[o]:
+                            continue
+
                         lst += rline.format(options[o])
 
                     lst += "\n"
