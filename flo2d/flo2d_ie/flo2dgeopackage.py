@@ -8888,7 +8888,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if not options.get("WAVEMAX"):
                     options["WAVEMAX"] = "0.00"
             else:
-                options["DEPRESSDEPTH"] = f"{float_or_zero(options.get('DEPRESSDEPTH')):.2f}"
+                if options.get("DEPRESSDEPTH") is None:
+                    options["DEPRESSDEPTH"] = "0.0"
                 if "SWMM" not in options:
                     options["SWMM"] = "0"
             if options["IFLOODWAY"] == "0":
