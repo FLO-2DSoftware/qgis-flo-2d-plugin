@@ -11731,10 +11731,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )
 
                 if engine != FLO2009:
-                    if not v2[4]:
-                        v2[4] = 0
-                    if not v3[2]:
-                        v3[2] = 0
+                    if v2[4] is None or v2[4] == "":
+                        v2[4] = 0.0
+                    if v3[2] is None or v3[2] == "":
+                        v3[2] = 0.0
 
                 i.write(line1.format(v1))
                 if v1 in (1, 2, 3):
