@@ -8880,9 +8880,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if "pro model" not in build:
                     options["build"] = ""
 
-            if "TIMTEP" in options:
-                options["TIMTEP"] = f"{float(options['TIMTEP']):.2f}"
-
             if engine == FLO2009:
                 options["SUPER"] = "0"
                 if not options.get("WAVEMAX"):
