@@ -1853,6 +1853,30 @@ class Flo2D(object):
                 and dat_files["TOPO.DAT"] is None
                 and dat_files["MANNINGS_N.DAT"] is None
             )
+
+            # Determine which grid format is available
+            has_modern_grid = (
+                    dat_files["TOPO.DAT"] is not None
+                    and dat_files["MANNINGS_N.DAT"] is not None
+            )
+
+            has_legacy_grid = (
+                    dat_files["CADPTS.DAT"] is not None
+                    and dat_files["FPLAIN.DAT"] is not None
+            )
+
+            if has_modern_grid:
+                import_calls.remove("import_cadpts_fplain")
+
+            elif has_legacy_grid:
+                import_calls.remove("import_mannings_n_topo")
+
+            else:
+                import_calls.remove("import_mannings_n_topo")
+                import_calls.remove("import_cadpts_fplain")
+
+                self.uc.log_info("WARNING: No complete grid dataset (TOPO/MANNINGS_N or CADPTS/FPLAIN) was detected.")
+
             topo = self.f2g.parser.dat_files["TOPO.DAT"]
             # if TOPO.DAT does not exist, it could be a FLO-2D 2009 model. Check for CADPTS.DAT
             if topo is None:
