@@ -104,12 +104,16 @@ class Schema1DConverter(SchemaConverter):
 
         self.schema_lbank_tab = "chan"
         self.user_lbank_tab = "user_left_bank"
+        self.schema_rbank_tab = "rbank"
+        self.user_rbank_tab = "user_right_bank"
         self.schema_xs_tab = "chan_elems"
         self.user_xs_tab = "user_xsections"
 
         self.xsecnames = dict(self.execute("SELECT elem_fid, xsecname FROM chan_n;"))
         self.schema_lbank_lyr = lyrs.data[self.schema_lbank_tab]["qlyr"]
         self.user_lbank_lyr = lyrs.data[self.user_lbank_tab]["qlyr"]
+        self.schema_rbank_lyr = lyrs.data[self.schema_rbank_tab]["qlyr"]
+        self.user_rbank_lyr = lyrs.data[self.user_rbank_tab]["qlyr"]
         self.schematized_xsections_lyr = lyrs.data[self.schema_xs_tab]["qlyr"]
         self.user_xs_lyr = lyrs.data[self.user_xs_tab]["qlyr"]
 
@@ -143,6 +147,10 @@ class Schema1DConverter(SchemaConverter):
         remove_features(self.user_lbank_lyr)
         self.schema2user(self.schema_lbank_lyr, self.user_lbank_lyr, "polyline")
 
+    def create_user_rbank(self):
+        remove_features(self.user_rbank_lyr)
+        self.schema2user(self.schema_rbank_lyr, self.user_rbank_lyr, "polyline")
+
     def create_user_xs(self):
         self.user_xs_lyr.blockSignals(True)
         self.copy_xs_tables()
@@ -152,12 +160,17 @@ class Schema1DConverter(SchemaConverter):
         geom_fn = self.geom_functions["polyline"]
         new_features = []
         for i, feat in enumerate(self.schematized_xsections_lyr.getFeatures(), start=1):
+
+            xsecname = self.xsecnames.get(feat["fid"])
+
+            if not xsecname or not xsecname.startswith("X-"):
+                continue
+
             if feat.geometry() is None:
                 self.set_geomless_xs(feat)
 
             new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
-            new_feat["name"] = "Cross-section-{}".format(i)
-            new_feat["name"] = "Cross-section-{}".format(i) if feat["type"] != "N" else self.xsecnames[feat["fid"]]
+            new_feat["name"] = xsecname
             new_features.append(new_feat)
         self.user_xs_lyr.startEditing()
         self.user_xs_lyr.addFeatures(new_features)
